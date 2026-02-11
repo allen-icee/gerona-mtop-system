@@ -105,4 +105,10 @@ class MtopApplicationController extends Controller
             'application' => $mtopApplication
         ]);
     }
+    // 7. DELETE RECORD (Admin Only)
+    public function destroy(MtopApplication $mtopApplication)
+    {
+        $mtopApplication->delete();
+        return redirect()->route('mtop.index');
+    }
 }

@@ -1,8 +1,22 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { Head, Link } from "@inertiajs/react";
-import { MtopApplication } from "@/types"; // We'll define this type below if needed, or use 'any' for now
+import { Head, Link, usePage, router } from "@inertiajs/react";
 
 export default function Index({ applications }: { applications: any[] }) {
+    // 1. Get the current user info
+    const user = usePage().props.auth.user;
+    const isAdmin = user.role === "admin";
+
+    // 2. Handle Delete
+    const handleDelete = (id: number) => {
+        if (
+            confirm(
+                "Are you sure you want to DELETE this record? This cannot be undone.",
+            )
+        ) {
+            router.delete(route("mtop.destroy", id));
+        }
+    };
+
     return (
         <AuthenticatedLayout
             header={
@@ -28,7 +42,7 @@ export default function Index({ applications }: { applications: any[] }) {
                         </Link>
                     </div>
 
-                    {/* THE TABLE (The "Logbook") */}
+                    {/* THE TABLE */}
                     <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
@@ -95,26 +109,12 @@ export default function Index({ applications }: { applications: any[] }) {
                                                 {app.transaction_date}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <span
-                                                    className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                                        app.status === "printed"
-                                                            ? "bg-green-100 text-green-800"
-                                                            : "bg-gray-100 text-gray-800"
-                                                    }`}
-                                                >
+                                                <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                                                     {app.status.toUpperCase()}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                <Link
-                                                    href={route(
-                                                        "mtop.edit",
-                                                        app.id,
-                                                    )}
-                                                    className="text-indigo-600 hover:text-indigo-900 mr-4"
-                                                >
-                                                    Edit
-                                                </Link>
+                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-4">
+                                                {/* PRINT: Everyone can see this */}
                                                 <Link
                                                     href={route(
                                                         "mtop.print",
@@ -124,6 +124,31 @@ export default function Index({ applications }: { applications: any[] }) {
                                                 >
                                                     PRINT
                                                 </Link>
+
+                                                {/* EDIT: Only Admins can see this */}
+                                                {isAdmin && (
+                                                    <Link
+                                                        href={route(
+                                                            "mtop.edit",
+                                                            app.id,
+                                                        )}
+                                                        className="text-indigo-600 hover:text-indigo-900"
+                                                    >
+                                                        Edit
+                                                    </Link>
+                                                )}
+
+                                                {/* DELETE: Only Admins can see this */}
+                                                {isAdmin && (
+                                                    <button
+                                                        onClick={() =>
+                                                            handleDelete(app.id)
+                                                        }
+                                                        className="text-red-600 hover:text-red-900 font-bold"
+                                                    >
+                                                        DEL
+                                                    </button>
+                                                )}
                                             </td>
                                         </tr>
                                     ))

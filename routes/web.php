@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\MtopApplicationController;
-use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -12,39 +11,37 @@ use Inertia\Inertia;
 |--------------------------------------------------------------------------
 */
 
+// 1. CHANGE ROOT URL:
+// Instead of the "Welcome" page, redirect immediately to Login.
 Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
+    return redirect()->route('login');
 });
 
+// 2. CHANGE DASHBOARD URL:
+// Instead of a generic "You are logged in" page, go straight to the MTOP List.
 Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
+    return redirect()->route('mtop.index');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-// --- AUTHENTICATED ROUTES (Must be logged in) ---
+// --- AUTHENTICATED ROUTES ---
 Route::middleware('auth')->group(function () {
 
-    // 1. Profile Routes
+    // Keep Profile Routes (Good for changing passwords)
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // 2. MTOP SHARED ROUTES (Staff & Admin)
-    // Everyone can List, Create, and Print
+    // MTOP SYSTEM (Shared)
     Route::get('/mtop', [MtopApplicationController::class, 'index'])->name('mtop.index');
     Route::get('/mtop/create', [MtopApplicationController::class, 'create'])->name('mtop.create');
     Route::post('/mtop', [MtopApplicationController::class, 'store'])->name('mtop.store');
     Route::get('/mtop/{mtopApplication}/print', [MtopApplicationController::class, 'print'])->name('mtop.print');
 
-    // 3. ADMIN ONLY ROUTES (Restricted)
-    // Only users with role='admin' can access these
+    // ADMIN ONLY
     Route::middleware(['admin'])->group(function () {
         Route::get('/mtop/{mtopApplication}/edit', [MtopApplicationController::class, 'edit'])->name('mtop.edit');
         Route::put('/mtop/{mtopApplication}', [MtopApplicationController::class, 'update'])->name('mtop.update');
+        Route::delete('/mtop/{mtopApplication}', [MtopApplicationController::class, 'destroy'])->name('mtop.destroy');
     });
 });
 
