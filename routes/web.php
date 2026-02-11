@@ -37,10 +37,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/mtop', [MtopApplicationController::class, 'store'])->name('mtop.store');
     Route::get('/mtop/{mtopApplication}/print', [MtopApplicationController::class, 'print'])->name('mtop.print');
 
-    // ADMIN ONLY
+    // 3. ADMIN ONLY ROUTES (Restricted)
     Route::middleware(['admin'])->group(function () {
         Route::get('/mtop/{mtopApplication}/edit', [MtopApplicationController::class, 'edit'])->name('mtop.edit');
         Route::put('/mtop/{mtopApplication}', [MtopApplicationController::class, 'update'])->name('mtop.update');
+
+        // ADD THIS LINE:
         Route::delete('/mtop/{mtopApplication}', [MtopApplicationController::class, 'destroy'])->name('mtop.destroy');
     });
 });

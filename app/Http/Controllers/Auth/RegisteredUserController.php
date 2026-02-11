@@ -15,29 +15,29 @@ use Inertia\Response;
 
 class RegisteredUserController extends Controller
 {
-    /**
-     * Display the registration view.
-     */
     public function create(): Response
     {
         return Inertia::render('Auth/Register');
     }
 
-    /**
-     * Handle an incoming registration request.
-     *
-     * @throws \Illuminate\Validation\ValidationException
-     */
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
+            // 1. NAME: Regex allows Letters, Spaces, and Dots only
+            'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s.]+$/'],
+
+            // 2. USERNAME: Min 5 chars, Letters/Numbers/Dashes only
+            'username' => ['required', 'string', 'min:4', 'max:255', 'unique:' . User::class, 'regex:/^[a-zA-Z0-9._-]+$/'],
+
+            // 3. EMAIL: Standard Email format (if provided)
+            'email' => 'nullable|string|lowercase|email|max:255|unique:' . User::class,
+
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
         $user = User::create([
             'name' => $request->name,
+            'username' => $request->username,
             'email' => $request->email,
             'password' => Hash::make($request->password),
         ]);

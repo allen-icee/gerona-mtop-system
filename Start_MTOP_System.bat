@@ -9,7 +9,7 @@ echo =====================================================
 echo.
 
 :: 1. Start the Local Server (Hidden in background)
-start /b php artisan serve --port=8100
+start /b php artisan serve --host=0.0.0.0 --port=8100
 
 :: 2. Wait 2 seconds for server to wake up
 timeout /t 2 /nobreak >nul
