@@ -1,50 +1,50 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\MtopApplicationController;
+use App\Http\Controllers\ProfileController;
+use Illuminate\Foundation\Application;
+use App\Models\MtopApplication;
+use App\Models\User;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-*/
-
-// 1. CHANGE ROOT URL:
-// Instead of the "Welcome" page, redirect immediately to Login.
+// 1. HOME PAGE: Redirects to Login
 Route::get('/', function () {
     return redirect()->route('login');
 });
 
-// 2. CHANGE DASHBOARD URL:
-// Instead of a generic "You are logged in" page, go straight to the MTOP List.
+// 2. DASHBOARD: The Command Center (New!)
 Route::get('/dashboard', function () {
-    return redirect()->route('mtop.index');
+    return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-// --- AUTHENTICATED ROUTES ---
+// 3. AUTHENTICATED ROUTES
 Route::middleware('auth')->group(function () {
 
-    // Keep Profile Routes (Good for changing passwords)
+    // PROFILE
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // MTOP SYSTEM (Shared)
+    // MTOP SYSTEM ROUTES (Shared by Admin & Staff)
     Route::get('/mtop', [MtopApplicationController::class, 'index'])->name('mtop.index');
     Route::get('/mtop/create', [MtopApplicationController::class, 'create'])->name('mtop.create');
     Route::post('/mtop', [MtopApplicationController::class, 'store'])->name('mtop.store');
-    Route::get('/mtop/{mtopApplication}/print', [MtopApplicationController::class, 'print'])->name('mtop.print');
+    Route::get('/mtop/{id}/print', [MtopApplicationController::class, 'print'])->name('mtop.print');
 
-    // 3. ADMIN ONLY ROUTES (Restricted)
-    Route::middleware(['admin'])->group(function () {
-        Route::get('/mtop/{mtopApplication}/edit', [MtopApplicationController::class, 'edit'])->name('mtop.edit');
-        Route::put('/mtop/{mtopApplication}', [MtopApplicationController::class, 'update'])->name('mtop.update');
-
-        // ADD THIS LINE:
-        Route::delete('/mtop/{mtopApplication}', [MtopApplicationController::class, 'destroy'])->name('mtop.destroy');
+    // ADMIN ONLY ROUTES (Edit & Delete)
+    Route::middleware('admin')->group(function () {
+        Route::get('/mtop/{id}/edit', [MtopApplicationController::class, 'edit'])->name('mtop.edit');
+        Route::put('/mtop/{id}', [MtopApplicationController::class, 'update'])->name('mtop.update');
+        Route::delete('/mtop/{id}', [MtopApplicationController::class, 'destroy'])->name('mtop.destroy');
     });
+    Route::get('/dashboard', function () {
+        return Inertia::render('Dashboard', [
+            'totalMtop' => MtopApplication::count(),
+            'totalUsers' => User::count(),
+            'newToday'   => MtopApplication::whereDate('created_at', today())->count(),
+        ]);
+    })->middleware(['auth', 'verified'])->name('dashboard');
 });
 
 require __DIR__ . '/auth.php';

@@ -166,7 +166,6 @@ export default function Authenticated({
                             MTOP Records
                         </ResponsiveNavLink>
                     </div>
-
                     <div className="border-t border-blue-700 pb-1 pt-4">
                         <div className="px-4">
                             <div className="text-base font-medium text-white">
@@ -194,6 +193,7 @@ export default function Authenticated({
                             </ResponsiveNavLink>
                         </div>
                     </div>
+                    a
                 </div>
             </nav>
 
