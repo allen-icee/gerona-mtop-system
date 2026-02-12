@@ -19,14 +19,17 @@ class MtopApplicationController extends Controller
         $search = $request->input('search');
         $month = $request->input('month');
         $year = $request->input('year');
+        $barangay = $request->input('barangay'); // NEW FILTER
 
         $query = MtopApplication::query();
 
-        // Search Logic
+        // Search Logic (Updated for split names)
         if ($search) {
             $query->where(function ($q) use ($search) {
-                $q->where('operator_name', 'like', "%{$search}%")
+                $q->where('last_name', 'like', "%{$search}%")
+                    ->orWhere('first_name', 'like', "%{$search}%")
                     ->orWhere('body_number', 'like', "%{$search}%")
+                    ->orWhere('mt_number', 'like', "%{$search}%") // Search by Control No.
                     ->orWhere('plate_no', 'like', "%{$search}%");
             });
         }
@@ -38,6 +41,10 @@ class MtopApplicationController extends Controller
         if ($year) {
             $query->whereYear('transaction_date', $year);
         }
+        if ($barangay) {
+            // Flexible match: "Poblacion 1" matches "POBLACION 1, GERONA..."
+            $query->where('address', 'like', "%{$barangay}%");
+        }
 
         $applications = $query->latest()
             ->paginate(10)
@@ -45,10 +52,9 @@ class MtopApplicationController extends Controller
 
         return Inertia::render('Mtop/Index', [
             'applications' => $applications,
-            'filters' => $request->only(['search', 'month', 'year']),
+            'filters' => $request->only(['search', 'month', 'year', 'barangay']), // Pass it to React
         ]);
     }
-
     /**
      * Show the form for creating a new resource.
      */
@@ -62,37 +68,36 @@ class MtopApplicationController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        // 1. VALIDATION
         $validated = $request->validate([
-            // Applicant
-            'operator_name' => 'required|string|max:255',
-            'address' => 'required|string|max:255',
+            // NAMES: Letters, spaces, dots, dashes only. No numbers!
+            'last_name'   => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\-]+$/'],
+            'first_name'  => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\-]+$/'],
+            'middle_name' => ['nullable', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\-]+$/'],
+
+            'address'        => 'required|string|max:100',
+            'contact_number' => ['nullable', 'regex:/^(09|\+639)\d{9}$/'], // Must be valid PH mobile
+
             'transaction_date' => 'required|date',
-            'mt_number' => 'nullable|string|max:50',
+            'mt_number'        => 'nullable|string|max:20',
 
-            // Unit
-            'body_number' => 'required|string|max:50',
-            'plate_no' => 'required|string|max:50',
-            'make_type' => 'required|string|max:100',
-            'engine_motor_no' => 'required|string|max:100',
-            'chassis_no' => 'required|string|max:100',
+            // UNIT: Strict formatting
+            'body_number'     => ['required', 'regex:/^[0-9]+$/'], // Numbers only
+            'plate_no'        => ['required', 'regex:/^[0-9A-Z]+$/'], // Uppercase Alphanumeric only (No dashes allowed in DB if you prefer clean data)
+            'make_type'       => 'required|string|max:30',
+            'engine_motor_no' => 'required|string|max:30',
+            'chassis_no'      => 'required|string|max:30',
 
-            // Documents (Nullable)
-            'cedula_number' => 'nullable|string|max:50',
-            'cedula_date' => 'nullable|date',
-            'or_number' => 'nullable|string|max:50',
-            'or_date' => 'nullable|date',
+            // DOCS
+            'cedula_number' => 'nullable|string|max:20',
+            'cedula_date'   => 'nullable|date',
+            'or_number'     => 'nullable|string|max:20',
+            'or_date'       => 'nullable|date',
         ]);
 
-        // 2. AUTO-CALCULATE: Valid Until (3 Years from Transaction Date)
-        if ($request->transaction_date) {
-            $validated['valid_until'] = Carbon::parse($request->transaction_date)->addYears(3);
-        }
-
-        // 3. DEFAULT STATUS
+        // Auto-Calculate Expiry
+        $validated['valid_until'] = \Carbon\Carbon::parse($request->transaction_date)->addYears(3);
         $validated['status'] = 'draft';
 
-        // 4. SAVE
         MtopApplication::create($validated);
 
         return redirect()->route('mtop.index');

@@ -49,6 +49,16 @@ export default function Authenticated({
                                 >
                                     MTOP Records
                                 </NavLink>
+                                {/* NEW: SYSTEM USERS LINK (Admin Only) */}
+                                {user.role === "admin" && (
+                                    <NavLink
+                                        href={route("users.index")}
+                                        active={route().current("users.*")}
+                                        className="text-blue-100 hover:text-white focus:text-white border-transparent hover:border-white focus:border-white"
+                                    >
+                                        System Users
+                                    </NavLink>
+                                )}
                             </div>
                         </div>
 
@@ -165,6 +175,16 @@ export default function Authenticated({
                         >
                             MTOP Records
                         </ResponsiveNavLink>
+                        {/* NEW: MOBILE LINK (Admin Only) */}
+                        {user.role === "admin" && (
+                            <ResponsiveNavLink
+                                href={route("users.index")}
+                                active={route().current("users.*")}
+                                className="text-white hover:bg-blue-700 focus:bg-blue-700 border-l-4 border-transparent hover:border-yellow-400"
+                            >
+                                System Users
+                            </ResponsiveNavLink>
+                        )}
                     </div>
                     <div className="border-t border-blue-700 pb-1 pt-4">
                         <div className="px-4">
@@ -193,7 +213,6 @@ export default function Authenticated({
                             </ResponsiveNavLink>
                         </div>
                     </div>
-                    a
                 </div>
             </nav>
 

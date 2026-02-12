@@ -14,32 +14,34 @@ return new class extends Migration
         Schema::create('mtop_applications', function (Blueprint $table) {
             $table->id();
 
-            // --- TABLE 1: APPLICANT & VALIDITY ---
-            $table->string('mt_number')->nullable();      // Control/Case Number (e.g., 2026-001)
-            $table->date('transaction_date');             // Date of Application (Feb 3, 2026)
-            $table->date('valid_until')->nullable();      // Expiry Date (Feb 3, 2029)
-            $table->string('operator_name');              // Name (Ricarte R. Bagsic)
-            $table->string('address');                    // Barangay (Plastado, Gerona, Tarlac)
+            // 1. APPLICANT DETAILS (Split Name)
+            $table->string('last_name', 50);   // Max 50 chars
+            $table->string('first_name', 50);  // Max 50 chars
+            $table->string('middle_name', 50)->nullable(); // Optional
+            $table->string('address', 255);
+            $table->string('contact_number', 11)->nullable(); // e.g., 09123456789
 
-            // --- TABLE 2: TRICYCLE UNIT DETAILS ---
-            $table->string('make_type');                  // Gawa At Uri (HONDA)
-            $table->string('engine_motor_no');            // Motor Bilang
-            $table->string('chassis_no');                 // Tsasi Bilang
-            $table->string('plate_no');                   // Plaka Bilang (RE1470)
-            $table->string('body_number')->nullable();    // Sidecar Number (# 1536)
+            // 2. MTOP DETAILS
+            $table->string('mt_number', 20)->nullable(); // Case #
+            $table->date('transaction_date');
+            $table->date('valid_until')->nullable();
 
-            // --- TABLE 3: CEDULA (Community Tax Cert) ---
-            $table->string('cedula_number')->nullable();  // Cedula Number
-            $table->date('cedula_date')->nullable();      // Cedula Date
+            // 3. UNIT DETAILS
+            $table->string('make_type', 50);        // e.g. HONDA
+            $table->string('engine_motor_no', 30);  // Serial No
+            $table->string('chassis_no', 30);       // Serial No
+            $table->string('plate_no', 10);         // e.g. 123ABC (Max 10)
+            $table->string('body_number', 10);      // e.g. 1536 (Max 10)
 
-            // --- TABLE 4: OFFICIAL RECEIPT ---
-            $table->string('or_number')->nullable();      // Official Receipt Number
-            $table->date('or_date')->nullable();          // Official Receipt Date
-            $table->decimal('amount', 10, 2)->nullable(); // Amount (Optional, kept just in case)
+            // 4. DOCUMENTS (Nullable)
+            $table->string('cedula_number', 20)->nullable();
+            $table->date('cedula_date')->nullable();
+            $table->string('or_number', 20)->nullable();
+            $table->date('or_date')->nullable();
 
-            // --- SYSTEM STATUS ---
-            $table->string('status')->default('draft');   // draft, printed, released
-            $table->timestamps();                         // Created At / Updated At
+            // 5. SYSTEM
+            $table->string('status', 20)->default('draft');
+            $table->timestamps();
         });
     }
 
