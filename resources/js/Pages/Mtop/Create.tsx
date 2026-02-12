@@ -7,9 +7,12 @@ import InputGroup from "@/Components/InputGroup";
 import BarangaySelect from "@/Components/BarangaySelect";
 import PermitPreview from "./Partials/PermitPreview";
 
-export default function Create() {
+export default function Create({
+    suggested_mt_number,
+}: {
+    suggested_mt_number: string;
+}) {
     const [step, setStep] = useState(1);
-
     const { data, setData, post, processing, errors } = useForm({
         // Applicant
         last_name: "",
@@ -17,7 +20,7 @@ export default function Create() {
         middle_name: "",
         address: "",
         // Transaction
-        mt_number: "",
+        mt_number: suggested_mt_number || "",
         transaction_date: new Date().toISOString().split("T")[0],
         // Unit
         make_type: "",
@@ -119,7 +122,7 @@ export default function Create() {
                                             <InputGroup
                                                 id="last_name"
                                                 label="Last Name"
-                                                placeholder="DELA CRUZ"
+                                                placeholder="BAGSIC"
                                                 icon="solar:user-bold"
                                                 value={data.last_name}
                                                 onChange={(e) =>
@@ -134,7 +137,7 @@ export default function Create() {
                                             <InputGroup
                                                 id="first_name"
                                                 label="First Name"
-                                                placeholder="JUAN"
+                                                placeholder="RICARTE"
                                                 value={data.first_name}
                                                 onChange={(e) =>
                                                     up(
@@ -148,7 +151,7 @@ export default function Create() {
                                             <InputGroup
                                                 id="middle_name"
                                                 label="M.I."
-                                                placeholder="A"
+                                                placeholder="R"
                                                 maxLength={1}
                                                 value={data.middle_name}
                                                 onChange={(e) =>
@@ -181,6 +184,7 @@ export default function Create() {
                                                 id="body_number"
                                                 label="Body Number"
                                                 icon="solar:hashtag-square-bold"
+                                                placeholder="1616"
                                                 value={data.body_number}
                                                 onChange={(e) =>
                                                     setData(
@@ -193,7 +197,8 @@ export default function Create() {
                                         <div className="col-span-4">
                                             <InputGroup
                                                 id="plate_no"
-                                                label="Plate Number"
+                                                label="Plate Number (Plaka Bilang)"
+                                                placeholder="RE1470"
                                                 icon="solar:card-reciept-bold"
                                                 value={data.plate_no}
                                                 onChange={(e) =>
@@ -207,7 +212,7 @@ export default function Create() {
                                         <div className="col-span-4">
                                             <InputGroup
                                                 id="make_type"
-                                                label="Make / Type"
+                                                label="Make/Brand (Gawa at Uri)"
                                                 placeholder="HONDA"
                                                 value={data.make_type}
                                                 onChange={(e) =>
@@ -222,7 +227,8 @@ export default function Create() {
                                         <div className="col-span-6">
                                             <InputGroup
                                                 id="engine_motor_no"
-                                                label="Engine Motor No."
+                                                label="Engine Motor No. (Motor Bilang)"
+                                                placeholder="KB506058032636E"
                                                 value={data.engine_motor_no}
                                                 onChange={(e) =>
                                                     up(
@@ -235,7 +241,8 @@ export default function Create() {
                                         <div className="col-span-6">
                                             <InputGroup
                                                 id="chassis_no"
-                                                label="Chassis No."
+                                                label="Chassis No. (Tsasi Bilang)"
+                                                placeholder="KB50605803236"
                                                 value={data.chassis_no}
                                                 onChange={(e) =>
                                                     up(
@@ -255,7 +262,8 @@ export default function Create() {
                                             <div className="space-y-3">
                                                 <InputGroup
                                                     id="cedula_number"
-                                                    label="No."
+                                                    label="Number"
+                                                    placeholder="28534360"
                                                     value={data.cedula_number}
                                                     onChange={(e) =>
                                                         up(
@@ -286,7 +294,8 @@ export default function Create() {
                                             <div className="space-y-3">
                                                 <InputGroup
                                                     id="or_number"
-                                                    label="No."
+                                                    label="Number"
+                                                    placeholder="9801547"
                                                     value={data.or_number}
                                                     onChange={(e) =>
                                                         up(

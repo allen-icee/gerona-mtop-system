@@ -60,7 +60,30 @@ class MtopApplicationController extends Controller
      */
     public function create(): Response
     {
-        return Inertia::render('Mtop/Create');
+        // 1. Get Current Year
+        $year = now()->year;
+
+        // 2. Find the latest MT number for this year (e.g., "2026-0005")
+        $lastApp = MtopApplication::where('mt_number', 'like', "$year-%")
+            ->orderBy('id', 'desc') // Order by ID to get the latest created
+            ->first();
+
+        $nextSequence = 1;
+
+        if ($lastApp) {
+            // Extract the sequence part (after the hyphen)
+            $parts = explode('-', $lastApp->mt_number);
+            if (count($parts) === 2) {
+                $nextSequence = intval($parts[1]) + 1;
+            }
+        }
+
+        // 3. Format as YYYY-XXXX (e.g., 2026-0001)
+        $suggested_mt_number = sprintf("%s-%04d", $year, $nextSequence);
+
+        return Inertia::render('Mtop/Create', [
+            'suggested_mt_number' => $suggested_mt_number
+        ]);
     }
 
     /**

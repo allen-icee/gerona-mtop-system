@@ -69,13 +69,7 @@ export default function Index({ applications, filters }: Props) {
     };
 
     return (
-        <AuthenticatedLayout
-            header={
-                <h2 className="font-semibold text-xl text-gray-800 leading-tight">
-                    MTOP Records
-                </h2>
-            }
-        >
+        <AuthenticatedLayout>
             <Head title="MTOP Records" />
 
             <div className="py-12">

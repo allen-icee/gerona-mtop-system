@@ -58,12 +58,12 @@ export default function PermitPreview({
                                 NAME
                             </td>
                             <td className="p-3 font-bold text-gray-800 text-sm">
-                                {val(fullName)}
+                                {val(fullName)}.
                             </td>
                         </tr>
                         <tr className="border-b border-black">
                             <td className="p-3 bg-blue-200 font-bold text-blue-900 border-r border-black">
-                                CASE NO.
+                                USAPIN BILANG
                             </td>
                             <td className="p-3 font-bold text-red-600">
                                 {val(data.mt_number)}
@@ -87,7 +87,7 @@ export default function PermitPreview({
                         </tr>
                         <tr>
                             <td className="p-3 bg-blue-200 font-bold text-blue-900 border-r border-black">
-                                EXPIRY
+                                EXPIRY DATE
                             </td>
                             <td className="p-3 font-bold text-gray-800">
                                 {formatExpiry(data.transaction_date)}
