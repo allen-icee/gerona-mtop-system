@@ -6,9 +6,15 @@ interface Props {
     value: string;
     onChange: (value: string) => void;
     error?: string;
+    required?: boolean; // 1. Add this optional prop
 }
 
-export default function BarangaySelect({ value, onChange, error }: Props) {
+export default function BarangaySelect({
+    value,
+    onChange,
+    error,
+    required,
+}: Props) {
     const [isOpen, setIsOpen] = useState(false);
 
     // Filter list based on input
@@ -23,6 +29,8 @@ export default function BarangaySelect({ value, onChange, error }: Props) {
         <div className="mb-4 relative">
             <label className="block font-medium text-sm text-gray-700 mb-1">
                 Barangay / Address
+                {/* 2. Conditionally render the red asterisk */}
+                {required && <span className="text-red-500 ml-1">*</span>}
             </label>
             <div className="relative">
                 <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
@@ -34,8 +42,6 @@ export default function BarangaySelect({ value, onChange, error }: Props) {
                     placeholder="Search Barangay..."
                     value={value}
                     onChange={(e) => {
-                        // RESTRICTION: Allow Letters, Numbers (for Poblacion 1), Spaces, Dots, Dashes.
-                        // BLOCK: @, #, $, %, etc.
                         const val = e.target.value
                             .toUpperCase()
                             .replace(/[^A-Z0-9\s.-]/g, "");
@@ -44,12 +50,13 @@ export default function BarangaySelect({ value, onChange, error }: Props) {
                     }}
                     onFocus={() => setIsOpen(true)}
                     onBlur={() => setTimeout(() => setIsOpen(false), 200)}
+                    required={required} // 3. Pass it to the input element too
                 />
             </div>
 
             {/* DROPDOWN */}
             {isOpen && filtered.length > 0 && (
-                <ul className="absolute z-50 w-full bg-white border border-gray-200 mt-1 max-h-60 overflow-y-auto shadow-lg rounded-md text-sm">
+                <ul className="absolute z-100 w-full bg-white border border-gray-200 mt-1 max-h-60 overflow-y-auto shadow-lg rounded-md text-sm">
                     {filtered.map((brgy) => (
                         <li
                             key={brgy}

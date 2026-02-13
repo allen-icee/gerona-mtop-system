@@ -8,11 +8,11 @@ export default function PermitPreview({
     data: any;
     showHeader?: boolean;
 }) {
-    // ... (Keep all your existing helper functions: fullName, val, formatDate, formatExpiry) ...
-    // Copy them exactly from your previous file
     const fullName =
         `${data.last_name || ""}, ${data.first_name || ""} ${data.middle_name || ""}`.toUpperCase();
+
     const val = (text: string) => (text ? text.toUpperCase() : "-");
+
     const formatDate = (dateString: string) => {
         if (!dateString) return "-";
         return new Date(dateString)
@@ -23,6 +23,7 @@ export default function PermitPreview({
             })
             .toUpperCase();
     };
+
     const formatExpiry = (dateString: string) => {
         if (!dateString) return "-";
         const date = new Date(dateString);
@@ -48,8 +49,6 @@ export default function PermitPreview({
             )}
 
             <div className="p-6 overflow-y-auto">
-                {/* ... (Keep the rest of your Table code exactly the same) ... */}
-
                 {/* --- TABLE 1: MAIN INFO --- */}
                 <table className="w-full border-collapse border border-black bg-white text-sm mb-6 shadow-sm">
                     <tbody>
@@ -138,7 +137,7 @@ export default function PermitPreview({
                 </table>
 
                 {/* --- TABLE 3 & 4: DOCS --- */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4 mb-6">
                     {/* CEDULA */}
                     <table className="w-full border-collapse border border-black bg-white text-xs shadow-sm">
                         <thead>
@@ -203,6 +202,38 @@ export default function PermitPreview({
                         </tbody>
                     </table>
                 </div>
+
+                {/* --- TABLE 5: SIGNATORIES (New Section) --- */}
+                <table className="w-full border-collapse border border-black bg-white text-xs shadow-sm">
+                    <thead>
+                        <tr className="bg-blue-300 text-blue-900 border-b border-black">
+                            <th
+                                colSpan={2}
+                                className="p-2 font-bold text-center uppercase tracking-wider"
+                            >
+                                Signatories
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr className="border-b border-black">
+                            <td className="p-2 bg-blue-200 font-bold text-blue-900 w-1/3 border-r border-black">
+                                Authorized Official
+                            </td>
+                            <td className="p-2 font-bold text-gray-800 text-sm pl-3 uppercase">
+                                {val(data.authorized_official)}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td className="p-2 bg-blue-200 font-bold text-blue-900 border-r border-black">
+                                Punong Bayan
+                            </td>
+                            <td className="p-2 font-bold text-gray-800 text-sm pl-3 uppercase">
+                                {val(data.punong_bayan)}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     );

@@ -4,7 +4,7 @@ import NavLink from "@/Components/NavLink";
 import ResponsiveNavLink from "@/Components/ResponsiveNavLink";
 import { Link, usePage } from "@inertiajs/react";
 import { PropsWithChildren, ReactNode, useState } from "react";
-import { Icon } from "@iconify/react"; // Ensure you have this installed
+import { Icon } from "@iconify/react";
 
 export default function Authenticated({
     header,
@@ -17,7 +17,7 @@ export default function Authenticated({
 
     return (
         <div className="min-h-screen bg-gray-50">
-            {/* 1. NAVBAR - CHANGED TO BLUE THEME */}
+            {/* 1. NAVBAR */}
             <nav className="bg-blue-900 border-b border-blue-800 shadow-md">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div className="flex h-16 justify-between">
@@ -49,7 +49,21 @@ export default function Authenticated({
                                 >
                                     MTOP Records
                                 </NavLink>
-                                {/* NEW: SYSTEM USERS LINK (Admin Only) */}
+
+                                {/* RESTRICTED: SIGNATORIES (Admin Only) */}
+                                {user.role === "admin" && (
+                                    <NavLink
+                                        href={route("signatories.index")}
+                                        active={route().current(
+                                            "signatories.*",
+                                        )}
+                                        className="text-blue-100 hover:text-white focus:text-white border-transparent hover:border-white focus:border-white"
+                                    >
+                                        Signatories
+                                    </NavLink>
+                                )}
+
+                                {/* RESTRICTED: SYSTEM USERS (Admin Only) */}
                                 {user.role === "admin" && (
                                     <NavLink
                                         href={route("users.index")}
@@ -72,7 +86,6 @@ export default function Authenticated({
                                                 type="button"
                                                 className="inline-flex items-center rounded-md border border-transparent bg-blue-800 px-3 py-2 text-sm font-medium leading-4 text-white transition duration-150 ease-in-out hover:bg-blue-700 focus:outline-none shadow-sm"
                                             >
-                                                {/* 2. SHOW ROLE BADGE */}
                                                 <div className="flex flex-col items-start mr-2">
                                                     <span className="leading-none">
                                                         {user.name}
@@ -175,15 +188,26 @@ export default function Authenticated({
                         >
                             MTOP Records
                         </ResponsiveNavLink>
-                        {/* NEW: MOBILE LINK (Admin Only) */}
+
+                        {/* RESTRICTED MOBILE LINKS (Admin Only) */}
                         {user.role === "admin" && (
-                            <ResponsiveNavLink
-                                href={route("users.index")}
-                                active={route().current("users.*")}
-                                className="text-white hover:bg-blue-700 focus:bg-blue-700 border-l-4 border-transparent hover:border-yellow-400"
-                            >
-                                System Users
-                            </ResponsiveNavLink>
+                            <>
+                                <ResponsiveNavLink
+                                    href={route("signatories.index")}
+                                    active={route().current("signatories.*")}
+                                    className="text-white hover:bg-blue-700 focus:bg-blue-700 border-l-4 border-transparent hover:border-yellow-400"
+                                >
+                                    Signatories
+                                </ResponsiveNavLink>
+
+                                <ResponsiveNavLink
+                                    href={route("users.index")}
+                                    active={route().current("users.*")}
+                                    className="text-white hover:bg-blue-700 focus:bg-blue-700 border-l-4 border-transparent hover:border-yellow-400"
+                                >
+                                    System Users
+                                </ResponsiveNavLink>
+                            </>
                         )}
                     </div>
                     <div className="border-t border-blue-700 pb-1 pt-4">
@@ -216,7 +240,7 @@ export default function Authenticated({
                 </div>
             </nav>
 
-            {/* HEADER (White strip below blue nav) */}
+            {/* HEADER */}
             {header && (
                 <header className="bg-white shadow">
                     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">

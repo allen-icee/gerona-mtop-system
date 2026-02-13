@@ -6,6 +6,7 @@ import { Icon } from "@iconify/react";
 import InputGroup from "@/Components/InputGroup";
 import BarangaySelect from "@/Components/BarangaySelect";
 import PermitPreview from "./Partials/PermitPreview";
+import OfficialsForm from "./Partials/OfficialsForm";
 
 interface MtopApplication {
     id: number;
@@ -24,12 +25,18 @@ interface MtopApplication {
     cedula_date: string;
     or_number: string;
     or_date: string;
+    punong_bayan: string;
+    authorized_official: string;
 }
 
 export default function Edit({
     application,
+    punong_bayans, // New Prop
+    officials, // New Prop
 }: {
     application: MtopApplication;
+    punong_bayans: string[]; // Define Type
+    officials: string[]; // Define Type
 }) {
     const [step, setStep] = useState(1);
 
@@ -50,6 +57,8 @@ export default function Edit({
         cedula_date: application.cedula_date || "",
         or_number: application.or_number || "",
         or_date: application.or_date || "",
+        punong_bayan: application.punong_bayan || "",
+        authorized_official: application.authorized_official || "",
     });
 
     const submit: FormEventHandler = (e) => {
@@ -118,6 +127,7 @@ export default function Edit({
                                                     )
                                                 }
                                                 placeholder="2026-0001"
+                                                required={true}
                                             />
                                         </div>
                                         <div className="col-span-6">
@@ -133,6 +143,7 @@ export default function Edit({
                                                         e.target.value,
                                                     )
                                                 }
+                                                required={true}
                                             />
                                         </div>
 
@@ -150,6 +161,7 @@ export default function Edit({
                                                         e.target.value,
                                                     )
                                                 }
+                                                required={true}
                                             />
                                         </div>
                                         <div className="col-span-5">
@@ -164,6 +176,7 @@ export default function Edit({
                                                         e.target.value,
                                                     )
                                                 }
+                                                required={true}
                                             />
                                         </div>
                                         <div className="col-span-2">
@@ -179,6 +192,7 @@ export default function Edit({
                                                         e.target.value,
                                                     )
                                                 }
+                                                // Middle Name Optional
                                             />
                                         </div>
 
@@ -188,6 +202,7 @@ export default function Edit({
                                                 onChange={(val) =>
                                                     setData("address", val)
                                                 }
+                                                required={true}
                                             />
                                         </div>
                                     </div>
@@ -210,6 +225,7 @@ export default function Edit({
                                                         e.target.value,
                                                     )
                                                 }
+                                                required={true}
                                             />
                                         </div>
                                         <div className="col-span-4">
@@ -224,6 +240,7 @@ export default function Edit({
                                                         e.target.value,
                                                     )
                                                 }
+                                                required={true}
                                             />
                                         </div>
                                         <div className="col-span-4">
@@ -238,6 +255,7 @@ export default function Edit({
                                                         e.target.value,
                                                     )
                                                 }
+                                                required={true}
                                             />
                                         </div>
 
@@ -252,6 +270,7 @@ export default function Edit({
                                                         e.target.value,
                                                     )
                                                 }
+                                                required={true}
                                             />
                                         </div>
                                         <div className="col-span-6">
@@ -265,11 +284,13 @@ export default function Edit({
                                                         e.target.value,
                                                     )
                                                 }
+                                                required={true}
                                             />
                                         </div>
 
                                         <div className="col-span-12 border-t pt-2 mt-2"></div>
 
+                                        {/* DOCS SECTIONS */}
                                         <div className="col-span-6 bg-yellow-50 p-3 rounded border border-yellow-200">
                                             <div className="font-bold text-xs text-yellow-800 uppercase mb-2">
                                                 Cedula
@@ -285,6 +306,7 @@ export default function Edit({
                                                             e.target.value,
                                                         )
                                                     }
+                                                    required={true}
                                                 />
                                                 <InputGroup
                                                     id="cedula_date"
@@ -297,6 +319,7 @@ export default function Edit({
                                                             e.target.value,
                                                         )
                                                     }
+                                                    required={true}
                                                 />
                                             </div>
                                         </div>
@@ -316,6 +339,7 @@ export default function Edit({
                                                             e.target.value,
                                                         )
                                                     }
+                                                    required={true}
                                                 />
                                                 <InputGroup
                                                     id="or_date"
@@ -328,8 +352,21 @@ export default function Edit({
                                                             e.target.value,
                                                         )
                                                     }
+                                                    required={true}
                                                 />
                                             </div>
+                                        </div>
+
+                                        {/* SIGNATORIES SECTION */}
+                                        <div className="col-span-12">
+                                            <OfficialsForm
+                                                data={data}
+                                                setData={setData}
+                                                errors={errors}
+                                                // PASS THE NEW PROPS DOWN
+                                                punong_bayans={punong_bayans}
+                                                officials={officials}
+                                            />
                                         </div>
                                     </div>
                                 </div>
@@ -357,7 +394,10 @@ export default function Edit({
                                         {step === 1 ? (
                                             <PrimaryButton
                                                 type="button"
-                                                onClick={() => setStep(2)}
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    setStep(2);
+                                                }}
                                             >
                                                 Next Step{" "}
                                                 <Icon

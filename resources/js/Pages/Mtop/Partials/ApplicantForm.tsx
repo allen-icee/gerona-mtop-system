@@ -37,6 +37,7 @@ export default function ApplicantForm({ data, setData, errors }: any) {
                         error={errors.last_name}
                         icon="solar:user-bold"
                         placeholder="DELA CRUZ"
+                        required={true} // <--- Added
                     />
                 </div>
                 <div className="md:col-span-1">
@@ -50,6 +51,7 @@ export default function ApplicantForm({ data, setData, errors }: any) {
                         }
                         error={errors.first_name}
                         placeholder="JUAN"
+                        required={true} // <--- Added
                     />
                 </div>
                 <div className="md:col-span-1">
@@ -69,6 +71,7 @@ export default function ApplicantForm({ data, setData, errors }: any) {
                         error={errors.middle_name}
                         placeholder="S"
                         maxLength={1}
+                        // Middle name is usually optional, so no required prop here
                     />
                 </div>
             </div>

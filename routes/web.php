@@ -2,7 +2,9 @@
 
 use App\Http\Controllers\MtopApplicationController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\UserController; // <--- IMPORT THIS!
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\SignatoryController; // Import SignatoryController
+use App\Http\Middleware\IsAdmin; // Import the Middleware Class
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -17,7 +19,7 @@ Route::get('/', function () {
 // 2. DASHBOARD: The Command Center (Real Data)
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard', [
-        'totalMtop' => MtopApplication::count(),
+        'totalMtop'  => MtopApplication::count(),
         'totalUsers' => User::count(),
         'newToday'   => MtopApplication::whereDate('created_at', today())->count(),
     ]);
@@ -32,28 +34,28 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // MTOP SYSTEM ROUTES (Shared by Admin & Staff)
+    // Staff can now Index, Create, Edit, Update, and Print
     Route::get('/mtop', [MtopApplicationController::class, 'index'])->name('mtop.index');
     Route::get('/mtop/create', [MtopApplicationController::class, 'create'])->name('mtop.create');
     Route::post('/mtop', [MtopApplicationController::class, 'store'])->name('mtop.store');
+
+    // MOVED EDIT & UPDATE HERE (Accessible to Staff)
+    Route::get('/mtop/{id}/edit', [MtopApplicationController::class, 'edit'])->name('mtop.edit');
+    Route::put('/mtop/{id}', [MtopApplicationController::class, 'update'])->name('mtop.update');
+
     Route::get('/mtop/{id}/print', [MtopApplicationController::class, 'print'])->name('mtop.print');
 
-    // ADMIN ONLY ROUTES (Edit, Delete, & User Management)
-    Route::middleware('admin')->group(function () {
-        // MTOP Admin Actions
-        Route::get('/mtop/{id}/edit', [MtopApplicationController::class, 'edit'])->name('mtop.edit');
-        Route::put('/mtop/{id}', [MtopApplicationController::class, 'update'])->name('mtop.update');
+    // ADMIN ONLY ROUTES (Delete, User Management, Signatories)
+    Route::middleware(IsAdmin::class)->group(function () {
+
+        // MTOP Delete (Still restricted to Admin for safety)
         Route::delete('/mtop/{id}', [MtopApplicationController::class, 'destroy'])->name('mtop.destroy');
 
-        // USER MANAGEMENT
-        Route::get('/users', [UserController::class, 'index'])->name('users.index');
-        Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
-        Route::post('/users', [UserController::class, 'store'])->name('users.store');
+        // USER MANAGEMENT (Resource shortens all the get/post/put/delete lines)
+        Route::resource('users', UserController::class);
 
-        // NEW: Edit & Update Routes
-        Route::get('/users/{id}/edit', [UserController::class, 'edit'])->name('users.edit');
-        Route::put('/users/{id}', [UserController::class, 'update'])->name('users.update');
-
-        Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
+        // SIGNATORIES CRUD
+        Route::resource('signatories', SignatoryController::class)->only(['index', 'store', 'update', 'destroy']);
     });
 });
 

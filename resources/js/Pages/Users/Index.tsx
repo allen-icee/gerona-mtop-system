@@ -1,19 +1,27 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { Head, Link, router } from "@inertiajs/react";
+import { Head, router, useForm } from "@inertiajs/react";
 import { Icon } from "@iconify/react";
 import Pagination from "@/Components/Pagination";
 import TextInput from "@/Components/TextInput";
-import { useState, useEffect } from "react";
+import Modal from "@/Components/Modal";
+import InputGroup from "@/Components/InputGroup";
+import PrimaryButton from "@/Components/PrimaryButton";
+import SecondaryButton from "@/Components/SecondaryButton";
+import InputLabel from "@/Components/InputLabel";
+import { useState, useEffect, FormEventHandler } from "react";
 
 // Props Interface
+interface User {
+    id: number;
+    name: string;
+    username: string;
+    email: string;
+    role: string;
+}
+
 interface Props {
     users: {
-        data: Array<{
-            id: number;
-            name: string;
-            username: string;
-            role: string;
-        }>;
+        data: User[];
         links: any[];
     };
     filters: {
@@ -23,8 +31,20 @@ interface Props {
 
 export default function Index({ users, filters }: Props) {
     const [search, setSearch] = useState(filters.search || "");
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingUser, setEditingUser] = useState<User | null>(null);
 
-    // 1. AUTO-SEARCH (Debounced)
+    // Form Handling
+    const { data, setData, post, put, processing, errors, reset } = useForm({
+        name: "",
+        username: "",
+        email: "",
+        role: "staff",
+        password: "",
+        password_confirmation: "",
+    });
+
+    // 1. AUTO-SEARCH
     useEffect(() => {
         const timer = setTimeout(() => {
             router.get(
@@ -35,6 +55,44 @@ export default function Index({ users, filters }: Props) {
         }, 300);
         return () => clearTimeout(timer);
     }, [search]);
+
+    // 2. MODAL HELPERS
+    const openModal = (user?: User) => {
+        if (user) {
+            setEditingUser(user);
+            setData({
+                name: user.name,
+                username: user.username,
+                email: user.email || "",
+                role: user.role,
+                password: "", // Empty for edit (optional)
+                password_confirmation: "",
+            });
+        } else {
+            setEditingUser(null);
+            reset();
+            setData("role", "staff"); // Default role
+        }
+        setIsModalOpen(true);
+    };
+
+    const closeModal = () => {
+        setIsModalOpen(false);
+        reset();
+    };
+
+    const submit: FormEventHandler = (e) => {
+        e.preventDefault();
+        const options = {
+            onSuccess: () => closeModal(),
+        };
+
+        if (editingUser) {
+            put(route("users.update", editingUser.id), options);
+        } else {
+            post(route("users.store"), options);
+        }
+    };
 
     const handleDelete = (id: number) => {
         if (confirm("Are you sure you want to remove this user?")) {
@@ -48,12 +106,11 @@ export default function Index({ users, filters }: Props) {
 
             <div className="py-12">
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                    {/* TOOLBAR (Bigger & Cleaner) */}
+                    {/* TOOLBAR */}
                     <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-                        {/* SEARCH */}
                         <div className="relative w-full sm:w-auto">
                             <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-gray-500">
-                                <Icon icon="solar:magnifer-bold" width="20" />
+                                <Icon icon="iconamoon:search-bold" width="20" />
                             </div>
                             <TextInput
                                 className="pl-12 w-full sm:w-80 py-3 text-base"
@@ -63,14 +120,13 @@ export default function Index({ users, filters }: Props) {
                             />
                         </div>
 
-                        {/* ADD BUTTON */}
-                        <Link
-                            href={route("users.create")}
+                        <button
+                            onClick={() => openModal()}
                             className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg flex items-center gap-2 shadow-md transition-transform hover:scale-105 w-full sm:w-auto justify-center"
                         >
                             <Icon icon="solar:user-plus-bold" width="24" />
                             Add New User
-                        </Link>
+                        </button>
                     </div>
 
                     {/* TABLE */}
@@ -102,17 +158,12 @@ export default function Index({ users, filters }: Props) {
                                             key={user.id}
                                             className="bg-white border-b hover:bg-gray-50 transition-colors"
                                         >
-                                            {/* NAME */}
                                             <td className="px-6 py-4 font-bold text-gray-800 text-base">
                                                 {user.name}
                                             </td>
-
-                                            {/* USERNAME */}
                                             <td className="px-6 py-4 text-gray-600">
                                                 {user.username}
                                             </td>
-
-                                            {/* ROLE BADGE */}
                                             <td className="px-6 py-4">
                                                 <span
                                                     className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide border ${
@@ -124,44 +175,47 @@ export default function Index({ users, filters }: Props) {
                                                     {user.role}
                                                 </span>
                                             </td>
+                                            <td className="px-6 py-4 text-center">
+                                                <div className="flex justify-center gap-4">
+                                                    <button
+                                                        onClick={() =>
+                                                            openModal(user)
+                                                        }
+                                                        className="text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1 font-bold hover:cursor-pointer"
+                                                        title="Edit User"
+                                                    >
+                                                        <Icon
+                                                            icon="solar:pen-new-square-bold"
+                                                            width="20"
+                                                        />
+                                                        Edit
+                                                    </button>
 
-                                            {/* ACTIONS */}
-                                            <td className="px-6 py-4 text-center flex justify-center gap-4">
-                                                <Link
-                                                    href={route(
-                                                        "users.edit",
-                                                        user.id,
-                                                    )}
-                                                    className="text-blue-500 hover:text-blue-700 transition-colors"
-                                                    title="Edit User"
-                                                >
-                                                    <Icon
-                                                        icon="solar:pen-new-square-bold"
-                                                        width="24"
-                                                    />
-                                                </Link>
-
-                                                <button
-                                                    onClick={() =>
-                                                        handleDelete(user.id)
-                                                    }
-                                                    className={`text-red-500 hover:text-red-700 transition-colors ${
-                                                        user.id === 1
-                                                            ? "opacity-30 cursor-not-allowed"
-                                                            : ""
-                                                    }`}
-                                                    disabled={user.id === 1}
-                                                    title={
-                                                        user.id === 1
-                                                            ? "Main Admin cannot be deleted"
-                                                            : "Delete User"
-                                                    }
-                                                >
-                                                    <Icon
-                                                        icon="solar:trash-bin-trash-bold"
-                                                        width="24"
-                                                    />
-                                                </button>
+                                                    <button
+                                                        onClick={() =>
+                                                            handleDelete(
+                                                                user.id,
+                                                            )
+                                                        }
+                                                        className={`text-red-600 hover:text-red-800 transition-colors flex items-center gap-1 font-bold ${
+                                                            user.id === 1
+                                                                ? "opacity-30 cursor-not-allowed"
+                                                                : "cursor-pointer"
+                                                        }`}
+                                                        disabled={user.id === 1}
+                                                        title={
+                                                            user.id === 1
+                                                                ? "Main Admin cannot be deleted"
+                                                                : "Delete User"
+                                                        }
+                                                    >
+                                                        <Icon
+                                                            icon="solar:trash-bin-trash-bold"
+                                                            width="20"
+                                                        />
+                                                        Delete
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))
@@ -175,6 +229,167 @@ export default function Index({ users, filters }: Props) {
                     </div>
                 </div>
             </div>
+
+            {/* --- USER FORM MODAL --- */}
+            <Modal show={isModalOpen} onClose={closeModal} maxWidth="xl">
+                <div className="bg-white rounded-lg shadow-xl relative z-50 overflow-visible flex flex-col">
+                    {/* Header */}
+                    <div className="bg-gray-800 px-6 py-4 flex justify-between items-center shrink-0 rounded-t-lg">
+                        <h3 className="text-white font-bold uppercase tracking-wider text-lg flex items-center gap-2">
+                            <Icon
+                                icon={
+                                    editingUser
+                                        ? "solar:pen-new-square-bold"
+                                        : "solar:user-plus-bold"
+                                }
+                            />
+                            {editingUser ? "Edit User" : "Add New User"}
+                        </h3>
+                        <button
+                            onClick={closeModal}
+                            className="text-gray-400 hover:text-white transition-colors"
+                        >
+                            <Icon icon="solar:close-circle-bold" width="28" />
+                        </button>
+                    </div>
+
+                    {/* Body */}
+                    <div className="p-6 bg-gray-50">
+                        <form id="user-form" onSubmit={submit}>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <InputGroup
+                                    id="name"
+                                    label="Full Name"
+                                    value={data.name}
+                                    onChange={(e) =>
+                                        setData("name", e.target.value)
+                                    }
+                                    error={errors.name}
+                                    icon="solar:user-id-bold"
+                                    placeholder="e.g. Juan Cruz"
+                                    required
+                                />
+                                <InputGroup
+                                    id="username"
+                                    label="Username"
+                                    value={data.username}
+                                    onChange={(e) =>
+                                        setData("username", e.target.value)
+                                    }
+                                    error={errors.username}
+                                    icon="solar:user-bold"
+                                    placeholder="e.g. juanc"
+                                    required
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <InputGroup
+                                    id="email"
+                                    label="Email (Optional)"
+                                    type="email"
+                                    value={data.email}
+                                    onChange={(e) =>
+                                        setData("email", e.target.value)
+                                    }
+                                    error={errors.email}
+                                    icon="solar:letter-bold"
+                                />
+
+                                {/* ROLE SELECT */}
+                                <div>
+                                    <InputLabel
+                                        htmlFor="role"
+                                        value="System Role"
+                                    />
+                                    <div className="relative mt-1">
+                                        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+                                            <Icon
+                                                icon="solar:shield-user-bold"
+                                                width="20"
+                                            />
+                                        </div>
+                                        <select
+                                            id="role"
+                                            value={data.role}
+                                            onChange={(e) =>
+                                                setData("role", e.target.value)
+                                            }
+                                            className="block w-full pl-10 py-3 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                                        >
+                                            <option value="staff">Staff</option>
+                                            <option value="admin">
+                                                Administrator
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* PASSWORD SECTION */}
+                            <div className="border-t border-gray-200 pt-4 mt-2">
+                                <h4 className="text-xs font-bold text-gray-500 uppercase mb-3 flex items-center gap-1">
+                                    <Icon icon="solar:lock-password-bold" />
+                                    {editingUser
+                                        ? "Change Password (Optional)"
+                                        : "Set Password"}
+                                </h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <InputGroup
+                                        id="password"
+                                        label="Password"
+                                        type="password"
+                                        value={data.password}
+                                        onChange={(e) =>
+                                            setData("password", e.target.value)
+                                        }
+                                        error={errors.password}
+                                        showPasswordToggle={true}
+                                        required={!editingUser} // Required only on create
+                                    />
+                                    <InputGroup
+                                        id="password_confirmation"
+                                        label="Confirm Password"
+                                        type="password"
+                                        value={data.password_confirmation}
+                                        onChange={(e) =>
+                                            setData(
+                                                "password_confirmation",
+                                                e.target.value,
+                                            )
+                                        }
+                                        error={errors.password_confirmation}
+                                        showPasswordToggle={true}
+                                        required={!editingUser} // Required only on create
+                                    />
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="bg-white border-t px-6 py-4 flex justify-end gap-3 rounded-b-lg">
+                        <SecondaryButton onClick={closeModal}>
+                            Cancel
+                        </SecondaryButton>
+
+                        <PrimaryButton
+                            className="bg-blue-600 hover:bg-blue-700"
+                            disabled={processing}
+                            onClick={() => {
+                                (
+                                    document.getElementById(
+                                        "user-form",
+                                    ) as HTMLFormElement
+                                )?.requestSubmit();
+                            }}
+                        >
+                            <Icon icon="solar:diskette-bold" className="mr-2" />
+                            {editingUser ? "Update User" : "Save User"}
+                        </PrimaryButton>
+                    </div>
+                </div>
+            </Modal>
         </AuthenticatedLayout>
     );
 }

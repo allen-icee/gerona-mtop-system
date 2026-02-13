@@ -81,7 +81,7 @@ export default function Index({ applications, filters }: Props) {
                             <div className="relative">
                                 <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-gray-500">
                                     <Icon
-                                        icon="solar:magnifer-bold"
+                                        icon="iconamoon:search-bold"
                                         width="20"
                                     />
                                 </div>
@@ -252,7 +252,7 @@ export default function Index({ applications, filters }: Props) {
                                                         onClick={() =>
                                                             handleDelete(app.id)
                                                         }
-                                                        className="text-red-500 hover:text-red-700"
+                                                        className="text-red-500 hover:text-red-700 hover:cursor-pointer"
                                                         title="Delete"
                                                     >
                                                         <Icon

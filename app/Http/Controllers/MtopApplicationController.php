@@ -7,7 +7,8 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Http\RedirectResponse;
-use Carbon\Carbon; // <--- Needed for date calculation
+use Carbon\Carbon;
+use App\Models\Signatory;
 
 class MtopApplicationController extends Controller
 {
@@ -19,17 +20,17 @@ class MtopApplicationController extends Controller
         $search = $request->input('search');
         $month = $request->input('month');
         $year = $request->input('year');
-        $barangay = $request->input('barangay'); // NEW FILTER
+        $barangay = $request->input('barangay');
 
         $query = MtopApplication::query();
 
-        // Search Logic (Updated for split names)
+        // Search Logic
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('last_name', 'like', "%{$search}%")
                     ->orWhere('first_name', 'like', "%{$search}%")
                     ->orWhere('body_number', 'like', "%{$search}%")
-                    ->orWhere('mt_number', 'like', "%{$search}%") // Search by Control No.
+                    ->orWhere('mt_number', 'like', "%{$search}%")
                     ->orWhere('plate_no', 'like', "%{$search}%");
             });
         }
@@ -42,7 +43,6 @@ class MtopApplicationController extends Controller
             $query->whereYear('transaction_date', $year);
         }
         if ($barangay) {
-            // Flexible match: "Poblacion 1" matches "POBLACION 1, GERONA..."
             $query->where('address', 'like', "%{$barangay}%");
         }
 
@@ -52,37 +52,40 @@ class MtopApplicationController extends Controller
 
         return Inertia::render('Mtop/Index', [
             'applications' => $applications,
-            'filters' => $request->only(['search', 'month', 'year', 'barangay']), // Pass it to React
+            'filters' => $request->only(['search', 'month', 'year', 'barangay']),
         ]);
     }
+
     /**
      * Show the form for creating a new resource.
      */
     public function create(): Response
     {
-        // 1. Get Current Year
         $year = now()->year;
 
-        // 2. Find the latest MT number for this year (e.g., "2026-0005")
+        // Find the latest MT number for this year
         $lastApp = MtopApplication::where('mt_number', 'like', "$year-%")
-            ->orderBy('id', 'desc') // Order by ID to get the latest created
+            ->orderBy('id', 'desc')
             ->first();
 
         $nextSequence = 1;
 
         if ($lastApp) {
-            // Extract the sequence part (after the hyphen)
             $parts = explode('-', $lastApp->mt_number);
             if (count($parts) === 2) {
                 $nextSequence = intval($parts[1]) + 1;
             }
         }
 
-        // 3. Format as YYYY-XXXX (e.g., 2026-0001)
         $suggested_mt_number = sprintf("%s-%04d", $year, $nextSequence);
 
+        $punong_bayans = Signatory::where('position', 'Punong Bayan')->where('is_active', true)->pluck('name');
+        $officials = Signatory::where('position', 'Authorized Official')->where('is_active', true)->pluck('name');
+
         return Inertia::render('Mtop/Create', [
-            'suggested_mt_number' => $suggested_mt_number
+            'suggested_mt_number' => $suggested_mt_number,
+            'punong_bayans' => $punong_bayans, // Pass to React
+            'officials' => $officials          // Pass to React
         ]);
     }
 
@@ -92,35 +95,35 @@ class MtopApplicationController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            // NAMES: Letters, spaces, dots, dashes only. No numbers!
+            // NAMES: Letters, spaces, dots, dashes only.
             'last_name'   => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\-]+$/'],
             'first_name'  => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\-]+$/'],
             'middle_name' => ['nullable', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\-]+$/'],
 
             'address'        => 'required|string|max:100',
-            'contact_number' => ['nullable', 'regex:/^(09|\+639)\d{9}$/'], // Must be valid PH mobile
+            'contact_number' => ['nullable', 'regex:/^(09|\+639)\d{9}$/'],
 
             'transaction_date' => 'required|date',
             'mt_number'        => 'nullable|string|max:20',
 
-            // UNIT: Strict formatting
+            // UNIT
             'body_number'     => ['required', 'regex:/^[0-9]+$/'], // Numbers only
-            'plate_no'        => ['required', 'regex:/^[0-9A-Z]+$/'], // Uppercase Alphanumeric only (No dashes allowed in DB if you prefer clean data)
+            'plate_no'        => ['required', 'string', 'max:20'], // Relaxed regex to avoid errors if users type dash
             'make_type'       => 'required|string|max:30',
             'engine_motor_no' => 'required|string|max:30',
             'chassis_no'      => 'required|string|max:30',
 
-            // DOCS
-            'cedula_number' => 'nullable|string|max:20',
-            'cedula_date'   => 'nullable|date',
-            'or_number'     => 'nullable|string|max:20',
-            'or_date'       => 'nullable|date',
+            // DOCS & OFFICIALS
+            'cedula_number'       => 'nullable|string|max:20',
+            'cedula_date'         => 'nullable|date',
+            'or_number'           => 'nullable|string|max:20',
+            'or_date'             => 'nullable|date',
             'punong_bayan'        => ['nullable', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\-]+$/'],
             'authorized_official' => ['nullable', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\-]+$/'],
         ]);
 
         // Auto-Calculate Expiry
-        $validated['valid_until'] = \Carbon\Carbon::parse($request->transaction_date)->addYears(3);
+        $validated['valid_until'] = Carbon::parse($request->transaction_date)->addYears(3);
         $validated['status'] = 'draft';
 
         MtopApplication::create($validated);
@@ -134,8 +137,13 @@ class MtopApplicationController extends Controller
     public function edit($id): Response
     {
         $application = MtopApplication::findOrFail($id);
+        $punong_bayans = Signatory::where('position', 'Punong Bayan')->where('is_active', true)->pluck('name');
+        $officials = Signatory::where('position', 'Authorized Official')->where('is_active', true)->pluck('name');
+
         return Inertia::render('Mtop/Edit', [
-            'application' => $application
+            'application' => $application,
+            'punong_bayans' => $punong_bayans,
+            'officials' => $officials
         ]);
     }
 
@@ -146,20 +154,28 @@ class MtopApplicationController extends Controller
     {
         $application = MtopApplication::findOrFail($id);
 
+        // FIXED: Updated validation to match the split-name structure and include officials
         $validated = $request->validate([
-            'operator_name' => 'required|string|max:255',
-            'address' => 'required|string|max:255',
+            'last_name'   => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\-]+$/'],
+            'first_name'  => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\-]+$/'],
+            'middle_name' => ['nullable', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\-]+$/'],
+
+            'address'          => 'required|string|max:100',
             'transaction_date' => 'required|date',
-            'mt_number' => 'nullable|string|max:50',
-            'body_number' => 'required|string|max:50',
-            'plate_no' => 'required|string|max:50',
-            'make_type' => 'required|string|max:100',
-            'engine_motor_no' => 'required|string|max:100',
-            'chassis_no' => 'required|string|max:100',
-            'cedula_number' => 'nullable|string|max:50',
-            'cedula_date' => 'nullable|date',
-            'or_number' => 'nullable|string|max:50',
-            'or_date' => 'nullable|date',
+            'mt_number'        => 'nullable|string|max:20',
+
+            'body_number'     => ['required', 'regex:/^[0-9]+$/'],
+            'plate_no'        => ['required', 'string', 'max:20'],
+            'make_type'       => 'required|string|max:30',
+            'engine_motor_no' => 'required|string|max:30',
+            'chassis_no'      => 'required|string|max:30',
+
+            'cedula_number'       => 'nullable|string|max:20',
+            'cedula_date'         => 'nullable|date',
+            'or_number'           => 'nullable|string|max:20',
+            'or_date'             => 'nullable|date',
+            'punong_bayan'        => ['nullable', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\-]+$/'],
+            'authorized_official' => ['nullable', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\-]+$/'],
         ]);
 
         // Recalculate expiry if date changed

@@ -6,12 +6,16 @@ import { Icon } from "@iconify/react";
 import InputGroup from "@/Components/InputGroup";
 import BarangaySelect from "@/Components/BarangaySelect";
 import PermitPreview from "./Partials/PermitPreview";
-import OfficialsForm from "./Partials/OfficialsForm"; //
+import OfficialsForm from "./Partials/OfficialsForm";
 
 export default function Create({
     suggested_mt_number,
+    punong_bayans, // New Prop
+    officials, // New Prop
 }: {
     suggested_mt_number: string;
+    punong_bayans: string[]; // Define Type
+    officials: string[]; // Define Type
 }) {
     const [step, setStep] = useState(1);
     const { data, setData, post, processing, errors } = useForm({
@@ -34,7 +38,7 @@ export default function Create({
         cedula_date: "",
         or_number: "",
         or_date: "",
-        // Signatories - ADDED THESE TWO LINES
+        // Signatories
         punong_bayan: "",
         authorized_official: "",
     });
@@ -64,7 +68,7 @@ export default function Create({
                     <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
                         {/* --- LEFT COLUMN: THE FORM CARD --- */}
                         <div className="xl:col-span-7 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                            {/* TABS */}
+                            {/* TABS (No Changes) */}
                             <div className="flex border-b border-gray-200 bg-gray-50">
                                 <button
                                     type="button"
@@ -101,6 +105,7 @@ export default function Create({
                                                     )
                                                 }
                                                 placeholder="2026-0001"
+                                                required={true}
                                             />
                                         </div>
                                         <div className="col-span-6">
@@ -116,6 +121,7 @@ export default function Create({
                                                         e.target.value,
                                                     )
                                                 }
+                                                required={true}
                                             />
                                         </div>
 
@@ -134,6 +140,7 @@ export default function Create({
                                                     )
                                                 }
                                                 error={errors.last_name}
+                                                required={true}
                                             />
                                         </div>
                                         <div className="col-span-5">
@@ -149,6 +156,7 @@ export default function Create({
                                                     )
                                                 }
                                                 error={errors.first_name}
+                                                required={true}
                                             />
                                         </div>
                                         <div className="col-span-2">
@@ -164,6 +172,7 @@ export default function Create({
                                                         e.target.value,
                                                     )
                                                 }
+                                                // Middle Name usually not required
                                             />
                                         </div>
 
@@ -174,6 +183,7 @@ export default function Create({
                                                     setData("address", val)
                                                 }
                                                 error={errors.address}
+                                                required={true} // <--- ADDED THIS
                                             />
                                         </div>
                                     </div>
@@ -198,6 +208,7 @@ export default function Create({
                                                     )
                                                 }
                                                 error={errors.body_number}
+                                                required={true}
                                             />
                                         </div>
                                         <div className="col-span-4">
@@ -214,6 +225,7 @@ export default function Create({
                                                     )
                                                 }
                                                 error={errors.plate_no}
+                                                required={true}
                                             />
                                         </div>
                                         <div className="col-span-4">
@@ -229,6 +241,7 @@ export default function Create({
                                                     )
                                                 }
                                                 error={errors.make_type}
+                                                required={true}
                                             />
                                         </div>
 
@@ -245,6 +258,7 @@ export default function Create({
                                                     )
                                                 }
                                                 error={errors.engine_motor_no}
+                                                required={true}
                                             />
                                         </div>
                                         <div className="col-span-6">
@@ -260,13 +274,14 @@ export default function Create({
                                                     )
                                                 }
                                                 error={errors.chassis_no}
+                                                required={true}
                                             />
                                         </div>
 
                                         <div className="col-span-12 border-t pt-2 mt-2"></div>
 
-                                        {/* DOCS SECTIONS */}
-                                        <div className="col-span-6  p-3 ">
+                                        {/* DOCS SECTIONS - ADDED REQUIRED HERE */}
+                                        <div className="col-span-6  p-3 ">
                                             <div className="font-bold text-xs text-yellow-800 uppercase mb-2">
                                                 Cedula
                                             </div>
@@ -280,6 +295,7 @@ export default function Create({
                                                             e.target.value,
                                                         )
                                                     }
+                                                    required={true} // <--- ADDED
                                                 />
                                                 <InputGroup
                                                     type="date"
@@ -291,11 +307,12 @@ export default function Create({
                                                             e.target.value,
                                                         )
                                                     }
+                                                    required={true} // <--- ADDED
                                                 />
                                             </div>
                                         </div>
 
-                                        <div className="col-span-6  p-3">
+                                        <div className="col-span-6  p-3">
                                             <div className="font-bold text-xs text-purple-800 uppercase mb-2">
                                                 Official Receipt
                                             </div>
@@ -309,6 +326,7 @@ export default function Create({
                                                             e.target.value,
                                                         )
                                                     }
+                                                    required={true} // <--- ADDED
                                                 />
                                                 <InputGroup
                                                     type="date"
@@ -320,16 +338,20 @@ export default function Create({
                                                             e.target.value,
                                                         )
                                                     }
+                                                    required={true} // <--- ADDED
                                                 />
                                             </div>
                                         </div>
 
-                                        {/* SIGNATORIES SECTION - INTEGRATED HERE */}
+                                        {/* SIGNATORIES SECTION */}
                                         <div className="col-span-12">
                                             <OfficialsForm
                                                 data={data}
                                                 setData={setData}
                                                 errors={errors}
+                                                // PASS THE NEW PROPS DOWN
+                                                punong_bayans={punong_bayans}
+                                                officials={officials}
                                             />
                                         </div>
                                     </div>
@@ -358,7 +380,11 @@ export default function Create({
                                         {step === 1 ? (
                                             <PrimaryButton
                                                 type="button"
-                                                onClick={() => setStep(2)}
+                                                // Prevent default form submission on Next
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    setStep(2);
+                                                }}
                                             >
                                                 Next Step{" "}
                                                 <Icon

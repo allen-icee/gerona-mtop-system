@@ -31,6 +31,7 @@ export default function TricycleForm({ data, setData, errors }: any) {
                     error={errors.body_number}
                     icon="solar:hashtag-square-bold"
                     placeholder="#1234"
+                    required={true} // <--- Added
                 />
 
                 <InputGroup
@@ -48,6 +49,7 @@ export default function TricycleForm({ data, setData, errors }: any) {
                     error={errors.plate_no}
                     icon="solar:card-reciept-bold"
                     placeholder="123ABC"
+                    required={true} // <--- Added
                 />
 
                 <InputGroup
@@ -66,6 +68,7 @@ export default function TricycleForm({ data, setData, errors }: any) {
                     error={errors.make_type}
                     icon="solar:box-minimalistic-bold"
                     placeholder="HONDA TMX"
+                    required={true} // <--- Added
                 />
 
                 <InputGroup
@@ -82,6 +85,7 @@ export default function TricycleForm({ data, setData, errors }: any) {
                     }}
                     error={errors.engine_motor_no}
                     icon="solar:settings-bold"
+                    required={true} // <--- Added
                 />
 
                 <InputGroup
@@ -98,6 +102,7 @@ export default function TricycleForm({ data, setData, errors }: any) {
                     }}
                     error={errors.chassis_no}
                     icon="solar:structure-bold"
+                    required={true} // <--- Added
                 />
             </div>
         </div>
