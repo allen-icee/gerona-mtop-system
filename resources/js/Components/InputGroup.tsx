@@ -1,12 +1,12 @@
 import { useState, InputHTMLAttributes } from "react";
 import { Icon } from "@iconify/react";
 
-// 1. EXTEND InputHTMLAttributes to accept maxLength, placeholder, etc.
 interface Props extends InputHTMLAttributes<HTMLInputElement> {
     label: string;
     error?: string;
     icon?: string;
     showPasswordToggle?: boolean;
+    required?: boolean; // Add this line
 }
 
 export default function InputGroup({
@@ -18,7 +18,8 @@ export default function InputGroup({
     icon,
     type = "text",
     showPasswordToggle = false,
-    ...props // 2. CAPTURE all other props (like maxLength)
+    required = false, // Default to false
+    ...props
 }: Props) {
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     const inputType = showPasswordToggle
@@ -34,10 +35,11 @@ export default function InputGroup({
                 className="block font-medium text-sm text-gray-700 mb-1"
             >
                 {label}
+                {required && <span className="text-red-500 ml-1">*</span>}{" "}
+                {/* Red asterisk */}
             </label>
 
             <div className="relative">
-                {/* ICON */}
                 {icon && (
                     <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
                         <Icon icon={icon} width="20" height="20" />
@@ -45,17 +47,17 @@ export default function InputGroup({
                 )}
 
                 <input
-                    {...props} // 3. SPREAD them here so standard attributes work
+                    {...props}
                     id={name}
                     name={name}
                     value={value}
                     type={inputType}
+                    required={required}
                     className={`border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm w-full py-3 ${
                         icon ? "pl-10" : "pl-3"
                     } ${error ? "border-red-500" : ""}`}
                 />
 
-                {/* PASSWORD TOGGLE */}
                 {showPasswordToggle && (
                     <button
                         type="button"

@@ -42,6 +42,9 @@ return new class extends Migration
             // 5. SYSTEM
             $table->string('status', 20)->default('draft');
             $table->timestamps();
+
+            $table->string('punong_bayan', 100)->nullable();
+            $table->string('authorized_official', 100)->nullable();
         });
     }
 

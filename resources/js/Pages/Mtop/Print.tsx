@@ -368,15 +368,13 @@ export default function Print({
                             {/* --- SIGNATURE AREA SECOND PAGE --- */}
                             <div className="mt-8 flex justify-end">
                                 <div className="flex flex-col items-center w-64">
-                                    {/* Signature line with name above it */}
                                     <div className="relative w-full mb-1">
                                         <p className="font-bold uppercase text-sm text-center relative z-10">
-                                            N/A
+                                            {application.authorized_official ||
+                                                "N/A"}
                                         </p>
                                         <div className="border-b border-black absolute bottom-0 w-full"></div>
                                     </div>
-
-                                    {/* Pirma */}
                                     <p className="text-xs text-center mt-1 mb-2">
                                         Pinunong Nagsagawa ng panunumpa at
                                         <span className="block mt-1">
@@ -385,19 +383,15 @@ export default function Print({
                                     </p>
                                 </div>
                             </div>
-
                             {/* --- SIGNATURE AREA PUNONG BAYAN --- */}
                             <div className="mt-4 flex justify-start">
                                 <div className="flex flex-col items-center w-64">
-                                    {/* Signature line with name above it */}
                                     <div className="relative w-full mb-1">
                                         <p className="font-bold uppercase text-sm text-center relative z-10">
-                                            N/A
+                                            {application.punong_bayan || "N/A"}
                                         </p>
                                         <div className="border-b border-black absolute bottom-0 w-full"></div>
                                     </div>
-
-                                    {/* Pirma */}
                                     <p className="text-xs text-center mt-1 mb-2">
                                         Punong Bayan
                                     </p>

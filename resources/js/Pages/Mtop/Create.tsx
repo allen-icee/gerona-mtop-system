@@ -6,6 +6,7 @@ import { Icon } from "@iconify/react";
 import InputGroup from "@/Components/InputGroup";
 import BarangaySelect from "@/Components/BarangaySelect";
 import PermitPreview from "./Partials/PermitPreview";
+import OfficialsForm from "./Partials/OfficialsForm"; //
 
 export default function Create({
     suggested_mt_number,
@@ -33,6 +34,9 @@ export default function Create({
         cedula_date: "",
         or_number: "",
         or_date: "",
+        // Signatories - ADDED THESE TWO LINES
+        punong_bayan: "",
+        authorized_official: "",
     });
 
     const submit: FormEventHandler = (e) => {
@@ -40,14 +44,12 @@ export default function Create({
         post(route("mtop.store"));
     };
 
-    // --- FIX IS HERE ---
     const up = (field: keyof typeof data, val: string) =>
         setData(field, val.toUpperCase());
 
     return (
         <AuthenticatedLayout
             header={
-                // CENTERED, SMALL HEADER
                 <div className="flex justify-center items-center h-0">
                     <h2 className="font-bold text-sm text-gray-700 uppercase tracking-widest">
                         New MTOP Application
@@ -131,6 +133,7 @@ export default function Create({
                                                         e.target.value,
                                                     )
                                                 }
+                                                error={errors.last_name}
                                             />
                                         </div>
                                         <div className="col-span-5">
@@ -145,6 +148,7 @@ export default function Create({
                                                         e.target.value,
                                                     )
                                                 }
+                                                error={errors.first_name}
                                             />
                                         </div>
                                         <div className="col-span-2">
@@ -169,12 +173,13 @@ export default function Create({
                                                 onChange={(val) =>
                                                     setData("address", val)
                                                 }
+                                                error={errors.address}
                                             />
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* --- STEP 2: UNIT & DOCS --- */}
+                                {/* --- STEP 2: UNIT, DOCS & OFFICIALS --- */}
                                 <div
                                     className={step === 2 ? "block" : "hidden"}
                                 >
@@ -192,12 +197,13 @@ export default function Create({
                                                         e.target.value,
                                                     )
                                                 }
+                                                error={errors.body_number}
                                             />
                                         </div>
                                         <div className="col-span-4">
                                             <InputGroup
                                                 id="plate_no"
-                                                label="Plate Number (Plaka Bilang)"
+                                                label="Plate Number"
                                                 placeholder="RE1470"
                                                 icon="solar:card-reciept-bold"
                                                 value={data.plate_no}
@@ -207,12 +213,13 @@ export default function Create({
                                                         e.target.value,
                                                     )
                                                 }
+                                                error={errors.plate_no}
                                             />
                                         </div>
                                         <div className="col-span-4">
                                             <InputGroup
                                                 id="make_type"
-                                                label="Make/Brand (Gawa at Uri)"
+                                                label="Make/Brand"
                                                 placeholder="HONDA"
                                                 value={data.make_type}
                                                 onChange={(e) =>
@@ -221,14 +228,15 @@ export default function Create({
                                                         e.target.value,
                                                     )
                                                 }
+                                                error={errors.make_type}
                                             />
                                         </div>
 
                                         <div className="col-span-6">
                                             <InputGroup
                                                 id="engine_motor_no"
-                                                label="Engine Motor No. (Motor Bilang)"
-                                                placeholder="KB506058032636E"
+                                                label="Engine Motor No."
+                                                placeholder="KB5060..."
                                                 value={data.engine_motor_no}
                                                 onChange={(e) =>
                                                     up(
@@ -236,13 +244,14 @@ export default function Create({
                                                         e.target.value,
                                                     )
                                                 }
+                                                error={errors.engine_motor_no}
                                             />
                                         </div>
                                         <div className="col-span-6">
                                             <InputGroup
                                                 id="chassis_no"
-                                                label="Chassis No. (Tsasi Bilang)"
-                                                placeholder="KB50605803236"
+                                                label="Chassis No."
+                                                placeholder="KB5060..."
                                                 value={data.chassis_no}
                                                 onChange={(e) =>
                                                     up(
@@ -250,20 +259,20 @@ export default function Create({
                                                         e.target.value,
                                                     )
                                                 }
+                                                error={errors.chassis_no}
                                             />
                                         </div>
 
                                         <div className="col-span-12 border-t pt-2 mt-2"></div>
 
-                                        <div className="col-span-6 bg-yellow-50 p-3 rounded border border-yellow-200">
+                                        {/* DOCS SECTIONS */}
+                                        <div className="col-span-6  p-3 ">
                                             <div className="font-bold text-xs text-yellow-800 uppercase mb-2">
                                                 Cedula
                                             </div>
                                             <div className="space-y-3">
                                                 <InputGroup
-                                                    id="cedula_number"
                                                     label="Number"
-                                                    placeholder="28534360"
                                                     value={data.cedula_number}
                                                     onChange={(e) =>
                                                         up(
@@ -273,7 +282,6 @@ export default function Create({
                                                     }
                                                 />
                                                 <InputGroup
-                                                    id="cedula_date"
                                                     type="date"
                                                     label="Date"
                                                     value={data.cedula_date}
@@ -287,15 +295,13 @@ export default function Create({
                                             </div>
                                         </div>
 
-                                        <div className="col-span-6 bg-purple-50 p-3 rounded border border-purple-200">
+                                        <div className="col-span-6  p-3">
                                             <div className="font-bold text-xs text-purple-800 uppercase mb-2">
                                                 Official Receipt
                                             </div>
                                             <div className="space-y-3">
                                                 <InputGroup
-                                                    id="or_number"
                                                     label="Number"
-                                                    placeholder="9801547"
                                                     value={data.or_number}
                                                     onChange={(e) =>
                                                         up(
@@ -305,7 +311,6 @@ export default function Create({
                                                     }
                                                 />
                                                 <InputGroup
-                                                    id="or_date"
                                                     type="date"
                                                     label="Date"
                                                     value={data.or_date}
@@ -318,10 +323,19 @@ export default function Create({
                                                 />
                                             </div>
                                         </div>
+
+                                        {/* SIGNATORIES SECTION - INTEGRATED HERE */}
+                                        <div className="col-span-12">
+                                            <OfficialsForm
+                                                data={data}
+                                                setData={setData}
+                                                errors={errors}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
 
-                                {/* --- FOOTER ACTIONS --- */}
+                                {/* FOOTER ACTIONS */}
                                 <div className="flex items-center justify-between mt-8 pt-4 border-t border-gray-100">
                                     <Link
                                         href={route("mtop.index")}

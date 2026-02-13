@@ -33,6 +33,7 @@ export interface MtopApplication {
     cedula_date?: string;
     or_number?: string;
     or_date?: string;
-
-    status: "draft" | "printed" | "released";
+    punong_bayan?: string;
+    authorized_official?: string;
+    status: string;
 }

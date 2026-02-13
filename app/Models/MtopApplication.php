@@ -27,6 +27,8 @@ class MtopApplication extends Model
         'cedula_date',
         'or_number',
         'or_date',
+        'punong_bayan',
+        'authorized_official',
         'status'
     ];
 

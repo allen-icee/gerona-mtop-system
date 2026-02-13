@@ -3,7 +3,7 @@ import { Icon } from "@iconify/react";
 
 export default function CedulaForm({ data, setData, errors }: any) {
     return (
-        <div className="bg-white p-6 rounded-lg shadow-sm border-l-4 border-yellow-500 h-full">
+        <div className="bg-white p-6 rounded-lg shadow-sm  h-full">
             <div className="flex items-center gap-2 mb-4 border-b pb-2">
                 <Icon
                     icon="solar:document-add-bold"

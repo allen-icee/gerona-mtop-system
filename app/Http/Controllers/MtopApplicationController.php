@@ -115,6 +115,8 @@ class MtopApplicationController extends Controller
             'cedula_date'   => 'nullable|date',
             'or_number'     => 'nullable|string|max:20',
             'or_date'       => 'nullable|date',
+            'punong_bayan'        => ['nullable', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\-]+$/'],
+            'authorized_official' => ['nullable', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\-]+$/'],
         ]);
 
         // Auto-Calculate Expiry
