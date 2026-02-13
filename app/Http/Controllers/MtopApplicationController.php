@@ -84,8 +84,8 @@ class MtopApplicationController extends Controller
 
         return Inertia::render('Mtop/Create', [
             'suggested_mt_number' => $suggested_mt_number,
-            'punong_bayans' => $punong_bayans, // Pass to React
-            'officials' => $officials          // Pass to React
+            'punong_bayans' => $punong_bayans,
+            'officials' => $officials
         ]);
     }
 
@@ -94,11 +94,12 @@ class MtopApplicationController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        // UPDATE: Added comma (\,) to the regex rules below
         $validated = $request->validate([
-            // NAMES: Letters, spaces, dots, dashes only.
-            'last_name'   => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\-]+$/'],
-            'first_name'  => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\-]+$/'],
-            'middle_name' => ['nullable', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\-]+$/'],
+            // NAMES: Letters, spaces, dots, dashes, AND COMMAS allowed.
+            'last_name'   => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
+            'first_name'  => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
+            'middle_name' => ['nullable', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
 
             'address'        => 'required|string|max:100',
             'contact_number' => ['nullable', 'regex:/^(09|\+639)\d{9}$/'],
@@ -108,7 +109,7 @@ class MtopApplicationController extends Controller
 
             // UNIT
             'body_number'     => ['required', 'regex:/^[0-9]+$/'], // Numbers only
-            'plate_no'        => ['required', 'string', 'max:20'], // Relaxed regex to avoid errors if users type dash
+            'plate_no'        => ['required', 'string', 'max:20'],
             'make_type'       => 'required|string|max:30',
             'engine_motor_no' => 'required|string|max:30',
             'chassis_no'      => 'required|string|max:30',
@@ -118,11 +119,11 @@ class MtopApplicationController extends Controller
             'cedula_date'         => 'nullable|date',
             'or_number'           => 'nullable|string|max:20',
             'or_date'             => 'nullable|date',
-            'punong_bayan'        => ['nullable', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\-]+$/'],
-            'authorized_official' => ['nullable', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\-]+$/'],
+            // UPDATE: Allowed comma here
+            'punong_bayan'        => ['nullable', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
+            'authorized_official' => ['nullable', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
         ]);
 
-        // Auto-Calculate Expiry
         $validated['valid_until'] = Carbon::parse($request->transaction_date)->addYears(3);
         $validated['status'] = 'draft';
 
@@ -154,11 +155,11 @@ class MtopApplicationController extends Controller
     {
         $application = MtopApplication::findOrFail($id);
 
-        // FIXED: Updated validation to match the split-name structure and include officials
+        // UPDATE: Added comma (\,) to the regex rules below
         $validated = $request->validate([
-            'last_name'   => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\-]+$/'],
-            'first_name'  => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\-]+$/'],
-            'middle_name' => ['nullable', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\-]+$/'],
+            'last_name'   => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
+            'first_name'  => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
+            'middle_name' => ['nullable', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
 
             'address'          => 'required|string|max:100',
             'transaction_date' => 'required|date',
@@ -174,11 +175,11 @@ class MtopApplicationController extends Controller
             'cedula_date'         => 'nullable|date',
             'or_number'           => 'nullable|string|max:20',
             'or_date'             => 'nullable|date',
-            'punong_bayan'        => ['nullable', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\-]+$/'],
-            'authorized_official' => ['nullable', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\-]+$/'],
+            // UPDATE: Allowed comma here
+            'punong_bayan'        => ['nullable', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
+            'authorized_official' => ['nullable', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
         ]);
 
-        // Recalculate expiry if date changed
         if ($request->transaction_date) {
             $validated['valid_until'] = Carbon::parse($request->transaction_date)->addYears(3);
         }

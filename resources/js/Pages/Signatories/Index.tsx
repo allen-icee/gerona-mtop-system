@@ -110,7 +110,7 @@ export default function Index({ signatories = [], filters = {} }: Props) {
                         {/* SEARCH */}
                         <div className="relative w-full sm:w-auto">
                             <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-gray-500">
-                                <Icon icon="iconamoon:search-bold" width="20" />
+                                <Icon icon="solar:magnifer-bold" width="20" />
                             </div>
                             <TextInput
                                 className="pl-12 w-full sm:w-80 py-3 text-base"
@@ -272,7 +272,10 @@ export default function Index({ signatories = [], filters = {} }: Props) {
                                 onChange={(e) =>
                                     setData(
                                         "name",
-                                        e.target.value.toUpperCase(),
+                                        // UPDATE: Allow letters, spaces, dots, commas, dashes
+                                        e.target.value
+                                            .toUpperCase()
+                                            .replace(/[^A-Z\s.,-]/g, ""),
                                     )
                                 }
                                 error={errors.name}

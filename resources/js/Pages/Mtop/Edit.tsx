@@ -31,12 +31,12 @@ interface MtopApplication {
 
 export default function Edit({
     application,
-    punong_bayans, // New Prop
-    officials, // New Prop
+    punong_bayans, // Received from Controller
+    officials, // Received from Controller
 }: {
     application: MtopApplication;
-    punong_bayans: string[]; // Define Type
-    officials: string[]; // Define Type
+    punong_bayans: string[];
+    officials: string[];
 }) {
     const [step, setStep] = useState(1);
 
@@ -63,7 +63,7 @@ export default function Edit({
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        put(route("mtop.update", application.id)); // Use PUT for updates
+        put(route("mtop.update", application.id));
     };
 
     const up = (field: keyof typeof data, val: string) =>
@@ -72,7 +72,6 @@ export default function Edit({
     return (
         <AuthenticatedLayout
             header={
-                // CENTERED, SMALL HEADER
                 <div className="flex justify-center items-center h-0 gap-2">
                     <h2 className="font-bold text-sm text-gray-700 uppercase tracking-widest">
                         Edit MTOP Application
@@ -192,7 +191,6 @@ export default function Edit({
                                                         e.target.value,
                                                     )
                                                 }
-                                                // Middle Name Optional
                                             />
                                         </div>
 
@@ -222,7 +220,10 @@ export default function Edit({
                                                 onChange={(e) =>
                                                     setData(
                                                         "body_number",
-                                                        e.target.value,
+                                                        // RESTRICTION: Remove non-digits, limit to 5 chars
+                                                        e.target.value
+                                                            .replace(/\D/g, "")
+                                                            .slice(0, 5),
                                                     )
                                                 }
                                                 required={true}
@@ -363,7 +364,6 @@ export default function Edit({
                                                 data={data}
                                                 setData={setData}
                                                 errors={errors}
-                                                // PASS THE NEW PROPS DOWN
                                                 punong_bayans={punong_bayans}
                                                 officials={officials}
                                             />

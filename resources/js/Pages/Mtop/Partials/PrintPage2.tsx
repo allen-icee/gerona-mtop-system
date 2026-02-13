@@ -10,7 +10,7 @@ export default function PrintPage2({ application, operatorName }: Props) {
         // REMOVED p-10 here
         <div className="h-[11.69in] w-full relative flex flex-col bg-white overflow-hidden">
             {/* HEADER: Full Width */}
-            <div className="w-full">
+            <div className="w-full px-2">
                 <img
                     src="/images/gerona-header.png"
                     alt="Municipality of Gerona Header"

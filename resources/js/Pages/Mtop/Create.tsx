@@ -183,7 +183,7 @@ export default function Create({
                                                     setData("address", val)
                                                 }
                                                 error={errors.address}
-                                                required={true} // <--- ADDED THIS
+                                                required={true}
                                             />
                                         </div>
                                     </div>
@@ -204,7 +204,10 @@ export default function Create({
                                                 onChange={(e) =>
                                                     setData(
                                                         "body_number",
-                                                        e.target.value,
+                                                        // RESTRICTION: Remove non-digits, limit to 5 chars
+                                                        e.target.value
+                                                            .replace(/\D/g, "")
+                                                            .slice(0, 5),
                                                     )
                                                 }
                                                 error={errors.body_number}
@@ -280,7 +283,7 @@ export default function Create({
 
                                         <div className="col-span-12 border-t pt-2 mt-2"></div>
 
-                                        {/* DOCS SECTIONS - ADDED REQUIRED HERE */}
+                                        {/* DOCS SECTIONS */}
                                         <div className="col-span-6  p-3 ">
                                             <div className="font-bold text-xs text-yellow-800 uppercase mb-2">
                                                 Cedula
@@ -295,7 +298,7 @@ export default function Create({
                                                             e.target.value,
                                                         )
                                                     }
-                                                    required={true} // <--- ADDED
+                                                    required={true}
                                                 />
                                                 <InputGroup
                                                     type="date"
@@ -307,7 +310,7 @@ export default function Create({
                                                             e.target.value,
                                                         )
                                                     }
-                                                    required={true} // <--- ADDED
+                                                    required={true}
                                                 />
                                             </div>
                                         </div>
@@ -326,7 +329,7 @@ export default function Create({
                                                             e.target.value,
                                                         )
                                                     }
-                                                    required={true} // <--- ADDED
+                                                    required={true}
                                                 />
                                                 <InputGroup
                                                     type="date"
@@ -338,7 +341,7 @@ export default function Create({
                                                             e.target.value,
                                                         )
                                                     }
-                                                    required={true} // <--- ADDED
+                                                    required={true}
                                                 />
                                             </div>
                                         </div>
@@ -349,7 +352,6 @@ export default function Create({
                                                 data={data}
                                                 setData={setData}
                                                 errors={errors}
-                                                // PASS THE NEW PROPS DOWN
                                                 punong_bayans={punong_bayans}
                                                 officials={officials}
                                             />
@@ -380,7 +382,6 @@ export default function Create({
                                         {step === 1 ? (
                                             <PrimaryButton
                                                 type="button"
-                                                // Prevent default form submission on Next
                                                 onClick={(e) => {
                                                     e.preventDefault();
                                                     setStep(2);
