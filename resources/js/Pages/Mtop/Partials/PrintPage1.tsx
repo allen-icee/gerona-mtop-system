@@ -1,4 +1,5 @@
 import React from "react";
+import { usePage } from "@inertiajs/react";
 
 interface Props {
     application: any;
@@ -6,6 +7,8 @@ interface Props {
 }
 
 export default function PrintPage1({ application, operatorName }: Props) {
+    const { printSettings } = usePage().props as any;
+
     // Helper to format date like "February 3, 2026"
     const formatDate = (dateString: string) => {
         if (!dateString) return "";
@@ -28,14 +31,15 @@ export default function PrintPage1({ application, operatorName }: Props) {
             className="w-full h-[11.69in] relative flex flex-col bg-white overflow-hidden text-black leading-tight"
             style={{ fontFamily: "Tahoma, sans-serif" }}
         >
-            {/* HEADER IMAGE - Full Width (No Padding applied here) */}
-            <div className="w-full mb-2">
-                <img
-                    src="/images/gerona-header.png"
-                    alt="Municipality of Gerona Header"
-                    className="w-full object-contain max-h-32"
-                />
-            </div>
+            {printSettings?.show_header && printSettings?.header_path && (
+                <div className="w-full mb-2 px-2 mt-2">
+                    <img
+                        src={`/storage/${printSettings.header_path}`}
+                        alt="Header"
+                        className="w-full object-contain max-h-32"
+                    />
+                </div>
+            )}
 
             {/* CONTENT BODY - Padding px-12 is exactly 0.5 inches */}
             <div className="px-12 flex flex-col">
@@ -189,25 +193,16 @@ export default function PrintPage1({ application, operatorName }: Props) {
                     </div>
                 </div>
 
-                {/* 11. FOOTER DETAILS (Right Side, Italic, 10px, Vertically Aligned) */}
-                <div className="flex justify-end">
-                    <div className="text-left italic text-[10pt] leading-[1.15] space-y-1 min-w-70">
-                        <div className="flex">
-                            <span className="w-28">SEDULA BILANG:</span>
-                            <span className="underline">
-                                {application.cedula_number || "_________"}
-                            </span>
-                        </div>
-                        <div className="flex">
-                            <span className="w-28">Petsa ng Pagkuha:</span>
-                            <span className="underline">
-                                {application.cedula_date
-                                    ? formatDate(application.cedula_date)
-                                    : "_________"}
-                            </span>
-                        </div>
+                {/* Added mt-auto to push the footer to the bottom of the 11.69in page */}
+                {printSettings?.show_footer && printSettings?.footer_path && (
+                    <div className="w-full mt-auto mb-8 px-2">
+                        <img
+                            src={`/storage/${printSettings.footer_path}`}
+                            alt="Footer"
+                            className="w-full object-contain max-h-32"
+                        />
                     </div>
-                </div>
+                )}
             </div>
         </div>
     );

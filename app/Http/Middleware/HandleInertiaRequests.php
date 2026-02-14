@@ -34,6 +34,7 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            'printSettings' => \App\Models\PrintSetting::first(),
         ];
     }
 }

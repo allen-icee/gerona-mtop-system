@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Models\MtopApplication;
 use App\Models\User;
+use App\Http\Controllers\PrintSettingController;
 
 // 1. HOME PAGE: Redirects to Login
 Route::get('/', function () {
@@ -56,6 +57,9 @@ Route::middleware('auth')->group(function () {
 
         // SIGNATORIES CRUD
         Route::resource('signatories', SignatoryController::class)->only(['index', 'store', 'update', 'destroy']);
+
+        Route::get('/settings/print', [PrintSettingController::class, 'edit'])->name('settings.print.edit');
+        Route::post('/settings/print', [PrintSettingController::class, 'update'])->name('settings.print.update');
     });
 });
 

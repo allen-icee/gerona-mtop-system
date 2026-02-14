@@ -73,6 +73,16 @@ export default function Authenticated({
                                         System Users
                                     </NavLink>
                                 )}
+                                {user.role === "admin" && (
+                                    <NavLink
+                                        href={route("settings.print.edit")}
+                                        active={route().current(
+                                            "settings.print.edit",
+                                        )}
+                                    >
+                                        Print Settings
+                                    </NavLink>
+                                )}
                             </div>
                         </div>
 

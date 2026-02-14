@@ -1,4 +1,5 @@
 import React from "react";
+import { usePage } from "@inertiajs/react";
 
 interface Props {
     application: any;
@@ -6,6 +7,7 @@ interface Props {
 }
 
 export default function PrintPage2({ application, operatorName }: Props) {
+    const { printSettings } = usePage().props as any;
     // Helpers
     const formatDate = (dateString: string) => {
         if (!dateString) return "";
@@ -73,14 +75,16 @@ export default function PrintPage2({ application, operatorName }: Props) {
             className="w-full h-[11.69in] relative flex flex-col bg-white overflow-hidden text-black leading-tight"
             style={{ fontFamily: "Tahoma, sans-serif" }}
         >
-            {/* HEADER IMAGE */}
-            <div className="w-full mb-2 px-2 mt-2">
-                <img
-                    src="/images/gerona-header.png"
-                    alt="Municipality of Gerona Header"
-                    className="w-full object-contain max-h-32"
-                />
-            </div>
+            {/* 3. DYNAMIC HEADER IMAGE */}
+            {printSettings?.show_header && printSettings?.header_path && (
+                <div className="w-full mb-2 px-2 mt-2">
+                    <img
+                        src={`/storage/${printSettings.header_path}`}
+                        alt="Header"
+                        className="w-full object-contain max-h-32"
+                    />
+                </div>
+            )}
 
             {/* CONTENT BODY */}
             <div className="px-12 flex flex-col">
@@ -283,6 +287,17 @@ export default function PrintPage2({ application, operatorName }: Props) {
                     </p>
                 </div>
             </div>
+            {/* 4. DYNAMIC FOOTER IMAGE */}
+            {/* Ilalagay ito sa dulo ng 'flex flex-col' container para sa Page 2 */}
+            {printSettings?.show_footer && printSettings?.footer_path && (
+                <div className="w-full mt-auto mb-8">
+                    <img
+                        src={`/storage/${printSettings.footer_path}`}
+                        alt="Footer"
+                        className="w-full object-contain max-h-32"
+                    />
+                </div>
+            )}
         </div>
     );
 }
