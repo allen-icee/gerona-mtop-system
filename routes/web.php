@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\MtopApplicationController;
-use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\SignatoryController; // Import SignatoryController
 use App\Http\Middleware\IsAdmin; // Import the Middleware Class
@@ -28,11 +27,6 @@ Route::get('/dashboard', function () {
 
 // 3. AUTHENTICATED ROUTES
 Route::middleware('auth')->group(function () {
-
-    // PROFILE
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // MTOP SYSTEM ROUTES (Shared by Admin & Staff)
     // Staff can now Index, Create, Edit, Update, and Print

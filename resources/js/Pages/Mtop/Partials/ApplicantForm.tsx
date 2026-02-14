@@ -1,6 +1,9 @@
 import InputGroup from "@/Components/InputGroup";
 import BarangaySelect from "@/Components/BarangaySelect";
 import { Icon } from "@iconify/react";
+import InputLabel from "@/Components/InputLabel"; // Import this
+
+const SUFFIXES = ["", "JR.", "SR.", "I", "II", "III", "IV", "V"];
 
 export default function ApplicantForm({ data, setData, errors }: any) {
     // Helper to allow ONLY Letters, Spaces, Dots (.), and Dashes (-)
@@ -23,12 +26,12 @@ export default function ApplicantForm({ data, setData, errors }: any) {
                 </h3>
             </div>
 
-            {/* NAME GRID */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                <div className="md:col-span-2">
+            {/* NAME GRID - Uses 12-column grid for 4-4-2-2 layout */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-4">
+                <div className="md:col-span-4">
                     <InputGroup
                         id="last_name"
-                        label="Last Name (Apelyido)"
+                        label="Last Name"
                         name="last_name"
                         value={data.last_name}
                         onChange={(e) =>
@@ -37,13 +40,13 @@ export default function ApplicantForm({ data, setData, errors }: any) {
                         error={errors.last_name}
                         icon="solar:user-bold"
                         placeholder="DELA CRUZ"
-                        required={true} // <--- Added
+                        required={true}
                     />
                 </div>
-                <div className="md:col-span-1">
+                <div className="md:col-span-4">
                     <InputGroup
                         id="first_name"
-                        label="First Name (Pangalan)"
+                        label="First Name"
                         name="first_name"
                         value={data.first_name}
                         onChange={(e) =>
@@ -51,10 +54,10 @@ export default function ApplicantForm({ data, setData, errors }: any) {
                         }
                         error={errors.first_name}
                         placeholder="JUAN"
-                        required={true} // <--- Added
+                        required={true}
                     />
                 </div>
-                <div className="md:col-span-1">
+                <div className="md:col-span-2">
                     <InputGroup
                         id="middle_name"
                         label="M.I."
@@ -71,8 +74,26 @@ export default function ApplicantForm({ data, setData, errors }: any) {
                         error={errors.middle_name}
                         placeholder="S"
                         maxLength={1}
-                        // Middle name is usually optional, so no required prop here
                     />
+                </div>
+
+                {/* SUFFIX DROPDOWN */}
+                <div className="md:col-span-2">
+                    <InputLabel htmlFor="suffix" value="Suffix" />
+                    <div className="relative mt-1">
+                        <select
+                            id="suffix"
+                            value={data.suffix}
+                            onChange={(e) => setData("suffix", e.target.value)}
+                            className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm w-full py-3 pl-3 text-sm"
+                        >
+                            {SUFFIXES.map((opt) => (
+                                <option key={opt} value={opt}>
+                                    {opt === "" ? "N/A" : opt}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -82,6 +103,7 @@ export default function ApplicantForm({ data, setData, errors }: any) {
                     value={data.address}
                     onChange={(val) => setData("address", val)}
                     error={errors.address}
+                    required={true}
                 />
             </div>
         </div>

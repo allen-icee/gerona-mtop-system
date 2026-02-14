@@ -5,6 +5,7 @@ import { FormEventHandler, useState } from "react";
 import { Icon } from "@iconify/react";
 import InputGroup from "@/Components/InputGroup";
 import BarangaySelect from "@/Components/BarangaySelect";
+import ApplicantForm from "./Partials/ApplicantForm"; // Import the component
 import PermitPreview from "./Partials/PermitPreview";
 import OfficialsForm from "./Partials/OfficialsForm";
 import Modal from "@/Components/Modal";
@@ -25,6 +26,7 @@ export default function Create({
         last_name: "",
         first_name: "",
         middle_name: "",
+        suffix: "", // Add suffix here
         address: "",
         mt_number: suggested_mt_number || "",
         transaction_date: new Date().toISOString().split("T")[0],
@@ -57,7 +59,7 @@ export default function Create({
                         New Application
                     </h2>
 
-                    {/* MOBILE PREVIEW ICON (Visible on screens smaller than XL) */}
+                    {/* MOBILE PREVIEW ICON */}
                     <button
                         type="button"
                         onClick={() => setShowMobilePreview(true)}
@@ -113,6 +115,7 @@ export default function Create({
                                     className={step === 1 ? "block" : "hidden"}
                                 >
                                     <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
+                                        {/* TRANSACTION DETAILS */}
                                         <div className="sm:col-span-6">
                                             <InputGroup
                                                 id="mt_number"
@@ -148,63 +151,12 @@ export default function Create({
 
                                         <div className="sm:col-span-12 border-t pt-2 mt-2"></div>
 
-                                        <div className="sm:col-span-5">
-                                            <InputGroup
-                                                id="last_name"
-                                                label="Last Name"
-                                                placeholder="BAGSIC"
-                                                icon="solar:user-bold"
-                                                value={data.last_name}
-                                                onChange={(e) =>
-                                                    up(
-                                                        "last_name",
-                                                        e.target.value,
-                                                    )
-                                                }
-                                                error={errors.last_name}
-                                                required
-                                            />
-                                        </div>
-                                        <div className="sm:col-span-5">
-                                            <InputGroup
-                                                id="first_name"
-                                                label="First Name"
-                                                placeholder="RICARTE"
-                                                value={data.first_name}
-                                                onChange={(e) =>
-                                                    up(
-                                                        "first_name",
-                                                        e.target.value,
-                                                    )
-                                                }
-                                                error={errors.first_name}
-                                                required
-                                            />
-                                        </div>
-                                        <div className="sm:col-span-2">
-                                            <InputGroup
-                                                id="middle_name"
-                                                label="M.I."
-                                                placeholder="R"
-                                                maxLength={1}
-                                                value={data.middle_name}
-                                                onChange={(e) =>
-                                                    up(
-                                                        "middle_name",
-                                                        e.target.value,
-                                                    )
-                                                }
-                                            />
-                                        </div>
-
+                                        {/* APPLICANT FORM COMPONENT (Replaces manual inputs) */}
                                         <div className="sm:col-span-12">
-                                            <BarangaySelect
-                                                value={data.address}
-                                                onChange={(val) =>
-                                                    setData("address", val)
-                                                }
-                                                error={errors.address}
-                                                required
+                                            <ApplicantForm
+                                                data={data}
+                                                setData={setData}
+                                                errors={errors}
                                             />
                                         </div>
                                     </div>
@@ -379,7 +331,7 @@ export default function Create({
                                     </div>
                                 </div>
 
-                                {/* DESKTOP FOOTER (Hidden on Mobile) */}
+                                {/* DESKTOP FOOTER */}
                                 <div className="hidden sm:flex items-center justify-between mt-8 pt-4 border-t border-gray-100">
                                     <Link
                                         href={route("mtop.index")}
@@ -427,7 +379,7 @@ export default function Create({
                             </form>
                         </div>
 
-                        {/* --- RIGHT COLUMN: PREVIEW (XL Screens Only) --- */}
+                        {/* RIGHT COLUMN: PREVIEW */}
                         <div className="hidden xl:block xl:col-span-5 sticky top-6">
                             <PermitPreview data={data} />
                         </div>
@@ -435,7 +387,7 @@ export default function Create({
                 </div>
             </div>
 
-            {/* --- MOBILE STICKY FOOTER --- */}
+            {/* MOBILE FOOTER & MODAL */}
             <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 sm:hidden z-40 flex justify-between items-center safe-area-pb">
                 <Link
                     href={route("mtop.index")}
@@ -478,7 +430,6 @@ export default function Create({
                 </div>
             </div>
 
-            {/* --- MOBILE PREVIEW MODAL --- */}
             <Modal
                 show={showMobilePreview}
                 onClose={() => setShowMobilePreview(false)}
@@ -497,7 +448,6 @@ export default function Create({
                         </button>
                     </div>
                     <div className="flex-1 overflow-y-auto bg-gray-100">
-                        {/* Re-use the PermitPreview component inside the modal */}
                         <PermitPreview data={data} showHeader={false} />
                     </div>
                     <div className="p-4 bg-white border-t border-gray-200 shrink-0">
