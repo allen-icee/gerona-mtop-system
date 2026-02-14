@@ -6,217 +6,277 @@ interface Props {
 }
 
 export default function PrintPage2({ application, operatorName }: Props) {
+    // Helpers
+    const formatDate = (dateString: string) => {
+        if (!dateString) return "";
+        return new Date(dateString).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+        });
+    };
+
+    const formatDateUpper = (dateString: string) => {
+        if (!dateString) return "";
+        return new Date(dateString)
+            .toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+            })
+            .toUpperCase();
+    };
+
+    const getExpiryDateUpper = (dateString: string) => {
+        if (!dateString) return "";
+        const date = new Date(dateString);
+        const expiry = new Date(date.setFullYear(date.getFullYear() + 3));
+        return expiry
+            .toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+            })
+            .toUpperCase();
+    };
+
+    // Helper for address formatting (first part uppercase if it's the barangay)
+    const formatAddress = (addr: string) => {
+        if (!addr) return "";
+
+        // Split and clean parts
+        const parts = addr
+            .split(",")
+            .map((part) => part.trim())
+            .filter((part) => part.length > 0);
+
+        if (parts.length === 0) return "";
+
+        // First part (Barangay) → FULL UPPERCASE
+        const barangay = parts[0].toUpperCase();
+
+        // Remaining parts → Proper Case (Gerona, Tarlac)
+        const properCase = (text: string) =>
+            text.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
+
+        const rest = parts.slice(1).map(properCase);
+
+        return [barangay, ...rest].join(", ");
+    };
+
+    const transactionDate = application.transaction_date
+        ? formatDate(application.transaction_date)
+        : "_________________";
+
     return (
-        // REMOVED p-10 here
-        <div className="h-[11.69in] w-full relative flex flex-col bg-white overflow-hidden">
-            {/* HEADER: Full Width */}
-            <div className="w-full px-2">
+        <div
+            className="w-full h-[11.69in] relative flex flex-col bg-white overflow-hidden text-black leading-tight"
+            style={{ fontFamily: "Tahoma, sans-serif" }}
+        >
+            {/* HEADER IMAGE */}
+            <div className="w-full mb-2 px-2 mt-2">
                 <img
                     src="/images/gerona-header.png"
                     alt="Municipality of Gerona Header"
-                    className="w-full object-cover"
+                    className="w-full object-contain max-h-32"
                 />
             </div>
 
-            {/* CONTENT: Padding added here */}
-            <div className="px-12 pb-12 pt-2 grow flex flex-col">
-                <p className="text-sm text-center font-bold uppercase mt-2">
-                    Tanggapan ng
-                    <br />
-                    Municipal Tricycle Franchising and Regulatory Board
-                </p>
-
-                <div className="w-full flex justify-end mb-2">
-                    <span className="font-bold text-sm">
-                        {application.transaction_date
-                            ? new Date(
-                                  application.transaction_date,
-                              ).toLocaleDateString("en-US", {
-                                  year: "numeric",
-                                  month: "long",
-                                  day: "numeric",
-                              })
-                            : "N/A"}
-                    </span>
+            {/* CONTENT BODY */}
+            <div className="px-12 flex flex-col">
+                {/* 1. OFFICE HEADER (Match Page 1: 12pt, Bold, Center, 1.0) */}
+                <div className="text-center font-bold uppercase text-[12pt] leading-none mt-4 mb-8">
+                    <p>TANGGAPAN NG</p>
+                    <p>MUNICIPAL TRYCICLE FRANCHISING AND REGULATORY BOARD</p>
                 </div>
 
-                <p className="text-base text-center font-bold mt-2 uppercase underline">
-                    pagpapatibay
-                </p>
+                {/* 2. DATE (Right, Bold, 11pt, 1.15) - Matching Page 1 style */}
+                <div className="flex justify-end mb-6">
+                    <div className="text-right font-bold text-[11pt] leading-[1.15]">
+                        {transactionDate}
+                    </div>
+                </div>
 
-                <div className="mt-4 text-justify leading-snug text-sm">
-                    <p className="text-sm text-left font-bold mt-2 uppercase">
-                        sa sinumang maaring kaakulan nito:
-                    </p>
-                    <p className="mt-4 mb-4 indent-8">
+                {/* 3. TITLE (14pt, Bold, No Underline, Leading 1.0, Spaced) */}
+                <div className="text-center font-bold uppercase mb-8 text-[14pt] leading-none">
+                    <p>P A G P A P A T I B A Y</p>
+                </div>
+
+                {/* 4. SALUTATION (12pt, Bold, Leading 1.0) */}
+                <div className="font-bold uppercase mb-5 text-[12pt] leading-none">
+                    SA SINUMANG MAAARING KAUKULAN NITO:
+                </div>
+
+                {/* 5. OPENING PARAGRAPH (12pt, Leading 1.0, Indent 8) */}
+                <div className="text-justify indent-8 mb-6 text-[12pt] leading-none">
+                    <p>
                         Pinatutunayan nito na ayon sa mga talaan sa tanggapang
                         ito, ang nasabing pangalan/humihiling ay napagkalooban
-                        ng Motorized Tricycle Operator's Permit (MTOP):
+                        ng Motorized Tricycle Operator’s Permit (MTOP):
                     </p>
+                </div>
 
-                    <div className="flex justify-between w-full px-4">
-                        <div className="space-y-1">
-                            <p>
-                                Pangalan ng Humihiling:{" "}
-                                <span className="font-bold uppercase underline ml-2">
-                                    {operatorName}
-                                </span>
-                            </p>
-                            <p>
-                                Tirahan:{" "}
-                                <span className="font-bold underline ml-2">
-                                    {application.address}
-                                </span>
-                            </p>
-                            <p>
-                                Uri ng Palingkuran:{" "}
-                                <span className="font-bold ml-2">
-                                    Paupahang Traysikel na may Motor
-                                </span>
-                            </p>
+                {/* 6. DETAILS BLOCK (12pt, Leading 1.0) */}
+                <div className="space-y-1 mb-4 text-[12pt] leading-none">
+                    <div>
+                        <span className="w-56 shrink-0">
+                            Pangalan ng Humihiling:
+                        </span>{" "}
+                        <span className="font-bold uppercase underline">
+                            {operatorName}
+                        </span>
+                    </div>
+
+                    {/* Tirahan + Usapin Bilang Line */}
+                    <div className="flex justify-between items-end">
+                        <div>
+                            <span className="w-56 shrink-0">Tirahan:</span>{" "}
+                            <span className="font-bold underline normal-case">
+                                {formatAddress(application.address)}
+                            </span>
                         </div>
-                        <div className="text-right">
-                            <p>
-                                Usaping Bilang:{" "}
-                                <span className="font-bold underline ml-2">
-                                    {application.mt_number}
-                                </span>
-                            </p>
+                        <div>
+                            <span>Usaping Bilang:</span>{" "}
+                            <span className="font-bold underline">
+                                {application.mt_number}
+                            </span>
                         </div>
                     </div>
 
-                    <p className="mt-6 mb-4">
-                        Pinahihintulutang Ruta:{" "}
-                        <span className="font-bold underline ml-2">
+                    <div className="mb-6">
+                        <span className="w-56 shrink-0">
+                            Uri ng Palingkuran:
+                        </span>{" "}
+                        <span>Paupahang Traysikel na may Motor</span>
+                    </div>
+                    <div className="mb-6">
+                        <span className="w-56 shrink-0">
+                            Pinahihintulutang Ruta:
+                        </span>{" "}
+                        <span className="font-bold underline">
                             Nasasakupan ng Gerona, Tarlac, at iba pa.
                         </span>
-                    </p>
-
-                    <p className="mt-4 mb-4">
-                        May bisa para sa loob ng tatlong taon, mula:{" "}
-                        <span className="font-bold underline ml-2">
-                            {application.transaction_date
-                                ? `${new Date(
-                                      application.transaction_date,
-                                  ).toLocaleDateString("en-PH", {
-                                      year: "numeric",
-                                      month: "long",
-                                      day: "numeric",
-                                  })} - ${new Date(
-                                      new Date(
-                                          application.transaction_date,
-                                      ).setFullYear(
-                                          new Date(
-                                              application.transaction_date,
-                                          ).getFullYear() + 3,
-                                      ),
-                                  ).toLocaleDateString("en-PH", {
-                                      year: "numeric",
-                                      month: "long",
-                                      day: "numeric",
-                                  })}`
-                                : "N/A"}
+                    </div>
+                    <div className="mb-4">
+                        <span className="w-75 shrink-0">
+                            May tibay para sa loob ng tatlong taon, mula:
+                        </span>{" "}
+                        <span className="font-bold uppercase underline">
+                            {formatDateUpper(application.transaction_date)} -{" "}
+                            {getExpiryDateUpper(application.transaction_date)}
                         </span>
-                    </p>
+                    </div>
+                </div>
 
-                    <table className="w-full border border-black border-collapse text-xs mt-6">
+                {/* 7. TABLE INTRO */}
+                <div className="mb-6 text-[12pt] leading-none">
+                    <p>Hanggang isinalalarawan ayon sa mga sumusunod:</p>
+                </div>
+
+                {/* 8. TABLE */}
+                <div className="mb-6">
+                    <table className="w-full border border-black border-collapse text-center text-[12pt]">
                         <thead>
                             <tr>
-                                <th className="border border-black px-1 py-1 uppercase italic font-normal text-center">
-                                    Gawa at Uri
+                                <th className="border border-black p-1 italic uppercase font-normal">
+                                    GAWA AT URI
                                 </th>
-                                <th className="border border-black px-1 py-1 uppercase italic font-normal text-center">
-                                    Motor Bilang
+                                <th className="border border-black p-1 italic uppercase font-normal">
+                                    MOTOR BILANG
                                 </th>
-                                <th className="border border-black px-1 py-1 uppercase italic font-normal text-center">
-                                    Tsasi Bilang
+                                <th className="border border-black p-1 italic uppercase font-normal">
+                                    TSASI BILANG
                                 </th>
-                                <th className="border border-black px-1 py-1 uppercase italic font-normal text-center">
-                                    Plaka Bilang
+                                <th className="border border-black p-1 italic uppercase font-normal">
+                                    PLAKA BILANG
                                 </th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
-                                <td className="border border-black px-1 py-1 text-center font-bold uppercase">
+                                <td className="border border-black p-1 font-bold uppercase">
                                     {application.make_type}
                                 </td>
-                                <td className="border border-black px-1 py-1 text-center font-bold uppercase">
+                                <td className="border border-black p-1 font-bold uppercase">
                                     {application.engine_motor_no}
                                 </td>
-                                <td className="border border-black px-1 py-1 text-center font-bold uppercase">
+                                <td className="border border-black p-1 font-bold uppercase">
                                     {application.chassis_no}
                                 </td>
-                                <td className="border border-black px-1 py-1 text-center font-bold uppercase">
-                                    {application.plate_no} (#
-                                    {application.body_number})
+                                <td className="border border-black p-1 font-bold uppercase">
+                                    {application.plate_no}{" "}
+                                    {application.body_number
+                                        ? `(#${application.body_number})`
+                                        : ""}
                                 </td>
                             </tr>
                         </tbody>
                     </table>
+                </div>
 
-                    <p className="mt-8 mb-4 font-bold uppercase">PAGTITIBAY:</p>
+                {/* 9. CLOSING PARAGRAPH (No Indent, 12pt, Leading 1.0) */}
+                <div className="text-justify mb-8 text-[12pt] leading-none">
+                    <p>
+                        Ang Pagtitibay na ito ay pinagkaloob ayon sa kahilingan
+                        ng nasabing may-ari ng traysikel upang gamitin sa
+                        pagpapatala sa ilalim ng hanay ng “PAUPAHAN”.
+                    </p>
+                </div>
 
-                    <div className="mt-8 flex justify-end">
-                        <div className="flex flex-col items-center w-72">
-                            <div className="w-full border-b border-black">
-                                <p className="font-bold uppercase text-sm text-center">
-                                    {application.authorized_official || "N/A"}
-                                </p>
-                            </div>
-                            <p className="text-xs text-center mt-1">
-                                Pinunong Nagsagawa ng panunumpa at
-                                <span className="block">
-                                    Nagbigay ng Kapahintulutan
-                                </span>
-                            </p>
+                {/* 10. PINAGTITIBAY Header (Left, 12pt) */}
+                <div className="uppercase mb-4 text-[12pt]">PINAGTITIBAY:</div>
+
+                {/* 11. SIGNATORIES */}
+
+                {/* Authorized Official (Right Aligned) */}
+                <div className="flex justify-end mb-8">
+                    <div className="text-center min-w-55">
+                        <div className="font-bold uppercase border-b border-black text-[12pt]">
+                            {application.authorized_official ||
+                                "________________________"}
                         </div>
+                        <p className="text-[11pt]">
+                            Pinunong Nagsagawa ng Panunumpa at
+                        </p>
+                        <p className="text-[11pt]">
+                            Nagbigay ng Kapahintulutan
+                        </p>
                     </div>
+                </div>
 
-                    <div className="mt-16 flex justify-start">
-                        <div className="flex flex-col items-center w-72">
-                            <div className="w-full border-b border-black">
-                                <p className="font-bold uppercase text-sm text-center">
-                                    {application.punong_bayan || "N/A"}
-                                </p>
-                            </div>
-                            <p className="text-xs text-center mt-1">
-                                Punong Bayan
-                            </p>
+                {/* Punong Bayan (Left Aligned) */}
+                <div className="flex justify-start mb-8">
+                    <div className="text-center min-w-55">
+                        <div className="font-bold uppercase border-b border-black text-[12pt]">
+                            {application.punong_bayan ||
+                                "________________________"}
                         </div>
+                        <p className="text-[11pt]">Punong Bayan</p>
                     </div>
+                </div>
 
-                    <div className="text-xs mt-12 px-4">
-                        <div className="grid grid-cols-2">
-                            <div>
-                                <p>
-                                    Bayad sa O.R. Bilang:{" "}
-                                    <span className="font-bold underline ml-1">
-                                        {application.or_number}
-                                    </span>
-                                </p>
-                                <p>
-                                    Inisyu Noong:{" "}
-                                    <span className="font-bold underline ml-1">
-                                        {application.or_date
-                                            ? new Date(
-                                                  application.or_date,
-                                              ).toLocaleDateString("en-PH", {
-                                                  year: "numeric",
-                                                  month: "long",
-                                                  day: "numeric",
-                                              })
-                                            : "N/A"}
-                                    </span>
-                                </p>
-                            </div>
-                            <div className="text-right">
-                                <p>Sa Gerona, Tarlac</p>
-                            </div>
-                        </div>
+                {/* 12. FOOTER DETAILS (Left, 11pt, Leading 1.0, Values Bold & Underline) */}
+                <div className="text-[11pt] leading-none space-y-1 mb-6">
+                    <div>
+                        <span className="w-48">Bayad na sa O.R. Bilang:</span>{" "}
+                        <span className="font-bold underline">
+                            {application.or_number || "_________"}
+                        </span>
                     </div>
+                    <div>
+                        <span className="w-48">Inisyu Noong:</span>{" "}
+                        <span className="font-bold underline">
+                            {transactionDate}
+                        </span>
+                    </div>
+                    <div className="flex">
+                        <span className="w-48">Sa Gerona, Tarlac</span>
+                    </div>
+                </div>
 
-                    <p className="mt-8 italic text-[10px] text-center text-gray-500">
+                {/* 13. DISCLAIMER (11pt, Leading 1.0, Not Italic) */}
+                <div className="text-[11pt] leading-none text-justify">
+                    <p>
                         May tibay kung orihinal o may opisyal na resibo ng
                         bayarin sa pagpapatibay at may opisyal na tuyong tatak
                         ng Sangguniang Bayan.
