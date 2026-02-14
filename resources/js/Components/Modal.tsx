@@ -37,9 +37,12 @@ export default function Modal({
             <Dialog
                 as="div"
                 id="modal"
-                className="fixed inset-0 z-50 flex transform items-center overflow-y-auto px-4 py-6 transition-all sm:px-0"
+                // FIX 1: z-[999] ensures it is ALWAYS on top of the Navbar
+                // FIX 2: p-0 allows full screen on mobile
+                className="fixed inset-0 z-999 flex transform items-center justify-center overflow-y-auto p-0 transition-all sm:px-4 sm:py-6"
                 onClose={close}
             >
+                {/* BACKDROP OVERLAY */}
                 <TransitionChild
                     enter="ease-out duration-300"
                     enterFrom="opacity-0"
@@ -51,6 +54,7 @@ export default function Modal({
                     <div className="absolute inset-0 bg-gray-500/75" />
                 </TransitionChild>
 
+                {/* MODAL PANEL */}
                 <TransitionChild
                     enter="ease-out duration-300"
                     enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
@@ -60,8 +64,12 @@ export default function Modal({
                     leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
                 >
                     <DialogPanel
-                        // FIXED: Changed overflow-hidden to overflow-visible so dropdowns can pop out
-                        className={`mb-6 transform overflow-visible rounded-lg bg-white shadow-xl transition-all sm:mx-auto sm:w-full ${maxWidthClass}`}
+                        // FIX 3: Added 'relative' to ensure it sits on top of the backdrop
+                        // FIX 4: Full width/height on mobile, rounded on desktop
+                        className={`relative transform overflow-visible bg-white shadow-xl transition-all
+                        h-full w-full rounded-none
+                        sm:h-auto sm:mx-auto sm:w-full sm:rounded-lg sm:mb-6
+                        ${maxWidthClass}`}
                     >
                         {children}
                     </DialogPanel>

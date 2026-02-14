@@ -8,7 +8,7 @@ import Modal from "@/Components/Modal";
 import PermitPreview from "./Partials/PermitPreview";
 import { BARANGAYS } from "@/Constants/Barangays";
 
-// ... (Keep your MtopApplication and Props interfaces exactly the same) ...
+// Interfaces
 interface MtopApplication {
     id: number;
     mt_number: string;
@@ -50,7 +50,7 @@ export default function Index({ applications, filters }: Props) {
     const [barangay, setBarangay] = useState(filters.barangay || "");
     const [viewingApp, setViewingApp] = useState<MtopApplication | null>(null);
 
-    // ... (Keep useEffect and handleDelete exactly the same) ...
+    // 1. AUTO-SEARCH
     useEffect(() => {
         const timer = setTimeout(() => {
             router.get(
@@ -72,13 +72,13 @@ export default function Index({ applications, filters }: Props) {
         <AuthenticatedLayout>
             <Head title="MTOP Records" />
 
-            <div className="py-12">
-                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                    {/* TOOLBAR - MADE BIGGER */}
+            <div className="py-6 sm:py-12">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    {/* TOOLBAR */}
                     <div className="flex flex-col xl:flex-row justify-between items-center mb-6 gap-4">
                         <div className="flex flex-col md:flex-row gap-3 w-full xl:w-auto">
-                            {/* SEARCH - WIDER AND TALLER */}
-                            <div className="relative">
+                            {/* SEARCH */}
+                            <div className="relative w-full md:w-auto">
                                 <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-gray-500">
                                     <Icon
                                         icon="iconamoon:search-bold"
@@ -86,17 +86,17 @@ export default function Index({ applications, filters }: Props) {
                                     />
                                 </div>
                                 <TextInput
-                                    className="pl-12 w-full md:w-80 py-3 text-base" // Bigger width & padding
+                                    className="pl-12 w-full md:w-80 py-3 text-base"
                                     placeholder="Search..."
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
                                 />
                             </div>
 
-                            {/* FILTERS - TALLER & WIDER */}
-                            <div className="flex gap-3">
+                            {/* FILTERS */}
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full md:w-auto">
                                 <select
-                                    className="border-gray-300 rounded-md shadow-sm text-base py-3 pl-4 pr-10 w-48" // Wider
+                                    className="border-gray-300 rounded-md shadow-sm text-base py-3 pl-4 pr-10 w-full sm:w-48"
                                     value={barangay}
                                     onChange={(e) =>
                                         setBarangay(e.target.value)
@@ -111,7 +111,7 @@ export default function Index({ applications, filters }: Props) {
                                 </select>
 
                                 <select
-                                    className="border-gray-300 rounded-md shadow-sm text-base py-3 w-32" // Wider
+                                    className="border-gray-300 rounded-md shadow-sm text-base py-3 w-full sm:w-32"
                                     value={month}
                                     onChange={(e) => setMonth(e.target.value)}
                                 >
@@ -127,7 +127,7 @@ export default function Index({ applications, filters }: Props) {
                                 </select>
 
                                 <select
-                                    className="border-gray-300 rounded-md shadow-sm text-base py-3 w-28" // Wider
+                                    className="border-gray-300 rounded-md shadow-sm text-base py-3 w-full sm:w-28"
                                     value={year}
                                     onChange={(e) => setYear(e.target.value)}
                                 >
@@ -138,7 +138,7 @@ export default function Index({ applications, filters }: Props) {
                             </div>
                         </div>
 
-                        {/* ADD BUTTON - BIGGER */}
+                        {/* ADD BUTTON */}
                         <Link
                             href={route("mtop.create")}
                             className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg flex items-center gap-2 shadow-md w-full xl:w-auto justify-center text-base transition-transform hover:scale-105"
@@ -148,17 +148,103 @@ export default function Index({ applications, filters }: Props) {
                         </Link>
                     </div>
 
-                    {/* TABLE */}
-                    <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg border border-gray-100">
+                    {/* --- MOBILE VIEW: CARDS --- */}
+                    <div className="grid grid-cols-1 gap-4 md:hidden">
+                        {applications.data.length === 0 ? (
+                            <div className="bg-white p-6 rounded-lg shadow text-center text-gray-500">
+                                No records found.
+                            </div>
+                        ) : (
+                            applications.data.map((app) => (
+                                <div
+                                    key={app.id}
+                                    className="bg-white p-5 rounded-lg shadow-sm border border-gray-100 flex flex-col gap-4"
+                                >
+                                    {/* Card Content... */}
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                                                Control No.
+                                            </span>
+                                            <div className="font-bold text-gray-900 text-lg">
+                                                {app.mt_number || "-"}
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => setViewingApp(app)}
+                                            className="text-blue-600 bg-blue-50 p-2 rounded-full hover:bg-blue-100"
+                                        >
+                                            <Icon
+                                                icon="solar:eye-bold"
+                                                width="20"
+                                            />
+                                        </button>
+                                    </div>
+                                    <div>
+                                        <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                                            Applicant
+                                        </span>
+                                        <div className="font-bold text-gray-800 text-base">
+                                            {app.last_name}, {app.first_name}{" "}
+                                            {app.middle_name
+                                                ? app.middle_name[0] + "."
+                                                : ""}
+                                        </div>
+                                        <div className="text-sm text-gray-500 mt-1">
+                                            {app.address}
+                                        </div>
+                                    </div>
+                                    <div className="border-t border-gray-100 pt-4 flex gap-2">
+                                        <a
+                                            href={route("mtop.print", app.id)}
+                                            target="_blank"
+                                            className="flex-1 bg-green-50 text-green-700 py-2 rounded-md font-semibold text-sm flex items-center justify-center gap-2"
+                                        >
+                                            <Icon
+                                                icon="solar:printer-bold"
+                                                width="18"
+                                            />{" "}
+                                            Print
+                                        </a>
+                                        <Link
+                                            href={route("mtop.edit", app.id)}
+                                            className="flex-1 bg-blue-50 text-blue-700 py-2 rounded-md font-semibold text-sm flex items-center justify-center gap-2"
+                                        >
+                                            <Icon
+                                                icon="solar:pen-new-square-bold"
+                                                width="18"
+                                            />{" "}
+                                            Edit
+                                        </Link>
+                                        {user.role === "admin" && (
+                                            <button
+                                                onClick={() =>
+                                                    handleDelete(app.id)
+                                                }
+                                                className="bg-red-50 text-red-600 p-2 rounded-md"
+                                            >
+                                                <Icon
+                                                    icon="solar:trash-bin-trash-bold"
+                                                    width="20"
+                                                />
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+
+                    {/* --- DESKTOP VIEW: TABLE --- */}
+                    <div className="hidden md:block bg-white overflow-hidden shadow-sm sm:rounded-lg border border-gray-100">
                         <table className="w-full text-sm text-left text-gray-500">
                             <thead className="text-xs text-gray-700 uppercase bg-gray-50 border-b">
                                 <tr>
-                                    <th className="px-6 py-4">Control No.</th>{" "}
-                                    {/* Increased Padding */}
+                                    <th className="px-6 py-4">Control No.</th>
                                     <th className="px-6 py-4">
                                         Applicant Name
                                     </th>
-                                    <th className="px-6 py-4 hidden sm:table-cell">
+                                    <th className="px-6 py-4 hidden lg:table-cell">
                                         Address
                                     </th>
                                     <th className="px-6 py-4 text-center">
@@ -185,14 +271,11 @@ export default function Index({ applications, filters }: Props) {
                                             key={app.id}
                                             className="bg-white border-b hover:bg-gray-50 transition-colors"
                                         >
-                                            {/* 1. CONTROL # */}
                                             <td className="px-6 py-4">
                                                 <div className="font-bold text-gray-900 text-base">
                                                     {app.mt_number || "-"}
                                                 </div>
                                             </td>
-
-                                            {/* 2. NAME - Bigger Font */}
                                             <td className="px-6 py-4 font-bold text-gray-800 text-base">
                                                 {app.last_name},{" "}
                                                 {app.first_name}{" "}
@@ -200,67 +283,65 @@ export default function Index({ applications, filters }: Props) {
                                                     ? app.middle_name[0] + "."
                                                     : ""}
                                             </td>
-
-                                            {/* 3. ADDRESS */}
-                                            <td className="px-6 py-4 hidden sm:table-cell text-gray-600">
+                                            <td className="px-6 py-4 hidden lg:table-cell text-gray-600">
                                                 {app.address}
                                             </td>
-
-                                            {/* 4. VIEW BUTTON - Bigger */}
                                             <td className="px-6 py-4 text-center">
                                                 <button
                                                     onClick={() =>
                                                         setViewingApp(app)
                                                     }
-                                                    className="font-bold text-sm uppercase tracking-wider text-blue-600 hover:text-blue-800 hover:underline bg-blue-50 px-3 py-1 rounded-md"
+                                                    className="font-bold text-sm uppercase tracking-wider text-blue-600 hover:text-blue-800 bg-blue-50 px-3 py-1 rounded-md hover:bg-blue-100 transition-colors"
                                                 >
-                                                    View Info
+                                                    View
                                                 </button>
                                             </td>
-
-                                            {/* 5. ACTIONS - Bigger Icons */}
-                                            <td className="px-6 py-4 flex items-center justify-center gap-4">
-                                                <a
-                                                    href={route(
-                                                        "mtop.print",
-                                                        app.id,
-                                                    )}
-                                                    target="_blank"
-                                                    className="text-green-600 hover:text-green-900 tooltip"
-                                                    title="Print"
-                                                >
-                                                    <Icon
-                                                        icon="solar:printer-bold"
-                                                        width="24"
-                                                    />
-                                                </a>
-                                                <Link
-                                                    href={route(
-                                                        "mtop.edit",
-                                                        app.id,
-                                                    )}
-                                                    className="text-blue-600 hover:text-blue-900"
-                                                    title="Edit"
-                                                >
-                                                    <Icon
-                                                        icon="solar:pen-new-square-bold"
-                                                        width="24"
-                                                    />
-                                                </Link>
-                                                {user.role === "admin" && (
-                                                    <button
-                                                        onClick={() =>
-                                                            handleDelete(app.id)
-                                                        }
-                                                        className="text-red-500 hover:text-red-700 hover:cursor-pointer"
-                                                        title="Delete"
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center justify-center gap-4">
+                                                    <a
+                                                        href={route(
+                                                            "mtop.print",
+                                                            app.id,
+                                                        )}
+                                                        target="_blank"
+                                                        className="text-green-600 hover:text-green-900 tooltip"
+                                                        title="Print"
                                                     >
                                                         <Icon
-                                                            icon="solar:trash-bin-trash-bold"
+                                                            icon="solar:printer-bold"
                                                             width="24"
                                                         />
-                                                    </button>
-                                                )}
+                                                    </a>
+                                                    <Link
+                                                        href={route(
+                                                            "mtop.edit",
+                                                            app.id,
+                                                        )}
+                                                        className="text-blue-600 hover:text-blue-900"
+                                                        title="Edit"
+                                                    >
+                                                        <Icon
+                                                            icon="solar:pen-new-square-bold"
+                                                            width="24"
+                                                        />
+                                                    </Link>
+                                                    {user.role === "admin" && (
+                                                        <button
+                                                            onClick={() =>
+                                                                handleDelete(
+                                                                    app.id,
+                                                                )
+                                                            }
+                                                            className="text-red-500 hover:text-red-700"
+                                                            title="Delete"
+                                                        >
+                                                            <Icon
+                                                                icon="solar:trash-bin-trash-bold"
+                                                                width="24"
+                                                            />
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </td>
                                         </tr>
                                     ))
@@ -268,6 +349,7 @@ export default function Index({ applications, filters }: Props) {
                             </tbody>
                         </table>
                     </div>
+
                     <div className="mt-6">
                         <Pagination links={applications.links} />
                     </div>
@@ -280,19 +362,22 @@ export default function Index({ applications, filters }: Props) {
                 onClose={() => setViewingApp(null)}
                 maxWidth="2xl"
             >
-                {" "}
-                {/* WIDER MODAL (5xl) */}
                 {viewingApp && (
-                    <div className="bg-white rounded-lg shadow-xl relative z-50 overflow-hidden flex flex-col max-h-[90vh]">
+                    /* RESPONSIVE MODAL WRAPPER FIX:
+                        - 'h-[100dvh]': Full screen on mobile to handle URL bar.
+                        - 'sm:max-h-[90vh]': Limits height on Desktop so headers stay visible.
+                        - 'sm:h-auto': Allows it to be shorter if content is small.
+                    */
+                    <div className="flex flex-col h-dvh sm:h-auto sm:max-h-[90vh]">
                         {/* Header */}
-                        <div className="bg-gray-800 px-6 py-4 flex justify-between items-center shrink-0">
+                        <div className="bg-gray-800 px-6 py-4 flex justify-between items-center shrink-0 sm:rounded-t-lg">
                             <h3 className="text-white font-bold uppercase tracking-wider text-lg flex items-center gap-2">
                                 <Icon icon="solar:document-text-bold" />
                                 Information Preview
                             </h3>
                             <button
                                 onClick={() => setViewingApp(null)}
-                                className="text-gray-400 hover:text-white transition-colors"
+                                className="text-gray-400 hover:text-white transition-colors p-2"
                             >
                                 <Icon
                                     icon="solar:close-circle-bold"
@@ -301,9 +386,9 @@ export default function Index({ applications, filters }: Props) {
                             </button>
                         </div>
 
-                        {/* Content - Increased Padding */}
+                        {/* Content */}
                         <div className="overflow-y-auto p-0 bg-gray-100 flex-1">
-                            {/* Pass showHeader=false to hide duplicate header inside modal */}
+                            {/* We pass showHeader={false} because the Modal already has a nice header above */}
                             <PermitPreview
                                 data={viewingApp}
                                 showHeader={false}
@@ -311,10 +396,10 @@ export default function Index({ applications, filters }: Props) {
                         </div>
 
                         {/* Footer */}
-                        <div className="bg-white border-t px-6 py-4 flex justify-end gap-3 shrink-0">
+                        <div className="bg-white border-t px-6 py-4 flex justify-end gap-3 shrink-0 sm:rounded-b-lg pb-safe">
                             <Link
                                 href={route("mtop.edit", viewingApp.id)}
-                                className="inline-flex items-center px-6 py-3 bg-blue-600 border border-transparent rounded-lg font-semibold text-sm text-white uppercase tracking-widest hover:bg-blue-700"
+                                className="justify-center flex-1 sm:flex-none inline-flex items-center px-6 py-3 bg-blue-600 border border-transparent rounded-lg font-semibold text-sm text-white uppercase tracking-widest hover:bg-blue-700"
                             >
                                 <Icon
                                     icon="solar:pen-new-square-bold"
@@ -325,7 +410,7 @@ export default function Index({ applications, filters }: Props) {
                             </Link>
                             <button
                                 onClick={() => setViewingApp(null)}
-                                className="inline-flex items-center px-6 py-3 bg-white border border-gray-300 rounded-lg font-semibold text-sm text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50"
+                                className="justify-center flex-1 sm:flex-none inline-flex items-center px-6 py-3 bg-white border border-gray-300 rounded-lg font-semibold text-sm text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50"
                             >
                                 Close
                             </button>

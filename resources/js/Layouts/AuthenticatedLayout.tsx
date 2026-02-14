@@ -16,7 +16,8 @@ export default function Authenticated({
         useState(false);
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        // CHANGED: Replaced min-h-screen with min-h-[100dvh] to fix mobile URL bar overlapping
+        <div className="min-h-dvh bg-gray-50">
             {/* 1. NAVBAR */}
             <nav className="bg-blue-900 border-b border-blue-800 shadow-md">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -116,11 +117,6 @@ export default function Authenticated({
 
                                     <Dropdown.Content>
                                         <Dropdown.Link
-                                            href={route("profile.edit")}
-                                        >
-                                            Profile
-                                        </Dropdown.Link>
-                                        <Dropdown.Link
                                             href={route("logout")}
                                             method="post"
                                             as="button"
@@ -216,6 +212,15 @@ export default function Authenticated({
                                     className="text-white hover:bg-blue-700 focus:bg-blue-700 border-l-4 border-transparent hover:border-yellow-400"
                                 >
                                     System Users
+                                </ResponsiveNavLink>
+                                <ResponsiveNavLink
+                                    href={route("settings.print.edit")}
+                                    active={route().current(
+                                        "settings.print.edit",
+                                    )}
+                                    className="text-white hover:bg-blue-700 focus:bg-blue-700 border-l-4 border-transparent hover:border-yellow-400"
+                                >
+                                    Print Settings
                                 </ResponsiveNavLink>
                             </>
                         )}

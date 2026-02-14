@@ -1,6 +1,5 @@
 import { Icon } from "@iconify/react";
 
-// Add showHeader to props, default it to true
 export default function PermitPreview({
     data,
     showHeader = true,
@@ -39,8 +38,9 @@ export default function PermitPreview({
     };
 
     return (
-        <div className="flex flex-col h-full bg-white font-sans">
-            {/* CONDITIONAL HEADER: Only show if showHeader is true */}
+        // FIX 1: Removed 'h-full', 'flex-col'. Let the parent modal handle the height/scroll.
+        <div className="bg-white font-sans w-full">
+            {/* Header */}
             {showHeader && (
                 <div className="bg-gray-800 text-white p-3 font-bold text-center uppercase tracking-wider text-sm flex items-center justify-center gap-2 border-b border-black">
                     <Icon icon="solar:document-text-bold" />
@@ -48,103 +48,108 @@ export default function PermitPreview({
                 </div>
             )}
 
-            <div className="p-6 overflow-y-auto">
+            {/* FIX 2: Removed 'overflow-y-auto' and 'flex-1'. Just simple padding. */}
+            <div className="p-4 sm:p-8">
                 {/* --- TABLE 1: MAIN INFO --- */}
-                <table className="w-full border-collapse border border-black bg-white text-sm mb-6 shadow-sm">
-                    <tbody>
-                        <tr className="border-b border-black">
-                            <td className="p-3 bg-blue-200 font-bold w-1/3 text-blue-900 border-r border-black">
-                                NAME
-                            </td>
-                            <td className="p-3 font-bold text-gray-800 text-sm">
-                                {val(fullName)}.
-                            </td>
-                        </tr>
-                        <tr className="border-b border-black">
-                            <td className="p-3 bg-blue-200 font-bold text-blue-900 border-r border-black">
-                                USAPIN BILANG
-                            </td>
-                            <td className="p-3 font-bold text-red-600">
-                                {val(data.mt_number)}
-                            </td>
-                        </tr>
-                        <tr className="border-b border-black">
-                            <td className="p-3 bg-blue-200 font-bold text-blue-900 border-r border-black">
-                                DATE
-                            </td>
-                            <td className="p-3 font-medium text-gray-800">
-                                {formatDate(data.transaction_date)}
-                            </td>
-                        </tr>
-                        <tr className="border-b border-black">
-                            <td className="p-3 bg-blue-200 font-bold text-blue-900 border-r border-black">
-                                BARANGAY
-                            </td>
-                            <td className="p-3 font-medium text-gray-800">
-                                {val(data.address)}
-                            </td>
-                        </tr>
-                        <tr>
-                            <td className="p-3 bg-blue-200 font-bold text-blue-900 border-r border-black">
-                                EXPIRY DATE
-                            </td>
-                            <td className="p-3 font-bold text-gray-800">
-                                {formatExpiry(data.transaction_date)}
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div className="overflow-x-auto mb-6">
+                    <table className="w-full border-collapse border border-black bg-white text-xs sm:text-sm shadow-sm min-w-75">
+                        <tbody>
+                            <tr className="border-b border-black">
+                                <td className="p-2 sm:p-3 bg-blue-200 font-bold w-1/3 text-blue-900 border-r border-black align-top">
+                                    NAME
+                                </td>
+                                <td className="p-2 sm:p-3 font-bold text-gray-800 align-top">
+                                    {val(fullName)}.
+                                </td>
+                            </tr>
+                            <tr className="border-b border-black">
+                                <td className="p-2 sm:p-3 bg-blue-200 font-bold text-blue-900 border-r border-black align-top">
+                                    USAPIN BILANG
+                                </td>
+                                <td className="p-2 sm:p-3 font-bold text-red-600 align-top">
+                                    {val(data.mt_number)}
+                                </td>
+                            </tr>
+                            <tr className="border-b border-black">
+                                <td className="p-2 sm:p-3 bg-blue-200 font-bold text-blue-900 border-r border-black align-top">
+                                    DATE
+                                </td>
+                                <td className="p-2 sm:p-3 font-medium text-gray-800 align-top">
+                                    {formatDate(data.transaction_date)}
+                                </td>
+                            </tr>
+                            <tr className="border-b border-black">
+                                <td className="p-2 sm:p-3 bg-blue-200 font-bold text-blue-900 border-r border-black align-top">
+                                    BARANGAY
+                                </td>
+                                <td className="p-2 sm:p-3 font-medium text-gray-800 align-top">
+                                    {val(data.address)}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td className="p-2 sm:p-3 bg-blue-200 font-bold text-blue-900 border-r border-black align-top">
+                                    EXPIRY DATE
+                                </td>
+                                <td className="p-2 sm:p-3 font-bold text-gray-800 align-top">
+                                    {formatExpiry(data.transaction_date)}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
 
                 {/* --- TABLE 2: UNIT --- */}
-                <table className="w-full border-collapse border border-black bg-white text-xs mb-6 text-center shadow-sm">
-                    <thead>
-                        <tr className="bg-blue-300 text-blue-900 font-bold uppercase border-b border-black">
-                            <th className="p-2 border-r border-black w-1/4">
-                                GAWA AT URI
-                            </th>
-                            <th className="p-2 border-r border-black w-1/4">
-                                MOTOR BILANG
-                            </th>
-                            <th className="p-2 border-r border-black w-1/4">
-                                TSASI BILANG
-                            </th>
-                            <th className="p-2 w-1/4">PLAKA BILANG</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td className="p-2 border-r border-black font-bold text-gray-700">
-                                {val(data.make_type)}
-                            </td>
-                            <td className="p-2 border-r border-black font-bold text-gray-700">
-                                {val(data.engine_motor_no)}
-                            </td>
-                            <td className="p-2 border-r border-black font-bold text-gray-700">
-                                {val(data.chassis_no)}
-                            </td>
-                            <td className="p-2 font-bold text-blue-700 text-sm">
-                                {val(data.plate_no)}
-                                {data.body_number ? (
-                                    <span className="text-gray-500 ml-1 font-normal">
-                                        (#{data.body_number})
-                                    </span>
-                                ) : (
-                                    ""
-                                )}
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div className="overflow-x-auto mb-6">
+                    <table className="w-full border-collapse border border-black bg-white text-[10px] sm:text-xs text-center shadow-sm min-w-75">
+                        <thead>
+                            <tr className="bg-blue-300 text-blue-900 font-bold uppercase border-b border-black text-[10px] sm:text-xs">
+                                <th className="p-2 sm:p-3 border-r border-black w-1/4 align-top">
+                                    GAWA AT URI
+                                </th>
+                                <th className="p-2 sm:p-3 border-r border-black w-1/4 align-top">
+                                    MOTOR BILANG
+                                </th>
+                                <th className="p-2 sm:p-3 border-r border-black w-1/4 align-top">
+                                    TSASI BILANG
+                                </th>
+                                <th className="p-2 sm:p-3 w-1/4 align-top">
+                                    PLAKA BILANG
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td className="p-2 sm:p-3 border-r border-black font-bold text-gray-700 text-xs sm:text-sm align-top">
+                                    {val(data.make_type)}
+                                </td>
+                                <td className="p-2 sm:p-3 border-r border-black font-bold text-gray-700 text-xs sm:text-sm align-top">
+                                    {val(data.engine_motor_no)}
+                                </td>
+                                <td className="p-2 sm:p-3 border-r border-black font-bold text-gray-700 text-xs sm:text-sm align-top">
+                                    {val(data.chassis_no)}
+                                </td>
+                                <td className="p-2 sm:p-3 font-bold text-blue-700 text-xs sm:text-sm align-top">
+                                    {val(data.plate_no)}
+                                    {data.body_number ? (
+                                        <div className="text-gray-500 font-normal">
+                                            (#{data.body_number})
+                                        </div>
+                                    ) : null}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
 
                 {/* --- TABLE 3 & 4: DOCS --- */}
-                <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6">
                     {/* CEDULA */}
-                    <table className="w-full border-collapse border border-black bg-white text-xs shadow-sm">
+                    <table className="w-full border-collapse border border-black bg-white text-xs sm:text-sm shadow-sm">
                         <thead>
                             <tr className="bg-blue-300 text-blue-900 border-b border-black">
                                 <th
                                     colSpan={2}
-                                    className="p-2 font-bold text-center"
+                                    className="p-2 sm:p-3 font-bold text-center"
                                 >
                                     CEDULA
                                 </th>
@@ -152,18 +157,18 @@ export default function PermitPreview({
                         </thead>
                         <tbody>
                             <tr className="border-b border-black">
-                                <td className="p-2 bg-blue-200 font-bold text-blue-900 w-1/3 border-r border-black">
+                                <td className="p-2 sm:p-3 bg-blue-200 font-bold text-blue-900 w-1/3 border-r border-black align-top">
                                     NUMBER
                                 </td>
-                                <td className="p-2 font-mono font-bold text-gray-800 text-sm pl-3">
+                                <td className="p-2 sm:p-3 font-mono font-bold text-gray-800 pl-3 align-top">
                                     {val(data.cedula_number)}
                                 </td>
                             </tr>
                             <tr>
-                                <td className="p-2 bg-blue-200 font-bold text-blue-900 border-r border-black">
+                                <td className="p-2 sm:p-3 bg-blue-200 font-bold text-blue-900 border-r border-black align-top">
                                     DATE
                                 </td>
-                                <td className="p-2 text-gray-600 font-medium pl-3">
+                                <td className="p-2 sm:p-3 text-gray-600 font-medium pl-3 align-top">
                                     {formatDate(data.cedula_date)}
                                 </td>
                             </tr>
@@ -171,12 +176,12 @@ export default function PermitPreview({
                     </table>
 
                     {/* OFFICIAL RECEIPT */}
-                    <table className="w-full border-collapse border border-black bg-white text-xs shadow-sm">
+                    <table className="w-full border-collapse border border-black bg-white text-xs sm:text-sm shadow-sm">
                         <thead>
                             <tr className="bg-blue-300 text-blue-900 border-b border-black">
                                 <th
                                     colSpan={2}
-                                    className="p-2 font-bold text-center"
+                                    className="p-2 sm:p-3 font-bold text-center"
                                 >
                                     OFFICIAL RECEIPT
                                 </th>
@@ -184,18 +189,18 @@ export default function PermitPreview({
                         </thead>
                         <tbody>
                             <tr className="border-b border-black">
-                                <td className="p-2 bg-blue-200 font-bold text-blue-900 w-1/3 border-r border-black">
+                                <td className="p-2 sm:p-3 bg-blue-200 font-bold text-blue-900 w-1/3 border-r border-black align-top">
                                     NUMBER
                                 </td>
-                                <td className="p-2 font-mono font-bold text-gray-800 text-sm pl-3">
+                                <td className="p-2 sm:p-3 font-mono font-bold text-gray-800 pl-3 align-top">
                                     {val(data.or_number)}
                                 </td>
                             </tr>
                             <tr>
-                                <td className="p-2 bg-blue-200 font-bold text-blue-900 border-r border-black">
+                                <td className="p-2 sm:p-3 bg-blue-200 font-bold text-blue-900 border-r border-black align-top">
                                     DATE
                                 </td>
-                                <td className="p-2 text-gray-600 font-medium pl-3">
+                                <td className="p-2 sm:p-3 text-gray-600 font-medium pl-3 align-top">
                                     {formatDate(data.or_date)}
                                 </td>
                             </tr>
@@ -203,37 +208,39 @@ export default function PermitPreview({
                     </table>
                 </div>
 
-                {/* --- TABLE 5: SIGNATORIES (New Section) --- */}
-                <table className="w-full border-collapse border border-black bg-white text-xs shadow-sm">
-                    <thead>
-                        <tr className="bg-blue-300 text-blue-900 border-b border-black">
-                            <th
-                                colSpan={2}
-                                className="p-2 font-bold text-center uppercase tracking-wider"
-                            >
-                                Signatories
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr className="border-b border-black">
-                            <td className="p-2 bg-blue-200 font-bold text-blue-900 w-1/3 border-r border-black">
-                                Authorized Official
-                            </td>
-                            <td className="p-2 font-bold text-gray-800 text-sm pl-3 uppercase">
-                                {val(data.authorized_official)}
-                            </td>
-                        </tr>
-                        <tr>
-                            <td className="p-2 bg-blue-200 font-bold text-blue-900 border-r border-black">
-                                Punong Bayan
-                            </td>
-                            <td className="p-2 font-bold text-gray-800 text-sm pl-3 uppercase">
-                                {val(data.punong_bayan)}
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                {/* --- TABLE 5: SIGNATORIES --- */}
+                <div className="overflow-x-auto">
+                    <table className="w-full border-collapse border border-black bg-white text-xs sm:text-sm shadow-sm min-w-75">
+                        <thead>
+                            <tr className="bg-blue-300 text-blue-900 border-b border-black">
+                                <th
+                                    colSpan={2}
+                                    className="p-2 sm:p-3 font-bold text-center uppercase tracking-wider"
+                                >
+                                    Signatories
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr className="border-b border-black">
+                                <td className="p-2 sm:p-3 bg-blue-200 font-bold text-blue-900 w-1/3 border-r border-black align-top">
+                                    Authorized Official
+                                </td>
+                                <td className="p-2 sm:p-3 font-bold text-gray-800 pl-3 uppercase align-top">
+                                    {val(data.authorized_official)}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td className="p-2 sm:p-3 bg-blue-200 font-bold text-blue-900 border-r border-black align-top">
+                                    Punong Bayan
+                                </td>
+                                <td className="p-2 sm:p-3 font-bold text-gray-800 pl-3 uppercase align-top">
+                                    {val(data.punong_bayan)}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     );

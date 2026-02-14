@@ -33,18 +33,18 @@ export default function Edit({ user }: { user: any }) {
         >
             <Head title="Edit User" />
 
-            <div className="py-12">
-                <div className="max-w-2xl mx-auto sm:px-6 lg:px-8">
+            {/* RESPONSIVE PADDING FIX: Matches Create.tsx */}
+            <div className="pt-6 pb-32 sm:py-12">
+                <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
                     <form
                         onSubmit={submit}
-                        className="bg-white p-6 rounded-lg shadow-sm border-t-4 border-blue-600"
+                        // Added relative z-0 for stacking context
+                        className="bg-white p-4 sm:p-8 rounded-lg shadow-sm border-t-4 border-blue-600 relative z-0"
                     >
-                        <div className="flex items-center gap-2 mb-6 border-b pb-2">
-                            <Icon
-                                icon="solar:user-bold"
-                                className="text-blue-600"
-                                width="24"
-                            />
+                        <div className="flex items-center gap-2 mb-6 border-b border-gray-100 pb-4">
+                            <div className="p-2 bg-blue-50 rounded-full text-blue-600">
+                                <Icon icon="solar:user-bold" width="24" />
+                            </div>
                             <h3 className="text-lg font-bold text-gray-700">
                                 Update Credentials
                             </h3>
@@ -92,16 +92,18 @@ export default function Edit({ user }: { user: any }) {
                                 icon="solar:letter-bold"
                             />
 
-                            <div className="mb-4">
+                            {/* ROLE DROPDOWN (Fixed Z-Index) */}
+                            <div>
                                 <InputLabel
                                     htmlFor="role"
                                     value="System Role"
                                 />
                                 <div className="relative mt-1">
-                                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+                                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400 z-10">
                                         <Icon
                                             icon="solar:shield-user-bold"
                                             width="20"
+                                            height="20"
                                         />
                                     </div>
                                     <select
@@ -111,7 +113,7 @@ export default function Edit({ user }: { user: any }) {
                                         onChange={(e) =>
                                             setData("role", e.target.value)
                                         }
-                                        className="block w-full pl-10 py-3 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                                        className="block w-full pl-10 py-3 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm relative z-0"
                                     >
                                         <option value="staff">
                                             Staff (Limited Access)
@@ -129,16 +131,15 @@ export default function Edit({ user }: { user: any }) {
                         </div>
 
                         {/* 3. PASSWORD RESET (Optional) */}
-                        <div className="border-t pt-4 mt-2">
-                            <h4 className="text-sm font-bold text-gray-500 uppercase mb-3">
+                        <div className="border-t border-gray-100 pt-4 mt-2 mb-6">
+                            <h4 className="text-xs font-bold text-gray-500 uppercase mb-1">
                                 Change Password (Optional)
                             </h4>
                             <p className="text-xs text-gray-400 mb-4">
-                                Leave these blank if you do not want to change
-                                the password.
+                                Leave blank to keep the current password.
                             </p>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <InputGroup
                                     id="password"
                                     label="New Password"
@@ -172,17 +173,17 @@ export default function Edit({ user }: { user: any }) {
                             </div>
                         </div>
 
-                        {/* ACTIONS */}
-                        <div className="flex items-center justify-end gap-4 border-t pt-4">
+                        {/* ACTIONS - Responsive Flex */}
+                        <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-3 sm:gap-4 border-t border-gray-100 pt-6">
                             <Link
                                 href={route("users.index")}
-                                className="text-sm text-gray-600 underline hover:text-gray-900"
+                                className="w-full sm:w-auto text-center py-3 sm:py-2 text-sm text-gray-600 underline hover:text-gray-900 transition-colors"
                             >
                                 Cancel
                             </Link>
 
                             <PrimaryButton
-                                className="bg-blue-600 hover:bg-blue-700"
+                                className="w-full sm:w-auto justify-center bg-blue-600 hover:bg-blue-700 py-3"
                                 disabled={processing}
                             >
                                 <Icon

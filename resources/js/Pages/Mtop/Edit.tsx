@@ -7,6 +7,7 @@ import InputGroup from "@/Components/InputGroup";
 import BarangaySelect from "@/Components/BarangaySelect";
 import PermitPreview from "./Partials/PermitPreview";
 import OfficialsForm from "./Partials/OfficialsForm";
+import Modal from "@/Components/Modal"; // Added for mobile preview
 
 interface MtopApplication {
     id: number;
@@ -31,14 +32,15 @@ interface MtopApplication {
 
 export default function Edit({
     application,
-    punong_bayans, // Received from Controller
-    officials, // Received from Controller
+    punong_bayans,
+    officials,
 }: {
     application: MtopApplication;
     punong_bayans: string[];
     officials: string[];
 }) {
     const [step, setStep] = useState(1);
+    const [showMobilePreview, setShowMobilePreview] = useState(false); // Mobile Preview State
 
     // 1. INITIALIZE FORM WITH EXISTING DATA
     const { data, setData, put, processing, errors } = useForm({
@@ -72,19 +74,31 @@ export default function Edit({
     return (
         <AuthenticatedLayout
             header={
-                <div className="flex justify-center items-center h-0 gap-2">
-                    <h2 className="font-bold text-sm text-gray-700 uppercase tracking-widest">
-                        Edit MTOP Application
-                    </h2>
-                    <span className="text-xs font-black bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
-                        {application.mt_number}
-                    </span>
+                <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                        <h2 className="font-bold text-sm sm:text-base text-gray-700 uppercase tracking-widest">
+                            Edit Application
+                        </h2>
+                        <span className="text-xs font-black bg-blue-100 text-blue-800 px-2 py-0.5 rounded hidden sm:inline-block">
+                            {application.mt_number}
+                        </span>
+                    </div>
+
+                    {/* MOBILE PREVIEW ICON (Visible on screens smaller than XL) */}
+                    <button
+                        type="button"
+                        onClick={() => setShowMobilePreview(true)}
+                        className="xl:hidden p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 transition-colors"
+                        title="Preview Permit"
+                    >
+                        <Icon icon="solar:eye-bold" width="24" />
+                    </button>
                 </div>
             }
         >
             <Head title="Edit MTOP" />
 
-            <div className="py-6">
+            <div className="py-6 pb-24 sm:pb-12">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
                         {/* --- LEFT COLUMN: THE FORM CARD --- */}
@@ -94,26 +108,39 @@ export default function Edit({
                                 <button
                                     type="button"
                                     onClick={() => setStep(1)}
-                                    className={`flex-1 py-3 text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 ${step === 1 ? "bg-white text-blue-600 border-t-2 border-blue-600" : "text-gray-400 hover:text-gray-600"}`}
+                                    className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 ${
+                                        step === 1
+                                            ? "bg-white text-blue-600 border-t-2 border-blue-600"
+                                            : "text-gray-400 hover:text-gray-600"
+                                    }`}
                                 >
-                                    <Icon icon="solar:user-id-bold" /> Applicant
+                                    <Icon
+                                        icon="solar:user-id-bold"
+                                        width="18"
+                                    />{" "}
+                                    Applicant
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setStep(2)}
-                                    className={`flex-1 py-3 text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 ${step === 2 ? "bg-white text-blue-600 border-t-2 border-blue-600" : "text-gray-400 hover:text-gray-600"}`}
+                                    className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 ${
+                                        step === 2
+                                            ? "bg-white text-blue-600 border-t-2 border-blue-600"
+                                            : "text-gray-400 hover:text-gray-600"
+                                    }`}
                                 >
-                                    <Icon icon="solar:wheel-bold" /> Unit & Docs
+                                    <Icon icon="solar:wheel-bold" width="18" />{" "}
+                                    Unit & Docs
                                 </button>
                             </div>
 
-                            <form onSubmit={submit} className="p-6">
+                            <form onSubmit={submit} className="p-4 sm:p-6">
                                 {/* --- STEP 1: APPLICANT --- */}
                                 <div
                                     className={step === 1 ? "block" : "hidden"}
                                 >
-                                    <div className="grid grid-cols-12 gap-4">
-                                        <div className="col-span-6">
+                                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
+                                        <div className="sm:col-span-6">
                                             <InputGroup
                                                 id="mt_number"
                                                 label="Control / Case No."
@@ -126,10 +153,10 @@ export default function Edit({
                                                     )
                                                 }
                                                 placeholder="2026-0001"
-                                                required={true}
+                                                required
                                             />
                                         </div>
-                                        <div className="col-span-6">
+                                        <div className="sm:col-span-6">
                                             <InputGroup
                                                 id="transaction_date"
                                                 type="date"
@@ -142,16 +169,17 @@ export default function Edit({
                                                         e.target.value,
                                                     )
                                                 }
-                                                required={true}
+                                                required
                                             />
                                         </div>
 
-                                        <div className="col-span-12 border-t pt-2 mt-2"></div>
-                                        <div className="col-span-5">
+                                        <div className="sm:col-span-12 border-t pt-2 mt-2"></div>
+
+                                        <div className="sm:col-span-5">
                                             <InputGroup
                                                 id="last_name"
                                                 label="Last Name"
-                                                placeholder="DELA CRUZ"
+                                                placeholder="BAGSIC"
                                                 icon="solar:user-bold"
                                                 value={data.last_name}
                                                 onChange={(e) =>
@@ -160,14 +188,15 @@ export default function Edit({
                                                         e.target.value,
                                                     )
                                                 }
-                                                required={true}
+                                                error={errors.last_name}
+                                                required
                                             />
                                         </div>
-                                        <div className="col-span-5">
+                                        <div className="sm:col-span-5">
                                             <InputGroup
                                                 id="first_name"
                                                 label="First Name"
-                                                placeholder="JUAN"
+                                                placeholder="RICARTE"
                                                 value={data.first_name}
                                                 onChange={(e) =>
                                                     up(
@@ -175,14 +204,15 @@ export default function Edit({
                                                         e.target.value,
                                                     )
                                                 }
-                                                required={true}
+                                                error={errors.first_name}
+                                                required
                                             />
                                         </div>
-                                        <div className="col-span-2">
+                                        <div className="sm:col-span-2">
                                             <InputGroup
                                                 id="middle_name"
                                                 label="M.I."
-                                                placeholder="A"
+                                                placeholder="R"
                                                 maxLength={1}
                                                 value={data.middle_name}
                                                 onChange={(e) =>
@@ -194,13 +224,14 @@ export default function Edit({
                                             />
                                         </div>
 
-                                        <div className="col-span-12">
+                                        <div className="sm:col-span-12">
                                             <BarangaySelect
                                                 value={data.address}
                                                 onChange={(val) =>
                                                     setData("address", val)
                                                 }
-                                                required={true}
+                                                error={errors.address}
+                                                required
                                             />
                                         </div>
                                     </div>
@@ -210,29 +241,31 @@ export default function Edit({
                                 <div
                                     className={step === 2 ? "block" : "hidden"}
                                 >
-                                    <div className="grid grid-cols-12 gap-4">
-                                        <div className="col-span-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
+                                        <div className="sm:col-span-4">
                                             <InputGroup
                                                 id="body_number"
                                                 label="Body Number"
                                                 icon="solar:hashtag-square-bold"
+                                                placeholder="1616"
                                                 value={data.body_number}
                                                 onChange={(e) =>
                                                     setData(
                                                         "body_number",
-                                                        // RESTRICTION: Remove non-digits, limit to 5 chars
                                                         e.target.value
                                                             .replace(/\D/g, "")
                                                             .slice(0, 5),
                                                     )
                                                 }
-                                                required={true}
+                                                error={errors.body_number}
+                                                required
                                             />
                                         </div>
-                                        <div className="col-span-4">
+                                        <div className="sm:col-span-4">
                                             <InputGroup
                                                 id="plate_no"
                                                 label="Plate Number"
+                                                placeholder="RE1470"
                                                 icon="solar:card-reciept-bold"
                                                 value={data.plate_no}
                                                 onChange={(e) =>
@@ -241,13 +274,14 @@ export default function Edit({
                                                         e.target.value,
                                                     )
                                                 }
-                                                required={true}
+                                                error={errors.plate_no}
+                                                required
                                             />
                                         </div>
-                                        <div className="col-span-4">
+                                        <div className="sm:col-span-4">
                                             <InputGroup
                                                 id="make_type"
-                                                label="Make / Type"
+                                                label="Make/Brand"
                                                 placeholder="HONDA"
                                                 value={data.make_type}
                                                 onChange={(e) =>
@@ -256,14 +290,16 @@ export default function Edit({
                                                         e.target.value,
                                                     )
                                                 }
-                                                required={true}
+                                                error={errors.make_type}
+                                                required
                                             />
                                         </div>
 
-                                        <div className="col-span-6">
+                                        <div className="sm:col-span-6">
                                             <InputGroup
                                                 id="engine_motor_no"
                                                 label="Engine Motor No."
+                                                placeholder="KB5060..."
                                                 value={data.engine_motor_no}
                                                 onChange={(e) =>
                                                     up(
@@ -271,13 +307,15 @@ export default function Edit({
                                                         e.target.value,
                                                     )
                                                 }
-                                                required={true}
+                                                error={errors.engine_motor_no}
+                                                required
                                             />
                                         </div>
-                                        <div className="col-span-6">
+                                        <div className="sm:col-span-6">
                                             <InputGroup
                                                 id="chassis_no"
                                                 label="Chassis No."
+                                                placeholder="KB5060..."
                                                 value={data.chassis_no}
                                                 onChange={(e) =>
                                                     up(
@@ -285,21 +323,21 @@ export default function Edit({
                                                         e.target.value,
                                                     )
                                                 }
-                                                required={true}
+                                                error={errors.chassis_no}
+                                                required
                                             />
                                         </div>
 
-                                        <div className="col-span-12 border-t pt-2 mt-2"></div>
+                                        <div className="sm:col-span-12 border-t pt-2 mt-2"></div>
 
-                                        {/* DOCS SECTIONS */}
-                                        <div className="col-span-6 bg-yellow-50 p-3 rounded border border-yellow-200">
+                                        {/* DOCS */}
+                                        <div className="sm:col-span-6 bg-yellow-50 p-3 rounded-lg border border-yellow-100">
                                             <div className="font-bold text-xs text-yellow-800 uppercase mb-2">
                                                 Cedula
                                             </div>
                                             <div className="space-y-3">
                                                 <InputGroup
-                                                    id="cedula_number"
-                                                    label="No."
+                                                    label="Number"
                                                     value={data.cedula_number}
                                                     onChange={(e) =>
                                                         up(
@@ -307,10 +345,9 @@ export default function Edit({
                                                             e.target.value,
                                                         )
                                                     }
-                                                    required={true}
+                                                    required
                                                 />
                                                 <InputGroup
-                                                    id="cedula_date"
                                                     type="date"
                                                     label="Date"
                                                     value={data.cedula_date}
@@ -320,19 +357,18 @@ export default function Edit({
                                                             e.target.value,
                                                         )
                                                     }
-                                                    required={true}
+                                                    required
                                                 />
                                             </div>
                                         </div>
 
-                                        <div className="col-span-6 bg-purple-50 p-3 rounded border border-purple-200">
+                                        <div className="sm:col-span-6 bg-purple-50 p-3 rounded-lg border border-purple-100">
                                             <div className="font-bold text-xs text-purple-800 uppercase mb-2">
                                                 Official Receipt
                                             </div>
                                             <div className="space-y-3">
                                                 <InputGroup
-                                                    id="or_number"
-                                                    label="No."
+                                                    label="Number"
                                                     value={data.or_number}
                                                     onChange={(e) =>
                                                         up(
@@ -340,10 +376,9 @@ export default function Edit({
                                                             e.target.value,
                                                         )
                                                     }
-                                                    required={true}
+                                                    required
                                                 />
                                                 <InputGroup
-                                                    id="or_date"
                                                     type="date"
                                                     label="Date"
                                                     value={data.or_date}
@@ -353,13 +388,13 @@ export default function Edit({
                                                             e.target.value,
                                                         )
                                                     }
-                                                    required={true}
+                                                    required
                                                 />
                                             </div>
                                         </div>
 
-                                        {/* SIGNATORIES SECTION */}
-                                        <div className="col-span-12">
+                                        {/* SIGNATORIES */}
+                                        <div className="sm:col-span-12 mt-2">
                                             <OfficialsForm
                                                 data={data}
                                                 setData={setData}
@@ -371,8 +406,8 @@ export default function Edit({
                                     </div>
                                 </div>
 
-                                {/* --- FOOTER ACTIONS --- */}
-                                <div className="flex items-center justify-between mt-8 pt-4 border-t border-gray-100">
+                                {/* DESKTOP FOOTER (Hidden on Mobile) */}
+                                <div className="hidden sm:flex items-center justify-between mt-8 pt-4 border-t border-gray-100">
                                     <Link
                                         href={route("mtop.index")}
                                         className="text-gray-500 hover:text-red-600 text-sm font-bold"
@@ -394,10 +429,7 @@ export default function Edit({
                                         {step === 1 ? (
                                             <PrimaryButton
                                                 type="button"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    setStep(2);
-                                                }}
+                                                onClick={() => setStep(2)}
                                             >
                                                 Next Step{" "}
                                                 <Icon
@@ -422,13 +454,88 @@ export default function Edit({
                             </form>
                         </div>
 
-                        {/* --- RIGHT COLUMN: PREVIEW --- */}
+                        {/* --- RIGHT COLUMN: PREVIEW (Hidden on Mobile) --- */}
                         <div className="hidden xl:block xl:col-span-5 sticky top-6">
                             <PermitPreview data={data} />
                         </div>
                     </div>
                 </div>
             </div>
+
+            {/* --- MOBILE STICKY FOOTER --- */}
+            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 sm:hidden z-40 flex justify-between items-center safe-area-pb">
+                <Link
+                    href={route("mtop.index")}
+                    className="text-gray-500 font-bold text-sm"
+                >
+                    Cancel
+                </Link>
+                <div className="flex gap-2">
+                    {step === 2 && (
+                        <button
+                            type="button"
+                            onClick={() => setStep(1)}
+                            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-bold text-sm"
+                        >
+                            Back
+                        </button>
+                    )}
+                    {step === 1 ? (
+                        <button
+                            type="button"
+                            onClick={() => setStep(2)}
+                            className="px-6 py-2 bg-blue-600 text-white rounded-lg font-bold text-sm flex items-center"
+                        >
+                            Next{" "}
+                            <Icon
+                                icon="solar:arrow-right-bold"
+                                className="ml-1"
+                            />
+                        </button>
+                    ) : (
+                        <button
+                            onClick={submit}
+                            disabled={processing}
+                            className="px-6 py-2 bg-blue-800 text-white rounded-lg font-bold text-sm flex items-center"
+                        >
+                            <Icon icon="solar:diskette-bold" className="mr-1" />{" "}
+                            Update
+                        </button>
+                    )}
+                </div>
+            </div>
+
+            {/* --- MOBILE PREVIEW MODAL --- */}
+            <Modal
+                show={showMobilePreview}
+                onClose={() => setShowMobilePreview(false)}
+                maxWidth="2xl"
+            >
+                <div className="flex flex-col h-dvh">
+                    <div className="bg-gray-800 px-4 py-3 flex justify-between items-center shrink-0">
+                        <span className="text-white font-bold uppercase flex items-center gap-2">
+                            <Icon icon="solar:document-text-bold" /> Preview
+                        </span>
+                        <button
+                            onClick={() => setShowMobilePreview(false)}
+                            className="text-white"
+                        >
+                            <Icon icon="solar:close-circle-bold" width="24" />
+                        </button>
+                    </div>
+                    <div className="flex-1 overflow-y-auto bg-gray-100">
+                        <PermitPreview data={data} showHeader={false} />
+                    </div>
+                    <div className="p-4 bg-white border-t border-gray-200 shrink-0">
+                        <button
+                            onClick={() => setShowMobilePreview(false)}
+                            className="w-full py-3 bg-gray-100 text-gray-700 font-bold rounded-lg"
+                        >
+                            Close Preview
+                        </button>
+                    </div>
+                </div>
+            </Modal>
         </AuthenticatedLayout>
     );
 }

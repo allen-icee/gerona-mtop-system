@@ -65,13 +65,13 @@ export default function Index({ users, filters }: Props) {
                 username: user.username,
                 email: user.email || "",
                 role: user.role,
-                password: "", // Empty for edit (optional)
+                password: "",
                 password_confirmation: "",
             });
         } else {
             setEditingUser(null);
             reset();
-            setData("role", "staff"); // Default role
+            setData("role", "staff");
         }
         setIsModalOpen(true);
     };
@@ -100,12 +100,25 @@ export default function Index({ users, filters }: Props) {
         }
     };
 
+    // Helper for Role Badge Style
+    const getRoleBadge = (role: string) => (
+        <span
+            className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide border ${
+                role === "admin"
+                    ? "bg-purple-100 text-purple-700 border-purple-200"
+                    : "bg-blue-100 text-blue-700 border-blue-200"
+            }`}
+        >
+            {role}
+        </span>
+    );
+
     return (
         <AuthenticatedLayout>
             <Head title="System Users" />
 
-            <div className="py-12">
-                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <div className="py-6 sm:py-12">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     {/* TOOLBAR */}
                     <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
                         <div className="relative w-full sm:w-auto">
@@ -129,8 +142,71 @@ export default function Index({ users, filters }: Props) {
                         </button>
                     </div>
 
-                    {/* TABLE */}
-                    <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg border border-gray-100">
+                    {/* --- MOBILE VIEW: CARDS (Hidden on Desktop) --- */}
+                    <div className="grid grid-cols-1 gap-4 md:hidden">
+                        {users.data.length === 0 ? (
+                            <div className="bg-white p-6 rounded-lg shadow text-center text-gray-500">
+                                No users found.
+                            </div>
+                        ) : (
+                            users.data.map((user) => (
+                                <div
+                                    key={user.id}
+                                    className="bg-white p-5 rounded-lg shadow-sm border border-gray-100 flex flex-col gap-4"
+                                >
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <h3 className="font-bold text-gray-900 text-lg">
+                                                {user.name}
+                                            </h3>
+                                            <div className="flex items-center text-gray-500 text-sm mt-1">
+                                                <Icon
+                                                    icon="solar:user-bold"
+                                                    className="mr-1"
+                                                    width="16"
+                                                />
+                                                {user.username}
+                                            </div>
+                                        </div>
+                                        {getRoleBadge(user.role)}
+                                    </div>
+
+                                    <div className="border-t border-gray-100 pt-4 flex gap-3">
+                                        <button
+                                            onClick={() => openModal(user)}
+                                            className="flex-1 bg-blue-50 text-blue-600 py-2 rounded-md font-semibold text-sm flex items-center justify-center gap-2 hover:bg-blue-100 transition-colors"
+                                        >
+                                            <Icon
+                                                icon="solar:pen-new-square-bold"
+                                                width="18"
+                                            />
+                                            Edit
+                                        </button>
+                                        <button
+                                            onClick={() =>
+                                                handleDelete(user.id)
+                                            }
+                                            disabled={user.id === 1}
+                                            className={`flex-1 py-2 rounded-md font-semibold text-sm flex items-center justify-center gap-2 transition-colors ${
+                                                user.id === 1
+                                                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                                                    : "bg-red-50 text-red-600 hover:bg-red-100"
+                                            }`}
+                                        >
+                                            <Icon
+                                                icon="solar:trash-bin-trash-bold"
+                                                width="18"
+                                            />
+                                            Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+
+                    {/* --- DESKTOP VIEW: TABLE (Hidden on Mobile) --- */}
+                    <div className="hidden md:block bg-white overflow-hidden shadow-sm sm:rounded-lg border border-gray-100">
                         <table className="w-full text-sm text-left text-gray-500">
                             <thead className="text-xs text-gray-700 uppercase bg-gray-50 border-b">
                                 <tr>
@@ -165,15 +241,7 @@ export default function Index({ users, filters }: Props) {
                                                 {user.username}
                                             </td>
                                             <td className="px-6 py-4">
-                                                <span
-                                                    className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide border ${
-                                                        user.role === "admin"
-                                                            ? "bg-purple-100 text-purple-700 border-purple-200"
-                                                            : "bg-blue-100 text-blue-700 border-blue-200"
-                                                    }`}
-                                                >
-                                                    {user.role}
-                                                </span>
+                                                {getRoleBadge(user.role)}
                                             </td>
                                             <td className="px-6 py-4 text-center">
                                                 <div className="flex justify-center gap-4">
@@ -232,9 +300,14 @@ export default function Index({ users, filters }: Props) {
 
             {/* --- USER FORM MODAL --- */}
             <Modal show={isModalOpen} onClose={closeModal} maxWidth="xl">
-                <div className="bg-white rounded-lg shadow-xl relative z-50 overflow-visible flex flex-col">
+                {/* CLEAN WRAPPER:
+                    - We removed 'bg-white', 'shadow-xl', 'rounded', and margins.
+                    - 'Modal.tsx' now handles the background and full-screen resizing.
+                    - 'flex flex-col h-full' ensures the sticky header/footer works inside the modal panel.
+                */}
+                <div className="flex flex-col h-full sm:h-auto">
                     {/* Header */}
-                    <div className="bg-gray-800 px-6 py-4 flex justify-between items-center shrink-0 rounded-t-lg">
+                    <div className="bg-gray-800 px-6 py-4 flex justify-between items-center shrink-0 sm:rounded-t-lg">
                         <h3 className="text-white font-bold uppercase tracking-wider text-lg flex items-center gap-2">
                             <Icon
                                 icon={
@@ -247,14 +320,14 @@ export default function Index({ users, filters }: Props) {
                         </h3>
                         <button
                             onClick={closeModal}
-                            className="text-gray-400 hover:text-white transition-colors"
+                            className="text-gray-400 hover:text-white transition-colors p-2"
                         >
                             <Icon icon="solar:close-circle-bold" width="28" />
                         </button>
                     </div>
 
                     {/* Body */}
-                    <div className="p-6 bg-gray-50">
+                    <div className="p-6 bg-gray-50 overflow-y-auto flex-1">
                         <form id="user-form" onSubmit={submit}>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                 <InputGroup
@@ -296,7 +369,6 @@ export default function Index({ users, filters }: Props) {
                                     icon="solar:letter-bold"
                                 />
 
-                                {/* ROLE SELECT */}
                                 <div>
                                     <InputLabel
                                         htmlFor="role"
@@ -326,7 +398,6 @@ export default function Index({ users, filters }: Props) {
                                 </div>
                             </div>
 
-                            {/* PASSWORD SECTION */}
                             <div className="border-t border-gray-200 pt-4 mt-2">
                                 <h4 className="text-xs font-bold text-gray-500 uppercase mb-3 flex items-center gap-1">
                                     <Icon icon="solar:lock-password-bold" />
@@ -345,7 +416,7 @@ export default function Index({ users, filters }: Props) {
                                         }
                                         error={errors.password}
                                         showPasswordToggle={true}
-                                        required={!editingUser} // Required only on create
+                                        required={!editingUser}
                                     />
                                     <InputGroup
                                         id="password_confirmation"
@@ -360,7 +431,7 @@ export default function Index({ users, filters }: Props) {
                                         }
                                         error={errors.password_confirmation}
                                         showPasswordToggle={true}
-                                        required={!editingUser} // Required only on create
+                                        required={!editingUser}
                                     />
                                 </div>
                             </div>
@@ -368,13 +439,16 @@ export default function Index({ users, filters }: Props) {
                     </div>
 
                     {/* Footer */}
-                    <div className="bg-white border-t px-6 py-4 flex justify-end gap-3 rounded-b-lg">
-                        <SecondaryButton onClick={closeModal}>
+                    <div className="bg-white border-t px-6 py-4 flex justify-end gap-3 shrink-0 sm:rounded-b-lg pb-safe">
+                        <SecondaryButton
+                            onClick={closeModal}
+                            className="justify-center flex-1 sm:flex-none"
+                        >
                             Cancel
                         </SecondaryButton>
 
                         <PrimaryButton
-                            className="bg-blue-600 hover:bg-blue-700"
+                            className="bg-blue-600 hover:bg-blue-700 justify-center flex-1 sm:flex-none"
                             disabled={processing}
                             onClick={() => {
                                 (
