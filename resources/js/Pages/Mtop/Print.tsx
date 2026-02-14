@@ -1,8 +1,7 @@
-import { Head } from "@inertiajs/react";
+import { Head, Link } from "@inertiajs/react"; // Import Link
 import { useEffect } from "react";
 import PrintPage1 from "./Partials/PrintPage1";
 import PrintPage2 from "./Partials/PrintPage2";
-
 interface MtopApplication {
     id: number;
     last_name: string;
@@ -30,7 +29,8 @@ export default function Print({
     application: MtopApplication;
 }) {
     useEffect(() => {
-        window.print();
+        // Optional: Wrap in setTimeout to ensure rendering finishes
+        setTimeout(() => window.print(), 500);
     }, []);
 
     const operatorName = `${application.first_name} ${application.middle_name ? application.middle_name + ". " : ""}${application.last_name}`;
@@ -39,9 +39,7 @@ export default function Print({
         <div className="bg-gray-100 min-h-screen flex justify-center text-gray-900 print:bg-white">
             <Head title={`Print MTOP - ${application.mt_number}`} />
 
-            {/* A4 Width Container */}
             <div className="w-[210mm] print:w-full">
-                {/* PAGE 1 */}
                 <div className="bg-white shadow-md print:shadow-none print:break-after-page">
                     <PrintPage1
                         application={application}
@@ -49,7 +47,6 @@ export default function Print({
                     />
                 </div>
 
-                {/* PAGE 2 */}
                 <div className="bg-white shadow-md mt-4 print:mt-0 print:shadow-none">
                     <PrintPage2
                         application={application}
@@ -57,14 +54,14 @@ export default function Print({
                     />
                 </div>
 
-                {/* BACK BUTTON */}
+                {/* FIXED BACK BUTTON */}
                 <div className="fixed top-4 right-4 print:hidden">
-                    <button
-                        onClick={() => window.history.back()}
-                        className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded shadow font-bold text-sm"
+                    <Link
+                        href={route("mtop.index")} // Explicitly links to the index
+                        className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded shadow font-bold text-sm flex items-center gap-2"
                     >
-                        BACK
-                    </button>
+                        <span>← BACK</span>
+                    </Link>
                 </div>
 
                 <style>{`

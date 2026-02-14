@@ -192,18 +192,20 @@ export default function PrintPage1({ application, operatorName }: Props) {
                         </p>
                     </div>
                 </div>
-
-                {/* Added mt-auto to push the footer to the bottom of the 11.69in page */}
-                {printSettings?.show_footer && printSettings?.footer_path && (
-                    <div className="w-full mt-auto mb-8 px-2">
-                        <img
-                            src={`/storage/${printSettings.footer_path}`}
-                            alt="Footer"
-                            className="w-full object-contain max-h-32"
-                        />
-                    </div>
-                )}
             </div>
+            {/* END OF px-12 DIV */}
+
+            {/* FOOTER: Now Outside the padded container */}
+            {/* It will span the full width minus px-2 */}
+            {printSettings?.show_footer && printSettings?.footer_path && (
+                <div className="w-full mt-auto mb-2 px-2">
+                    <img
+                        src={`/storage/${printSettings.footer_path}`}
+                        alt="Footer"
+                        className="w-full object-contain max-h-32"
+                    />
+                </div>
+            )}
         </div>
     );
 }

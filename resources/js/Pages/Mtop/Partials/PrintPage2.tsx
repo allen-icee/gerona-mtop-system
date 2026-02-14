@@ -290,7 +290,7 @@ export default function PrintPage2({ application, operatorName }: Props) {
             {/* 4. DYNAMIC FOOTER IMAGE */}
             {/* Ilalagay ito sa dulo ng 'flex flex-col' container para sa Page 2 */}
             {printSettings?.show_footer && printSettings?.footer_path && (
-                <div className="w-full mt-auto mb-8">
+                <div className="w-full mt-auto mb-2 px-2">
                     <img
                         src={`/storage/${printSettings.footer_path}`}
                         alt="Footer"
