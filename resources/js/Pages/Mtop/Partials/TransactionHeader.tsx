@@ -38,6 +38,7 @@ export default function TransactionHeader({
                     icon="solar:folder-with-files-bold"
                     placeholder="2026-0001"
                     className="md:col-span-1"
+                    error={errors?.mt_number}
                 />
 
                 {/* 2. TRANSACTION DATE */}
@@ -51,6 +52,7 @@ export default function TransactionHeader({
                         setData("transaction_date", e.target.value)
                     }
                     icon="solar:calendar-bold"
+                    error={errors?.transaction_date}
                 />
 
                 {/* 3. VALIDITY (Read Only) */}
@@ -66,7 +68,12 @@ export default function TransactionHeader({
                             type="text"
                             disabled
                             className="block w-full pl-10 py-3 border-gray-300 bg-gray-100 text-gray-600 font-bold rounded-md shadow-sm"
-                            value={expiryDisplay()}
+                            // FIX: Added check to ensure expiryDisplay is a function before calling it
+                            value={
+                                typeof expiryDisplay === "function"
+                                    ? expiryDisplay()
+                                    : "N/A"
+                            }
                         />
                     </div>
                 </div>

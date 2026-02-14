@@ -8,6 +8,7 @@ interface Props {
 
 export default function PrintPage2({ application, operatorName }: Props) {
     const { printSettings } = usePage().props as any;
+
     // Helpers
     const formatDate = (dateString: string) => {
         if (!dateString) return "";

@@ -3,7 +3,7 @@ import { usePage } from "@inertiajs/react";
 
 interface Props {
     application: any;
-    operatorName: string;
+    operatorName: string; // Ito ay galing sa Print.tsx na pinagsama na ang names
 }
 
 export default function PrintPage1({ application, operatorName }: Props) {
@@ -18,10 +18,12 @@ export default function PrintPage1({ application, operatorName }: Props) {
             day: "numeric",
         });
     };
+
     const toTitleCase = (str: string) => {
         if (!str) return "";
         return str.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
     };
+
     const transactionDate = application.transaction_date
         ? formatDate(application.transaction_date)
         : "_________________";
@@ -41,22 +43,22 @@ export default function PrintPage1({ application, operatorName }: Props) {
                 </div>
             )}
 
-            {/* CONTENT BODY - Padding px-12 is exactly 0.5 inches */}
+            {/* CONTENT BODY */}
             <div className="px-12 flex flex-col">
-                {/* 1. OFFICE HEADER (12pt, Bold, Center, 1.0 spacing) */}
+                {/* 1. OFFICE HEADER */}
                 <div className="text-center font-bold uppercase text-[12pt] leading-none mb-8 mt-4">
                     <p>TANGGAPAN NG</p>
-                    <p>MUNICIPAL TRYCICLE FRANCHISING AND REGULATORY BOARD</p>
+                    <p>MUNICIPAL TRICYCLE FRANCHISING AND REGULATORY BOARD</p>
                 </div>
 
-                {/* 2. DATE (Right, Bold, 11px, 1.15 spacing) */}
+                {/* 2. DATE */}
                 <div className="flex justify-end mb-8">
                     <div className="text-right font-bold text-[11pt] leading-[1.15]">
                         {transactionDate}
                     </div>
                 </div>
 
-                {/* 3. TITLE (13pt, Center, Bold, 1.15 spacing) */}
+                {/* 3. TITLE */}
                 <div className="text-center font-bold uppercase mb-8 text-[13pt] leading-[1.15]">
                     <p>
                         APLIKASYON PARA SA MOTORIZED TRICYCLE OPERATOR’S PERMIT
@@ -64,7 +66,7 @@ export default function PrintPage1({ application, operatorName }: Props) {
                     </p>
                 </div>
 
-                {/* 4. USAPIN BILANG - RIGHT SIDE (Bold Label 12px) */}
+                {/* 4. USAPIN BILANG */}
                 <div className="flex justify-end mb-8 text-[12pt] leading-[1.15]">
                     <div>
                         <span>Usapin Bilang:</span>{" "}
@@ -74,11 +76,12 @@ export default function PrintPage1({ application, operatorName }: Props) {
                     </div>
                 </div>
 
-                {/* 5. BODY PARAGRAPH 1 (Justified, 12px, 1.15 spacing) */}
+                {/* 5. BODY PARAGRAPH 1 */}
                 <div className="text-justify mb-8 text-[12pt] leading-[1.15]">
                     <p>
                         Ako si{" "}
                         <span className="font-bold uppercase underline">
+                            {/* Siguraduhin na ang operatorName ay may kasama nang Suffix galing sa Print.tsx */}
                             {operatorName}
                         </span>
                         , may sapat na taong gulang, may
@@ -94,7 +97,7 @@ export default function PrintPage1({ application, operatorName }: Props) {
                     </p>
                 </div>
 
-                {/* 6. TABLE (Italic Headers - NOT BOLD) */}
+                {/* 6. TABLE */}
                 <div className="mb-8">
                     <table className="w-full border border-black border-collapse text-center text-[11pt]">
                         <thead>
@@ -135,7 +138,7 @@ export default function PrintPage1({ application, operatorName }: Props) {
                     </table>
                 </div>
 
-                {/* 7. BODY PARAGRAPHS 2 & 3 (Justified, 12px, 1.15 spacing) */}
+                {/* 7. BODY PARAGRAPHS 2 & 3 */}
                 <div className="space-y-4 mb-2 text-[12pt] leading-[1.15] text-justify">
                     <p className="indent-8">
                         Ako ay may kakayahang panatilihin ang paglilingkod at sa
@@ -152,7 +155,7 @@ export default function PrintPage1({ application, operatorName }: Props) {
                     </p>
                 </div>
 
-                {/* 8. LIST (Justified, 12px, 1.15 spacing) */}
+                {/* 8. LIST */}
                 <div className="mb-8 text-[12pt] leading-[1.15] text-justify">
                     <ol className="list-decimal ml-10 space-y-1">
                         <li className="pl-2">
@@ -172,7 +175,7 @@ export default function PrintPage1({ application, operatorName }: Props) {
                     </ol>
                 </div>
 
-                {/* 9. FINAL PARAGRAPH (Justified, 12px, 1.15 spacing) */}
+                {/* 9. FINAL PARAGRAPH */}
                 <div className="text-justify indent-8 mb-16 text-[12pt] leading-[1.15]">
                     <p>
                         Ang hindi ko pagsunod sa mga itinatadhana ng
@@ -181,9 +184,9 @@ export default function PrintPage1({ application, operatorName }: Props) {
                     </p>
                 </div>
 
-                {/* 10. SIGNATURE AREA (Right Side, 12px, 1.15 spacing) */}
+                {/* 10. SIGNATURE AREA */}
                 <div className="flex justify-end mb-4">
-                    <div className="text-center min-w-70">
+                    <div className="text-center min-w-65">
                         <div className="font-bold uppercase border-b border-black text-[12pt] leading-[1.15] px-2 mb-1">
                             {operatorName}
                         </div>
@@ -192,11 +195,29 @@ export default function PrintPage1({ application, operatorName }: Props) {
                         </p>
                     </div>
                 </div>
-            </div>
-            {/* END OF px-12 DIV */}
 
-            {/* FOOTER: Now Outside the padded container */}
-            {/* It will span the full width minus px-2 */}
+                {/* 11. FOOTER DETAILS */}
+                <div className="flex justify-end">
+                    <div className="text-left italic text-[10pt] leading-[1.15]  min-w-65">
+                        <div>
+                            <span className="w-28">SEDULA BILANG:</span>{" "}
+                            <span className="underline">
+                                {application.cedula_number || "_________"}
+                            </span>
+                        </div>
+                        <div>
+                            <span className="w-28">Petsa ng Pagkuha:</span>{" "}
+                            <span className="underline">
+                                {application.cedula_date
+                                    ? formatDate(application.cedula_date)
+                                    : "_________"}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* FOOTER */}
             {printSettings?.show_footer && printSettings?.footer_path && (
                 <div className="w-full mt-auto mb-2 px-2">
                     <img

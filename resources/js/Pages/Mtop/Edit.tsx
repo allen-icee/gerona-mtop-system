@@ -3,17 +3,23 @@ import PrimaryButton from "@/Components/PrimaryButton";
 import { Head, Link, useForm } from "@inertiajs/react";
 import { FormEventHandler, useState } from "react";
 import { Icon } from "@iconify/react";
-import InputGroup from "@/Components/InputGroup";
-import BarangaySelect from "@/Components/BarangaySelect";
-import PermitPreview from "./Partials/PermitPreview";
+import Modal from "@/Components/Modal";
+
+// Import Partials
+import TransactionHeader from "./Partials/TransactionHeader";
+import ApplicantForm from "./Partials/ApplicantForm";
+import TricycleForm from "./Partials/TricycleForm";
+import CedulaForm from "./Partials/CedulaForm";
+import OfficialReceiptForm from "./Partials/OfficialReceiptForm";
 import OfficialsForm from "./Partials/OfficialsForm";
-import Modal from "@/Components/Modal"; // Added for mobile preview
+import PermitPreview from "./Partials/PermitPreview";
 
 interface MtopApplication {
     id: number;
     last_name: string;
     first_name: string;
     middle_name: string;
+    suffix?: string;
     address: string;
     mt_number: string;
     transaction_date: string;
@@ -40,13 +46,14 @@ export default function Edit({
     officials: string[];
 }) {
     const [step, setStep] = useState(1);
-    const [showMobilePreview, setShowMobilePreview] = useState(false); // Mobile Preview State
+    const [showMobilePreview, setShowMobilePreview] = useState(false);
 
     // 1. INITIALIZE FORM WITH EXISTING DATA
     const { data, setData, put, processing, errors } = useForm({
         last_name: application.last_name || "",
         first_name: application.first_name || "",
         middle_name: application.middle_name || "",
+        suffix: application.suffix || "",
         address: application.address || "",
         mt_number: application.mt_number || "",
         transaction_date: application.transaction_date || "",
@@ -62,14 +69,22 @@ export default function Edit({
         punong_bayan: application.punong_bayan || "",
         authorized_official: application.authorized_official || "",
     });
-
+    const expiryDisplay = () => {
+        if (!data.transaction_date) return "N/A";
+        const date = new Date(data.transaction_date);
+        const expiry = new Date(date.setFullYear(date.getFullYear() + 3));
+        return expiry
+            .toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+            })
+            .toUpperCase();
+    };
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
         put(route("mtop.update", application.id));
     };
-
-    const up = (field: keyof typeof data, val: string) =>
-        setData(field, val.toUpperCase());
 
     return (
         <AuthenticatedLayout
@@ -84,7 +99,6 @@ export default function Edit({
                         </span>
                     </div>
 
-                    {/* MOBILE PREVIEW ICON (Visible on screens smaller than XL) */}
                     <button
                         type="button"
                         onClick={() => setShowMobilePreview(true)}
@@ -101,7 +115,7 @@ export default function Edit({
             <div className="py-6 pb-24 sm:pb-12">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
-                        {/* --- LEFT COLUMN: THE FORM CARD --- */}
+                        {/* --- LEFT COLUMN: FORM --- */}
                         <div className="xl:col-span-7 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                             {/* TABS */}
                             <div className="flex border-b border-gray-200 bg-gray-50">
@@ -134,279 +148,69 @@ export default function Edit({
                                 </button>
                             </div>
 
-                            <form onSubmit={submit} className="p-4 sm:p-6">
-                                {/* --- STEP 1: APPLICANT --- */}
+                            <form
+                                onSubmit={submit}
+                                className="p-4 sm:p-6 space-y-6"
+                            >
+                                {/* STEP 1: APPLICANT */}
                                 <div
-                                    className={step === 1 ? "block" : "hidden"}
+                                    className={
+                                        step === 1
+                                            ? "block space-y-6"
+                                            : "hidden"
+                                    }
                                 >
-                                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
-                                        <div className="sm:col-span-6">
-                                            <InputGroup
-                                                id="mt_number"
-                                                label="Control / Case No."
-                                                icon="solar:folder-with-files-bold"
-                                                value={data.mt_number}
-                                                onChange={(e) =>
-                                                    up(
-                                                        "mt_number",
-                                                        e.target.value,
-                                                    )
-                                                }
-                                                placeholder="2026-0001"
-                                                required
-                                            />
-                                        </div>
-                                        <div className="sm:col-span-6">
-                                            <InputGroup
-                                                id="transaction_date"
-                                                type="date"
-                                                label="Date"
-                                                icon="solar:calendar-bold"
-                                                value={data.transaction_date}
-                                                onChange={(e) =>
-                                                    setData(
-                                                        "transaction_date",
-                                                        e.target.value,
-                                                    )
-                                                }
-                                                required
-                                            />
-                                        </div>
+                                    <TransactionHeader
+                                        data={data}
+                                        setData={setData}
+                                        errors={errors}
+                                        expiryDisplay={expiryDisplay} // Ensure this is passed
+                                    />
 
-                                        <div className="sm:col-span-12 border-t pt-2 mt-2"></div>
-
-                                        <div className="sm:col-span-5">
-                                            <InputGroup
-                                                id="last_name"
-                                                label="Last Name"
-                                                placeholder="BAGSIC"
-                                                icon="solar:user-bold"
-                                                value={data.last_name}
-                                                onChange={(e) =>
-                                                    up(
-                                                        "last_name",
-                                                        e.target.value,
-                                                    )
-                                                }
-                                                error={errors.last_name}
-                                                required
-                                            />
-                                        </div>
-                                        <div className="sm:col-span-5">
-                                            <InputGroup
-                                                id="first_name"
-                                                label="First Name"
-                                                placeholder="RICARTE"
-                                                value={data.first_name}
-                                                onChange={(e) =>
-                                                    up(
-                                                        "first_name",
-                                                        e.target.value,
-                                                    )
-                                                }
-                                                error={errors.first_name}
-                                                required
-                                            />
-                                        </div>
-                                        <div className="sm:col-span-2">
-                                            <InputGroup
-                                                id="middle_name"
-                                                label="M.I."
-                                                placeholder="R"
-                                                maxLength={1}
-                                                value={data.middle_name}
-                                                onChange={(e) =>
-                                                    up(
-                                                        "middle_name",
-                                                        e.target.value,
-                                                    )
-                                                }
-                                            />
-                                        </div>
-
-                                        <div className="sm:col-span-12">
-                                            <BarangaySelect
-                                                value={data.address}
-                                                onChange={(val) =>
-                                                    setData("address", val)
-                                                }
-                                                error={errors.address}
-                                                required
-                                            />
-                                        </div>
-                                    </div>
+                                    <ApplicantForm
+                                        data={data}
+                                        setData={setData}
+                                        errors={errors}
+                                    />
                                 </div>
 
-                                {/* --- STEP 2: UNIT & DOCS --- */}
+                                {/* STEP 2: UNIT & DOCS */}
                                 <div
-                                    className={step === 2 ? "block" : "hidden"}
+                                    className={
+                                        step === 2
+                                            ? "block space-y-6"
+                                            : "hidden"
+                                    }
                                 >
-                                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
-                                        <div className="sm:col-span-4">
-                                            <InputGroup
-                                                id="body_number"
-                                                label="Body Number"
-                                                icon="solar:hashtag-square-bold"
-                                                placeholder="1616"
-                                                value={data.body_number}
-                                                onChange={(e) =>
-                                                    setData(
-                                                        "body_number",
-                                                        e.target.value
-                                                            .replace(/\D/g, "")
-                                                            .slice(0, 5),
-                                                    )
-                                                }
-                                                error={errors.body_number}
-                                                required
-                                            />
-                                        </div>
-                                        <div className="sm:col-span-4">
-                                            <InputGroup
-                                                id="plate_no"
-                                                label="Plate Number"
-                                                placeholder="RE1470"
-                                                icon="solar:card-reciept-bold"
-                                                value={data.plate_no}
-                                                onChange={(e) =>
-                                                    up(
-                                                        "plate_no",
-                                                        e.target.value,
-                                                    )
-                                                }
-                                                error={errors.plate_no}
-                                                required
-                                            />
-                                        </div>
-                                        <div className="sm:col-span-4">
-                                            <InputGroup
-                                                id="make_type"
-                                                label="Make/Brand"
-                                                placeholder="HONDA"
-                                                value={data.make_type}
-                                                onChange={(e) =>
-                                                    up(
-                                                        "make_type",
-                                                        e.target.value,
-                                                    )
-                                                }
-                                                error={errors.make_type}
-                                                required
-                                            />
-                                        </div>
+                                    <TricycleForm
+                                        data={data}
+                                        setData={setData}
+                                        errors={errors}
+                                    />
 
-                                        <div className="sm:col-span-6">
-                                            <InputGroup
-                                                id="engine_motor_no"
-                                                label="Engine Motor No."
-                                                placeholder="KB5060..."
-                                                value={data.engine_motor_no}
-                                                onChange={(e) =>
-                                                    up(
-                                                        "engine_motor_no",
-                                                        e.target.value,
-                                                    )
-                                                }
-                                                error={errors.engine_motor_no}
-                                                required
-                                            />
-                                        </div>
-                                        <div className="sm:col-span-6">
-                                            <InputGroup
-                                                id="chassis_no"
-                                                label="Chassis No."
-                                                placeholder="KB5060..."
-                                                value={data.chassis_no}
-                                                onChange={(e) =>
-                                                    up(
-                                                        "chassis_no",
-                                                        e.target.value,
-                                                    )
-                                                }
-                                                error={errors.chassis_no}
-                                                required
-                                            />
-                                        </div>
-
-                                        <div className="sm:col-span-12 border-t pt-2 mt-2"></div>
-
-                                        {/* DOCS */}
-                                        <div className="sm:col-span-6 bg-yellow-50 p-3 rounded-lg border border-yellow-100">
-                                            <div className="font-bold text-xs text-yellow-800 uppercase mb-2">
-                                                Cedula
-                                            </div>
-                                            <div className="space-y-3">
-                                                <InputGroup
-                                                    label="Number"
-                                                    value={data.cedula_number}
-                                                    onChange={(e) =>
-                                                        up(
-                                                            "cedula_number",
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                    required
-                                                />
-                                                <InputGroup
-                                                    type="date"
-                                                    label="Date"
-                                                    value={data.cedula_date}
-                                                    onChange={(e) =>
-                                                        setData(
-                                                            "cedula_date",
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                    required
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="sm:col-span-6 bg-purple-50 p-3 rounded-lg border border-purple-100">
-                                            <div className="font-bold text-xs text-purple-800 uppercase mb-2">
-                                                Official Receipt
-                                            </div>
-                                            <div className="space-y-3">
-                                                <InputGroup
-                                                    label="Number"
-                                                    value={data.or_number}
-                                                    onChange={(e) =>
-                                                        up(
-                                                            "or_number",
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                    required
-                                                />
-                                                <InputGroup
-                                                    type="date"
-                                                    label="Date"
-                                                    value={data.or_date}
-                                                    onChange={(e) =>
-                                                        setData(
-                                                            "or_date",
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                    required
-                                                />
-                                            </div>
-                                        </div>
-
-                                        {/* SIGNATORIES */}
-                                        <div className="sm:col-span-12 mt-2">
-                                            <OfficialsForm
-                                                data={data}
-                                                setData={setData}
-                                                errors={errors}
-                                                punong_bayans={punong_bayans}
-                                                officials={officials}
-                                            />
-                                        </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <CedulaForm
+                                            data={data}
+                                            setData={setData}
+                                            errors={errors}
+                                        />
+                                        <OfficialReceiptForm
+                                            data={data}
+                                            setData={setData}
+                                            errors={errors}
+                                        />
                                     </div>
+
+                                    <OfficialsForm
+                                        data={data}
+                                        setData={setData}
+                                        errors={errors}
+                                        punong_bayans={punong_bayans}
+                                        officials={officials}
+                                    />
                                 </div>
 
-                                {/* DESKTOP FOOTER (Hidden on Mobile) */}
+                                {/* DESKTOP FOOTER */}
                                 <div className="hidden sm:flex items-center justify-between mt-8 pt-4 border-t border-gray-100">
                                     <Link
                                         href={route("mtop.index")}
@@ -429,7 +233,10 @@ export default function Edit({
                                         {step === 1 ? (
                                             <PrimaryButton
                                                 type="button"
-                                                onClick={() => setStep(2)}
+                                                onClick={(e) => {
+                                                    e.preventDefault(); // This prevents the form from submitting
+                                                    setStep(2); // This moves you to the next tab
+                                                }}
                                             >
                                                 Next Step{" "}
                                                 <Icon
@@ -454,7 +261,7 @@ export default function Edit({
                             </form>
                         </div>
 
-                        {/* --- RIGHT COLUMN: PREVIEW (Hidden on Mobile) --- */}
+                        {/* RIGHT COLUMN: PREVIEW */}
                         <div className="hidden xl:block xl:col-span-5 sticky top-6">
                             <PermitPreview data={data} />
                         </div>
@@ -462,7 +269,7 @@ export default function Edit({
                 </div>
             </div>
 
-            {/* --- MOBILE STICKY FOOTER --- */}
+            {/* MOBILE STICKY FOOTER */}
             <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 sm:hidden z-40 flex justify-between items-center safe-area-pb">
                 <Link
                     href={route("mtop.index")}
@@ -505,7 +312,7 @@ export default function Edit({
                 </div>
             </div>
 
-            {/* --- MOBILE PREVIEW MODAL --- */}
+            {/* MOBILE PREVIEW MODAL */}
             <Modal
                 show={showMobilePreview}
                 onClose={() => setShowMobilePreview(false)}

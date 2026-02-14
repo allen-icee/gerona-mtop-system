@@ -7,8 +7,22 @@ export default function PermitPreview({
     data: any;
     showHeader?: boolean;
 }) {
-    const fullName =
-        `${data.last_name || ""}, ${data.first_name || ""} ${data.middle_name || ""}`.toUpperCase();
+    // UPDATE: Added suffix to the fullName string logic
+    const fullName = [
+        data.last_name,
+        data.first_name,
+        data.middle_name ? `${data.middle_name}.` : "",
+        data.suffix, // <--- Added this
+    ]
+        .filter(Boolean) // This removes empty strings if middle_name or suffix is missing
+        .join(" ")
+        .toUpperCase();
+
+    // Alternative formatting if you want the "Last Name, First Name M.I. Suffix" style:
+    const formattedName =
+        `${data.last_name || ""}, ${data.first_name || ""} ${data.middle_name ? data.middle_name + "." : ""} ${data.suffix || ""}`
+            .trim()
+            .toUpperCase();
 
     const val = (text: string) => (text ? text.toUpperCase() : "-");
 
@@ -38,7 +52,6 @@ export default function PermitPreview({
     };
 
     return (
-        // FIX 1: Removed 'h-full', 'flex-col'. Let the parent modal handle the height/scroll.
         <div className="bg-white font-sans w-full">
             {/* Header */}
             {showHeader && (
@@ -48,7 +61,6 @@ export default function PermitPreview({
                 </div>
             )}
 
-            {/* FIX 2: Removed 'overflow-y-auto' and 'flex-1'. Just simple padding. */}
             <div className="p-4 sm:p-8">
                 {/* --- TABLE 1: MAIN INFO --- */}
                 <div className="overflow-x-auto mb-6">
@@ -59,7 +71,8 @@ export default function PermitPreview({
                                     NAME
                                 </td>
                                 <td className="p-2 sm:p-3 font-bold text-gray-800 align-top">
-                                    {val(fullName)}.
+                                    {/* UPDATE: Use the formattedName including suffix */}
+                                    {val(formattedName)}
                                 </td>
                             </tr>
                             <tr className="border-b border-black">
