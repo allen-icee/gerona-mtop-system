@@ -8,6 +8,7 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\RedirectResponse; // Import this
 
 class UserController extends Controller
 {
@@ -31,14 +32,14 @@ class UserController extends Controller
         ]);
     }
 
-    // 2. SHOW CREATE FORM
+    // 2. SHOW CREATE FORM (Not strictly needed with Modals, but good to keep)
     public function create()
     {
         return Inertia::render('Users/Create');
     }
 
     // 3. STORE NEW USER
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         $request->validate([
             'name' => 'required|string|max:255',
@@ -56,10 +57,11 @@ class UserController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        return redirect()->route('users.index')->with('message', 'User created successfully');
+        // CHANGED: Use back() + 'message' for the Green Toast
+        return redirect()->back()->with('message', 'User created successfully');
     }
 
-    // 4. SHOW EDIT FORM (New!)
+    // 4. SHOW EDIT FORM (Not strictly needed with Modals)
     public function edit($id)
     {
         $user = User::findOrFail($id);
@@ -68,8 +70,8 @@ class UserController extends Controller
         ]);
     }
 
-    // 5. UPDATE USER (New!)
-    public function update(Request $request, $id)
+    // 5. UPDATE USER
+    public function update(Request $request, $id): RedirectResponse
     {
         $user = User::findOrFail($id);
 
@@ -78,42 +80,44 @@ class UserController extends Controller
             'username' => 'required|string|max:255|unique:users,username,' . $user->id,
             'email' => 'nullable|string|lowercase|email|max:255|unique:users,email,' . $user->id,
             'role' => 'required|in:admin,staff',
-            'password' => ['nullable', 'confirmed', Rules\Password::defaults()], // Nullable = Optional
+            'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        // Update basic info
         $user->name = $request->name;
         $user->username = $request->username;
         $user->email = $request->email;
         $user->role = $request->role;
 
-        // Update Password ONLY if provided (leave blank to keep current)
         if ($request->filled('password')) {
             $user->password = Hash::make($request->password);
         }
 
         $user->save();
 
-        return redirect()->route('users.index')->with('message', 'User updated successfully');
+        // CHANGED: Use back() + 'message' for the Green Toast
+        return redirect()->back()->with('message', 'User updated successfully');
     }
 
-    // 6. DELETE USER (Improved Security)
-    public function destroy($id)
+    // 6. DELETE USER
+    public function destroy($id): RedirectResponse
     {
         $user = User::findOrFail($id);
 
         // Rule 1: Cannot delete yourself
         if ($user->id === Auth::id()) {
-            return back()->withErrors(['error' => 'You cannot delete your own account.']);
+            // CHANGED: Use 'error' flash key to trigger Red Toast
+            return back()->with('error', 'You cannot delete your own account.');
         }
 
         // Rule 2: Cannot delete the Main Super Admin (ID 1)
         if ($user->id === 1) {
-            return back()->withErrors(['error' => 'The Main Administrator cannot be deleted.']);
+            // CHANGED: Use 'error' flash key to trigger Red Toast
+            return back()->with('error', 'The Main Administrator cannot be deleted.');
         }
 
         $user->delete();
 
-        return redirect()->route('users.index');
+        // CHANGED: Added 'message' to trigger Green Toast on success
+        return redirect()->back()->with('message', 'User deleted successfully');
     }
 }

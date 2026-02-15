@@ -39,7 +39,9 @@ Route::middleware('auth')->group(function () {
     Route::put('/mtop/{id}', [MtopApplicationController::class, 'update'])->name('mtop.update');
 
     Route::get('/mtop/{id}/print', [MtopApplicationController::class, 'print'])->name('mtop.print');
+    Route::get('/mtop/export', [MtopApplicationController::class, 'export'])->name('mtop.export');
 
+    Route::resource('mtop', MtopApplicationController::class);
     // ADMIN ONLY ROUTES (Delete, User Management, Signatories)
     Route::middleware(IsAdmin::class)->group(function () {
 

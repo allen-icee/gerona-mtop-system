@@ -199,7 +199,8 @@ class MtopApplicationController extends Controller
         $application = MtopApplication::findOrFail($id);
         $application->delete();
 
-        return redirect()->route('mtop.index');
+        // CHANGED: Use back() to keep filter state and add 'message' for the Toast
+        return redirect()->back()->with('message', 'Record deleted successfully.');
     }
 
     /**
@@ -211,5 +212,105 @@ class MtopApplicationController extends Controller
         return Inertia::render('Mtop/Print', [
             'application' => $application
         ]);
+    }
+    public function export(Request $request)
+    {
+        $search = $request->input('search');
+        $month = $request->input('month');
+        $year = $request->input('year');
+        $barangay = $request->input('barangay');
+
+        // Reuse the exact same filtering logic
+        $query = MtopApplication::query();
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('last_name', 'like', "%{$search}%")
+                    ->orWhere('first_name', 'like', "%{$search}%")
+                    ->orWhere('body_number', 'like', "%{$search}%")
+                    ->orWhere('mt_number', 'like', "%{$search}%")
+                    ->orWhere('plate_no', 'like', "%{$search}%");
+            });
+        }
+
+        if ($month) {
+            $query->whereMonth('transaction_date', $month);
+        }
+        if ($year) {
+            $query->whereYear('transaction_date', $year);
+        }
+        if ($barangay) {
+            $query->where('address', 'like', "%{$barangay}%");
+        }
+
+        // Get all records (no pagination)
+        $records = $query->latest()->get();
+
+        // Define CSV Headers
+        $csvFileName = 'mtop_records_' . date('Y-m-d_H-i') . '.csv';
+        $headers = [
+            "Content-type"        => "text/csv",
+            "Content-Disposition" => "attachment; filename=$csvFileName",
+            "Pragma"              => "no-cache",
+            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+            "Expires"             => "0"
+        ];
+
+        // Callback to stream the download
+        $callback = function () use ($records) {
+            $file = fopen('php://output', 'w');
+
+            // Add Header Row
+            fputcsv($file, [
+                'Control No',
+                'Transaction Date',
+                'Last Name',
+                'First Name',
+                'Middle Name',
+                'Suffix',
+                'Address',
+                'Contact #',
+                'Body Number',
+                'Plate No',
+                'Make/Type',
+                'Engine No',
+                'Chassis No',
+                'OR No',
+                'OR Date',
+                'Cedula No',
+                'Cedula Date',
+                'Valid Until',
+                'Status'
+            ]);
+
+            // Add Data Rows
+            foreach ($records as $row) {
+                fputcsv($file, [
+                    $row->mt_number,
+                    $row->transaction_date,
+                    $row->last_name,
+                    $row->first_name,
+                    $row->middle_name,
+                    $row->suffix,
+                    $row->address,
+                    $row->contact_number,
+                    $row->body_number,
+                    $row->plate_no,
+                    $row->make_type,
+                    $row->engine_motor_no,
+                    $row->chassis_no,
+                    $row->or_number,
+                    $row->or_date,
+                    $row->cedula_number,
+                    $row->cedula_date,
+                    $row->valid_until,
+                    $row->status
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }

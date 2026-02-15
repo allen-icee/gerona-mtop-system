@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Signatory;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Http\RedirectResponse; // Import this for type hinting
 
 class SignatoryController extends Controller
 {
@@ -15,7 +16,7 @@ class SignatoryController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -24,10 +25,11 @@ class SignatoryController extends Controller
 
         Signatory::create($validated);
 
-        return redirect()->back();
+        // CHANGED: Added success message for Toast
+        return redirect()->back()->with('message', 'Official added successfully.');
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, $id): RedirectResponse
     {
         $signatory = Signatory::findOrFail($id);
 
@@ -39,12 +41,15 @@ class SignatoryController extends Controller
 
         $signatory->update($validated);
 
-        return redirect()->back();
+        // CHANGED: Added success message for Toast
+        return redirect()->back()->with('message', 'Official updated successfully.');
     }
 
-    public function destroy($id)
+    public function destroy($id): RedirectResponse
     {
         Signatory::findOrFail($id)->delete();
-        return redirect()->back();
+
+        // CHANGED: Added success message for Toast
+        return redirect()->back()->with('message', 'Official deleted successfully.');
     }
 }

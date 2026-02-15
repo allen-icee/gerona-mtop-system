@@ -9,6 +9,7 @@ import PrimaryButton from "@/Components/PrimaryButton";
 import SecondaryButton from "@/Components/SecondaryButton";
 import InputLabel from "@/Components/InputLabel";
 import { useState, useEffect, FormEventHandler } from "react";
+import ConfirmDeleteModal from "@/Components/ConfirmDeleteModal"; // <--- IMPORT THIS
 
 // Props Interface
 interface User {
@@ -33,6 +34,10 @@ export default function Index({ users, filters }: Props) {
     const [search, setSearch] = useState(filters.search || "");
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<User | null>(null);
+
+    // DELETE MODAL STATE
+    const [deletingId, setDeletingId] = useState<number | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     // Form Handling
     const { data, setData, post, put, processing, errors, reset } = useForm({
@@ -94,11 +99,23 @@ export default function Index({ users, filters }: Props) {
         }
     };
 
-    const handleDelete = (id: number) => {
-        if (confirm("Are you sure you want to remove this user?")) {
-            router.delete(route("users.destroy", id));
+    // --- NEW DELETE LOGIC ---
+    const confirmDelete = (id: number) => {
+        setDeletingId(id);
+    };
+
+    const handleDelete = () => {
+        if (deletingId) {
+            setIsDeleting(true);
+            router.delete(route("users.destroy", deletingId), {
+                onFinish: () => {
+                    setDeletingId(null);
+                    setIsDeleting(false);
+                },
+            });
         }
     };
+    // ------------------------
 
     // Helper for Role Badge Style
     const getRoleBadge = (role: string) => (
@@ -142,7 +159,7 @@ export default function Index({ users, filters }: Props) {
                         </button>
                     </div>
 
-                    {/* --- MOBILE VIEW: CARDS (Hidden on Desktop) --- */}
+                    {/* --- MOBILE VIEW: CARDS --- */}
                     <div className="grid grid-cols-1 gap-4 md:hidden">
                         {users.data.length === 0 ? (
                             <div className="bg-white p-6 rounded-lg shadow text-center text-gray-500">
@@ -184,8 +201,8 @@ export default function Index({ users, filters }: Props) {
                                         </button>
                                         <button
                                             onClick={() =>
-                                                handleDelete(user.id)
-                                            }
+                                                confirmDelete(user.id)
+                                            } // CHANGED
                                             disabled={user.id === 1}
                                             className={`flex-1 py-2 rounded-md font-semibold text-sm flex items-center justify-center gap-2 transition-colors ${
                                                 user.id === 1
@@ -205,7 +222,7 @@ export default function Index({ users, filters }: Props) {
                         )}
                     </div>
 
-                    {/* --- DESKTOP VIEW: TABLE (Hidden on Mobile) --- */}
+                    {/* --- DESKTOP VIEW: TABLE --- */}
                     <div className="hidden md:block bg-white overflow-hidden shadow-sm sm:rounded-lg border border-gray-100">
                         <table className="w-full text-sm text-left text-gray-500">
                             <thead className="text-xs text-gray-700 uppercase bg-gray-50 border-b">
@@ -261,10 +278,10 @@ export default function Index({ users, filters }: Props) {
 
                                                     <button
                                                         onClick={() =>
-                                                            handleDelete(
+                                                            confirmDelete(
                                                                 user.id,
                                                             )
-                                                        }
+                                                        } // CHANGED
                                                         className={`text-red-600 hover:text-red-800 transition-colors flex items-center gap-1 font-bold ${
                                                             user.id === 1
                                                                 ? "opacity-30 cursor-not-allowed"
@@ -300,11 +317,7 @@ export default function Index({ users, filters }: Props) {
 
             {/* --- USER FORM MODAL --- */}
             <Modal show={isModalOpen} onClose={closeModal} maxWidth="xl">
-                {/* CLEAN WRAPPER:
-                    - We removed 'bg-white', 'shadow-xl', 'rounded', and margins.
-                    - 'Modal.tsx' now handles the background and full-screen resizing.
-                    - 'flex flex-col h-full' ensures the sticky header/footer works inside the modal panel.
-                */}
+                {/* ... (Keep your existing Form Modal code exactly as is) ... */}
                 <div className="flex flex-col h-full sm:h-auto">
                     {/* Header */}
                     <div className="bg-gray-800 px-6 py-4 flex justify-between items-center shrink-0 sm:rounded-t-lg">
@@ -464,6 +477,16 @@ export default function Index({ users, filters }: Props) {
                     </div>
                 </div>
             </Modal>
+
+            {/* --- CONFIRM DELETE MODAL --- */}
+            <ConfirmDeleteModal
+                show={deletingId !== null}
+                onClose={() => setDeletingId(null)}
+                onConfirm={handleDelete}
+                title="Delete User?"
+                message="Are you sure you want to remove this user from the system? They will no longer be able to login."
+                processing={isDeleting}
+            />
         </AuthenticatedLayout>
     );
 }

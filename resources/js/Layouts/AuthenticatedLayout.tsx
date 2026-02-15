@@ -5,6 +5,7 @@ import ResponsiveNavLink from "@/Components/ResponsiveNavLink";
 import { Link, usePage } from "@inertiajs/react";
 import { PropsWithChildren, ReactNode, useState } from "react";
 import { Icon } from "@iconify/react";
+import ToastListener from "@/Components/ToastListener";
 
 export default function Authenticated({
     header,
@@ -18,6 +19,7 @@ export default function Authenticated({
     return (
         // CHANGED: Replaced min-h-screen with min-h-[100dvh] to fix mobile URL bar overlapping
         <div className="min-h-dvh bg-gray-50">
+            <ToastListener />
             {/* 1. NAVBAR */}
             <nav className="bg-blue-900 border-b border-blue-800 shadow-md">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">

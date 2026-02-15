@@ -7,8 +7,8 @@ import SecondaryButton from "@/Components/SecondaryButton";
 import Modal from "@/Components/Modal";
 import TextInput from "@/Components/TextInput";
 import { Icon } from "@iconify/react";
-// 1. IMPORT HEADLESS UI SWITCH
 import { Switch } from "@headlessui/react";
+import ConfirmDeleteModal from "@/Components/ConfirmDeleteModal"; // <--- IMPORT THIS
 
 interface Signatory {
     id: number;
@@ -29,6 +29,10 @@ export default function Index({ signatories = [], filters = {} }: Props) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
 
+    // DELETE MODAL STATE
+    const [deletingId, setDeletingId] = useState<number | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+
     // 1. AUTO-SEARCH
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -42,16 +46,7 @@ export default function Index({ signatories = [], filters = {} }: Props) {
     }, [search]);
 
     // 2. FORM
-    const {
-        data,
-        setData,
-        post,
-        put,
-        delete: destroy,
-        reset,
-        errors,
-        processing,
-    } = useForm({
+    const { data, setData, post, put, reset, errors, processing } = useForm({
         name: "",
         position: "Punong Bayan",
         is_active: true,
@@ -89,11 +84,23 @@ export default function Index({ signatories = [], filters = {} }: Props) {
         }
     };
 
-    const handleDelete = (id: number) => {
-        if (confirm("Are you sure you want to delete this official?")) {
-            destroy(route("signatories.destroy", id));
+    // --- NEW DELETE LOGIC ---
+    const confirmDelete = (id: number) => {
+        setDeletingId(id);
+    };
+
+    const handleDelete = () => {
+        if (deletingId) {
+            setIsDeleting(true);
+            router.delete(route("signatories.destroy", deletingId), {
+                onFinish: () => {
+                    setDeletingId(null);
+                    setIsDeleting(false);
+                },
+            });
         }
     };
+    // ------------------------
 
     // Helper: Status Badge
     const getStatusBadge = (isActive: boolean) => (
@@ -180,7 +187,9 @@ export default function Index({ signatories = [], filters = {} }: Props) {
                                             Edit
                                         </button>
                                         <button
-                                            onClick={() => handleDelete(sig.id)}
+                                            onClick={() =>
+                                                confirmDelete(sig.id)
+                                            } // CHANGED
                                             className="flex-1 bg-red-50 text-red-600 py-2 rounded-md font-semibold text-sm flex items-center justify-center gap-2 hover:bg-red-100 transition-colors"
                                         >
                                             <Icon
@@ -250,8 +259,10 @@ export default function Index({ signatories = [], filters = {} }: Props) {
                                                     </button>
                                                     <button
                                                         onClick={() =>
-                                                            handleDelete(sig.id)
-                                                        }
+                                                            confirmDelete(
+                                                                sig.id,
+                                                            )
+                                                        } // CHANGED
                                                         className="text-red-600 hover:text-red-900 flex items-center gap-1 font-bold hover:cursor-pointer"
                                                         title="Delete"
                                                     >
@@ -278,6 +289,7 @@ export default function Index({ signatories = [], filters = {} }: Props) {
                 onClose={() => setIsModalOpen(false)}
                 maxWidth="lg"
             >
+                {/* ... (Keep your existing Form Modal content EXACTLY as it was) ... */}
                 <div className="flex flex-col h-full sm:h-auto">
                     {/* 1. HEADER */}
                     <div className="bg-gray-800 px-6 py-4 flex justify-between items-center shrink-0 sm:rounded-t-lg">
@@ -409,6 +421,16 @@ export default function Index({ signatories = [], filters = {} }: Props) {
                     </div>
                 </div>
             </Modal>
+
+            {/* --- CONFIRM DELETE MODAL --- */}
+            <ConfirmDeleteModal
+                show={deletingId !== null}
+                onClose={() => setDeletingId(null)}
+                onConfirm={handleDelete}
+                title="Delete Official?"
+                message="Are you sure you want to delete this official? They will no longer appear in new forms."
+                processing={isDeleting}
+            />
         </AuthenticatedLayout>
     );
 }

@@ -20,7 +20,7 @@ export default function PermitPreview({
 
     // Alternative formatting if you want the "Last Name, First Name M.I. Suffix" style:
     const formattedName =
-        `${data.last_name || ""}, ${data.first_name || ""} ${data.middle_name ? data.middle_name + "." : ""} ${data.suffix || ""}`
+        `${data.last_name || ""}, ${data.first_name || ""} ${data.middle_name ? data.middle_name + "." : ""}, ${data.suffix || ""}.`
             .trim()
             .toUpperCase();
 

@@ -365,7 +365,8 @@ export default function Create({
                 <div className="flex flex-col h-dvh">
                     <div className="bg-gray-800 px-4 py-3 flex justify-between items-center shrink-0">
                         <span className="text-white font-bold uppercase flex items-center gap-2">
-                            <Icon icon="solar:document-text-bold" /> Preview
+                            <Icon icon="solar:document-text-bold" /> Information
+                            Preview
                         </span>
                         <button
                             onClick={() => setShowMobilePreview(false)}

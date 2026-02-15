@@ -7,6 +7,7 @@ import TextInput from "@/Components/TextInput";
 import Modal from "@/Components/Modal";
 import PermitPreview from "./Partials/PermitPreview";
 import { BARANGAYS } from "@/Constants/Barangays";
+import ConfirmDeleteModal from "@/Components/ConfirmDeleteModal";
 
 // Interfaces
 interface MtopApplication {
@@ -15,6 +16,7 @@ interface MtopApplication {
     last_name: string;
     first_name: string;
     middle_name: string;
+    suffix?: string;
     body_number: string;
     address: string;
     plate_no: string;
@@ -49,7 +51,8 @@ export default function Index({ applications, filters }: Props) {
     const [year, setYear] = useState(filters.year || "");
     const [barangay, setBarangay] = useState(filters.barangay || "");
     const [viewingApp, setViewingApp] = useState<MtopApplication | null>(null);
-
+    const [deletingId, setDeletingId] = useState<number | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false); // Add processing state
     // 1. AUTO-SEARCH
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -61,10 +64,18 @@ export default function Index({ applications, filters }: Props) {
         }, 300);
         return () => clearTimeout(timer);
     }, [search, month, year, barangay]);
-
-    const handleDelete = (id: number) => {
-        if (confirm("Are you sure? This cannot be undone.")) {
-            router.delete(route("mtop.destroy", id));
+    const confirmDelete = (id: number) => {
+        setDeletingId(id);
+    };
+    const handleDelete = () => {
+        if (deletingId) {
+            setIsDeleting(true);
+            router.delete(route("mtop.destroy", deletingId), {
+                onFinish: () => {
+                    setDeletingId(null);
+                    setIsDeleting(false);
+                },
+            });
         }
     };
 
@@ -76,7 +87,8 @@ export default function Index({ applications, filters }: Props) {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     {/* TOOLBAR */}
                     <div className="flex flex-col xl:flex-row justify-between items-center mb-6 gap-4">
-                        <div className="flex flex-col md:flex-row gap-3 w-full xl:w-auto">
+                        {/* SEARCH & FILTERS CONTAINER */}
+                        <div className="flex flex-col md:flex-row gap-3 w-full xl:w-auto flex-wrap">
                             {/* SEARCH */}
                             <div className="relative w-full md:w-auto">
                                 <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-gray-500">
@@ -94,7 +106,7 @@ export default function Index({ applications, filters }: Props) {
                             </div>
 
                             {/* FILTERS */}
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full md:w-auto">
+                            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto flex-wrap">
                                 <select
                                     className="border-gray-300 rounded-md shadow-sm text-base py-3 pl-4 pr-10 w-full sm:w-48"
                                     value={barangay}
@@ -138,17 +150,40 @@ export default function Index({ applications, filters }: Props) {
                             </div>
                         </div>
 
-                        {/* ADD BUTTON */}
-                        <Link
-                            href={route("mtop.create")}
-                            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg flex items-center gap-2 shadow-md w-full xl:w-auto justify-center text-base transition-transform hover:scale-105"
-                        >
-                            <Icon icon="solar:add-circle-bold" width="24" />
-                            Add New Record
-                        </Link>
+                        {/* ACTIONS (EXPORT + ADD) */}
+                        <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
+                            {/* EXPORT BUTTON */}
+                            <a
+                                href={route("mtop.export", {
+                                    _query: {
+                                        search,
+                                        month,
+                                        year,
+                                        barangay,
+                                    },
+                                })}
+                                target="_blank"
+                                className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg flex items-center justify-center gap-2 shadow-md w-full sm:w-auto text-base transition-transform hover:scale-105"
+                            >
+                                <Icon
+                                    icon="solar:file-download-bold"
+                                    width="24"
+                                />
+                                Export Excel
+                            </a>
+
+                            {/* ADD BUTTON */}
+                            <Link
+                                href={route("mtop.create")}
+                                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg flex items-center justify-center gap-2 shadow-md w-full sm:w-auto text-base transition-transform hover:scale-105"
+                            >
+                                <Icon icon="solar:add-circle-bold" width="24" />
+                                Add New Record
+                            </Link>
+                        </div>
                     </div>
 
-                    {/* --- MOBILE VIEW: CARDS --- */}
+                    {/* --- MOBILE VIEW: CARDS (UNCHANGED) --- */}
                     <div className="grid grid-cols-1 gap-4 md:hidden">
                         {applications.data.length === 0 ? (
                             <div className="bg-white p-6 rounded-lg shadow text-center text-gray-500">
@@ -160,7 +195,6 @@ export default function Index({ applications, filters }: Props) {
                                     key={app.id}
                                     className="bg-white p-5 rounded-lg shadow-sm border border-gray-100 flex flex-col gap-4"
                                 >
-                                    {/* Card Content... */}
                                     <div className="flex justify-between items-start">
                                         <div>
                                             <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
@@ -188,6 +222,9 @@ export default function Index({ applications, filters }: Props) {
                                             {app.last_name}, {app.first_name}{" "}
                                             {app.middle_name
                                                 ? app.middle_name[0] + "."
+                                                : ""}{" "}
+                                            {app.suffix
+                                                ? app.suffix + ". "
                                                 : ""}
                                         </div>
                                         <div className="text-sm text-gray-500 mt-1">
@@ -219,13 +256,14 @@ export default function Index({ applications, filters }: Props) {
                                         {user.role === "admin" && (
                                             <button
                                                 onClick={() =>
-                                                    handleDelete(app.id)
+                                                    confirmDelete(app.id)
                                                 }
-                                                className="bg-red-50 text-red-600 p-2 rounded-md"
+                                                className="inline-flex items-center justify-center bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 p-1.5 rounded-md transition-colors"
+                                                title="Delete"
                                             >
                                                 <Icon
                                                     icon="solar:trash-bin-trash-bold"
-                                                    width="20"
+                                                    width="18"
                                                 />
                                             </button>
                                         )}
@@ -235,7 +273,7 @@ export default function Index({ applications, filters }: Props) {
                         )}
                     </div>
 
-                    {/* --- DESKTOP VIEW: TABLE --- */}
+                    {/* --- DESKTOP VIEW: TABLE (UPDATED) --- */}
                     <div className="hidden md:block bg-white overflow-hidden shadow-sm sm:rounded-lg border border-gray-100">
                         <table className="w-full text-sm text-left text-gray-500">
                             <thead className="text-xs text-gray-700 uppercase bg-gray-50 border-b">
@@ -281,63 +319,76 @@ export default function Index({ applications, filters }: Props) {
                                                 {app.first_name}{" "}
                                                 {app.middle_name
                                                     ? app.middle_name[0] + "."
+                                                    : ""}{" "}
+                                                {app.suffix
+                                                    ? app.suffix + ". "
                                                     : ""}
                                             </td>
                                             <td className="px-6 py-4 hidden lg:table-cell text-gray-600">
                                                 {app.address}
                                             </td>
+
+                                            {/* UPDATED VIEW BUTTON WITH ICON */}
                                             <td className="px-6 py-4 text-center">
                                                 <button
                                                     onClick={() =>
                                                         setViewingApp(app)
                                                     }
-                                                    className="font-bold text-sm uppercase tracking-wider text-blue-600 hover:text-blue-800 bg-blue-50 px-3 py-1 rounded-md hover:bg-blue-100 transition-colors"
+                                                    className="inline-flex items-center justify-center gap-2 font-bold text-sm uppercase tracking-wider text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-3 py-1.5 rounded-md hover:bg-indigo-100 transition-colors"
                                                 >
+                                                    <Icon
+                                                        icon="solar:eye-bold"
+                                                        width="18"
+                                                    />
                                                     View
                                                 </button>
                                             </td>
+
+                                            {/* UPDATED ACTIONS WITH ICONS & TEXT */}
                                             <td className="px-6 py-4">
-                                                <div className="flex items-center justify-center gap-4">
+                                                <div className="flex items-center justify-center gap-2">
                                                     <a
                                                         href={route(
                                                             "mtop.print",
                                                             app.id,
                                                         )}
                                                         target="_blank"
-                                                        className="text-green-600 hover:text-green-900 tooltip"
-                                                        title="Print"
+                                                        className="inline-flex items-center gap-1.5 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 px-3 py-1.5 rounded-md font-semibold text-sm transition-colors"
+                                                        title="Print Permit"
                                                     >
                                                         <Icon
                                                             icon="solar:printer-bold"
-                                                            width="24"
+                                                            width="18"
                                                         />
+                                                        Print
                                                     </a>
                                                     <Link
                                                         href={route(
                                                             "mtop.edit",
                                                             app.id,
                                                         )}
-                                                        className="text-blue-600 hover:text-blue-900"
-                                                        title="Edit"
+                                                        className="inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800 px-3 py-1.5 rounded-md font-semibold text-sm transition-colors"
+                                                        title="Edit Application"
                                                     >
                                                         <Icon
                                                             icon="solar:pen-new-square-bold"
-                                                            width="24"
+                                                            width="18"
                                                         />
+                                                        Edit
                                                     </Link>
                                                     {user.role === "admin" && (
                                                         <button
                                                             onClick={() =>
-                                                                handleDelete(
+                                                                confirmDelete(
                                                                     app.id,
                                                                 )
                                                             }
-                                                            className="text-red-500 hover:text-red-700"
+                                                            className="inline-flex items-center justify-center bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 p-1.5 rounded-md transition-colors"
                                                             title="Delete"
                                                         >
                                                             <Icon
                                                                 icon="solar:trash-bin-trash-bold"
-                                                                width="24"
+                                                                width="18"
                                                             />
                                                         </button>
                                                     )}
@@ -363,13 +414,7 @@ export default function Index({ applications, filters }: Props) {
                 maxWidth="2xl"
             >
                 {viewingApp && (
-                    /* RESPONSIVE MODAL WRAPPER FIX:
-                        - 'h-[100dvh]': Full screen on mobile to handle URL bar.
-                        - 'sm:max-h-[90vh]': Limits height on Desktop so headers stay visible.
-                        - 'sm:h-auto': Allows it to be shorter if content is small.
-                    */
                     <div className="flex flex-col h-dvh sm:h-auto sm:max-h-[90vh]">
-                        {/* Header */}
                         <div className="bg-gray-800 px-6 py-4 flex justify-between items-center shrink-0 sm:rounded-t-lg">
                             <h3 className="text-white font-bold uppercase tracking-wider text-lg flex items-center gap-2">
                                 <Icon icon="solar:document-text-bold" />
@@ -386,16 +431,13 @@ export default function Index({ applications, filters }: Props) {
                             </button>
                         </div>
 
-                        {/* Content */}
                         <div className="overflow-y-auto p-0 bg-gray-100 flex-1">
-                            {/* We pass showHeader={false} because the Modal already has a nice header above */}
                             <PermitPreview
                                 data={viewingApp}
                                 showHeader={false}
                             />
                         </div>
 
-                        {/* Footer */}
                         <div className="bg-white border-t px-6 py-4 flex justify-end gap-3 shrink-0 sm:rounded-b-lg pb-safe">
                             <Link
                                 href={route("mtop.edit", viewingApp.id)}
@@ -418,6 +460,12 @@ export default function Index({ applications, filters }: Props) {
                     </div>
                 )}
             </Modal>
+            <ConfirmDeleteModal
+                show={deletingId !== null}
+                onClose={() => setDeletingId(null)}
+                onConfirm={handleDelete}
+                processing={isDeleting}
+            />
         </AuthenticatedLayout>
     );
 }
