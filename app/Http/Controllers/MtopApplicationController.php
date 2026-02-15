@@ -24,7 +24,6 @@ class MtopApplicationController extends Controller
 
         $query = MtopApplication::query();
 
-        // Search Logic
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('last_name', 'like', "%{$search}%")
@@ -35,7 +34,6 @@ class MtopApplicationController extends Controller
             });
         }
 
-        // Filter Logic
         if ($month) {
             $query->whereMonth('transaction_date', $month);
         }
@@ -63,7 +61,6 @@ class MtopApplicationController extends Controller
     {
         $year = now()->year;
 
-        // Find the latest MT number for this year
         $lastApp = MtopApplication::where('mt_number', 'like', "$year-%")
             ->orderBy('id', 'desc')
             ->first();
@@ -94,12 +91,11 @@ class MtopApplicationController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        // UPDATE: Added comma (\,) to the regex rules below
         $validated = $request->validate([
-            // NAMES: Letters, spaces, dots, dashes, AND COMMAS allowed.
             'last_name'   => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
             'first_name'  => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
             'middle_name' => ['nullable', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
+            'suffix'      => ['nullable', 'string', 'max:10', 'regex:/^[a-zA-Z\s\.\,\-]+$/'], // ADDED SUFFIX
 
             'address'        => 'required|string|max:100',
             'contact_number' => ['nullable', 'regex:/^(09|\+639)\d{9}$/'],
@@ -107,19 +103,16 @@ class MtopApplicationController extends Controller
             'transaction_date' => 'required|date',
             'mt_number'        => 'nullable|string|max:20',
 
-            // UNIT
-            'body_number'     => ['required', 'regex:/^[0-9]+$/'], // Numbers only
+            'body_number'     => ['required', 'regex:/^[0-9]+$/'],
             'plate_no'        => ['required', 'string', 'max:20'],
             'make_type'       => 'required|string|max:30',
             'engine_motor_no' => 'required|string|max:30',
             'chassis_no'      => 'required|string|max:30',
 
-            // DOCS & OFFICIALS
             'cedula_number'       => 'nullable|string|max:20',
             'cedula_date'         => 'nullable|date',
             'or_number'           => 'nullable|string|max:20',
             'or_date'             => 'nullable|date',
-            // UPDATE: Allowed comma here
             'punong_bayan'        => ['nullable', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
             'authorized_official' => ['nullable', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
         ]);
@@ -127,9 +120,14 @@ class MtopApplicationController extends Controller
         $validated['valid_until'] = Carbon::parse($request->transaction_date)->addYears(3);
         $validated['status'] = 'draft';
 
-        MtopApplication::create($validated);
+        $mtop = MtopApplication::create($validated);
 
-        return redirect()->route('mtop.index');
+        // CHANGED: Redirect BACK with success_data instead of going to Index
+        return redirect()->back()->with('success_data', [
+            'id' => $mtop->id,
+            'mt_number' => $mtop->mt_number,
+            'operator_name' => $mtop->first_name . ' ' . $mtop->last_name . ($mtop->suffix ? ' ' . $mtop->suffix : ''),
+        ]);
     }
 
     /**
@@ -155,11 +153,11 @@ class MtopApplicationController extends Controller
     {
         $application = MtopApplication::findOrFail($id);
 
-        // UPDATE: Added comma (\,) to the regex rules below
         $validated = $request->validate([
             'last_name'   => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
             'first_name'  => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
             'middle_name' => ['nullable', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
+            'suffix'      => ['nullable', 'string', 'max:10', 'regex:/^[a-zA-Z\s\.\,\-]+$/'], // ADDED SUFFIX
 
             'address'          => 'required|string|max:100',
             'transaction_date' => 'required|date',
@@ -175,7 +173,6 @@ class MtopApplicationController extends Controller
             'cedula_date'         => 'nullable|date',
             'or_number'           => 'nullable|string|max:20',
             'or_date'             => 'nullable|date',
-            // UPDATE: Allowed comma here
             'punong_bayan'        => ['nullable', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
             'authorized_official' => ['nullable', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
         ]);
@@ -186,7 +183,12 @@ class MtopApplicationController extends Controller
 
         $application->update($validated);
 
-        return redirect()->route('mtop.index');
+        // CHANGED: Redirect BACK with success_data for the modal
+        return redirect()->back()->with('success_data', [
+            'id' => $application->id,
+            'mt_number' => $application->mt_number,
+            'operator_name' => $application->first_name . ' ' . $application->last_name . ($application->suffix ? ' ' . $application->suffix : ''),
+        ]);
     }
 
     /**

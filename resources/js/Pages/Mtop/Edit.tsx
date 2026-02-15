@@ -13,6 +13,7 @@ import CedulaForm from "./Partials/CedulaForm";
 import OfficialReceiptForm from "./Partials/OfficialReceiptForm";
 import OfficialsForm from "./Partials/OfficialsForm";
 import PermitPreview from "./Partials/PermitPreview";
+import PrintSuccessModal from "./Partials/PrintSuccessModal";
 
 interface MtopApplication {
     id: number;
@@ -47,7 +48,8 @@ export default function Edit({
 }) {
     const [step, setStep] = useState(1);
     const [showMobilePreview, setShowMobilePreview] = useState(false);
-
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [updatedRecord, setUpdatedRecord] = useState<any>(null);
     // 1. INITIALIZE FORM WITH EXISTING DATA
     const { data, setData, put, processing, errors } = useForm({
         last_name: application.last_name || "",
@@ -69,6 +71,7 @@ export default function Edit({
         punong_bayan: application.punong_bayan || "",
         authorized_official: application.authorized_official || "",
     });
+
     const expiryDisplay = () => {
         if (!data.transaction_date) return "N/A";
         const date = new Date(data.transaction_date);
@@ -81,9 +84,19 @@ export default function Edit({
             })
             .toUpperCase();
     };
+
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        put(route("mtop.update", application.id));
+        put(route("mtop.update", application.id), {
+            onSuccess: (page: any) => {
+                // Check for flash data from controller
+                const successData = page.props.flash?.success_data;
+                if (successData) {
+                    setUpdatedRecord(successData);
+                    setShowSuccessModal(true);
+                }
+            },
+        });
     };
 
     return (
@@ -117,7 +130,7 @@ export default function Edit({
                     <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
                         {/* --- LEFT COLUMN: FORM --- */}
                         <div className="xl:col-span-7 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                            {/* TABS */}
+                            {/* 3-STEP TABS */}
                             <div className="flex border-b border-gray-200 bg-gray-50">
                                 <button
                                     type="button"
@@ -144,7 +157,22 @@ export default function Edit({
                                     }`}
                                 >
                                     <Icon icon="solar:wheel-bold" width="18" />{" "}
-                                    Unit & Docs
+                                    Unit
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setStep(3)}
+                                    className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 ${
+                                        step === 3
+                                            ? "bg-white text-blue-600 border-t-2 border-blue-600"
+                                            : "text-gray-400 hover:text-gray-600"
+                                    }`}
+                                >
+                                    <Icon
+                                        icon="solar:file-check-bold"
+                                        width="18"
+                                    />{" "}
+                                    Docs
                                 </button>
                             </div>
 
@@ -164,9 +192,8 @@ export default function Edit({
                                         data={data}
                                         setData={setData}
                                         errors={errors}
-                                        expiryDisplay={expiryDisplay} // Ensure this is passed
+                                        expiryDisplay={expiryDisplay}
                                     />
-
                                     <ApplicantForm
                                         data={data}
                                         setData={setData}
@@ -174,7 +201,7 @@ export default function Edit({
                                     />
                                 </div>
 
-                                {/* STEP 2: UNIT & DOCS */}
+                                {/* STEP 2: UNIT */}
                                 <div
                                     className={
                                         step === 2
@@ -187,7 +214,16 @@ export default function Edit({
                                         setData={setData}
                                         errors={errors}
                                     />
+                                </div>
 
+                                {/* STEP 3: DOCS & SIGNATORIES */}
+                                <div
+                                    className={
+                                        step === 3
+                                            ? "block space-y-6"
+                                            : "hidden"
+                                    }
+                                >
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <CedulaForm
                                             data={data}
@@ -200,7 +236,6 @@ export default function Edit({
                                             errors={errors}
                                         />
                                     </div>
-
                                     <OfficialsForm
                                         data={data}
                                         setData={setData}
@@ -220,22 +255,25 @@ export default function Edit({
                                     </Link>
 
                                     <div className="flex gap-3">
-                                        {step === 2 && (
+                                        {step > 1 && (
                                             <button
                                                 type="button"
-                                                onClick={() => setStep(1)}
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    setStep(step - 1);
+                                                }}
                                                 className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md font-bold hover:bg-gray-200 text-sm"
                                             >
                                                 Back
                                             </button>
                                         )}
 
-                                        {step === 1 ? (
+                                        {step < 3 ? (
                                             <PrimaryButton
                                                 type="button"
                                                 onClick={(e) => {
-                                                    e.preventDefault(); // This prevents the form from submitting
-                                                    setStep(2); // This moves you to the next tab
+                                                    e.preventDefault(); // Prevent submit
+                                                    setStep(step + 1);
                                                 }}
                                             >
                                                 Next Step{" "}
@@ -248,6 +286,7 @@ export default function Edit({
                                             <PrimaryButton
                                                 className="bg-blue-800 hover:bg-blue-900"
                                                 disabled={processing}
+                                                // Submit is handled by form onSubmit, so no onClick needed here unless strictly required
                                             >
                                                 <Icon
                                                     icon="solar:diskette-bold"
@@ -268,7 +307,12 @@ export default function Edit({
                     </div>
                 </div>
             </div>
-
+            <PrintSuccessModal
+                show={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                action="update"
+                data={updatedRecord}
+            />
             {/* MOBILE STICKY FOOTER */}
             <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 sm:hidden z-40 flex justify-between items-center safe-area-pb">
                 <Link
@@ -278,19 +322,25 @@ export default function Edit({
                     Cancel
                 </Link>
                 <div className="flex gap-2">
-                    {step === 2 && (
+                    {step > 1 && (
                         <button
                             type="button"
-                            onClick={() => setStep(1)}
+                            onClick={(e) => {
+                                e.preventDefault();
+                                setStep(step - 1);
+                            }}
                             className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-bold text-sm"
                         >
                             Back
                         </button>
                     )}
-                    {step === 1 ? (
+                    {step < 3 ? (
                         <button
                             type="button"
-                            onClick={() => setStep(2)}
+                            onClick={(e) => {
+                                e.preventDefault();
+                                setStep(step + 1);
+                            }}
                             className="px-6 py-2 bg-blue-600 text-white rounded-lg font-bold text-sm flex items-center"
                         >
                             Next{" "}

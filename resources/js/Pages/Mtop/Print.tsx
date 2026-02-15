@@ -7,6 +7,7 @@ interface MtopApplication {
     last_name: string;
     first_name: string;
     middle_name: string;
+    suffix: string;
     address: string;
     mt_number: string;
     transaction_date: string;
@@ -33,8 +34,11 @@ export default function Print({
         setTimeout(() => window.print(), 500);
     }, []);
 
-    const operatorName = `${application.first_name} ${application.middle_name ? application.middle_name + ". " : ""}${application.last_name}`;
-
+    const operatorName = `${application.first_name} ${
+        application.middle_name ? application.middle_name + ". " : ""
+    }${application.last_name}${
+        application.suffix ? " " + application.suffix : ""
+    }`;
     return (
         <div className="bg-gray-100 min-h-screen flex justify-center text-gray-900 print:bg-white">
             <Head title={`Print MTOP - ${application.mt_number}`} />

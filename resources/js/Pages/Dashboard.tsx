@@ -88,7 +88,7 @@ export default function Dashboard({
                             </div>
                         </div>
 
-                        {/* Card 3: Active Users (Visible to Admin only generally, but kept for layout consistency) */}
+                        {/* Card 3: Active Users */}
                         <div className="bg-white p-6 rounded-lg shadow-sm border-t-4 border-green-500 flex items-center justify-between sm:col-span-2 md:col-span-1">
                             <div>
                                 <p className="text-gray-500 text-xs sm:text-sm font-medium uppercase tracking-wider">
@@ -164,20 +164,20 @@ export default function Dashboard({
                             </span>
                         </Link>
 
-                        {/* Action: Profile Settings */}
+                        {/* Action: Manage Signatories (REPLACED PROFILE) */}
                         <Link
-                            href={route("profile.edit")}
+                            href={route("signatories.index")}
                             className="group bg-white p-4 sm:p-6 rounded-xl shadow-sm hover:shadow-md transition-all border border-gray-100 flex flex-col items-center text-center gap-3 hover:-translate-y-1"
                         >
-                            <div className="p-3 sm:p-4 bg-gray-50 text-gray-600 rounded-full group-hover:bg-gray-600 group-hover:text-white transition-colors">
+                            <div className="p-3 sm:p-4 bg-indigo-50 text-indigo-600 rounded-full group-hover:bg-indigo-600 group-hover:text-white transition-colors">
                                 <Icon
-                                    icon="solar:settings-bold"
+                                    icon="solar:pen-new-square-bold"
                                     width="24"
                                     className="sm:w-8 sm:h-8"
                                 />
                             </div>
-                            <span className="font-semibold text-sm sm:text-base text-gray-700 group-hover:text-gray-900 leading-tight">
-                                My Profile
+                            <span className="font-semibold text-sm sm:text-base text-gray-700 group-hover:text-indigo-900 leading-tight">
+                                Manage Signatories
                             </span>
                         </Link>
                     </div>

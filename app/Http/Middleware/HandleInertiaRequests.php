@@ -34,6 +34,12 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            // ADD THIS FLASH BLOCK
+            'flash' => [
+                'success_data' => fn() => $request->session()->get('success_data'),
+                'message' => fn() => $request->session()->get('message'),
+                'error' => fn() => $request->session()->get('error'),
+            ],
             'printSettings' => \App\Models\PrintSetting::first(),
         ];
     }
