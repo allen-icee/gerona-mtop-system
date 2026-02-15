@@ -3,6 +3,7 @@ import PrimaryButton from "@/Components/PrimaryButton";
 import { Head, Link, useForm } from "@inertiajs/react";
 import { FormEventHandler, useState } from "react";
 import { Icon } from "@iconify/react";
+import toast from "react-hot-toast";
 import Modal from "@/Components/Modal";
 
 // Import Partials
@@ -50,8 +51,10 @@ export default function Edit({
     const [showMobilePreview, setShowMobilePreview] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [updatedRecord, setUpdatedRecord] = useState<any>(null);
+
     // 1. INITIALIZE FORM WITH EXISTING DATA
-    const { data, setData, put, processing, errors } = useForm({
+    // We destructured 'isDirty' here to track changes
+    const { data, setData, put, processing, errors, isDirty } = useForm({
         last_name: application.last_name || "",
         first_name: application.first_name || "",
         middle_name: application.middle_name || "",
@@ -71,6 +74,50 @@ export default function Edit({
         punong_bayan: application.punong_bayan || "",
         authorized_official: application.authorized_official || "",
     });
+
+    // 2. VALIDATION LOGIC
+    const requiredFields = {
+        1: ["last_name", "first_name", "address", "transaction_date"],
+        2: [
+            "body_number",
+            "plate_no",
+            "make_type",
+            "engine_motor_no",
+            "chassis_no",
+        ],
+        3: [
+            "cedula_number",
+            "cedula_date",
+            "or_number",
+            "or_date",
+            "punong_bayan",
+            "authorized_official",
+        ],
+    };
+
+    const isStepValid = (stepNum: number) => {
+        // @ts-ignore
+        const fields = requiredFields[stepNum];
+        // @ts-ignore
+        return fields.every(
+            (field: string) =>
+                data[field as keyof typeof data] &&
+                String(data[field as keyof typeof data]).trim() !== "",
+        );
+    };
+
+    const handleNext = () => {
+        if (isStepValid(step)) {
+            setStep(step + 1);
+        } else {
+            toast.error(
+                "Please fill in all required fields before proceeding.",
+            );
+        }
+    };
+
+    // Check if WHOLE form is valid (no empty required fields)
+    const isFormValid = isStepValid(1) && isStepValid(2) && isStepValid(3);
 
     const expiryDisplay = () => {
         if (!data.transaction_date) return "N/A";
@@ -149,7 +196,13 @@ export default function Edit({
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={() => setStep(2)}
+                                    onClick={() => {
+                                        if (isStepValid(1)) setStep(2);
+                                        else
+                                            toast.error(
+                                                "Complete Step 1 first",
+                                            );
+                                    }}
                                     className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 ${
                                         step === 2
                                             ? "bg-white text-blue-600 border-t-2 border-blue-600"
@@ -161,7 +214,14 @@ export default function Edit({
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={() => setStep(3)}
+                                    onClick={() => {
+                                        if (isStepValid(1) && isStepValid(2))
+                                            setStep(3);
+                                        else
+                                            toast.error(
+                                                "Complete Step 1 & 2 first",
+                                            );
+                                    }}
                                     className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 ${
                                         step === 3
                                             ? "bg-white text-blue-600 border-t-2 border-blue-600"
@@ -273,8 +333,13 @@ export default function Edit({
                                                 type="button"
                                                 onClick={(e) => {
                                                     e.preventDefault(); // Prevent submit
-                                                    setStep(step + 1);
+                                                    handleNext();
                                                 }}
+                                                className={
+                                                    !isStepValid(step)
+                                                        ? "opacity-50 cursor-not-allowed"
+                                                        : ""
+                                                }
                                             >
                                                 Next Step{" "}
                                                 <Icon
@@ -284,9 +349,18 @@ export default function Edit({
                                             </PrimaryButton>
                                         ) : (
                                             <PrimaryButton
-                                                className="bg-blue-800 hover:bg-blue-900"
-                                                disabled={processing}
-                                                // Submit is handled by form onSubmit, so no onClick needed here unless strictly required
+                                                className={`bg-blue-800 hover:bg-blue-900 ${
+                                                    !isDirty ||
+                                                    processing ||
+                                                    !isFormValid
+                                                        ? "opacity-50 cursor-not-allowed"
+                                                        : ""
+                                                }`}
+                                                disabled={
+                                                    processing ||
+                                                    !isDirty ||
+                                                    !isFormValid
+                                                }
                                             >
                                                 <Icon
                                                     icon="solar:diskette-bold"
@@ -339,9 +413,13 @@ export default function Edit({
                             type="button"
                             onClick={(e) => {
                                 e.preventDefault();
-                                setStep(step + 1);
+                                handleNext();
                             }}
-                            className="px-6 py-2 bg-blue-600 text-white rounded-lg font-bold text-sm flex items-center"
+                            className={`px-6 py-2 bg-blue-600 text-white rounded-lg font-bold text-sm flex items-center ${
+                                !isStepValid(step)
+                                    ? "opacity-70 cursor-not-allowed"
+                                    : ""
+                            }`}
                         >
                             Next{" "}
                             <Icon
@@ -352,8 +430,12 @@ export default function Edit({
                     ) : (
                         <button
                             onClick={submit}
-                            disabled={processing}
-                            className="px-6 py-2 bg-blue-800 text-white rounded-lg font-bold text-sm flex items-center"
+                            disabled={processing || !isDirty || !isFormValid}
+                            className={`px-6 py-2 bg-blue-800 text-white rounded-lg font-bold text-sm flex items-center ${
+                                !isDirty || processing || !isFormValid
+                                    ? "opacity-50 cursor-not-allowed"
+                                    : ""
+                            }`}
                         >
                             <Icon icon="solar:diskette-bold" className="mr-1" />{" "}
                             Update

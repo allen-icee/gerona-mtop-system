@@ -1,9 +1,9 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import PrimaryButton from "@/Components/PrimaryButton";
 import { Head, Link, useForm, usePage } from "@inertiajs/react";
-import { FormEventHandler, useState, useEffect } from "react";
+import { FormEventHandler, useState } from "react";
 import { Icon } from "@iconify/react";
-import InputGroup from "@/Components/InputGroup";
+import toast from "react-hot-toast";
 import Modal from "@/Components/Modal";
 
 // Partials
@@ -58,6 +58,50 @@ export default function Create({
         punong_bayan: "",
         authorized_official: "",
     });
+
+    // VALIDATION LOGIC
+    const requiredFields = {
+        1: ["last_name", "first_name", "address", "transaction_date"],
+        2: [
+            "body_number",
+            "plate_no",
+            "make_type",
+            "engine_motor_no",
+            "chassis_no",
+        ],
+        3: [
+            "cedula_number",
+            "cedula_date",
+            "or_number",
+            "or_date",
+            "punong_bayan",
+            "authorized_official",
+        ],
+    };
+
+    const isStepValid = (stepNum: number) => {
+        // @ts-ignore
+        const fields = requiredFields[stepNum];
+        // @ts-ignore
+        return fields.every(
+            (field: string) =>
+                data[field as keyof typeof data] &&
+                String(data[field as keyof typeof data]).trim() !== "",
+        );
+    };
+
+    const handleNext = () => {
+        if (isStepValid(step)) {
+            setStep(step + 1);
+        } else {
+            toast.error(
+                "Please fill in all required fields before proceeding.",
+            );
+        }
+    };
+
+    // Check if WHOLE form (Step 1 & 2) is valid for saving
+    const isFormValid = isStepValid(1) && isStepValid(2) && isStepValid(3);
 
     const expiryDisplay = () => {
         if (!data.transaction_date) return "N/A";
@@ -132,7 +176,13 @@ export default function Create({
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={() => setStep(2)}
+                                    onClick={() => {
+                                        if (isStepValid(1)) setStep(2);
+                                        else
+                                            toast.error(
+                                                "Complete Step 1 first",
+                                            );
+                                    }}
                                     className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 ${
                                         step === 2
                                             ? "bg-white text-blue-600 border-t-2 border-blue-600"
@@ -144,7 +194,14 @@ export default function Create({
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={() => setStep(3)}
+                                    onClick={() => {
+                                        if (isStepValid(1) && isStepValid(2))
+                                            setStep(3);
+                                        else
+                                            toast.error(
+                                                "Complete Step 1 & 2 first",
+                                            );
+                                    }}
                                     className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 ${
                                         step === 3
                                             ? "bg-white text-blue-600 border-t-2 border-blue-600"
@@ -255,8 +312,11 @@ export default function Create({
                                         {step < 3 ? (
                                             <PrimaryButton
                                                 type="button"
-                                                onClick={() =>
-                                                    setStep(step + 1)
+                                                onClick={handleNext}
+                                                className={
+                                                    !isStepValid(step)
+                                                        ? "opacity-50 cursor-not-allowed"
+                                                        : ""
                                                 }
                                             >
                                                 Next Step{" "}
@@ -267,8 +327,14 @@ export default function Create({
                                             </PrimaryButton>
                                         ) : (
                                             <PrimaryButton
-                                                className="bg-green-600 hover:bg-green-700"
-                                                disabled={processing}
+                                                className={`bg-green-600 hover:bg-green-700 ${
+                                                    processing || !isFormValid
+                                                        ? "opacity-50 cursor-not-allowed"
+                                                        : ""
+                                                }`}
+                                                disabled={
+                                                    processing || !isFormValid
+                                                }
                                             >
                                                 <Icon
                                                     icon="solar:diskette-bold"
@@ -289,72 +355,14 @@ export default function Create({
                     </div>
                 </div>
             </div>
+
+            {/* --- PRINT SUCCESS MODAL (Replaces inline Success Modal) --- */}
             <PrintSuccessModal
                 show={showSuccessModal}
                 onClose={() => setShowSuccessModal(false)}
                 action="create"
                 data={createdRecord}
             />
-            {/* --- SUCCESS MODAL --- */}
-            <Modal
-                show={showSuccessModal}
-                onClose={() => setShowSuccessModal(false)}
-                maxWidth="md"
-            >
-                <div className="p-6 flex flex-col items-center text-center">
-                    <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-4">
-                        <Icon icon="solar:check-circle-bold" width="40" />
-                    </div>
-
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">
-                        Application Saved!
-                    </h3>
-                    <p className="text-gray-500 mb-6 text-sm">
-                        The MTOP application has been successfully created.
-                    </p>
-
-                    {createdRecord && (
-                        <div className="w-full bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6">
-                            <p className="text-xs text-gray-500 uppercase tracking-wide font-bold">
-                                Case Number
-                            </p>
-                            <p className="text-lg font-bold text-blue-700 mb-2">
-                                {createdRecord.mt_number}
-                            </p>
-
-                            <p className="text-xs text-gray-500 uppercase tracking-wide font-bold">
-                                Applicant
-                            </p>
-                            <p className="text-base font-medium text-gray-800 uppercase">
-                                {createdRecord.operator_name}
-                            </p>
-                        </div>
-                    )}
-
-                    <div className="w-full space-y-3">
-                        <a
-                            href={
-                                createdRecord
-                                    ? route("mtop.print", createdRecord.id)
-                                    : "#"
-                            }
-                            target="_blank"
-                            className=" w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-sm flex items-center justify-center gap-2 transition-colors"
-                        >
-                            <Icon icon="solar:printer-bold" width="20" />
-                            Print this as Document
-                        </a>
-
-                        <Link
-                            href={route("mtop.index")}
-                            className=" w-full py-3 bg-white border-2 border-gray-200 text-gray-700 font-bold rounded-lg hover:bg-gray-50 flex items-center justify-center gap-2 transition-colors"
-                        >
-                            <Icon icon="solar:list-bold" width="20" />
-                            Go to MTOP Records
-                        </Link>
-                    </div>
-                </div>
-            </Modal>
 
             {/* MOBILE PREVIEW MODAL */}
             <Modal

@@ -52,21 +52,34 @@ export default function Index({ applications, filters }: Props) {
     const [barangay, setBarangay] = useState(filters.barangay || "");
     const [viewingApp, setViewingApp] = useState<MtopApplication | null>(null);
     const [deletingId, setDeletingId] = useState<number | null>(null);
-    const [isDeleting, setIsDeleting] = useState(false); // Add processing state
-    // 1. AUTO-SEARCH
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    // 1. SEARCH & AUTO-REFRESH (POLLING)
     useEffect(() => {
-        const timer = setTimeout(() => {
+        // Search Debounce (waits 300ms after typing)
+        const searchTimer = setTimeout(() => {
             router.get(
                 route("mtop.index"),
                 { search, month, year, barangay },
                 { preserveState: true, replace: true },
             );
         }, 300);
-        return () => clearTimeout(timer);
+
+        // Polling (Refreshes data every 10 seconds to sync with other staff)
+        const pollInterval = setInterval(() => {
+            router.reload({ only: ["applications"] });
+        }, 10000);
+
+        return () => {
+            clearTimeout(searchTimer);
+            clearInterval(pollInterval);
+        };
     }, [search, month, year, barangay]);
+
     const confirmDelete = (id: number) => {
         setDeletingId(id);
     };
+
     const handleDelete = () => {
         if (deletingId) {
             setIsDeleting(true);
@@ -183,7 +196,7 @@ export default function Index({ applications, filters }: Props) {
                         </div>
                     </div>
 
-                    {/* --- MOBILE VIEW: CARDS (UNCHANGED) --- */}
+                    {/* --- MOBILE VIEW: CARDS --- */}
                     <div className="grid grid-cols-1 gap-4 md:hidden">
                         {applications.data.length === 0 ? (
                             <div className="bg-white p-6 rounded-lg shadow text-center text-gray-500">
@@ -223,9 +236,7 @@ export default function Index({ applications, filters }: Props) {
                                             {app.middle_name
                                                 ? app.middle_name[0] + "."
                                                 : ""}{" "}
-                                            {app.suffix
-                                                ? app.suffix + ". "
-                                                : ""}
+                                            {app.suffix ? app.suffix : ""}
                                         </div>
                                         <div className="text-sm text-gray-500 mt-1">
                                             {app.address}
@@ -258,12 +269,11 @@ export default function Index({ applications, filters }: Props) {
                                                 onClick={() =>
                                                     confirmDelete(app.id)
                                                 }
-                                                className="inline-flex items-center justify-center bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 p-1.5 rounded-md transition-colors"
-                                                title="Delete"
+                                                className="bg-red-50 text-red-600 p-2 rounded-md"
                                             >
                                                 <Icon
                                                     icon="solar:trash-bin-trash-bold"
-                                                    width="18"
+                                                    width="20"
                                                 />
                                             </button>
                                         )}
@@ -273,7 +283,7 @@ export default function Index({ applications, filters }: Props) {
                         )}
                     </div>
 
-                    {/* --- DESKTOP VIEW: TABLE (UPDATED) --- */}
+                    {/* --- DESKTOP VIEW: TABLE --- */}
                     <div className="hidden md:block bg-white overflow-hidden shadow-sm sm:rounded-lg border border-gray-100">
                         <table className="w-full text-sm text-left text-gray-500">
                             <thead className="text-xs text-gray-700 uppercase bg-gray-50 border-b">
@@ -327,8 +337,6 @@ export default function Index({ applications, filters }: Props) {
                                             <td className="px-6 py-4 hidden lg:table-cell text-gray-600">
                                                 {app.address}
                                             </td>
-
-                                            {/* UPDATED VIEW BUTTON WITH ICON */}
                                             <td className="px-6 py-4 text-center">
                                                 <button
                                                     onClick={() =>
@@ -343,8 +351,6 @@ export default function Index({ applications, filters }: Props) {
                                                     View
                                                 </button>
                                             </td>
-
-                                            {/* UPDATED ACTIONS WITH ICONS & TEXT */}
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center justify-center gap-2">
                                                     <a
@@ -460,6 +466,8 @@ export default function Index({ applications, filters }: Props) {
                     </div>
                 )}
             </Modal>
+
+            {/* --- DELETE CONFIRMATION MODAL --- */}
             <ConfirmDeleteModal
                 show={deletingId !== null}
                 onClose={() => setDeletingId(null)}

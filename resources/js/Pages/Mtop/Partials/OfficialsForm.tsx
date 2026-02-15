@@ -1,13 +1,12 @@
 import SignatorySelect from "@/Components/SignatorySelect";
 import { Icon } from "@iconify/react";
 
-// FIX: Define the props to include 'data', 'punong_bayans', and 'officials'
 interface Props {
-    data: any; // Accepts the form data object
-    setData: Function; // Accepts the setData function
-    errors: any; // Accepts the errors object
-    punong_bayans: string[]; // List of names for the dropdown
-    officials: string[]; // List of names for the dropdown
+    data: any;
+    setData: (field: string, value: any) => void;
+    errors: any;
+    punong_bayans: string[];
+    officials: string[];
 }
 
 export default function OfficialsForm({
@@ -18,15 +17,16 @@ export default function OfficialsForm({
     officials = [],
 }: Props) {
     return (
-        <div className="bg-white p-6 rounded-lg shadow-sm border-l-4 border-gray-600">
-            <div className="flex items-center gap-2 mb-6 border-b pb-2">
+        <div className="space-y-2">
+            {/* Section Header */}
+            <div className="flex items-center gap-2 text-gray-800 border-b border-gray-200 pb-2">
                 <Icon
                     icon="solar:pen-new-square-bold"
                     className="text-gray-600"
-                    width="24"
+                    width="20"
                 />
-                <h3 className="text-lg font-bold text-gray-700 uppercase">
-                    3. Signatories (Mga Pumirma)
+                <h3 className="font-bold text-base uppercase tracking-wide">
+                    Signatories (Mga Pumirma)
                 </h3>
             </div>
 
@@ -52,10 +52,18 @@ export default function OfficialsForm({
                 />
             </div>
 
-            <p className="text-xs text-gray-500 mt-2 italic">
-                * Type to search. You can also type a new name if it's not in
-                the list.
-            </p>
+            <div className="flex items-start gap-2 bg-blue-50 p-3 rounded-lg border border-blue-100">
+                <Icon
+                    icon="solar:info-circle-bold"
+                    className="text-blue-500 mt-0.5 shrink-0"
+                    width="16"
+                />
+                <p className="text-xs text-blue-700 leading-relaxed">
+                    <strong>Pro-tip:</strong> You can type to search existing
+                    officials or type a new name manually if they aren't on the
+                    list.
+                </p>
+            </div>
         </div>
     );
 }
