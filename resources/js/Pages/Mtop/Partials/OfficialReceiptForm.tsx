@@ -1,10 +1,14 @@
 import InputGroup from "@/Components/InputGroup";
 import { Icon } from "@iconify/react";
 
-export default function OfficialReceiptForm({ data, setData, errors }: any) {
+export default function OfficialReceiptForm({
+    data,
+    setData,
+    errors,
+    onKeyDown, // <--- Add this
+}: any) {
     return (
         <div className="space-y-2">
-            {/* Section Header */}
             <div className="flex items-center gap-2 text-gray-800 border-b border-gray-200 pb-2">
                 <Icon
                     icon="solar:bill-check-bold"
@@ -16,7 +20,6 @@ export default function OfficialReceiptForm({ data, setData, errors }: any) {
                 </h3>
             </div>
 
-            {/* Changed to grid-cols-1 for vertical stacking */}
             <div className="grid grid-cols-1 gap-4">
                 <InputGroup
                     id="or_number"
@@ -32,6 +35,7 @@ export default function OfficialReceiptForm({ data, setData, errors }: any) {
                     icon="solar:hashtag-bold"
                     placeholder="e.g. OR-12345"
                     required={true}
+                    onKeyDown={onKeyDown} // <--- Pass it down
                 />
                 <InputGroup
                     id="or_date"
@@ -42,6 +46,7 @@ export default function OfficialReceiptForm({ data, setData, errors }: any) {
                     onChange={(e: any) => setData("or_date", e.target.value)}
                     icon="solar:calendar-date-bold"
                     required={true}
+                    onKeyDown={onKeyDown} // <--- Pass it down
                 />
             </div>
         </div>

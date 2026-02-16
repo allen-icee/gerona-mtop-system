@@ -7,6 +7,9 @@ interface Props {
     errors: any;
     punong_bayans: string[];
     officials: string[];
+    onKeyDown?: (
+        e: React.KeyboardEvent<HTMLInputElement | HTMLSelectElement>,
+    ) => void; // <--- Add this to the Interface
 }
 
 export default function OfficialsForm({
@@ -15,10 +18,10 @@ export default function OfficialsForm({
     errors,
     punong_bayans = [],
     officials = [],
+    onKeyDown, // <--- Destructure it
 }: Props) {
     return (
         <div className="space-y-2">
-            {/* Section Header */}
             <div className="flex items-center gap-2 text-gray-800 border-b border-gray-200 pb-2">
                 <Icon
                     icon="solar:pen-new-square-bold"
@@ -31,7 +34,6 @@ export default function OfficialsForm({
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Authorized Official Selector */}
                 <SignatorySelect
                     label="Authorized Official"
                     value={data.authorized_official}
@@ -39,9 +41,9 @@ export default function OfficialsForm({
                     options={officials}
                     error={errors.authorized_official}
                     required={true}
+                    onKeyDown={onKeyDown} // <--- Pass it down
                 />
 
-                {/* Punong Bayan Selector */}
                 <SignatorySelect
                     label="Punong Bayan"
                     value={data.punong_bayan}
@@ -49,6 +51,7 @@ export default function OfficialsForm({
                     options={punong_bayans}
                     error={errors.punong_bayan}
                     required={true}
+                    onKeyDown={onKeyDown} // <--- Pass it down
                 />
             </div>
 

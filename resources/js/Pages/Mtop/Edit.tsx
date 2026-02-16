@@ -53,7 +53,6 @@ export default function Edit({
     const [updatedRecord, setUpdatedRecord] = useState<any>(null);
 
     // 1. INITIALIZE FORM WITH EXISTING DATA
-    // We destructured 'isDirty' here to track changes
     const { data, setData, put, processing, errors, isDirty } = useForm({
         last_name: application.last_name || "",
         first_name: application.first_name || "",
@@ -106,31 +105,8 @@ export default function Edit({
         );
     };
 
-    const handleNext = () => {
-        if (isStepValid(step)) {
-            setStep(step + 1);
-        } else {
-            toast.error(
-                "Please fill in all required fields before proceeding.",
-            );
-        }
-    };
-
-    // Check if WHOLE form is valid (no empty required fields)
+    // Check if WHOLE form is valid
     const isFormValid = isStepValid(1) && isStepValid(2) && isStepValid(3);
-
-    const expiryDisplay = () => {
-        if (!data.transaction_date) return "N/A";
-        const date = new Date(data.transaction_date);
-        const expiry = new Date(date.setFullYear(date.getFullYear() + 3));
-        return expiry
-            .toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-            })
-            .toUpperCase();
-    };
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -144,6 +120,94 @@ export default function Edit({
                 }
             },
         });
+    };
+
+    const handleNext = () => {
+        if (isStepValid(step)) {
+            const nextStep = step + 1;
+            setStep(nextStep);
+
+            // Wait for re-render, then focus first input of new step
+            setTimeout(() => {
+                const form = document.querySelector("form");
+                if (form) {
+                    const visibleInputs = Array.from(
+                        form.querySelectorAll(
+                            'input:not([disabled]):not([readonly]):not([type="hidden"]), select, textarea',
+                        ),
+                    ).filter(
+                        (el) => (el as HTMLElement).offsetParent !== null,
+                    ) as HTMLElement[];
+
+                    if (visibleInputs.length > 0) {
+                        visibleInputs[0].focus();
+                    }
+                }
+            }, 100);
+        } else {
+            toast.error(
+                "Please fill in all required fields before proceeding.",
+            );
+        }
+    };
+
+    // --- HANDLE ENTER KEY NAVIGATION ---
+    const handleEnterKey = (
+        e: React.KeyboardEvent<HTMLInputElement | HTMLSelectElement>,
+    ) => {
+        if (e.key === "Enter") {
+            e.preventDefault(); // Prevent form submission
+
+            const form = e.currentTarget.form;
+            if (!form) return;
+
+            // Get all POTENTIALLY focusable elements
+            const allInputs = Array.from(
+                form.querySelectorAll(
+                    'input:not([disabled]):not([readonly]), select:not([disabled]), textarea:not([disabled]), button[type="submit"]',
+                ),
+            ) as HTMLElement[];
+
+            // Filter for only currently VISIBLE elements
+            const visibleInputs = allInputs.filter(
+                (el) => el.offsetParent !== null,
+            );
+
+            // Find current element index
+            const index = visibleInputs.indexOf(e.currentTarget as any);
+
+            if (index > -1) {
+                // If not the last visible input, focus the next one
+                if (index < visibleInputs.length - 1) {
+                    visibleInputs[index + 1].focus();
+                } else {
+                    // We are on the LAST field of the current step
+                    if (step < 3) {
+                        handleNext();
+                    } else {
+                        // FIX: We are on the final step. Trigger Submit if valid.
+                        if (isFormValid) {
+                            submit(e as unknown as React.FormEvent);
+                        } else {
+                            toast.error("Please fill in all required fields.");
+                        }
+                    }
+                }
+            }
+        }
+    };
+
+    const expiryDisplay = () => {
+        if (!data.transaction_date) return "N/A";
+        const date = new Date(data.transaction_date);
+        const expiry = new Date(date.setFullYear(date.getFullYear() + 3));
+        return expiry
+            .toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+            })
+            .toUpperCase();
     };
 
     return (
@@ -253,11 +317,13 @@ export default function Edit({
                                         setData={setData}
                                         errors={errors}
                                         expiryDisplay={expiryDisplay}
+                                        onKeyDown={handleEnterKey}
                                     />
                                     <ApplicantForm
                                         data={data}
                                         setData={setData}
                                         errors={errors}
+                                        onKeyDown={handleEnterKey}
                                     />
                                 </div>
 
@@ -273,6 +339,7 @@ export default function Edit({
                                         data={data}
                                         setData={setData}
                                         errors={errors}
+                                        onKeyDown={handleEnterKey}
                                     />
                                 </div>
 
@@ -289,11 +356,13 @@ export default function Edit({
                                             data={data}
                                             setData={setData}
                                             errors={errors}
+                                            onKeyDown={handleEnterKey}
                                         />
                                         <OfficialReceiptForm
                                             data={data}
                                             setData={setData}
                                             errors={errors}
+                                            onKeyDown={handleEnterKey}
                                         />
                                     </div>
                                     <OfficialsForm
@@ -302,6 +371,7 @@ export default function Edit({
                                         errors={errors}
                                         punong_bayans={punong_bayans}
                                         officials={officials}
+                                        onKeyDown={handleEnterKey}
                                     />
                                 </div>
 
@@ -349,6 +419,8 @@ export default function Edit({
                                             </PrimaryButton>
                                         ) : (
                                             <PrimaryButton
+                                                // Added type submit for clarity, handled via handler or click
+                                                type="submit"
                                                 className={`bg-blue-800 hover:bg-blue-900 ${
                                                     !isDirty ||
                                                     processing ||

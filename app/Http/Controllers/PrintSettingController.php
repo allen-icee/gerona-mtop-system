@@ -23,7 +23,7 @@ class PrintSettingController extends Controller
         $validated = $request->validate([
             'header' => 'nullable|image|max:2048',
             'footer' => 'nullable|image|max:2048',
-            'show_header' => 'required|boolean',
+            'show_header' => 'required|boolean', // Validates "true"/"false" strings correctly
             'show_footer' => 'required|boolean',
         ]);
 
@@ -37,10 +37,12 @@ class PrintSettingController extends Controller
             $settings->footer_path = $request->file('footer')->store('print-assets', 'public');
         }
 
-        $settings->show_header = $request->show_header;
-        $settings->show_footer = $request->show_footer;
+        // --- FIX HERE: Use boolean() helper to handle FormData strings ---
+        $settings->show_header = $request->boolean('show_header');
+        $settings->show_footer = $request->boolean('show_footer');
+
         $settings->save();
 
-        return back()->with('success', 'Print layout updated successfully.');
+        return back()->with('message', 'Print layout updated successfully.');
     }
 }

@@ -3,16 +3,15 @@ import { Head, useForm, router } from "@inertiajs/react";
 import PrimaryButton from "@/Components/PrimaryButton";
 import InputLabel from "@/Components/InputLabel";
 import { Switch } from "@headlessui/react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react"; // Added useRef
 import UnsavedChangesModal from "@/Components/UnsavedChangesModal";
-import ToastListener from "@/Components/ToastListener";
 
 export default function PrintLayout({ settings }: { settings: any }) {
     const { data, setData, post, processing, isDirty, reset } = useForm({
         header: null as File | null,
         footer: null as File | null,
-        show_header: settings.show_header ?? true,
-        show_footer: settings.show_footer ?? false,
+        show_header: settings.show_header ? true : false,
+        show_footer: settings.show_footer ? true : false,
     });
 
     const [headerPreview, setHeaderPreview] = useState<string | null>(null);
@@ -20,28 +19,47 @@ export default function PrintLayout({ settings }: { settings: any }) {
     const [showExitModal, setShowExitModal] = useState(false);
     const [pendingUrl, setPendingUrl] = useState<string | null>(null);
 
-    // Initialize previews from settings
+    // FIX: Use a Ref to bypass checks immediately after saving
+    const allowExitRef = useRef(false);
+
+    // Sync state with settings when they change (after save)
     useEffect(() => {
-        if (settings.header_path)
-            setHeaderPreview(`/storage/${settings.header_path}`);
-        if (settings.footer_path)
-            setFooterPreview(`/storage/${settings.footer_path}`);
+        setData((prev) => ({
+            ...prev,
+            show_header: settings.show_header ? true : false,
+            show_footer: settings.show_footer ? true : false,
+        }));
+
+        const timestamp = new Date().getTime();
+        if (settings.header_path) {
+            setHeaderPreview(`/storage/${settings.header_path}?t=${timestamp}`);
+        } else {
+            setHeaderPreview(null);
+        }
+        if (settings.footer_path) {
+            setFooterPreview(`/storage/${settings.footer_path}?t=${timestamp}`);
+        } else {
+            setFooterPreview(null);
+        }
     }, [settings]);
 
     // Handle Unsaved Changes Protection
     useEffect(() => {
-        // 1. Browser Refresh / Close Tab (Native Dialog)
         const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-            if (isDirty) {
+            // Check allowExitRef to see if we should ignore the dirty state
+            if (isDirty && !allowExitRef.current) {
                 e.preventDefault();
                 e.returnValue = "";
             }
         };
 
-        // 2. Internal Inertia Navigation (Custom Modal)
         const removeInertiaListener = router.on("before", (event) => {
-            // Only intercept GET requests (navigation), not POST (form submission)
-            if (isDirty && event.detail.visit.method === "get") {
+            // FIX: Check !allowExitRef.current. If true, we skip the block.
+            if (
+                !allowExitRef.current &&
+                isDirty &&
+                event.detail.visit.method === "get"
+            ) {
                 event.preventDefault();
                 setPendingUrl(event.detail.visit.url.href);
                 setShowExitModal(true);
@@ -54,7 +72,7 @@ export default function PrintLayout({ settings }: { settings: any }) {
             window.removeEventListener("beforeunload", handleBeforeUnload);
             removeInertiaListener();
         };
-    }, [isDirty]);
+    }, [isDirty]); // Re-bind listener when dirty state changes
 
     // --- Modal Actions ---
 
@@ -64,21 +82,31 @@ export default function PrintLayout({ settings }: { settings: any }) {
     };
 
     const discardAndExit = () => {
+        allowExitRef.current = true; // Allow exit without saving
         setShowExitModal(false);
-        reset(); // Clear dirty state
+        reset();
         if (pendingUrl) router.visit(pendingUrl);
     };
 
     const saveAndExit = () => {
         post(route("settings.print.update"), {
             onSuccess: () => {
+                // FIX: Set this to true IMMEDIATELY so the router listener lets us pass
+                allowExitRef.current = true;
+
                 setShowExitModal(false);
-                reset(); // Clear dirty state
+
+                // Clear file inputs visually
+                setData("header", null);
+                setData("footer", null);
+
+                // Navigate to the pending URL
                 if (pendingUrl) router.visit(pendingUrl);
             },
             onError: () => {
-                // Keep modal closed or handle error state if preferred
+                // If error, keep modal closed so user can fix it, but don't allow exit yet
                 setShowExitModal(false);
+                allowExitRef.current = false;
             },
         });
     };
@@ -103,16 +131,18 @@ export default function PrintLayout({ settings }: { settings: any }) {
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(route("settings.print.update"));
+        post(route("settings.print.update"), {
+            onSuccess: () => {
+                setData("header", null);
+                setData("footer", null);
+            },
+        });
     };
 
     // Helper Component
     const ToggleSwitch = ({ label, checked, onChange }: any) => (
         <Switch.Group as="div" className="flex items-center justify-between">
-            <Switch.Label
-                as="span"
-                className="mr-3 text-sm font-medium text-gray-700"
-            >
+            <Switch.Label className="mr-3 text-sm font-medium text-gray-700">
                 {label}
             </Switch.Label>
             <Switch
@@ -135,7 +165,6 @@ export default function PrintLayout({ settings }: { settings: any }) {
     return (
         <AuthenticatedLayout>
             <Head title="Print Layout Settings" />
-            <ToastListener />
 
             <UnsavedChangesModal
                 show={showExitModal}
@@ -180,19 +209,12 @@ export default function PrintLayout({ settings }: { settings: any }) {
                                 </div>
 
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-                                    {/* Upload Input */}
                                     <div className="space-y-2">
                                         <InputLabel value="Upload New Image" />
                                         <input
                                             type="file"
                                             onChange={handleHeaderChange}
-                                            className="block w-full text-sm text-gray-500
-                                                file:mr-4 file:py-2.5 file:px-4
-                                                file:rounded-full file:border-0
-                                                file:text-sm file:font-semibold
-                                                file:bg-blue-50 file:text-blue-700
-                                                hover:file:bg-blue-100 cursor-pointer
-                                                border border-gray-300 rounded-lg"
+                                            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer border border-gray-300 rounded-lg"
                                             accept="image/*"
                                         />
                                         <p className="text-xs text-gray-500">
@@ -200,14 +222,8 @@ export default function PrintLayout({ settings }: { settings: any }) {
                                             JPG)
                                         </p>
                                     </div>
-
-                                    {/* Preview */}
                                     <div
-                                        className={`transition-opacity duration-300 ${
-                                            data.show_header
-                                                ? "opacity-100"
-                                                : "opacity-50 grayscale"
-                                        }`}
+                                        className={`transition-opacity duration-300 ${data.show_header ? "opacity-100" : "opacity-50 grayscale"}`}
                                     >
                                         <InputLabel
                                             value="Preview"
@@ -258,19 +274,12 @@ export default function PrintLayout({ settings }: { settings: any }) {
                                 </div>
 
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-                                    {/* Upload Input */}
                                     <div className="space-y-2">
                                         <InputLabel value="Upload New Image" />
                                         <input
                                             type="file"
                                             onChange={handleFooterChange}
-                                            className="block w-full text-sm text-gray-500
-                                                file:mr-4 file:py-2.5 file:px-4
-                                                file:rounded-full file:border-0
-                                                file:text-sm file:font-semibold
-                                                file:bg-blue-50 file:text-blue-700
-                                                hover:file:bg-blue-100 cursor-pointer
-                                                border border-gray-300 rounded-lg"
+                                            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer border border-gray-300 rounded-lg"
                                             accept="image/*"
                                         />
                                         <p className="text-xs text-gray-500">
@@ -278,14 +287,8 @@ export default function PrintLayout({ settings }: { settings: any }) {
                                             JPG)
                                         </p>
                                     </div>
-
-                                    {/* Preview */}
                                     <div
-                                        className={`transition-opacity duration-300 ${
-                                            data.show_footer
-                                                ? "opacity-100"
-                                                : "opacity-50 grayscale"
-                                        }`}
+                                        className={`transition-opacity duration-300 ${data.show_footer ? "opacity-100" : "opacity-50 grayscale"}`}
                                     >
                                         <InputLabel
                                             value="Preview"
@@ -312,11 +315,7 @@ export default function PrintLayout({ settings }: { settings: any }) {
                             <div className="flex items-center justify-end pt-2">
                                 <PrimaryButton
                                     disabled={processing || !isDirty}
-                                    className={`w-full sm:w-auto justify-center ${
-                                        !isDirty
-                                            ? "opacity-50 cursor-not-allowed"
-                                            : ""
-                                    }`}
+                                    className={`w-full sm:w-auto justify-center ${!isDirty ? "opacity-50 cursor-not-allowed" : ""}`}
                                 >
                                     Save Changes
                                 </PrimaryButton>

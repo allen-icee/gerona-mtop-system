@@ -6,7 +6,8 @@ interface Props extends InputHTMLAttributes<HTMLInputElement> {
     error?: string;
     icon?: string;
     showPasswordToggle?: boolean;
-    required?: boolean; // Add this line
+    required?: boolean;
+    onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void; // Added onKeyDown
 }
 
 export default function InputGroup({
@@ -18,7 +19,8 @@ export default function InputGroup({
     icon,
     type = "text",
     showPasswordToggle = false,
-    required = false, // Default to false
+    required = false,
+    onKeyDown, // Destructure onKeyDown
     ...props
 }: Props) {
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -35,8 +37,7 @@ export default function InputGroup({
                 className="block font-medium text-sm text-gray-700 mb-1"
             >
                 {label}
-                {required && <span className="text-red-500 ml-1">*</span>}{" "}
-                {/* Red asterisk */}
+                {required && <span className="text-red-500 ml-1">*</span>}
             </label>
 
             <div className="relative">
@@ -53,6 +54,7 @@ export default function InputGroup({
                     value={value}
                     type={inputType}
                     required={required}
+                    onKeyDown={onKeyDown} // Pass onKeyDown to input
                     className={`border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm w-full py-3 ${
                         icon ? "pl-10" : "pl-3"
                     } ${error ? "border-red-500" : ""}`}

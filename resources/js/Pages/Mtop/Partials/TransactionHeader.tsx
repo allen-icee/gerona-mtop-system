@@ -6,6 +6,7 @@ export default function TransactionHeader({
     setData,
     errors,
     expiryDisplay,
+    onKeyDown, // <--- Add this
 }: any) {
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -20,8 +21,8 @@ export default function TransactionHeader({
                     icon="solar:folder-with-files-bold"
                     placeholder="Auto-Generated"
                     error={errors?.mt_number}
+                    onKeyDown={onKeyDown} // <--- Pass it down
                 />
-                {/* Lock Icon Overlay for clarity */}
                 <div className="absolute right-3 top-9.5 text-gray-400 pointer-events-none">
                     <Icon icon="solar:lock-bold" width="16" />
                 </div>
@@ -39,10 +40,10 @@ export default function TransactionHeader({
                 }
                 icon="solar:calendar-bold"
                 error={errors?.transaction_date}
+                onKeyDown={onKeyDown} // <--- Pass it down
             />
 
-            {/* 3. VALIDITY (Custom Input for specific styling) */}
-            {/* Spans 2 cols on tablet to look balanced, back to 1 on desktop */}
+            {/* 3. VALIDITY */}
             <div className="sm:col-span-2 lg:col-span-1">
                 <label className="block font-medium text-sm text-gray-700 mb-1">
                     Validity{" "}
@@ -63,6 +64,7 @@ export default function TransactionHeader({
                                 ? expiryDisplay()
                                 : "N/A"
                         }
+                        // No onKeyDown needed here since it's disabled
                     />
                 </div>
             </div>

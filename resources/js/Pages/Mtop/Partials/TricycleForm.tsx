@@ -1,10 +1,14 @@
 import InputGroup from "@/Components/InputGroup";
 import { Icon } from "@iconify/react";
 
-export default function TricycleForm({ data, setData, errors }: any) {
+export default function TricycleForm({
+    data,
+    setData,
+    errors,
+    onKeyDown, // <--- Add this
+}: any) {
     return (
         <div className="space-y-6">
-            {/* Section Header */}
             <div className="flex items-center gap-2 text-gray-800 border-b border-gray-200 pb-2">
                 <Icon
                     icon="solar:wheel-bold"
@@ -17,7 +21,6 @@ export default function TricycleForm({ data, setData, errors }: any) {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {/* Body Number */}
                 <InputGroup
                     id="body_number"
                     label="Body Number (MTOP)"
@@ -33,9 +36,9 @@ export default function TricycleForm({ data, setData, errors }: any) {
                     icon="solar:hashtag-square-bold"
                     placeholder="1234"
                     required={true}
+                    onKeyDown={onKeyDown} // <--- Pass it down
                 />
 
-                {/* Plate Number */}
                 <InputGroup
                     id="plate_no"
                     label="Plate Number"
@@ -51,9 +54,9 @@ export default function TricycleForm({ data, setData, errors }: any) {
                     icon="solar:plate-bold"
                     placeholder="123ABC"
                     required={true}
+                    onKeyDown={onKeyDown} // <--- Pass it down
                 />
 
-                {/* Make / Type */}
                 <InputGroup
                     id="make_type"
                     label="Make / Type"
@@ -69,9 +72,9 @@ export default function TricycleForm({ data, setData, errors }: any) {
                     icon="solar:box-minimalistic-bold"
                     placeholder="HONDA TMX"
                     required={true}
+                    onKeyDown={onKeyDown} // <--- Pass it down
                 />
 
-                {/* Engine Motor No. */}
                 <InputGroup
                     id="engine_motor_no"
                     label="Engine Motor No."
@@ -87,9 +90,9 @@ export default function TricycleForm({ data, setData, errors }: any) {
                     icon="solar:settings-bold"
                     placeholder="ENG-12345"
                     required={true}
+                    onKeyDown={onKeyDown} // <--- Pass it down
                 />
 
-                {/* Chassis No. */}
                 <InputGroup
                     id="chassis_no"
                     label="Chassis No."
@@ -105,6 +108,7 @@ export default function TricycleForm({ data, setData, errors }: any) {
                     icon="solar:structure-bold"
                     placeholder="CHA-67890"
                     required={true}
+                    onKeyDown={onKeyDown} // <--- Pass it down
                 />
             </div>
         </div>

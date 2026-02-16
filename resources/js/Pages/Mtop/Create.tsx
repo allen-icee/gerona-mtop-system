@@ -90,31 +90,8 @@ export default function Create({
         );
     };
 
-    const handleNext = () => {
-        if (isStepValid(step)) {
-            setStep(step + 1);
-        } else {
-            toast.error(
-                "Please fill in all required fields before proceeding.",
-            );
-        }
-    };
-
     // Check if WHOLE form (Step 1 & 2) is valid for saving
     const isFormValid = isStepValid(1) && isStepValid(2) && isStepValid(3);
-
-    const expiryDisplay = () => {
-        if (!data.transaction_date) return "N/A";
-        const date = new Date(data.transaction_date);
-        const expiry = new Date(date.setFullYear(date.getFullYear() + 3));
-        return expiry
-            .toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-            })
-            .toUpperCase();
-    };
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -130,6 +107,95 @@ export default function Create({
                 }
             },
         });
+    };
+
+    const handleNext = () => {
+        if (isStepValid(step)) {
+            const nextStep = step + 1;
+            setStep(nextStep);
+
+            // Wait for re-render, then focus first input of new step
+            setTimeout(() => {
+                const form = document.querySelector("form");
+                if (form) {
+                    const visibleInputs = Array.from(
+                        form.querySelectorAll(
+                            'input:not([disabled]):not([readonly]):not([type="hidden"]), select, textarea',
+                        ),
+                    ).filter(
+                        (el) => (el as HTMLElement).offsetParent !== null,
+                    ) as HTMLElement[];
+
+                    if (visibleInputs.length > 0) {
+                        visibleInputs[0].focus();
+                    }
+                }
+            }, 100);
+        } else {
+            toast.error(
+                "Please fill in all required fields before proceeding.",
+            );
+        }
+    };
+
+    // --- HANDLE ENTER KEY NAVIGATION ---
+    const handleEnterKey = (
+        e: React.KeyboardEvent<HTMLInputElement | HTMLSelectElement>,
+    ) => {
+        if (e.key === "Enter") {
+            e.preventDefault(); // Stop form submission
+
+            const form = e.currentTarget.form;
+            if (!form) return;
+
+            // Get all POTENTIALLY focusable elements
+            const allInputs = Array.from(
+                form.querySelectorAll(
+                    'input:not([disabled]):not([readonly]), select:not([disabled]), textarea:not([disabled]), button[type="submit"]',
+                ),
+            ) as HTMLElement[];
+
+            // Filter for only currently VISIBLE elements
+            const visibleInputs = allInputs.filter(
+                (el) => el.offsetParent !== null,
+            );
+
+            // Find current element index
+            const index = visibleInputs.indexOf(e.currentTarget as any);
+
+            if (index > -1) {
+                // If not the last visible input, focus the next one
+                if (index < visibleInputs.length - 1) {
+                    visibleInputs[index + 1].focus();
+                } else {
+                    // We are on the LAST field of the current step
+                    if (step < 3) {
+                        handleNext();
+                    } else {
+                        // FIX: We are on the last step (Step 3).
+                        // If validation passes, Trigger Submit.
+                        if (isFormValid) {
+                            submit(e as unknown as React.FormEvent);
+                        } else {
+                            toast.error("Please fill in all required fields.");
+                        }
+                    }
+                }
+            }
+        }
+    };
+
+    const expiryDisplay = () => {
+        if (!data.transaction_date) return "N/A";
+        const date = new Date(data.transaction_date);
+        const expiry = new Date(date.setFullYear(date.getFullYear() + 3));
+        return expiry
+            .toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+            })
+            .toUpperCase();
     };
 
     return (
@@ -233,11 +299,13 @@ export default function Create({
                                         setData={setData}
                                         errors={errors}
                                         expiryDisplay={expiryDisplay}
+                                        onKeyDown={handleEnterKey}
                                     />
                                     <ApplicantForm
                                         data={data}
                                         setData={setData}
                                         errors={errors}
+                                        onKeyDown={handleEnterKey}
                                     />
                                 </div>
 
@@ -253,6 +321,7 @@ export default function Create({
                                         data={data}
                                         setData={setData}
                                         errors={errors}
+                                        onKeyDown={handleEnterKey}
                                     />
                                 </div>
 
@@ -269,11 +338,13 @@ export default function Create({
                                             data={data}
                                             setData={setData}
                                             errors={errors}
+                                            onKeyDown={handleEnterKey}
                                         />
                                         <OfficialReceiptForm
                                             data={data}
                                             setData={setData}
                                             errors={errors}
+                                            onKeyDown={handleEnterKey}
                                         />
                                     </div>
                                     <OfficialsForm
@@ -282,6 +353,7 @@ export default function Create({
                                         errors={errors}
                                         punong_bayans={punong_bayans}
                                         officials={officials}
+                                        onKeyDown={handleEnterKey}
                                     />
                                 </div>
 
@@ -327,6 +399,8 @@ export default function Create({
                                             </PrimaryButton>
                                         ) : (
                                             <PrimaryButton
+                                                // Added type="submit" to be safe, though enter key triggers handler manually
+                                                type="submit"
                                                 className={`bg-green-600 hover:bg-green-700 ${
                                                     processing || !isFormValid
                                                         ? "opacity-50 cursor-not-allowed"
@@ -356,7 +430,7 @@ export default function Create({
                 </div>
             </div>
 
-            {/* --- PRINT SUCCESS MODAL (Replaces inline Success Modal) --- */}
+            {/* --- PRINT SUCCESS MODAL --- */}
             <PrintSuccessModal
                 show={showSuccessModal}
                 onClose={() => setShowSuccessModal(false)}

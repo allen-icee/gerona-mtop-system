@@ -1,40 +1,29 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Icon } from "@iconify/react";
 
 interface Props {
-    label: string;
     value: string;
     onChange: (value: string) => void;
-    options: string[];
     error?: string;
-    required?: boolean;
     onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
 }
 
-export default function SignatorySelect({
-    label,
+const SUFFIXES = ["", "JR.", "SR.", "I", "II", "III", "IV", "V"];
+
+export default function SuffixSelect({
     value,
     onChange,
-    options,
     error,
-    required,
     onKeyDown,
 }: Props) {
     const [isOpen, setIsOpen] = useState(false);
     const [selectedIndex, setSelectedIndex] = useState(-1);
     const listRef = useRef<HTMLUListElement>(null);
 
-    const filtered = useMemo(() => {
-        if (!value) return options;
-        return options.filter((o) =>
-            o.toUpperCase().includes(value.toUpperCase()),
-        );
-    }, [value, options]);
-
-    // Reset selection index when filter changes
+    // Sync selection index
     useEffect(() => {
-        setSelectedIndex(-1);
-    }, [filtered]);
+        setSelectedIndex(SUFFIXES.indexOf(value));
+    }, [value]);
 
     // Scroll active item into view
     useEffect(() => {
@@ -57,11 +46,18 @@ export default function SignatorySelect({
     }, [selectedIndex, isOpen]);
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (isOpen && filtered.length > 0) {
+        // Allow opening with Arrow keys if closed
+        if (!isOpen && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
+            e.preventDefault();
+            setIsOpen(true);
+            return;
+        }
+
+        if (isOpen) {
             if (e.key === "ArrowDown") {
                 e.preventDefault();
                 setSelectedIndex((prev) =>
-                    prev < filtered.length - 1 ? prev + 1 : prev,
+                    prev < SUFFIXES.length - 1 ? prev + 1 : prev,
                 );
                 return;
             }
@@ -72,9 +68,8 @@ export default function SignatorySelect({
             }
             if (e.key === "Enter" && selectedIndex >= 0) {
                 e.preventDefault();
-                onChange(filtered[selectedIndex]);
+                onChange(SUFFIXES[selectedIndex]);
                 setIsOpen(false);
-                setSelectedIndex(-1);
                 return;
             }
             if (e.key === "Escape") {
@@ -83,62 +78,60 @@ export default function SignatorySelect({
             }
         }
 
-        // Pass to parent logic
+        // Pass to parent logic (Next Field) if dropdown is closed or key handled
         if (onKeyDown) onKeyDown(e);
     };
 
     return (
         <div className="mb-4 relative">
             <label className="block font-medium text-sm text-gray-700 mb-1">
-                {label} {required && <span className="text-red-500">*</span>}
+                Suffix
             </label>
             <div className="relative">
                 <input
                     type="text"
-                    className={`block w-full py-3 pl-3 pr-10 border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 ${
+                    // Removed readOnly so it is selectable by our Enter logic
+                    className={`block w-full py-3 pl-3 pr-10 border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 cursor-pointer caret-transparent ${
                         error ? "border-red-500" : ""
                     }`}
-                    value={value}
-                    onChange={(e) => {
-                        const sanitized = e.target.value
-                            .toUpperCase()
-                            .replace(/[^A-Z\s.,-]/g, "");
-
-                        onChange(sanitized);
-                        setIsOpen(true);
-                    }}
-                    onFocus={() => setIsOpen(true)}
+                    value={value || "N/A"}
+                    onClick={() => setIsOpen(!isOpen)}
                     onBlur={() => setTimeout(() => setIsOpen(false), 200)}
-                    required={required}
-                    placeholder="Search or type name..."
-                    onKeyDown={handleKeyDown} // Use wrapper handler
+                    onKeyDown={handleKeyDown}
+                    onChange={() => {}} // Prevent typing
                 />
 
                 <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
-                    <Icon icon="solar:alt-arrow-down-bold" />
+                    <Icon
+                        icon="solar:alt-arrow-down-bold"
+                        className={`transition-transform duration-200 ${
+                            isOpen ? "rotate-180" : ""
+                        }`}
+                        width="18"
+                    />
                 </div>
             </div>
 
-            {isOpen && filtered.length > 0 && (
+            {isOpen && (
                 <ul
                     ref={listRef}
                     className="absolute z-50 w-full bg-white border border-gray-200 mt-1 max-h-40 overflow-y-auto shadow-lg rounded-md text-sm"
                 >
-                    {filtered.map((name, index) => (
+                    {SUFFIXES.map((opt, index) => (
                         <li
-                            key={index}
-                            className={`px-4 py-2 cursor-pointer text-gray-700 uppercase ${
+                            key={opt}
+                            className={`px-4 py-2 cursor-pointer text-gray-700 ${
                                 index === selectedIndex
-                                    ? "bg-blue-100 text-blue-900"
-                                    : "hover:bg-blue-50"
+                                    ? "bg-indigo-100 text-indigo-800 font-bold"
+                                    : "hover:bg-indigo-50"
                             }`}
                             onMouseDown={() => {
-                                onChange(name);
+                                onChange(opt);
                                 setIsOpen(false);
                             }}
-                            onMouseEnter={() => setSelectedIndex(index)} // Optional
+                            onMouseEnter={() => setSelectedIndex(index)}
                         >
-                            {name}
+                            {opt === "" ? "N/A" : opt}
                         </li>
                     ))}
                 </ul>

@@ -1,12 +1,14 @@
 import InputGroup from "@/Components/InputGroup";
 import BarangaySelect from "@/Components/BarangaySelect";
+import SuffixSelect from "@/Components/SuffixSelect"; // Import the new component
 import { Icon } from "@iconify/react";
-import InputLabel from "@/Components/InputLabel";
 
-const SUFFIXES = ["", "JR.", "SR.", "I", "II", "III", "IV", "V"];
-
-export default function ApplicantForm({ data, setData, errors }: any) {
-    // Helper to allow ONLY Letters, Spaces, Dots (.), and Dashes (-)
+export default function ApplicantForm({
+    data,
+    setData,
+    errors,
+    onKeyDown,
+}: any) {
     const handleNameChange = (field: string, value: string) => {
         const cleanValue = value.toUpperCase().replace(/[^A-Z\s.-]/g, "");
         setData(field, cleanValue);
@@ -14,7 +16,6 @@ export default function ApplicantForm({ data, setData, errors }: any) {
 
     return (
         <div className="space-y-4">
-            {/* Section Header (Optional - good for visual separation if used in a long form) */}
             <div className="flex items-center gap-2 text-gray-800 border-b border-gray-200 pb-2">
                 <Icon
                     icon="solar:user-id-bold"
@@ -26,9 +27,8 @@ export default function ApplicantForm({ data, setData, errors }: any) {
                 </h3>
             </div>
 
-            {/* NAME GRID */}
             <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
-                {/* Last Name (4 cols on tablet/desktop) */}
+                {/* Last Name */}
                 <div className="sm:col-span-12 md:col-span-4">
                     <InputGroup
                         id="last_name"
@@ -42,10 +42,11 @@ export default function ApplicantForm({ data, setData, errors }: any) {
                         icon="solar:user-bold"
                         placeholder="DELA CRUZ"
                         required={true}
+                        onKeyDown={onKeyDown}
                     />
                 </div>
 
-                {/* First Name (4 cols on tablet/desktop) */}
+                {/* First Name */}
                 <div className="sm:col-span-12 md:col-span-4">
                     <InputGroup
                         id="first_name"
@@ -58,10 +59,11 @@ export default function ApplicantForm({ data, setData, errors }: any) {
                         error={errors.first_name}
                         placeholder="JUAN"
                         required={true}
+                        onKeyDown={onKeyDown}
                     />
                 </div>
 
-                {/* Middle Initial (2 cols on tablet/desktop) */}
+                {/* Middle Initial */}
                 <div className="sm:col-span-6 md:col-span-2">
                     <InputGroup
                         id="middle_name"
@@ -78,26 +80,18 @@ export default function ApplicantForm({ data, setData, errors }: any) {
                         error={errors.middle_name}
                         placeholder="S"
                         maxLength={1}
+                        onKeyDown={onKeyDown}
                     />
                 </div>
 
-                {/* Suffix (2 cols on tablet/desktop) */}
+                {/* Suffix - UPDATED */}
                 <div className="sm:col-span-6 md:col-span-2">
-                    <InputLabel htmlFor="suffix" value="Suffix" />
-                    <div className="relative mt-1">
-                        <select
-                            id="suffix"
-                            value={data.suffix}
-                            onChange={(e) => setData("suffix", e.target.value)}
-                            className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm w-full py-3 pl-3 text-sm bg-white"
-                        >
-                            {SUFFIXES.map((opt) => (
-                                <option key={opt} value={opt}>
-                                    {opt === "" ? "N/A" : opt}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
+                    <SuffixSelect
+                        value={data.suffix}
+                        onChange={(val) => setData("suffix", val)}
+                        error={errors.suffix}
+                        onKeyDown={onKeyDown}
+                    />
                 </div>
             </div>
 
@@ -108,6 +102,7 @@ export default function ApplicantForm({ data, setData, errors }: any) {
                     onChange={(val) => setData("address", val)}
                     error={errors.address}
                     required={true}
+                    onKeyDown={onKeyDown}
                 />
             </div>
         </div>
