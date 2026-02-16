@@ -191,7 +191,7 @@ export default function Index({ users, filters }: Props) {
                                     <div className="border-t border-gray-100 pt-4 flex gap-3">
                                         <button
                                             onClick={() => openModal(user)}
-                                            className="flex-1 bg-blue-50 text-blue-600 py-2 rounded-md font-semibold text-sm flex items-center justify-center gap-2 hover:bg-blue-100 transition-colors"
+                                            className="flex-1 bg-blue-50 text-blue-700  hover:text-blue-800 rounded-md px-3 py-1.5 text-sm flex items-center justify-center gap-2 hover:bg-blue-100 transition-colors"
                                         >
                                             <Icon
                                                 icon="solar:pen-new-square-bold"
@@ -207,7 +207,7 @@ export default function Index({ users, filters }: Props) {
                                             className={`flex-1 py-2 rounded-md font-semibold text-sm flex items-center justify-center gap-2 transition-colors ${
                                                 user.id === 1
                                                     ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                                                    : "bg-red-50 text-red-600 hover:bg-red-100"
+                                                    : "bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 p-1.5 rounded-md"
                                             }`}
                                         >
                                             <Icon
@@ -266,7 +266,7 @@ export default function Index({ users, filters }: Props) {
                                                         onClick={() =>
                                                             openModal(user)
                                                         }
-                                                        className="text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1 font-bold hover:cursor-pointer"
+                                                        className="bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800 rounded-md px-3 py-1.5 transition-colors flex items-center gap-1 font-bold hover:cursor-pointer"
                                                         title="Edit User"
                                                     >
                                                         <Icon
@@ -282,7 +282,7 @@ export default function Index({ users, filters }: Props) {
                                                                 user.id,
                                                             )
                                                         } // CHANGED
-                                                        className={`text-red-600 hover:text-red-800 transition-colors flex items-center gap-1 font-bold ${
+                                                        className={`bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 p-1.5 rounded-md transition-colors flex items-center gap-1 font-bold ${
                                                             user.id === 1
                                                                 ? "opacity-30 cursor-not-allowed"
                                                                 : "cursor-pointer"

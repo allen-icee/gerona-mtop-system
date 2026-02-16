@@ -145,7 +145,7 @@ export default function Index({ applications, filters }: Props) {
                                         <option key={i} value={i + 1}>
                                             {new Date(0, i).toLocaleString(
                                                 "default",
-                                                { month: "short" },
+                                                { month: "long" },
                                             )}
                                         </option>
                                     ))}
@@ -342,13 +342,13 @@ export default function Index({ applications, filters }: Props) {
                                                     onClick={() =>
                                                         setViewingApp(app)
                                                     }
-                                                    className="inline-flex items-center justify-center gap-2 font-bold text-sm uppercase tracking-wider text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-3 py-1.5 rounded-md hover:bg-indigo-100 transition-colors"
+                                                    className="inline-flex items-center justify-center gap-2 font-bold text-sm tracking-wider hover:cursor-pointer text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-3 py-1.5 rounded-md hover:bg-indigo-100 transition-colors"
                                                 >
                                                     <Icon
                                                         icon="solar:eye-bold"
                                                         width="18"
                                                     />
-                                                    View
+                                                    Details
                                                 </button>
                                             </td>
                                             <td className="px-6 py-4">
@@ -359,7 +359,7 @@ export default function Index({ applications, filters }: Props) {
                                                             app.id,
                                                         )}
                                                         target="_blank"
-                                                        className="inline-flex items-center gap-1.5 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 px-3 py-1.5 rounded-md font-semibold text-sm transition-colors"
+                                                        className="inline-flex items-center gap-1.5 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 px-3 py-1.5 rounded-md font-bold text-sm transition-colors"
                                                         title="Print Permit"
                                                     >
                                                         <Icon
@@ -373,7 +373,7 @@ export default function Index({ applications, filters }: Props) {
                                                             "mtop.edit",
                                                             app.id,
                                                         )}
-                                                        className="inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800 px-3 py-1.5 rounded-md font-semibold text-sm transition-colors"
+                                                        className="inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800 hover:cursor-pointer px-3 py-1.5 rounded-md font-bold text-sm transition-colors"
                                                         title="Edit Application"
                                                     >
                                                         <Icon

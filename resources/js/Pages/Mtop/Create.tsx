@@ -156,7 +156,7 @@ export default function Create({
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
                         {/* --- LEFT COLUMN: FORM --- */}
-                        <div className="xl:col-span-7 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                        <div className="xl:col-span-7 bg-white rounded-lg shadow-sm border border-gray-200 overflow-visible">
                             {/* 3-STEP NAVIGATION TABS */}
                             <div className="flex border-b border-gray-200 bg-gray-50">
                                 <button
