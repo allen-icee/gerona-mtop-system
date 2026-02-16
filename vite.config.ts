@@ -7,7 +7,7 @@ export default defineConfig({
     server: {
         host: "0.0.0.0", // Allows access from network
         hmr: {
-            host: "192.168.100.7", // REPLACE THIS with your computer's actual local IP address
+            host: "192.168.10.185", // REPLACE THIS with your computer's actual local IP address
         },
     },
     plugins: [

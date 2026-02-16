@@ -174,7 +174,7 @@ export default function PrintPage2({ application, operatorName }: Props) {
                 </div>
 
                 {/* 7. TABLE INTRO */}
-                <div className="mb-6 text-[12pt] leading-none">
+                <div className="mb-4 text-[12pt] leading-none">
                     <p>Hanggang isinalalarawan ayon sa mga sumusunod:</p>
                 </div>
 
@@ -220,7 +220,7 @@ export default function PrintPage2({ application, operatorName }: Props) {
                 </div>
 
                 {/* 9. CLOSING PARAGRAPH (No Indent, 12pt, Leading 1.0) */}
-                <div className="text-justify mb-8 text-[12pt] leading-none">
+                <div className="text-justify mb-4 text-[12pt] leading-none">
                     <p>
                         Ang Pagtitibay na ito ay pinagkaloob ayon sa kahilingan
                         ng nasabing may-ari ng traysikel upang gamitin sa
@@ -234,7 +234,7 @@ export default function PrintPage2({ application, operatorName }: Props) {
                 {/* 11. SIGNATORIES */}
 
                 {/* Authorized Official (Right Aligned) */}
-                <div className="flex justify-end mb-8">
+                <div className="flex justify-end mb-4">
                     <div className="text-center min-w-55">
                         <div className="font-bold uppercase border-b border-black text-[12pt]">
                             {application.authorized_official ||
@@ -250,7 +250,7 @@ export default function PrintPage2({ application, operatorName }: Props) {
                 </div>
 
                 {/* Punong Bayan (Left Aligned) */}
-                <div className="flex justify-start mb-8">
+                <div className="flex justify-start mb-4">
                     <div className="text-center min-w-55">
                         <div className="font-bold uppercase border-b border-black text-[12pt]">
                             {application.punong_bayan ||
@@ -261,7 +261,7 @@ export default function PrintPage2({ application, operatorName }: Props) {
                 </div>
 
                 {/* 12. FOOTER DETAILS (Left, 11pt, Leading 1.0, Values Bold & Underline) */}
-                <div className="text-[11pt] leading-none space-y-1 mb-6">
+                <div className="text-[11pt] leading-none space-y-1 mb-4">
                     <div>
                         <span className="w-48">Bayad na sa O.R. Bilang:</span>{" "}
                         <span className="font-bold underline">
@@ -280,7 +280,7 @@ export default function PrintPage2({ application, operatorName }: Props) {
                 </div>
 
                 {/* 13. DISCLAIMER (11pt, Leading 1.0, Not Italic) */}
-                <div className="text-[11pt] leading-none text-justify">
+                <div className="text-[11pt] leading-none text-justif mb-2">
                     <p>
                         May tibay kung orihinal o may opisyal na resibo ng
                         bayarin sa pagpapatibay at may opisyal na tuyong tatak

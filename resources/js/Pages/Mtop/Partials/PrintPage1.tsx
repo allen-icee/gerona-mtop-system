@@ -176,7 +176,7 @@ export default function PrintPage1({ application, operatorName }: Props) {
                 </div>
 
                 {/* 9. FINAL PARAGRAPH */}
-                <div className="text-justify indent-8 mb-16 text-[12pt] leading-[1.15]">
+                <div className="text-justify indent-8 mb-8 text-[12pt] leading-[1.15]">
                     <p>
                         Ang hindi ko pagsunod sa mga itinatadhana ng
                         kapahintulutang ito ay sapat nang maging dahilan upang

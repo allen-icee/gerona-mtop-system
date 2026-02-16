@@ -9,7 +9,7 @@ use Inertia\Response;
 use Illuminate\Http\RedirectResponse;
 use Carbon\Carbon;
 use App\Models\Signatory;
-use Illuminate\Support\Facades\DB; // <--- IMPORTANT: Added DB Facade
+use Illuminate\Support\Facades\DB;
 
 class MtopApplicationController extends Controller
 {
@@ -62,8 +62,7 @@ class MtopApplicationController extends Controller
     {
         $year = now()->year;
 
-        // We still calculate this to show a "Suggested" number to the user,
-        // but the actual saving will regenerate it to be safe.
+        // Generate Suggested MT Number
         $lastApp = MtopApplication::where('mt_number', 'like', "$year-%")
             ->orderBy('id', 'desc')
             ->first();
@@ -79,6 +78,7 @@ class MtopApplicationController extends Controller
 
         $suggested_mt_number = sprintf("%s-%04d", $year, $nextSequence);
 
+        // Fetch Signatories for Dropdowns
         $punong_bayans = Signatory::where('position', 'Punong Bayan')->where('is_active', true)->pluck('name');
         $officials = Signatory::where('position', 'Authorized Official')->where('is_active', true)->pluck('name');
 
@@ -91,49 +91,49 @@ class MtopApplicationController extends Controller
 
     /**
      * Store a newly created resource in storage.
-     * CONCURRENCY FIX APPLIED HERE
      */
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'last_name'   => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
-            'first_name'  => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
-            'middle_name' => ['nullable', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
-            'suffix'      => ['nullable', 'string', 'max:10', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
+            // Applicant
+            'last_name'           => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
+            'first_name'          => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
+            'middle_name'         => ['nullable', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
+            'suffix'              => ['nullable', 'string', 'max:10', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
+            'address'             => 'required|string|max:100',
+            'contact_number'      => ['nullable', 'regex:/^(09|\+639)\d{9}$/'],
 
-            'address'        => 'required|string|max:100',
-            'contact_number' => ['nullable', 'regex:/^(09|\+639)\d{9}$/'],
+            // Transaction
+            'transaction_date'    => 'required|date',
+            'mt_number'           => 'nullable|string',
 
-            'transaction_date' => 'required|date',
-            // We allow mt_number to be passed but we will overwrite it
-            'mt_number'        => 'nullable|string',
+            // Unit
+            'body_number'         => ['required', 'regex:/^[0-9]+$/'],
+            'plate_no'            => ['required', 'string', 'max:20'],
+            'make_type'           => 'required|string|max:30',
+            'engine_motor_no'     => 'required|string|max:30',
+            'chassis_no'          => 'required|string|max:30',
 
-            'body_number'     => ['required', 'regex:/^[0-9]+$/'],
-            'plate_no'        => ['required', 'string', 'max:20'],
-            'make_type'       => 'required|string|max:30',
-            'engine_motor_no' => 'required|string|max:30',
-            'chassis_no'      => 'required|string|max:30',
-
+            // Docs & Signatories (STRICTLY REQUIRED)
             'cedula_number'       => 'required|string|max:20',
             'cedula_date'         => 'required|date',
             'or_number'           => 'required|string|max:20',
             'or_date'             => 'required|date',
-            'punong_bayan'        => ['nullable', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
-            'authorized_official' => ['nullable', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
+            'punong_bayan'        => ['required', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
+            'authorized_official' => ['required', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
         ]);
 
-        // --- START ATOMIC TRANSACTION ---
+        // ATOMIC TRANSACTION
         $mtop = DB::transaction(function () use ($validated, $request) {
             $year = now()->year;
 
-            // Lock the table rows for reading to prevent race conditions
+            // Lock rows to prevent race conditions
             $lastApp = MtopApplication::where('mt_number', 'like', "$year-%")
                 ->orderBy('id', 'desc')
-                ->lockForUpdate() // <--- CRITICAL: Locks rows until transaction commits
+                ->lockForUpdate()
                 ->first();
 
             $nextSequence = 1;
-
             if ($lastApp) {
                 $parts = explode('-', $lastApp->mt_number);
                 if (count($parts) === 2) {
@@ -141,21 +141,19 @@ class MtopApplicationController extends Controller
                 }
             }
 
-            // Force the newly generated number
+            // Force generated number
             $validated['mt_number'] = sprintf("%s-%04d", $year, $nextSequence);
             $validated['valid_until'] = Carbon::parse($request->transaction_date)->addYears(3);
             $validated['status'] = 'draft';
 
             return MtopApplication::create($validated);
         });
-        // --- END TRANSACTION ---
 
-        // Redirect BACK with success_data for the modal
         return redirect()->back()->with('success_data', [
             'id' => $mtop->id,
             'mt_number' => $mtop->mt_number,
             'operator_name' => $mtop->first_name . ' ' . $mtop->last_name . ($mtop->suffix ? ' ' . $mtop->suffix : ''),
-        ]);
+        ])->with('message', 'Application created successfully!');
     }
 
     /**
@@ -164,6 +162,8 @@ class MtopApplicationController extends Controller
     public function edit($id): Response
     {
         $application = MtopApplication::findOrFail($id);
+
+        // FETCH LISTS FOR EDIT DROPDOWNS
         $punong_bayans = Signatory::where('position', 'Punong Bayan')->where('is_active', true)->pluck('name');
         $officials = Signatory::where('position', 'Authorized Official')->where('is_active', true)->pluck('name');
 
@@ -182,27 +182,24 @@ class MtopApplicationController extends Controller
         $application = MtopApplication::findOrFail($id);
 
         $validated = $request->validate([
-            'last_name'   => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
-            'first_name'  => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
-            'middle_name' => ['nullable', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
-            'suffix'      => ['nullable', 'string', 'max:10', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
-
-            'address'          => 'required|string|max:100',
-            'transaction_date' => 'required|date',
-            'mt_number'        => 'nullable|string|max:20',
-
-            'body_number'     => ['required', 'regex:/^[0-9]+$/'],
-            'plate_no'        => ['required', 'string', 'max:20'],
-            'make_type'       => 'required|string|max:30',
-            'engine_motor_no' => 'required|string|max:30',
-            'chassis_no'      => 'required|string|max:30',
-
+            'last_name'           => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
+            'first_name'          => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
+            'middle_name'         => ['nullable', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
+            'suffix'              => ['nullable', 'string', 'max:10', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
+            'address'             => 'required|string|max:100',
+            'transaction_date'    => 'required|date',
+            'mt_number'           => 'nullable|string|max:20',
+            'body_number'         => ['required', 'regex:/^[0-9]+$/'],
+            'plate_no'            => ['required', 'string', 'max:20'],
+            'make_type'           => 'required|string|max:30',
+            'engine_motor_no'     => 'required|string|max:30',
+            'chassis_no'          => 'required|string|max:30',
             'cedula_number'       => 'required|string|max:20',
             'cedula_date'         => 'required|date',
             'or_number'           => 'required|string|max:20',
             'or_date'             => 'required|date',
-            'punong_bayan'        => ['nullable', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
-            'authorized_official' => ['nullable', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
+            'punong_bayan'        => ['required', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
+            'authorized_official' => ['required', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
         ]);
 
         if ($request->transaction_date) {
@@ -215,7 +212,7 @@ class MtopApplicationController extends Controller
             'id' => $application->id,
             'mt_number' => $application->mt_number,
             'operator_name' => $application->first_name . ' ' . $application->last_name . ($application->suffix ? ' ' . $application->suffix : ''),
-        ]);
+        ])->with('message', 'Record updated successfully!');
     }
 
     /**
@@ -226,7 +223,6 @@ class MtopApplicationController extends Controller
         $application = MtopApplication::findOrFail($id);
         $application->delete();
 
-        // Use 'message' for Green Toast
         return redirect()->back()->with('message', 'Record deleted successfully.');
     }
 
@@ -241,6 +237,9 @@ class MtopApplicationController extends Controller
         ]);
     }
 
+    /**
+     * Export data to CSV
+     */
     public function export(Request $request)
     {
         $search = $request->input('search');
@@ -283,7 +282,6 @@ class MtopApplicationController extends Controller
 
         $callback = function () use ($records) {
             $file = fopen('php://output', 'w');
-
             fputcsv($file, [
                 'Control No',
                 'Transaction Date',
@@ -329,7 +327,6 @@ class MtopApplicationController extends Controller
                     $row->status
                 ]);
             }
-
             fclose($file);
         };
 

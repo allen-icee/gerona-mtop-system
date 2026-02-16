@@ -1,30 +1,89 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { Head, useForm, Link } from "@inertiajs/react";
+import { Head, useForm, router } from "@inertiajs/react";
 import PrimaryButton from "@/Components/PrimaryButton";
-import SecondaryButton from "@/Components/SecondaryButton";
 import InputLabel from "@/Components/InputLabel";
-import { Switch } from "@headlessui/react"; // Using your installed Headless UI
+import { Switch } from "@headlessui/react";
 import { useState, useEffect } from "react";
+import UnsavedChangesModal from "@/Components/UnsavedChangesModal";
+import ToastListener from "@/Components/ToastListener";
 
 export default function PrintLayout({ settings }: { settings: any }) {
-    const { data, setData, post, processing } = useForm({
+    const { data, setData, post, processing, isDirty, reset } = useForm({
         header: null as File | null,
         footer: null as File | null,
         show_header: settings.show_header ?? true,
         show_footer: settings.show_footer ?? false,
     });
 
-    // Preview States
     const [headerPreview, setHeaderPreview] = useState<string | null>(null);
     const [footerPreview, setFooterPreview] = useState<string | null>(null);
+    const [showExitModal, setShowExitModal] = useState(false);
+    const [pendingUrl, setPendingUrl] = useState<string | null>(null);
 
-    // Initialize previews
+    // Initialize previews from settings
     useEffect(() => {
         if (settings.header_path)
             setHeaderPreview(`/storage/${settings.header_path}`);
         if (settings.footer_path)
             setFooterPreview(`/storage/${settings.footer_path}`);
     }, [settings]);
+
+    // Handle Unsaved Changes Protection
+    useEffect(() => {
+        // 1. Browser Refresh / Close Tab (Native Dialog)
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            if (isDirty) {
+                e.preventDefault();
+                e.returnValue = "";
+            }
+        };
+
+        // 2. Internal Inertia Navigation (Custom Modal)
+        const removeInertiaListener = router.on("before", (event) => {
+            // Only intercept GET requests (navigation), not POST (form submission)
+            if (isDirty && event.detail.visit.method === "get") {
+                event.preventDefault();
+                setPendingUrl(event.detail.visit.url.href);
+                setShowExitModal(true);
+            }
+        });
+
+        window.addEventListener("beforeunload", handleBeforeUnload);
+
+        return () => {
+            window.removeEventListener("beforeunload", handleBeforeUnload);
+            removeInertiaListener();
+        };
+    }, [isDirty]);
+
+    // --- Modal Actions ---
+
+    const cancelExit = () => {
+        setShowExitModal(false);
+        setPendingUrl(null);
+    };
+
+    const discardAndExit = () => {
+        setShowExitModal(false);
+        reset(); // Clear dirty state
+        if (pendingUrl) router.visit(pendingUrl);
+    };
+
+    const saveAndExit = () => {
+        post(route("settings.print.update"), {
+            onSuccess: () => {
+                setShowExitModal(false);
+                reset(); // Clear dirty state
+                if (pendingUrl) router.visit(pendingUrl);
+            },
+            onError: () => {
+                // Keep modal closed or handle error state if preferred
+                setShowExitModal(false);
+            },
+        });
+    };
+
+    // --- Form Actions ---
 
     const handleHeaderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -47,16 +106,8 @@ export default function PrintLayout({ settings }: { settings: any }) {
         post(route("settings.print.update"));
     };
 
-    // Reusable Toggle Switch Component
-    const ToggleSwitch = ({
-        label,
-        checked,
-        onChange,
-    }: {
-        label: string;
-        checked: boolean;
-        onChange: (checked: boolean) => void;
-    }) => (
+    // Helper Component
+    const ToggleSwitch = ({ label, checked, onChange }: any) => (
         <Switch.Group as="div" className="flex items-center justify-between">
             <Switch.Label
                 as="span"
@@ -84,6 +135,15 @@ export default function PrintLayout({ settings }: { settings: any }) {
     return (
         <AuthenticatedLayout>
             <Head title="Print Layout Settings" />
+            <ToastListener />
+
+            <UnsavedChangesModal
+                show={showExitModal}
+                onClose={cancelExit}
+                onDiscard={discardAndExit}
+                onSave={saveAndExit}
+                processing={processing}
+            />
 
             <div className="py-6 sm:py-12">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -112,7 +172,7 @@ export default function PrintLayout({ settings }: { settings: any }) {
                                                     : "Disabled"
                                             }
                                             checked={data.show_header}
-                                            onChange={(val) =>
+                                            onChange={(val: boolean) =>
                                                 setData("show_header", val)
                                             }
                                         />
@@ -143,7 +203,11 @@ export default function PrintLayout({ settings }: { settings: any }) {
 
                                     {/* Preview */}
                                     <div
-                                        className={`transition-opacity duration-300 ${data.show_header ? "opacity-100" : "opacity-50 grayscale"}`}
+                                        className={`transition-opacity duration-300 ${
+                                            data.show_header
+                                                ? "opacity-100"
+                                                : "opacity-50 grayscale"
+                                        }`}
                                     >
                                         <InputLabel
                                             value="Preview"
@@ -186,7 +250,7 @@ export default function PrintLayout({ settings }: { settings: any }) {
                                                     : "Disabled"
                                             }
                                             checked={data.show_footer}
-                                            onChange={(val) =>
+                                            onChange={(val: boolean) =>
                                                 setData("show_footer", val)
                                             }
                                         />
@@ -217,7 +281,11 @@ export default function PrintLayout({ settings }: { settings: any }) {
 
                                     {/* Preview */}
                                     <div
-                                        className={`transition-opacity duration-300 ${data.show_footer ? "opacity-100" : "opacity-50 grayscale"}`}
+                                        className={`transition-opacity duration-300 ${
+                                            data.show_footer
+                                                ? "opacity-100"
+                                                : "opacity-50 grayscale"
+                                        }`}
                                     >
                                         <InputLabel
                                             value="Preview"
@@ -241,22 +309,14 @@ export default function PrintLayout({ settings }: { settings: any }) {
                             </div>
 
                             {/* --- ACTIONS --- */}
-                            <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-4 pt-2">
-                                <Link
-                                    href={route("dashboard")}
-                                    className="w-full sm:w-auto"
-                                >
-                                    <SecondaryButton
-                                        disabled={processing}
-                                        className="w-full justify-center"
-                                    >
-                                        Cancel
-                                    </SecondaryButton>
-                                </Link>
-
+                            <div className="flex items-center justify-end pt-2">
                                 <PrimaryButton
-                                    disabled={processing}
-                                    className="w-full sm:w-auto justify-center"
+                                    disabled={processing || !isDirty}
+                                    className={`w-full sm:w-auto justify-center ${
+                                        !isDirty
+                                            ? "opacity-50 cursor-not-allowed"
+                                            : ""
+                                    }`}
                                 >
                                     Save Changes
                                 </PrimaryButton>
