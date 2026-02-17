@@ -18,7 +18,7 @@ export default function PermitPreview({
         .toUpperCase();
 
     const formattedName =
-        `${data.last_name || ""}, ${data.first_name || ""} ${data.middle_name ? data.middle_name + "." : ""}, ${data.suffix || ""}.`
+        `${data.last_name || ""} ${data.suffix || ""}, ${data.first_name || ""} ${data.middle_name ? data.middle_name + "." : ""} `
             .trim()
             .toUpperCase();
 
