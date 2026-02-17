@@ -30,7 +30,9 @@ class MtopApplication extends Model
         'or_date',
         'punong_bayan',
         'authorized_official',
-        'status'
+        'status',
+        'driver_name',
+        'driver_photo_path',
     ];
 
     // Helper: Get Full Name automatically
