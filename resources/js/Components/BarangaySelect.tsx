@@ -24,7 +24,6 @@ export default function BarangaySelect({
     // Filter list based on input
     const filtered = useMemo(() => {
         if (!value) return BARANGAYS;
-        // Strip out the suffix for cleaner filtering
         const searchTerms = value
             .replace(/, GERONA, TARLAC/i, "")
             .trim()
@@ -59,30 +58,24 @@ export default function BarangaySelect({
 
     // --- STRICT VALIDATION ON BLUR ---
     const handleBlur = () => {
-        // Use timeout to allow "onClick" on the dropdown item to trigger first
         setTimeout(() => {
             setIsOpen(false);
+            if (!value.trim()) return;
 
-            if (!value.trim()) return; // Let 'required' prop handle empty state
-
-            // 1. Normalize Input: Remove suffix, trim, uppercase
             const inputBase = value
                 .replace(/, GERONA, TARLAC$/i, "")
                 .trim()
                 .toUpperCase();
 
-            // 2. Find Exact Match
             const match = BARANGAYS.find((b) => b.toUpperCase() === inputBase);
 
             if (match) {
-                // 3. If matched, ensure it has the correct full format
                 const correctFormat = `${match}, GERONA, TARLAC`;
                 if (value !== correctFormat) {
                     onChange(correctFormat);
                 }
             } else {
-                // 4. If NO match, clear the field (force user to select valid option)
-                onChange("");
+                onChange(""); // Force clear if invalid
             }
         }, 200);
     };
@@ -132,6 +125,7 @@ export default function BarangaySelect({
 
                 <input
                     type="text"
+                    name="address" // Added name for Create.tsx detection
                     className={`block w-full pl-10 pr-10 py-3 border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 ${
                         error ? "border-red-500" : ""
                     }`}
@@ -145,7 +139,7 @@ export default function BarangaySelect({
                         setIsOpen(true);
                     }}
                     onFocus={() => setIsOpen(true)}
-                    onBlur={handleBlur} // <--- UPDATED HANDLER
+                    onBlur={handleBlur}
                     required={required}
                     onKeyDown={handleKeyDown}
                 />

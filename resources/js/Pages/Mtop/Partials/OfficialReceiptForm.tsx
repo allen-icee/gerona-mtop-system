@@ -5,7 +5,7 @@ export default function OfficialReceiptForm({
     data,
     setData,
     errors,
-    onKeyDown, // <--- Add this
+    onKeyDown,
 }: any) {
     return (
         <div className="space-y-2">
@@ -35,18 +35,19 @@ export default function OfficialReceiptForm({
                     icon="solar:hashtag-bold"
                     placeholder="e.g. OR-12345"
                     required={true}
-                    onKeyDown={onKeyDown} // <--- Pass it down
+                    onKeyDown={onKeyDown}
                 />
                 <InputGroup
                     id="or_date"
                     label="Date Paid"
                     name="or_date"
                     type="date"
+                    max="9999-12-31" // <--- Stops 5 digit years
                     value={data.or_date}
                     onChange={(e: any) => setData("or_date", e.target.value)}
                     icon="solar:calendar-date-bold"
                     required={true}
-                    onKeyDown={onKeyDown} // <--- Pass it down
+                    onKeyDown={onKeyDown}
                 />
             </div>
         </div>

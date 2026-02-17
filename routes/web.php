@@ -41,7 +41,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/mtop/{id}/print', [MtopApplicationController::class, 'print'])->name('mtop.print');
     Route::get('/mtop/export', [MtopApplicationController::class, 'export'])->name('mtop.export');
 
-    Route::resource('mtop', MtopApplicationController::class);
+    // --- PHASE 4: BATCH ID PRINTING ROUTES ---
+    // Note: These must exist BEFORE any 'catch-all' routes like /{id}
+    Route::post('/mtop/update-driver-info', [MtopApplicationController::class, 'updateDriverInfo'])->name('mtop.update_driver');
+    Route::get('/mtop/print-ids', [MtopApplicationController::class, 'printIds'])->name('mtop.print_ids');
+
     // ADMIN ONLY ROUTES (Delete, User Management, Signatories)
     Route::middleware(IsAdmin::class)->group(function () {
 

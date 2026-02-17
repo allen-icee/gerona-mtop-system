@@ -1,12 +1,7 @@
 import InputGroup from "@/Components/InputGroup";
 import { Icon } from "@iconify/react";
 
-export default function CedulaForm({
-    data,
-    setData,
-    errors,
-    onKeyDown, // <--- Add this
-}: any) {
+export default function CedulaForm({ data, setData, errors, onKeyDown }: any) {
     return (
         <div className="space-y-2">
             <div className="flex items-center gap-2 text-gray-800 border-b border-gray-200 pb-2">
@@ -35,20 +30,21 @@ export default function CedulaForm({
                     icon="solar:hashtag-bold"
                     placeholder="e.g. 12345678"
                     required={true}
-                    onKeyDown={onKeyDown} // <--- Pass it down
+                    onKeyDown={onKeyDown}
                 />
                 <InputGroup
                     id="cedula_date"
                     label="Date Issued"
                     name="cedula_date"
                     type="date"
+                    max="9999-12-31" // <--- Stops 5 digit years
                     value={data.cedula_date}
                     onChange={(e: any) =>
                         setData("cedula_date", e.target.value)
                     }
                     icon="solar:calendar-date-bold"
                     required={true}
-                    onKeyDown={onKeyDown} // <--- Pass it down
+                    onKeyDown={onKeyDown}
                 />
             </div>
         </div>

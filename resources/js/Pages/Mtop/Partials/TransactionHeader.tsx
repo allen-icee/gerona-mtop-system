@@ -6,7 +6,7 @@ export default function TransactionHeader({
     setData,
     errors,
     expiryDisplay,
-    onKeyDown, // <--- Add this
+    onKeyDown,
 }: any) {
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -21,26 +21,27 @@ export default function TransactionHeader({
                     icon="solar:folder-with-files-bold"
                     placeholder="Auto-Generated"
                     error={errors?.mt_number}
-                    onKeyDown={onKeyDown} // <--- Pass it down
+                    onKeyDown={onKeyDown}
                 />
                 <div className="absolute right-3 top-9.5 text-gray-400 pointer-events-none">
                     <Icon icon="solar:lock-bold" width="16" />
                 </div>
             </div>
 
-            {/* 2. TRANSACTION DATE */}
+            {/* 2. TRANSACTION DATE (Updated with Max Date) */}
             <InputGroup
                 id="transaction_date"
                 label="Transaction Date"
                 name="transaction_date"
                 type="date"
+                max="9999-12-31" // <--- Stops 5 digit years
                 value={data.transaction_date}
                 onChange={(e: any) =>
                     setData("transaction_date", e.target.value)
                 }
                 icon="solar:calendar-bold"
                 error={errors?.transaction_date}
-                onKeyDown={onKeyDown} // <--- Pass it down
+                onKeyDown={onKeyDown}
             />
 
             {/* 3. VALIDITY */}
@@ -64,7 +65,6 @@ export default function TransactionHeader({
                                 ? expiryDisplay()
                                 : "N/A"
                         }
-                        // No onKeyDown needed here since it's disabled
                     />
                 </div>
             </div>

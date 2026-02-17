@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Signatory;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Illuminate\Http\RedirectResponse; // Import this for type hinting
+use Illuminate\Http\RedirectResponse;
 
 class SignatoryController extends Controller
 {
@@ -20,12 +20,12 @@ class SignatoryController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'position' => 'required|string|in:Punong Bayan,Authorized Official',
+            // FIXED: Added 'Committee on Transportation' to the allowed list
+            'position' => 'required|string|in:Punong Bayan,Authorized Official,Committee on Transportation',
         ]);
 
         Signatory::create($validated);
 
-        // CHANGED: Added success message for Toast
         return redirect()->back()->with('message', 'Official added successfully.');
     }
 
@@ -35,13 +35,13 @@ class SignatoryController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'position' => 'required|string|in:Punong Bayan,Authorized Official',
+            // FIXED: Added 'Committee on Transportation' here too
+            'position' => 'required|string|in:Punong Bayan,Authorized Official,Committee on Transportation',
             'is_active' => 'boolean'
         ]);
 
         $signatory->update($validated);
 
-        // CHANGED: Added success message for Toast
         return redirect()->back()->with('message', 'Official updated successfully.');
     }
 
@@ -49,7 +49,6 @@ class SignatoryController extends Controller
     {
         Signatory::findOrFail($id)->delete();
 
-        // CHANGED: Added success message for Toast
         return redirect()->back()->with('message', 'Official deleted successfully.');
     }
 }

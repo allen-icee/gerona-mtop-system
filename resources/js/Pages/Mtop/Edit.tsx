@@ -38,6 +38,28 @@ interface MtopApplication {
     authorized_official: string;
 }
 
+// --- STRICT DATE VALIDATION HELPER ---
+const isValidDate = (dateString: string): boolean => {
+    if (!dateString) return false;
+
+    // Check format YYYY-MM-DD
+    const regex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!regex.test(dateString)) return false;
+
+    // Parse date parts
+    const [year, month, day] = dateString.split("-").map(Number);
+
+    // Create Date object
+    const date = new Date(year, month - 1, day);
+
+    // Check strict equality (handles "Feb 31" rolling over to "Mar 3")
+    return (
+        date.getFullYear() === year &&
+        date.getMonth() === month - 1 &&
+        date.getDate() === day
+    );
+};
+
 export default function Edit({
     application,
     punong_bayans,
@@ -78,7 +100,7 @@ export default function Edit({
     const requiredFields = {
         1: ["last_name", "first_name", "address", "transaction_date"],
         2: [
-            "body_number",
+            // "body_number", <--- REMOVED (Optional now)
             "plate_no",
             "make_type",
             "engine_motor_no",
@@ -97,12 +119,33 @@ export default function Edit({
     const isStepValid = (stepNum: number) => {
         // @ts-ignore
         const fields = requiredFields[stepNum];
-        // @ts-ignore
-        return fields.every(
+
+        // 1. Basic Empty Check
+        const basicCheck = fields.every(
             (field: string) =>
                 data[field as keyof typeof data] &&
                 String(data[field as keyof typeof data]).trim() !== "",
         );
+
+        if (!basicCheck) return false;
+
+        // 2. Strict Step 1 Checks (Address & Date)
+        if (stepNum === 1) {
+            if (!data.address.toUpperCase().includes("GERONA, TARLAC")) {
+                return false;
+            }
+            if (!isValidDate(data.transaction_date)) {
+                return false;
+            }
+        }
+
+        // 3. Strict Step 3 Checks (Cedula & OR Dates)
+        if (stepNum === 3) {
+            if (!isValidDate(data.cedula_date)) return false;
+            if (!isValidDate(data.or_date)) return false;
+        }
+
+        return true;
     };
 
     // Check if WHOLE form is valid
@@ -110,24 +153,63 @@ export default function Edit({
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
+
+        // --- FINAL DATE GUARD ---
+        if (!isValidDate(data.transaction_date)) {
+            toast.error("Invalid Transaction Date.");
+            return;
+        }
+        if (!isValidDate(data.cedula_date)) {
+            toast.error("Invalid Cedula Date.");
+            return;
+        }
+        if (!isValidDate(data.or_date)) {
+            toast.error("Invalid Official Receipt Date.");
+            return;
+        }
+
         put(route("mtop.update", application.id), {
             onSuccess: (page: any) => {
-                // Check for flash data from controller
                 const successData = page.props.flash?.success_data;
                 if (successData) {
                     setUpdatedRecord(successData);
                     setShowSuccessModal(true);
                 }
             },
+            onError: (errs) => {
+                console.error("Update Errors:", errs);
+                toast.error("Failed to update record. Check inputs.");
+            },
         });
     };
 
     const handleNext = () => {
+        // Explicit validation feedback
+        if (step === 1) {
+            if (!isValidDate(data.transaction_date)) {
+                toast.error("Invalid Transaction Date! Check calendar.");
+                return;
+            }
+            if (!data.address.toUpperCase().includes("GERONA, TARLAC")) {
+                toast.error("Invalid Address! Please select a Barangay.");
+                return;
+            }
+        }
+        if (step === 3) {
+            if (!isValidDate(data.cedula_date)) {
+                toast.error("Invalid Cedula Date! Check calendar.");
+                return;
+            }
+            if (!isValidDate(data.or_date)) {
+                toast.error("Invalid OR Date! Check calendar.");
+                return;
+            }
+        }
+
         if (isStepValid(step)) {
             const nextStep = step + 1;
             setStep(nextStep);
 
-            // Wait for re-render, then focus first input of new step
             setTimeout(() => {
                 const form = document.querySelector("form");
                 if (form) {
@@ -156,40 +238,55 @@ export default function Edit({
         e: React.KeyboardEvent<HTMLInputElement | HTMLSelectElement>,
     ) => {
         if (e.key === "Enter") {
-            e.preventDefault(); // Prevent form submission
+            e.preventDefault();
+
+            // Address Check
+            if (
+                e.currentTarget.name === "address" ||
+                e.currentTarget.closest('[name="address"]')
+            ) {
+                const currentVal = (e.currentTarget as HTMLInputElement).value;
+                if (!currentVal.toUpperCase().includes("GERONA, TARLAC")) {
+                    return;
+                }
+            }
 
             const form = e.currentTarget.form;
             if (!form) return;
 
-            // Get all POTENTIALLY focusable elements
             const allInputs = Array.from(
                 form.querySelectorAll(
                     'input:not([disabled]):not([readonly]), select:not([disabled]), textarea:not([disabled]), button[type="submit"]',
                 ),
             ) as HTMLElement[];
 
-            // Filter for only currently VISIBLE elements
             const visibleInputs = allInputs.filter(
                 (el) => el.offsetParent !== null,
             );
 
-            // Find current element index
             const index = visibleInputs.indexOf(e.currentTarget as any);
 
             if (index > -1) {
-                // If not the last visible input, focus the next one
                 if (index < visibleInputs.length - 1) {
                     visibleInputs[index + 1].focus();
                 } else {
-                    // We are on the LAST field of the current step
                     if (step < 3) {
                         handleNext();
                     } else {
-                        // FIX: We are on the final step. Trigger Submit if valid.
+                        // FIX: On final step, trigger Submit if valid.
                         if (isFormValid) {
                             submit(e as unknown as React.FormEvent);
                         } else {
-                            toast.error("Please fill in all required fields.");
+                            if (
+                                !isValidDate(data.cedula_date) ||
+                                !isValidDate(data.or_date)
+                            ) {
+                                toast.error("Invalid Dates in Step 3.");
+                            } else {
+                                toast.error(
+                                    "Please fill in all required fields.",
+                                );
+                            }
                         }
                     }
                 }
@@ -198,7 +295,8 @@ export default function Edit({
     };
 
     const expiryDisplay = () => {
-        if (!data.transaction_date) return "N/A";
+        if (!data.transaction_date || !isValidDate(data.transaction_date))
+            return "INVALID DATE";
         const date = new Date(data.transaction_date);
         const expiry = new Date(date.setFullYear(date.getFullYear() + 3));
         return expiry
@@ -264,7 +362,7 @@ export default function Edit({
                                         if (isStepValid(1)) setStep(2);
                                         else
                                             toast.error(
-                                                "Complete Step 1 first",
+                                                "Complete Step 1 first (Check Date/Address)",
                                             );
                                     }}
                                     className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 ${
@@ -419,7 +517,6 @@ export default function Edit({
                                             </PrimaryButton>
                                         ) : (
                                             <PrimaryButton
-                                                // Added type submit for clarity, handled via handler or click
                                                 type="submit"
                                                 className={`bg-blue-800 hover:bg-blue-900 ${
                                                     !isDirty ||

@@ -90,15 +90,16 @@ export default function SuffixSelect({
             <div className="relative">
                 <input
                     type="text"
-                    // Removed readOnly so it is selectable by our Enter logic
                     className={`block w-full py-3 pl-3 pr-10 border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 cursor-pointer caret-transparent ${
                         error ? "border-red-500" : ""
                     }`}
                     value={value || "N/A"}
-                    onClick={() => setIsOpen(!isOpen)}
+                    onClick={() => setIsOpen(true)} // Force open on click
+                    onFocus={() => setIsOpen(true)} // Force open on Tab/Focus
                     onBlur={() => setTimeout(() => setIsOpen(false), 200)}
                     onKeyDown={handleKeyDown}
                     onChange={() => {}} // Prevent typing
+                    readOnly={false} // Keep writable for focus events, but prevent typing via onChange
                 />
 
                 <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">

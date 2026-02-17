@@ -7,18 +7,16 @@ export default function PermitPreview({
     data: any;
     showHeader?: boolean;
 }) {
-    // UPDATE: Added suffix to the fullName string logic
     const fullName = [
         data.last_name,
         data.first_name,
         data.middle_name ? `${data.middle_name}.` : "",
-        data.suffix, // <--- Added this
+        data.suffix,
     ]
-        .filter(Boolean) // This removes empty strings if middle_name or suffix is missing
+        .filter(Boolean)
         .join(" ")
         .toUpperCase();
 
-    // Alternative formatting if you want the "Last Name, First Name M.I. Suffix" style:
     const formattedName =
         `${data.last_name || ""}, ${data.first_name || ""} ${data.middle_name ? data.middle_name + "." : ""}, ${data.suffix || ""}.`
             .trim()
@@ -53,7 +51,6 @@ export default function PermitPreview({
 
     return (
         <div className="bg-white font-sans w-full">
-            {/* Header */}
             {showHeader && (
                 <div className="bg-gray-800 text-white p-3 font-bold text-center uppercase tracking-wider text-sm flex items-center justify-center gap-2 border-b border-black">
                     <Icon icon="solar:document-text-bold" />
@@ -71,7 +68,6 @@ export default function PermitPreview({
                                     NAME
                                 </td>
                                 <td className="p-2 sm:p-3 font-bold text-gray-800 align-top">
-                                    {/* UPDATE: Use the formattedName including suffix */}
                                     {val(formattedName)}
                                 </td>
                             </tr>
@@ -142,7 +138,16 @@ export default function PermitPreview({
                                     {val(data.chassis_no)}
                                 </td>
                                 <td className="p-2 sm:p-3 font-bold text-blue-700 text-xs sm:text-sm align-top">
-                                    {val(data.plate_no)}
+                                    {/* Handle "For Registration" Styling */}
+                                    {data.plate_no === "FOR REGISTRATION" ? (
+                                        <span className="text-orange-600 text-[10px] leading-tight block">
+                                            FOR REGISTRATION
+                                        </span>
+                                    ) : (
+                                        val(data.plate_no)
+                                    )}
+
+                                    {/* Hide body number if empty */}
                                     {data.body_number ? (
                                         <div className="text-gray-500 font-normal">
                                             (#{data.body_number})

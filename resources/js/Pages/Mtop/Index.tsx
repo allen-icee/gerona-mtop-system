@@ -2,12 +2,14 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, Link, router, usePage } from "@inertiajs/react";
 import { Icon } from "@iconify/react";
 import Pagination from "@/Components/Pagination";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import TextInput from "@/Components/TextInput";
 import Modal from "@/Components/Modal";
 import PermitPreview from "./Partials/PermitPreview";
 import { BARANGAYS } from "@/Constants/Barangays";
 import ConfirmDeleteModal from "@/Components/ConfirmDeleteModal";
+import Checkbox from "@/Components/Checkbox";
+import DriverInfoModal from "./Partials/DriverInfoModal";
 
 // Interfaces
 interface MtopApplication {
@@ -28,6 +30,9 @@ interface MtopApplication {
     cedula_date: string;
     or_number: string;
     or_date: string;
+    // New fields for ID printing
+    driver_name?: string;
+    driver_photo_path?: string;
 }
 
 interface Props {
@@ -41,9 +46,12 @@ interface Props {
         year?: string;
         barangay?: string;
     };
+    // Received from Controller
+    officials: { name: string; position: string }[];
 }
 
-export default function Index({ applications, filters }: Props) {
+export default function Index({ applications, filters, officials }: Props) {
+    // <--- Added 'officials' here
     const user = usePage().props.auth.user;
 
     const [search, setSearch] = useState(filters.search || "");
@@ -54,9 +62,12 @@ export default function Index({ applications, filters }: Props) {
     const [deletingId, setDeletingId] = useState<number | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
+    // --- PHASE 4: BATCH PRINTING STATE ---
+    const [selectedIds, setSelectedIds] = useState<number[]>([]);
+    const [showDriverModal, setShowDriverModal] = useState(false);
+
     // 1. SEARCH & AUTO-REFRESH (POLLING)
     useEffect(() => {
-        // Search Debounce (waits 300ms after typing)
         const searchTimer = setTimeout(() => {
             router.get(
                 route("mtop.index"),
@@ -65,7 +76,6 @@ export default function Index({ applications, filters }: Props) {
             );
         }, 300);
 
-        // Polling (Refreshes data every 10 seconds to sync with other staff)
         const pollInterval = setInterval(() => {
             router.reload({ only: ["applications"] });
         }, 10000);
@@ -92,6 +102,28 @@ export default function Index({ applications, filters }: Props) {
         }
     };
 
+    // --- SELECTION LOGIC ---
+    const toggleSelect = (id: number) => {
+        if (selectedIds.includes(id)) {
+            setSelectedIds(selectedIds.filter((i) => i !== id));
+        } else {
+            setSelectedIds([...selectedIds, id]);
+        }
+    };
+
+    const toggleSelectAll = () => {
+        if (selectedIds.length === applications.data.length) {
+            setSelectedIds([]);
+        } else {
+            setSelectedIds(applications.data.map((app) => app.id));
+        }
+    };
+
+    // Filter selected apps for the modal
+    const selectedApps = useMemo(() => {
+        return applications.data.filter((app) => selectedIds.includes(app.id));
+    }, [selectedIds, applications.data]);
+
     return (
         <AuthenticatedLayout>
             <Head title="MTOP Records" />
@@ -100,9 +132,8 @@ export default function Index({ applications, filters }: Props) {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     {/* TOOLBAR */}
                     <div className="flex flex-col xl:flex-row justify-between items-center mb-6 gap-4">
-                        {/* SEARCH & FILTERS CONTAINER */}
+                        {/* SEARCH & FILTERS */}
                         <div className="flex flex-col md:flex-row gap-3 w-full xl:w-auto flex-wrap">
-                            {/* SEARCH */}
                             <div className="relative w-full md:w-auto">
                                 <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-gray-500">
                                     <Icon
@@ -118,7 +149,6 @@ export default function Index({ applications, filters }: Props) {
                                 />
                             </div>
 
-                            {/* FILTERS */}
                             <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto flex-wrap">
                                 <select
                                     className="border-gray-300 rounded-md shadow-sm text-base py-3 pl-4 pr-10 w-full sm:w-48"
@@ -163,17 +193,25 @@ export default function Index({ applications, filters }: Props) {
                             </div>
                         </div>
 
-                        {/* ACTIONS (EXPORT + ADD) */}
+                        {/* ACTIONS */}
                         <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
-                            {/* EXPORT BUTTON */}
+                            {/* --- BATCH PRINT BUTTON (Shows when items selected) --- */}
+                            {selectedIds.length > 0 && (
+                                <button
+                                    onClick={() => setShowDriverModal(true)}
+                                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg flex items-center justify-center gap-2 shadow-md w-full sm:w-auto text-base transition-transform hover:scale-105 animate-in fade-in slide-in-from-right-4"
+                                >
+                                    <Icon
+                                        icon="solar:printer-bold"
+                                        width="24"
+                                    />
+                                    Print IDs ({selectedIds.length})
+                                </button>
+                            )}
+
                             <a
                                 href={route("mtop.export", {
-                                    _query: {
-                                        search,
-                                        month,
-                                        year,
-                                        barangay,
-                                    },
+                                    _query: { search, month, year, barangay },
                                 })}
                                 target="_blank"
                                 className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg flex items-center justify-center gap-2 shadow-md w-full sm:w-auto text-base transition-transform hover:scale-105"
@@ -182,105 +220,17 @@ export default function Index({ applications, filters }: Props) {
                                     icon="solar:file-download-bold"
                                     width="24"
                                 />
-                                Export Excel
+                                Export
                             </a>
 
-                            {/* ADD BUTTON */}
                             <Link
                                 href={route("mtop.create")}
                                 className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg flex items-center justify-center gap-2 shadow-md w-full sm:w-auto text-base transition-transform hover:scale-105"
                             >
                                 <Icon icon="solar:add-circle-bold" width="24" />
-                                Add New Record
+                                Add
                             </Link>
                         </div>
-                    </div>
-
-                    {/* --- MOBILE VIEW: CARDS --- */}
-                    <div className="grid grid-cols-1 gap-4 md:hidden">
-                        {applications.data.length === 0 ? (
-                            <div className="bg-white p-6 rounded-lg shadow text-center text-gray-500">
-                                No records found.
-                            </div>
-                        ) : (
-                            applications.data.map((app) => (
-                                <div
-                                    key={app.id}
-                                    className="bg-white p-5 rounded-lg shadow-sm border border-gray-100 flex flex-col gap-4"
-                                >
-                                    <div className="flex justify-between items-start">
-                                        <div>
-                                            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                                                Control No.
-                                            </span>
-                                            <div className="font-bold text-gray-900 text-lg">
-                                                {app.mt_number || "-"}
-                                            </div>
-                                        </div>
-                                        <button
-                                            onClick={() => setViewingApp(app)}
-                                            className="text-blue-600 bg-blue-50 p-2 rounded-full hover:bg-blue-100"
-                                        >
-                                            <Icon
-                                                icon="solar:eye-bold"
-                                                width="20"
-                                            />
-                                        </button>
-                                    </div>
-                                    <div>
-                                        <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                                            Applicant
-                                        </span>
-                                        <div className="font-bold text-gray-800 text-base">
-                                            {app.last_name}, {app.first_name}{" "}
-                                            {app.middle_name
-                                                ? app.middle_name[0] + "."
-                                                : ""}{" "}
-                                            {app.suffix ? app.suffix : ""}
-                                        </div>
-                                        <div className="text-sm text-gray-500 mt-1">
-                                            {app.address}
-                                        </div>
-                                    </div>
-                                    <div className="border-t border-gray-100 pt-4 flex gap-2">
-                                        <a
-                                            href={route("mtop.print", app.id)}
-                                            target="_blank"
-                                            className="flex-1 bg-green-50 text-green-700 py-2 rounded-md font-semibold text-sm flex items-center justify-center gap-2"
-                                        >
-                                            <Icon
-                                                icon="solar:printer-bold"
-                                                width="18"
-                                            />{" "}
-                                            Print
-                                        </a>
-                                        <Link
-                                            href={route("mtop.edit", app.id)}
-                                            className="flex-1 bg-blue-50 text-blue-700 py-2 rounded-md font-semibold text-sm flex items-center justify-center gap-2"
-                                        >
-                                            <Icon
-                                                icon="solar:pen-new-square-bold"
-                                                width="18"
-                                            />{" "}
-                                            Edit
-                                        </Link>
-                                        {user.role === "admin" && (
-                                            <button
-                                                onClick={() =>
-                                                    confirmDelete(app.id)
-                                                }
-                                                className="bg-red-50 text-red-600 p-2 rounded-md"
-                                            >
-                                                <Icon
-                                                    icon="solar:trash-bin-trash-bold"
-                                                    width="20"
-                                                />
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-                            ))
-                        )}
                     </div>
 
                     {/* --- DESKTOP VIEW: TABLE --- */}
@@ -288,6 +238,17 @@ export default function Index({ applications, filters }: Props) {
                         <table className="w-full text-sm text-left text-gray-500">
                             <thead className="text-xs text-gray-700 uppercase bg-gray-50 border-b">
                                 <tr>
+                                    {/* CHECKBOX HEADER */}
+                                    <th className="px-6 py-4 w-4">
+                                        <Checkbox
+                                            checked={
+                                                applications.data.length > 0 &&
+                                                selectedIds.length ===
+                                                    applications.data.length
+                                            }
+                                            onChange={toggleSelectAll}
+                                        />
+                                    </th>
                                     <th className="px-6 py-4">Control No.</th>
                                     <th className="px-6 py-4">
                                         Applicant Name
@@ -307,7 +268,7 @@ export default function Index({ applications, filters }: Props) {
                                 {applications.data.length === 0 ? (
                                     <tr>
                                         <td
-                                            colSpan={5}
+                                            colSpan={6}
                                             className="px-6 py-8 text-center text-gray-400"
                                         >
                                             No records found.
@@ -317,8 +278,23 @@ export default function Index({ applications, filters }: Props) {
                                     applications.data.map((app) => (
                                         <tr
                                             key={app.id}
-                                            className="bg-white border-b hover:bg-gray-50 transition-colors"
+                                            className={`border-b transition-colors ${
+                                                selectedIds.includes(app.id)
+                                                    ? "bg-indigo-50"
+                                                    : "bg-white hover:bg-gray-50"
+                                            }`}
                                         >
+                                            {/* CHECKBOX ROW */}
+                                            <td className="px-6 py-4">
+                                                <Checkbox
+                                                    checked={selectedIds.includes(
+                                                        app.id,
+                                                    )}
+                                                    onChange={() =>
+                                                        toggleSelect(app.id)
+                                                    }
+                                                />
+                                            </td>
                                             <td className="px-6 py-4">
                                                 <div className="font-bold text-gray-900 text-base">
                                                     {app.mt_number || "-"}
@@ -412,6 +388,14 @@ export default function Index({ applications, filters }: Props) {
                     </div>
                 </div>
             </div>
+
+            {/* --- DRIVER INFO MODAL (BATCH PRINTING) --- */}
+            <DriverInfoModal
+                show={showDriverModal}
+                onClose={() => setShowDriverModal(false)}
+                selectedApps={selectedApps}
+                officials={officials} // <--- CORRECTLY PASSED NOW
+            />
 
             {/* --- PREVIEW MODAL --- */}
             <Modal

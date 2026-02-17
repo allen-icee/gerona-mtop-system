@@ -10,6 +10,7 @@ use Illuminate\Http\RedirectResponse;
 use Carbon\Carbon;
 use App\Models\Signatory;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage; // <--- ADDED THIS IMPORT
 
 class MtopApplicationController extends Controller
 {
@@ -49,9 +50,15 @@ class MtopApplicationController extends Controller
             ->paginate(10)
             ->withQueryString();
 
+        // --- NEW: FETCH OFFICIALS FOR PRINT MODAL ---
+        $officials = Signatory::where('is_active', true)->get()->map(function ($s) {
+            return ['name' => $s->name, 'position' => $s->position];
+        });
+
         return Inertia::render('Mtop/Index', [
             'applications' => $applications,
             'filters' => $request->only(['search', 'month', 'year', 'barangay']),
+            'officials' => $officials, // <--- PASSING OFFICIALS TO FRONTEND
         ]);
     }
 
@@ -108,13 +115,13 @@ class MtopApplicationController extends Controller
             'mt_number'           => 'nullable|string',
 
             // Unit
-            'body_number'         => ['required', 'regex:/^[0-9]+$/'],
-            'plate_no'            => ['required', 'string', 'max:20'],
+            'body_number'         => ['nullable', 'regex:/^[0-9]+$/'],
+            'plate_no'            => ['required', 'string', 'max:30'],
             'make_type'           => 'required|string|max:30',
             'engine_motor_no'     => 'required|string|max:30',
             'chassis_no'          => 'required|string|max:30',
 
-            // Docs & Signatories (STRICTLY REQUIRED)
+            // Docs & Signatories
             'cedula_number'       => 'required|string|max:20',
             'cedula_date'         => 'required|date',
             'or_number'           => 'required|string|max:20',
@@ -162,8 +169,6 @@ class MtopApplicationController extends Controller
     public function edit($id): Response
     {
         $application = MtopApplication::findOrFail($id);
-
-        // FETCH LISTS FOR EDIT DROPDOWNS
         $punong_bayans = Signatory::where('position', 'Punong Bayan')->where('is_active', true)->pluck('name');
         $officials = Signatory::where('position', 'Authorized Official')->where('is_active', true)->pluck('name');
 
@@ -189,8 +194,8 @@ class MtopApplicationController extends Controller
             'address'             => 'required|string|max:100',
             'transaction_date'    => 'required|date',
             'mt_number'           => 'nullable|string|max:20',
-            'body_number'         => ['required', 'regex:/^[0-9]+$/'],
-            'plate_no'            => ['required', 'string', 'max:20'],
+            'body_number'         => ['nullable', 'regex:/^[0-9]+$/'],
+            'plate_no'            => ['required', 'string', 'max:30'],
             'make_type'           => 'required|string|max:30',
             'engine_motor_no'     => 'required|string|max:30',
             'chassis_no'          => 'required|string|max:30',
@@ -331,5 +336,73 @@ class MtopApplicationController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Phase 4: Batch Update Driver Info & Photos
+     */
+    public function updateDriverInfo(Request $request)
+    {
+        $request->validate([
+            'drivers' => 'required|array',
+            'drivers.*.id' => 'required|exists:mtop_applications,id',
+            'drivers.*.driver_name' => 'nullable|string|max:100',
+            'drivers.*.photo' => 'nullable|image|max:10240', // Increased limit to 10MB just in case
+        ]);
+
+        // We loop through the input array keys to match them with the file array
+        $drivers = $request->input('drivers');
+
+        foreach ($drivers as $index => $data) {
+            $app = MtopApplication::find($data['id']);
+
+            $updateData = ['driver_name' => $data['driver_name'] ?? $app->driver_name];
+
+            // FIXED: Explicitly check and retrieve the file using dot notation
+            if ($request->hasFile("drivers.{$index}.photo")) {
+
+                // 1. Delete old photo if it exists
+                if ($app->driver_photo_path && Storage::exists('public/' . $app->driver_photo_path)) {
+                    Storage::delete('public/' . $app->driver_photo_path);
+                }
+
+                // 2. Get the specific file object
+                $file = $request->file("drivers.{$index}.photo");
+
+                // 3. Store it
+                $path = $file->store('driver_photos', 'public');
+                $updateData['driver_photo_path'] = $path;
+            }
+
+            $app->update($updateData);
+        }
+
+        return redirect()->back()->with('message', 'Driver information and photos updated successfully!');
+    }
+
+    /**
+     * Phase 4: Print IDs View
+     */
+    public function printIds(Request $request)
+    {
+        $ids = explode(',', $request->query('ids', ''));
+
+        $mayors = $request->query('mayors', []);
+        $committees = $request->query('committees', []);
+
+        // TRANSFORM to array so custom fields stick
+        $applications = MtopApplication::whereIn('id', $ids)->get()->map(function ($app) use ($mayors, $committees) {
+            $data = $app->toArray(); // Convert to array first
+
+            // Now merge the custom fields
+            $data['print_mayor'] = $mayors[$app->id] ?? 'Municipal Mayor';
+            $data['print_committee'] = $committees[$app->id] ?? 'Committee Chair';
+
+            return $data;
+        });
+
+        return Inertia::render('Mtop/PrintIds', [
+            'applications' => $applications,
+        ]);
     }
 }

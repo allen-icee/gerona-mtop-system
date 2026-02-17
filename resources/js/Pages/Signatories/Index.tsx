@@ -8,7 +8,7 @@ import Modal from "@/Components/Modal";
 import TextInput from "@/Components/TextInput";
 import { Icon } from "@iconify/react";
 import { Switch } from "@headlessui/react";
-import ConfirmDeleteModal from "@/Components/ConfirmDeleteModal"; // <--- IMPORT THIS
+import ConfirmDeleteModal from "@/Components/ConfirmDeleteModal";
 
 interface Signatory {
     id: number;
@@ -23,6 +23,13 @@ interface Props {
         search?: string;
     };
 }
+
+// REMOVED "Municipal Mayor" since it is the same as "Punong Bayan"
+const POSITIONS = [
+    "Punong Bayan",
+    "Authorized Official",
+    "Committee on Transportation",
+];
 
 export default function Index({ signatories = [], filters = {} }: Props) {
     const [search, setSearch] = useState(filters.search || "");
@@ -84,7 +91,7 @@ export default function Index({ signatories = [], filters = {} }: Props) {
         }
     };
 
-    // --- NEW DELETE LOGIC ---
+    // --- DELETE LOGIC ---
     const confirmDelete = (id: number) => {
         setDeletingId(id);
     };
@@ -100,7 +107,6 @@ export default function Index({ signatories = [], filters = {} }: Props) {
             });
         }
     };
-    // ------------------------
 
     // Helper: Status Badge
     const getStatusBadge = (isActive: boolean) => (
@@ -189,7 +195,7 @@ export default function Index({ signatories = [], filters = {} }: Props) {
                                         <button
                                             onClick={() =>
                                                 confirmDelete(sig.id)
-                                            } // CHANGED
+                                            }
                                             className="flex-1 bg-red-50 text-red-600 py-2 rounded-md font-bold text-sm flex items-center justify-center gap-2 hover:bg-red-100 transition-colors"
                                         >
                                             <Icon
@@ -262,7 +268,7 @@ export default function Index({ signatories = [], filters = {} }: Props) {
                                                             confirmDelete(
                                                                 sig.id,
                                                             )
-                                                        } // CHANGED
+                                                        }
                                                         className="bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 p-1.5 rounded-md flex items-center gap-1 font-bold hover:cursor-pointer"
                                                         title="Delete"
                                                     >
@@ -289,7 +295,6 @@ export default function Index({ signatories = [], filters = {} }: Props) {
                 onClose={() => setIsModalOpen(false)}
                 maxWidth="lg"
             >
-                {/* ... (Keep your existing Form Modal content EXACTLY as it was) ... */}
                 <div className="flex flex-col h-full sm:h-auto">
                     {/* 1. HEADER */}
                     <div className="bg-gray-800 px-6 py-4 flex justify-between items-center shrink-0 sm:rounded-t-lg">
@@ -327,12 +332,11 @@ export default function Index({ signatories = [], filters = {} }: Props) {
                                         }
                                         className="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 pl-10 py-3 relative z-0"
                                     >
-                                        <option value="Punong Bayan">
-                                            Punong Bayan
-                                        </option>
-                                        <option value="Authorized Official">
-                                            Authorized Official
-                                        </option>
+                                        {POSITIONS.map((pos) => (
+                                            <option key={pos} value={pos}>
+                                                {pos}
+                                            </option>
+                                        ))}
                                     </select>
                                 </div>
                             </div>
