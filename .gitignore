@@ -22,3 +22,10 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+# NativePHP Builds
+/dist
+/nativephp/build
+
+# Database files (Local)
+/database/*.sqlite
+/database/*.sqlite-journal

@@ -25,7 +25,7 @@ start http://192.168.10.185:8100
 echo System is running!
 echo -----------------------------------------------------
 echo HOST COMPUTER can access at: http://127.0.0.1:8100
-echo OTHER STAFF should use:      http://192.168.10.185:8100
+echo OTHER STAFF should use:      http://192.168.10.105:8100
 echo -----------------------------------------------------
 echo.
 echo Close this window to stop the system.
