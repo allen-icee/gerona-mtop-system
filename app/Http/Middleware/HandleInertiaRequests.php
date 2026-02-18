@@ -29,18 +29,25 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        // We use a try-catch so the app doesn't crash if the table is missing on first run
+        $printSettings = null;
+        try {
+            $printSettings = \App\Models\PrintSetting::first();
+        } catch (\Exception $e) {
+            // Table doesn't exist yet, ignore
+        }
+
         return [
             ...parent::share($request),
             'auth' => [
                 'user' => $request->user(),
             ],
-            // ADD THIS FLASH BLOCK
             'flash' => [
                 'success_data' => fn() => $request->session()->get('success_data'),
                 'message' => fn() => $request->session()->get('message'),
                 'error' => fn() => $request->session()->get('error'),
             ],
-            'printSettings' => \App\Models\PrintSetting::first(),
+            'printSettings' => $printSettings,
         ];
     }
 }
