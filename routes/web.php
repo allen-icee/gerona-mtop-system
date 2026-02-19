@@ -9,6 +9,7 @@ use Inertia\Inertia;
 use App\Models\MtopApplication;
 use App\Models\User;
 use App\Http\Controllers\PrintSettingController;
+use Illuminate\Support\Facades\Artisan;
 
 /*
 |--------------------------------------------------------------------------
@@ -25,11 +26,17 @@ Route::get('/', function () {
 });
 
 // 2. DASHBOARD: The Command Center (Real Data)
+// routes/web.php
+
 Route::get('/dashboard', function () {
+    // 1. Get the Local IP Address of the Server
+    $serverIp = getHostByName(getHostName());
+
     return Inertia::render('Dashboard', [
         'totalMtop'  => MtopApplication::count(),
         'totalUsers' => User::count(),
         'newToday'   => MtopApplication::whereDate('created_at', today())->count(),
+        'serverIp'   => $serverIp, // <--- PASS THIS NEW VARIABLE
     ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
@@ -51,7 +58,15 @@ Route::middleware('auth')->group(function () {
     Route::put('/mtop/{id}', [MtopApplicationController::class, 'update'])->name('mtop.update');
     Route::get('/mtop/{id}/print', [MtopApplicationController::class, 'print'])->name('mtop.print');
     Route::get('/mtop/export', [MtopApplicationController::class, 'export'])->name('mtop.export');
-
+    // BACKUP ROUTE
+    Route::post('/settings/backup', function () {
+        try {
+            Artisan::call('backup:run');
+            return back()->with('status', 'Database backup created successfully!');
+        } catch (\Exception $e) {
+            return back()->withErrors(['backup' => 'Backup failed: ' . $e->getMessage()]);
+        }
+    })->name('settings.backup');
     // ADMIN ONLY ROUTES (Delete, User Management, Signatories)
     Route::middleware(IsAdmin::class)->group(function () {
 

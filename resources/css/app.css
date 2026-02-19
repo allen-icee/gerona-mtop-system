@@ -1,1 +1,54 @@
 @import "tailwindcss";
+
+/* 1. DEFINE FONTS GLOBALLY HERE */
+@font-face {
+    font-family: "LEMONMILK";
+    src: url("/fonts/LEMONMILK-Light.otf") format("opentype");
+    font-weight: 300;
+    font-style: normal;
+}
+@font-face {
+    font-family: "LEMONMILK";
+    src: url("/fonts/LEMONMILK-Regular.otf") format("opentype");
+    font-weight: 400;
+    font-style: normal;
+}
+@font-face {
+    font-family: "UPBOLTERS";
+    src: url("/fonts/UPBOLTERS New-Regular.otf") format("opentype");
+}
+@font-face {
+    font-family: "KeepCalm";
+    src: url("/fonts/KeepCalm-Medium.ttf") format("truetype");
+    font-weight: 500;
+}
+@font-face {
+    font-family: "ArialNarrow7";
+    src: url("/fonts/arialnarrow.ttf") format("truetype");
+}
+@font-face {
+    font-family: "DiezmaRd";
+    src: url("/fonts/Diezma-ExtraBold.otf") format("opentype");
+    font-weight: 800;
+}
+@layer base {
+    input::placeholder,
+    textarea::placeholder {
+        color: #6b7280 !important; /* Tailwind gray-500 */
+        opacity: 1 !important; /* Forces it to be solid */
+    }
+
+    /* Webkit specific override for Electron/Chrome */
+    input::-webkit-input-placeholder,
+    textarea::-webkit-input-placeholder {
+        color: #6b7280 !important;
+        opacity: 1 !important;
+    }
+}
+/* 2. FORCE PRINT SETTINGS GLOBALLY */
+@media print {
+    body {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+}
