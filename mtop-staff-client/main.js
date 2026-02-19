@@ -1,28 +1,33 @@
-const { app, BrowserWindow, ipcMain } = require("electron");
+const { app, BrowserWindow, ipcMain, shell } = require("electron"); // ✅ ADDED 'shell'
 const path = require("path");
 const fs = require("fs");
 
-// This saves the IP in a safe hidden folder on the staff's Windows PC
 const configPath = path.join(app.getPath("userData"), "server-config.json");
 
 function createWindow() {
     const mainWindow = new BrowserWindow({
         width: 1280,
         height: 800,
-        autoHideMenuBar: true, // ✅ Hides the top menu bar
-        icon: path.join(__dirname, "MunicipalityLogo.png"), // ✅ Custom Logo (Make sure icon.png is in this folder!)
+        autoHideMenuBar: true,
+        icon: path.join(__dirname, "MunicipalityLogo.png"),
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,
         },
     });
 
-    // ✅ Completely removes the File/Edit/View menu
     mainWindow.setMenu(null);
 
-    // Function to load the MTOP server
+    // ✅ ADD THIS BLOCK: Intercept print routes and open in Google Chrome / Edge
+    mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+        if (url.includes("/print-ids") || url.includes("/print")) {
+            shell.openExternal(url);
+            return { action: "deny" };
+        }
+        return { action: "allow" };
+    });
+
     const loadServer = (ip) => {
-        // We use port 8100 as configured in your update-ip.js
         const serverUrl = `http://${ip}:8000`;
 
         mainWindow.loadURL(serverUrl).catch((err) => {
@@ -31,16 +36,13 @@ function createWindow() {
         });
     };
 
-    // 1. Check if we already saved an IP before
     if (fs.existsSync(configPath)) {
         const config = JSON.parse(fs.readFileSync(configPath));
         loadServer(config.ip);
     } else {
-        // 2. If no IP is saved, show the settings page
         mainWindow.loadFile("settings.html");
     }
 
-    // 3. Listen for the user clicking "Save" on the settings page
     ipcMain.on("save-ip", (event, ip) => {
         fs.writeFileSync(configPath, JSON.stringify({ ip }));
         loadServer(ip);

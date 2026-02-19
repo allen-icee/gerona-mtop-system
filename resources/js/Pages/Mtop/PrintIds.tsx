@@ -1,79 +1,24 @@
 import { Head } from "@inertiajs/react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 interface Props {
     applications: any[];
 }
 
 export default function PrintIds({ applications }: Props) {
-    // --- ZOOM STATE ---
-    const [scale, setScale] = useState(1);
-
     useEffect(() => {
-        // 1. Auto-print on initial load
         setTimeout(() => window.print(), 500);
-
-        // 2. Listen for Ctrl+P or Cmd+P
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "p") {
-                e.preventDefault();
-                window.print();
-            }
-        };
-
-        // 3. Listen for Ctrl + Mouse Wheel for Zooming
-        const handleWheel = (e: WheelEvent) => {
-            if (e.ctrlKey || e.metaKey) {
-                e.preventDefault();
-                if (e.deltaY < 0) {
-                    setScale((s) => Math.min(s + 0.1, 2.5));
-                } else {
-                    setScale((s) => Math.max(s - 0.1, 0.3));
-                }
-            }
-        };
-
-        // 4. RESET ZOOM BEFORE PRINTING
-        const handleBeforePrint = () => {
-            setScale(1);
-        };
-
-        window.addEventListener("keydown", handleKeyDown);
-        window.addEventListener("wheel", handleWheel, { passive: false });
-        window.addEventListener("beforeprint", handleBeforePrint);
-
-        return () => {
-            window.removeEventListener("keydown", handleKeyDown);
-            window.removeEventListener("wheel", handleWheel);
-            window.removeEventListener("beforeprint", handleBeforePrint);
-        };
     }, []);
 
     return (
-        <div className="w-full min-h-screen bg-gray-500 p-8 print:p-0 print:bg-white flex flex-col items-center gap-4 relative overflow-auto">
+        <div className="w-full min-h-screen bg-gray-500 p-8 print:p-0 print:bg-white flex flex-col items-center gap-4">
             <Head title="Print IDs" />
-
-            {/* FLOATING ACTION BAR (Hidden when printing) */}
-            <div className="fixed top-4 right-4 print:hidden z-50 flex items-center gap-3">
-                <div className="bg-gray-800/80 backdrop-blur-sm text-white px-4 py-2 rounded shadow font-bold text-xs flex items-center gap-2">
-                    🔍 Ctrl + Scroll to Zoom ({Math.round(scale * 100)}%)
-                </div>
-                <button
-                    onClick={() => window.print()}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded shadow font-bold text-sm flex items-center gap-2 transition-colors cursor-pointer"
-                >
-                    🖨️ PRINT
-                </button>
-            </div>
 
             {/* A4 PAGE CONTAINER
                - Width: 210mm
                - Padding: adjusted to approx 5mm top/bottom and very tight sides to fit 2 cards (4in+4in > 200mm)
             */}
-            <div
-                className="mx-auto bg-white shadow-lg print:shadow-none w-[210mm] min-h-[297mm] grid grid-cols-2 content-start px-[2mm] py-[5mm] origin-top transition-transform duration-75"
-                style={{ zoom: scale }}
-            >
+            <div className="mx-auto bg-white shadow-lg print:shadow-none w-[210mm] min-h-[297mm] grid grid-cols-2 content-start px-[2mm] py-[5mm]">
                 {applications.map((app) => (
                     /* ID CARD CONTAINER
                        - Dimensions: 4in x 5.5in
