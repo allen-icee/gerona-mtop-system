@@ -6,7 +6,7 @@
     "type": "module",
     "author": "Municipality of Gerona",
     "scripts": {
-        "dev": "vite",
+        "dev": "node scripts/update-ip.js && vite",
         "build": "tsc && vite build",
         "start": "electron electron.cjs",
         "dist": "electron-builder",

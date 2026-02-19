@@ -17,7 +17,6 @@ export default function Authenticated({
         useState(false);
 
     return (
-        // CHANGED: Replaced min-h-screen with min-h-[100dvh] to fix mobile URL bar overlapping
         <div className="min-h-dvh bg-gray-50">
             <ToastListener />
             {/* 1. NAVBAR */}
@@ -53,6 +52,17 @@ export default function Authenticated({
                                     MTOP Records
                                 </NavLink>
 
+                                {/* PRINT SETTINGS (VISIBLE TO EVERYONE) */}
+                                <NavLink
+                                    href={route("settings.print.edit")}
+                                    active={route().current(
+                                        "settings.print.edit",
+                                    )}
+                                    className="text-blue-100 hover:text-white focus:text-white border-transparent hover:border-white focus:border-white"
+                                >
+                                    Print Settings
+                                </NavLink>
+
                                 {/* RESTRICTED: SIGNATORIES (Admin Only) */}
                                 {user.role === "admin" && (
                                     <NavLink
@@ -74,16 +84,6 @@ export default function Authenticated({
                                         className="text-blue-100 hover:text-white focus:text-white border-transparent hover:border-white focus:border-white"
                                     >
                                         System Users
-                                    </NavLink>
-                                )}
-                                {user.role === "admin" && (
-                                    <NavLink
-                                        href={route("settings.print.edit")}
-                                        active={route().current(
-                                            "settings.print.edit",
-                                        )}
-                                    >
-                                        Print Settings
                                     </NavLink>
                                 )}
                             </div>
@@ -197,6 +197,15 @@ export default function Authenticated({
                             MTOP Records
                         </ResponsiveNavLink>
 
+                        {/* PRINT SETTINGS (VISIBLE TO EVERYONE) */}
+                        <ResponsiveNavLink
+                            href={route("settings.print.edit")}
+                            active={route().current("settings.print.edit")}
+                            className="text-white hover:bg-blue-700 focus:bg-blue-700 border-l-4 border-transparent hover:border-yellow-400"
+                        >
+                            Print Settings
+                        </ResponsiveNavLink>
+
                         {/* RESTRICTED MOBILE LINKS (Admin Only) */}
                         {user.role === "admin" && (
                             <>
@@ -214,15 +223,6 @@ export default function Authenticated({
                                     className="text-white hover:bg-blue-700 focus:bg-blue-700 border-l-4 border-transparent hover:border-yellow-400"
                                 >
                                     System Users
-                                </ResponsiveNavLink>
-                                <ResponsiveNavLink
-                                    href={route("settings.print.edit")}
-                                    active={route().current(
-                                        "settings.print.edit",
-                                    )}
-                                    className="text-white hover:bg-blue-700 focus:bg-blue-700 border-l-4 border-transparent hover:border-yellow-400"
-                                >
-                                    Print Settings
                                 </ResponsiveNavLink>
                             </>
                         )}

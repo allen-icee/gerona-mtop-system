@@ -48,11 +48,16 @@ function createWindow() {
         width: 1200,
         height: 800,
         title: "Gerona MTOP System",
+        icon: path.join(__dirname, "public", "images", "MunicipalityLogo.png"), // ✅ Custom Logo
+        autoHideMenuBar: true, // ✅ Hides the top menu bar
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
         },
     });
+
+    // ✅ Completely removes the File/Edit/View menu
+    mainWindow.setMenu(null);
 
     // 3. Load the URL
     // Wait 2.5 seconds for Laravel to boot up

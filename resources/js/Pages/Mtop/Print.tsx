@@ -1,7 +1,8 @@
-import { Head, Link } from "@inertiajs/react"; // Import Link
+import { Head } from "@inertiajs/react";
 import { useEffect } from "react";
 import PrintPage1 from "./Partials/PrintPage1";
 import PrintPage2 from "./Partials/PrintPage2";
+
 interface MtopApplication {
     id: number;
     last_name: string;
@@ -30,8 +31,23 @@ export default function Print({
     application: MtopApplication;
 }) {
     useEffect(() => {
-        // Optional: Wrap in setTimeout to ensure rendering finishes
+        // 1. Auto-print on initial load
         setTimeout(() => window.print(), 500);
+
+        // 2. Listen for Ctrl+P or Cmd+P
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "p") {
+                e.preventDefault(); // Stop default browser save/print dialog if any
+                window.print(); // Trigger our print
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+
+        // 3. Cleanup listener when component unmounts
+        return () => {
+            window.removeEventListener("keydown", handleKeyDown);
+        };
     }, []);
 
     const operatorName = `${application.first_name} ${
@@ -39,8 +55,9 @@ export default function Print({
     }${application.last_name}${
         application.suffix ? " " + application.suffix : ""
     }`;
+
     return (
-        <div className="bg-gray-100 min-h-screen flex justify-center text-gray-900 print:bg-white">
+        <div className="bg-gray-100 min-h-screen flex justify-center text-gray-900 print:bg-white relative">
             <Head title={`Print MTOP - ${application.mt_number}`} />
 
             <div className="w-[210mm] print:w-full">
@@ -58,14 +75,14 @@ export default function Print({
                     />
                 </div>
 
-                {/* FIXED BACK BUTTON */}
-                <div className="fixed top-4 right-4 print:hidden">
-                    <Link
-                        href={route("mtop.index")} // Explicitly links to the index
-                        className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded shadow font-bold text-sm flex items-center gap-2"
+                {/* MANUAL PRINT BUTTON FOR ELECTRON & WEB */}
+                <div className="fixed top-4 right-4 print:hidden z-50">
+                    <button
+                        onClick={() => window.print()}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded shadow font-bold text-sm flex items-center gap-2 transition-colors cursor-pointer"
                     >
-                        <span>← BACK</span>
-                    </Link>
+                        🖨️ PRINT
+                    </button>
                 </div>
 
                 <style>{`

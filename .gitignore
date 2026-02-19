@@ -29,3 +29,9 @@ Thumbs.db
 # Database files (Local)
 /database/*.sqlite
 /database/*.sqlite-journal
+
+# MTOP Staff Client (Electron Wrapper)
+
+/mtop-staff-client/node_modules
+
+/mtop-staff-client/dist

@@ -19,13 +19,13 @@ start /b php artisan serve --host=0.0.0.0 --port=8100
 timeout /t 3 /nobreak >nul
 
 :: 4. Open Browser (The node script updated this IP automatically!)
-start http://192.168.100.7:8100
+start http://192.168.11.137:8100
 
 :: 5. Instructions
 echo System is running!
 echo -----------------------------------------------------
 echo HOST COMPUTER can access at: http://127.0.0.1:8100
-echo OTHER STAFF should use:      http://192.168.10.105:8100
+echo OTHER STAFF should use:      http://192.168.11.137:8100
 echo -----------------------------------------------------
 echo.
 echo Close this window to stop the system.

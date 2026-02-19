@@ -13,10 +13,12 @@ export default function Dashboard({
     newToday: number;
     serverIp: string;
 }) {
-    // We assume the user object includes the 'role' field
     const user: any = usePage().props.auth.user;
 
-    const staffLink = `http://${serverIp}:8000`;
+    // ✅ DYNAMIC PORT FIX: Grabs whatever port the browser is currently using
+    const port =
+        typeof window !== "undefined" ? window.location.port || "80" : "8100";
+    const staffLink = `http://${serverIp}:${port}`;
 
     // SMART GREETING LOGIC
     const hour = new Date().getHours();
@@ -66,7 +68,7 @@ export default function Dashboard({
                                 </div>
                                 <div className="text-xs text-blue-200 text-center sm:text-right">
                                     <p>Host IP: {serverIp}</p>
-                                    <p>Port: 8000</p>
+                                    <p>Port: {port}</p>
                                 </div>
                             </div>
                         </div>
@@ -157,7 +159,7 @@ export default function Dashboard({
                         Quick Actions
                     </h3>
                     <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {/* Action: Add New Record */}
+                        {/* Action 1: Add New Record (Visible to Everyone) */}
                         <Link
                             href={route("mtop.create")}
                             className="group bg-white p-4 sm:p-6 rounded-xl shadow-sm hover:shadow-md transition-all border border-gray-100 flex flex-col items-center text-center gap-3 hover:-translate-y-1"
@@ -171,6 +173,23 @@ export default function Dashboard({
                             </div>
                             <span className="font-semibold text-sm sm:text-base text-gray-700 group-hover:text-blue-900 leading-tight">
                                 Add New Operator
+                            </span>
+                        </Link>
+
+                        {/* ✅ FIXED: Print Settings is now accessible to Everyone */}
+                        <Link
+                            href={route("settings.print.edit")}
+                            className="group bg-white p-4 sm:p-6 rounded-xl shadow-sm hover:shadow-md transition-all border border-gray-100 flex flex-col items-center text-center gap-3 hover:-translate-y-1"
+                        >
+                            <div className="p-3 sm:p-4 bg-orange-50 text-orange-600 rounded-full group-hover:bg-orange-600 group-hover:text-white transition-colors">
+                                <Icon
+                                    icon="solar:printer-bold"
+                                    width="24"
+                                    className="sm:w-8 sm:h-8"
+                                />
+                            </div>
+                            <span className="font-semibold text-sm sm:text-base text-gray-700 group-hover:text-orange-900 leading-tight">
+                                Print Settings
                             </span>
                         </Link>
 
@@ -193,22 +212,7 @@ export default function Dashboard({
                                         Manage Signatories
                                     </span>
                                 </Link>
-                                {/* Action: Print Settings (Visible to Everyone) */}
-                                <Link
-                                    href={route("settings.print.edit")}
-                                    className="group bg-white p-4 sm:p-6 rounded-xl shadow-sm hover:shadow-md transition-all border border-gray-100 flex flex-col items-center text-center gap-3 hover:-translate-y-1"
-                                >
-                                    <div className="p-3 sm:p-4 bg-orange-50 text-orange-600 rounded-full group-hover:bg-orange-600 group-hover:text-white transition-colors">
-                                        <Icon
-                                            icon="solar:printer-bold"
-                                            width="24"
-                                            className="sm:w-8 sm:h-8"
-                                        />
-                                    </div>
-                                    <span className="font-semibold text-sm sm:text-base text-gray-700 group-hover:text-orange-900 leading-tight">
-                                        Print Settings
-                                    </span>
-                                </Link>
+
                                 {/* Action: Backup Database */}
                                 <button
                                     onClick={handleBackup}

@@ -7,7 +7,23 @@ interface Props {
 
 export default function PrintIds({ applications }: Props) {
     useEffect(() => {
+        // 1. Auto-print on initial load
         setTimeout(() => window.print(), 800);
+
+        // 2. Listen for Ctrl+P or Cmd+P
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "p") {
+                e.preventDefault(); // Stop default browser save/print dialog if any
+                window.print(); // Trigger our print
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+
+        // 3. Cleanup listener when component unmounts
+        return () => {
+            window.removeEventListener("keydown", handleKeyDown);
+        };
     }, []);
 
     // ✅ SAFE OUTLINE STYLE (Web + Electron + Print)
@@ -40,8 +56,18 @@ export default function PrintIds({ applications }: Props) {
     };
 
     return (
-        <div className="w-full min-h-screen bg-gray-500 p-8 print:p-0 print:bg-white flex flex-col items-center gap-4">
+        <div className="w-full min-h-screen bg-gray-500 p-8 print:p-0 print:bg-white flex flex-col items-center gap-4 relative">
             <Head title="Print IDs" />
+
+            {/* MANUAL PRINT BUTTON FOR ELECTRON & WEB */}
+            <div className="fixed top-4 right-4 print:hidden z-50">
+                <button
+                    onClick={() => window.print()}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded shadow font-bold text-sm flex items-center gap-2 transition-colors cursor-pointer"
+                >
+                    🖨️ PRINT
+                </button>
+            </div>
 
             <div className="mx-auto bg-white shadow-lg print:shadow-none w-[210mm] min-h-[297mm] grid grid-cols-2 content-start px-[2mm] py-[5mm]">
                 {applications.map((app) => (
