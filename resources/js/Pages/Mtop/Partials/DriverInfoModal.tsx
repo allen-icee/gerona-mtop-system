@@ -3,7 +3,7 @@ import PrimaryButton from "@/Components/PrimaryButton";
 import SecondaryButton from "@/Components/SecondaryButton";
 import { useForm } from "@inertiajs/react";
 import { Icon } from "@iconify/react";
-import { FormEventHandler, useEffect } from "react";
+import { FormEventHandler, useEffect, useRef } from "react";
 import TextInput from "@/Components/TextInput";
 import SignatorySelect from "@/Components/SignatorySelect";
 
@@ -24,12 +24,15 @@ export default function DriverInfoModal({
         drivers: [] as any[],
     });
 
+    const initialized = useRef(false);
+
     // Sync data when modal opens
     useEffect(() => {
-        if (show && selectedApps.length > 0) {
+        if (show && selectedApps.length > 0 && !initialized.current) {
             const defaultMayor =
                 officials.find((o) => o.position === "Punong Bayan")?.name ||
                 "";
+
             const defaultCommittee =
                 officials.find(
                     (o) => o.position === "Committee on Transportation",
@@ -52,8 +55,15 @@ export default function DriverInfoModal({
                     committee: defaultCommittee,
                 })),
             });
+
+            initialized.current = true;
         }
-    }, [show, selectedApps, officials]);
+
+        // Reset when modal closes so it can initialize again next open
+        if (!show) {
+            initialized.current = false;
+        }
+    }, [show]);
 
     const handleDriverChange = (index: number, field: string, value: any) => {
         const newDrivers = [...data.drivers];
@@ -65,6 +75,13 @@ export default function DriverInfoModal({
         const newDrivers = [...data.drivers];
         newDrivers[index].photo = file;
         newDrivers[index].preview = URL.createObjectURL(file);
+        setData("drivers", newDrivers);
+    };
+
+    const handleRemovePhoto = (index: number) => {
+        const newDrivers = [...data.drivers];
+        newDrivers[index].photo = null;
+        newDrivers[index].preview = null;
         setData("drivers", newDrivers);
     };
 
@@ -160,7 +177,6 @@ export default function DriverInfoModal({
                             <div className="absolute bottom-0 left-0 bg-gray-100 text-gray-400 font-black text-4xl px-3 py-1 rounded-tr-xl rounded-bl-xl select-none z-0 opacity-50">
                                 #{index + 1}
                             </div>
-
                             {/* LEFT: PHOTO */}
                             <div className="shrink-0 flex flex-col items-center gap-3 w-full sm:w-40 border-b sm:border-b-0 sm:border-r border-gray-100 pb-4 sm:pb-0 sm:pr-6 z-10">
                                 <div className="w-32 h-32 bg-gray-50 border-2 border-gray-300 border-dashed rounded-lg flex items-center justify-center overflow-hidden relative group">
@@ -183,21 +199,52 @@ export default function DriverInfoModal({
                                         </div>
                                     )}
                                 </div>
-                                <label className="w-full text-center cursor-pointer bg-blue-50 text-blue-600 border border-blue-100 py-2 rounded-md text-xs font-bold hover:bg-blue-100 hover:text-blue-700 transition-colors uppercase tracking-wide">
-                                    Upload
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        className="hidden"
-                                        onChange={(e) =>
-                                            e.target.files &&
-                                            handlePhotoChange(
-                                                index,
-                                                e.target.files[0],
-                                            )
-                                        }
-                                    />
-                                </label>
+
+                                <div className="flex gap-2 w-full">
+                                    {/* UPLOAD BUTTON */}
+                                    <label
+                                        className="
+                flex-1 text-center cursor-pointer
+                bg-blue-50 text-blue-600 border border-blue-100
+                py-2 rounded-md text-xs font-bold uppercase tracking-wide
+                transition-transform duration-200 ease-in-out
+                hover:scale-105 active:scale-95
+            "
+                                    >
+                                        Upload
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            className="hidden"
+                                            onChange={(e) =>
+                                                e.target.files &&
+                                                handlePhotoChange(
+                                                    index,
+                                                    e.target.files[0],
+                                                )
+                                            }
+                                        />
+                                    </label>
+
+                                    {/* REMOVE BUTTON - show only if there is a photo */}
+                                    {driver.preview && (
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                handleRemovePhoto(index)
+                                            }
+                                            className="
+                    flex-1 text-center cursor-pointer
+                    bg-red-50 text-red-600 border border-red-100
+                    py-2 rounded-md text-xs font-bold uppercase tracking-wide
+                    transition-transform duration-200 ease-in-out
+                    hover:scale-105 active:scale-95
+                "
+                                        >
+                                            Remove
+                                        </button>
+                                    )}
+                                </div>
                             </div>
 
                             {/* RIGHT: DETAILS */}
@@ -213,7 +260,7 @@ export default function DriverInfoModal({
                                         Driver Name
                                     </label>
                                     <TextInput
-                                        className="w-full"
+                                        className="w-full px-3"
                                         value={driver.driver_name}
                                         onChange={(e) =>
                                             handleDriverChange(

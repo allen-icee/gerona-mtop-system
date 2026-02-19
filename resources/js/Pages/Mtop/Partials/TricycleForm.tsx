@@ -57,7 +57,9 @@ export default function TricycleForm({
                         onChange={(e: any) => {
                             setData(
                                 "body_number",
-                                e.target.value.replace(/\D/g, ""),
+                                e.target.value
+                                    .replace(/\D/g, "") // numbers only
+                                    .slice(0, 5), // 🔥 limit to 6 digits
                             );
                         }}
                         error={errors.body_number}
@@ -66,7 +68,9 @@ export default function TricycleForm({
                         required={!noBodyNumber}
                         onKeyDown={onKeyDown}
                         disabled={noBodyNumber}
+                        maxLength={6} // optional but good UX
                     />
+
                     <div className="flex items-center">
                         <input
                             type="checkbox"

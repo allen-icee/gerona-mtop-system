@@ -114,7 +114,7 @@ export default function PrintIds({ applications }: Props) {
                                 <div className="border border-black rounded-lg h-[15mm] w-full flex items-center justify-center bg-white">
                                     {/* Wrap the text in a span and apply the text effects here */}
                                     <span
-                                        className="text-4xl text-black font-['UPBOLTERS']
+                                        className="text-5xl text-black font-['UPBOLTERS']
                                         [-webkit-text-stroke:2px_white]
                                         [paint-order:stroke_fill]
                                         drop-shadow-[1px_1px_0_rgba(0,0,0,0.85)]"
