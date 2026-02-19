@@ -174,23 +174,6 @@ export default function Dashboard({
                             </span>
                         </Link>
 
-                        {/* Action: Search */}
-                        <Link
-                            href={route("mtop.index")}
-                            className="group bg-white p-4 sm:p-6 rounded-xl shadow-sm hover:shadow-md transition-all border border-gray-100 flex flex-col items-center text-center gap-3 hover:-translate-y-1"
-                        >
-                            <div className="p-3 sm:p-4 bg-teal-50 text-teal-600 rounded-full group-hover:bg-teal-600 group-hover:text-white transition-colors">
-                                <Icon
-                                    icon="solar:magnifer-bold"
-                                    width="24"
-                                    className="sm:w-8 sm:h-8"
-                                />
-                            </div>
-                            <span className="font-semibold text-sm sm:text-base text-gray-700 group-hover:text-teal-900 leading-tight">
-                                Search Database
-                            </span>
-                        </Link>
-
                         {/* ADMIN ONLY ACTIONS */}
                         {user.role === "admin" && (
                             <>
@@ -210,7 +193,22 @@ export default function Dashboard({
                                         Manage Signatories
                                     </span>
                                 </Link>
-
+                                {/* Action: Print Settings (Visible to Everyone) */}
+                                <Link
+                                    href={route("settings.print.edit")}
+                                    className="group bg-white p-4 sm:p-6 rounded-xl shadow-sm hover:shadow-md transition-all border border-gray-100 flex flex-col items-center text-center gap-3 hover:-translate-y-1"
+                                >
+                                    <div className="p-3 sm:p-4 bg-orange-50 text-orange-600 rounded-full group-hover:bg-orange-600 group-hover:text-white transition-colors">
+                                        <Icon
+                                            icon="solar:printer-bold"
+                                            width="24"
+                                            className="sm:w-8 sm:h-8"
+                                        />
+                                    </div>
+                                    <span className="font-semibold text-sm sm:text-base text-gray-700 group-hover:text-orange-900 leading-tight">
+                                        Print Settings
+                                    </span>
+                                </Link>
                                 {/* Action: Backup Database */}
                                 <button
                                     onClick={handleBackup}

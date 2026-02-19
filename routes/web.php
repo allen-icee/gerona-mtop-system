@@ -26,8 +26,6 @@ Route::get('/', function () {
 });
 
 // 2. DASHBOARD: The Command Center (Real Data)
-// routes/web.php
-
 Route::get('/dashboard', function () {
     // 1. Get the Local IP Address of the Server
     $serverIp = getHostByName(getHostName());
@@ -58,6 +56,7 @@ Route::middleware('auth')->group(function () {
     Route::put('/mtop/{id}', [MtopApplicationController::class, 'update'])->name('mtop.update');
     Route::get('/mtop/{id}/print', [MtopApplicationController::class, 'print'])->name('mtop.print');
     Route::get('/mtop/export', [MtopApplicationController::class, 'export'])->name('mtop.export');
+
     // BACKUP ROUTE
     Route::post('/settings/backup', function () {
         try {
@@ -67,6 +66,12 @@ Route::middleware('auth')->group(function () {
             return back()->withErrors(['backup' => 'Backup failed: ' . $e->getMessage()]);
         }
     })->name('settings.backup');
+
+    // --- PRINT SETTINGS ---
+    // Moved outside of IsAdmin so Staff can access it
+    Route::get('/settings/print', [PrintSettingController::class, 'edit'])->name('settings.print.edit');
+    Route::post('/settings/print', [PrintSettingController::class, 'update'])->name('settings.print.update');
+
     // ADMIN ONLY ROUTES (Delete, User Management, Signatories)
     Route::middleware(IsAdmin::class)->group(function () {
 
@@ -78,10 +83,6 @@ Route::middleware('auth')->group(function () {
 
         // SIGNATORIES CRUD
         Route::resource('signatories', SignatoryController::class)->only(['index', 'store', 'update', 'destroy']);
-
-        // PRINT SETTINGS
-        Route::get('/settings/print', [PrintSettingController::class, 'edit'])->name('settings.print.edit');
-        Route::post('/settings/print', [PrintSettingController::class, 'update'])->name('settings.print.update');
     });
 });
 
