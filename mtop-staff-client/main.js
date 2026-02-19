@@ -23,7 +23,7 @@ function createWindow() {
     // Function to load the MTOP server
     const loadServer = (ip) => {
         // We use port 8100 as configured in your update-ip.js
-        const serverUrl = `http://${ip}:8100`;
+        const serverUrl = `http://${ip}:8000`;
 
         mainWindow.loadURL(serverUrl).catch((err) => {
             console.log("Failed to connect, showing settings...");
