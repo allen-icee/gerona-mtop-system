@@ -23,6 +23,7 @@ class MtopApplicationController extends Controller
         $month = $request->input('month');
         $year = $request->input('year');
         $barangay = $request->input('barangay');
+        $renewal = $request->input('renewal');
 
         $query = MtopApplication::query();
 
@@ -45,6 +46,11 @@ class MtopApplicationController extends Controller
         if ($barangay) {
             $query->where('address', 'like', "%{$barangay}%");
         }
+        if ($renewal === 'upcoming') {
+            $query->whereBetween('valid_until', [now(), now()->addDays(30)]);
+        } elseif ($renewal === 'expired') {
+            $query->where('valid_until', '<', now());
+        }
 
         $applications = $query->latest()
             ->paginate(10)
@@ -57,8 +63,8 @@ class MtopApplicationController extends Controller
 
         return Inertia::render('Mtop/Index', [
             'applications' => $applications,
-            'filters' => $request->only(['search', 'month', 'year', 'barangay']),
-            'officials' => $officials, // <--- PASSING OFFICIALS TO FRONTEND
+            'filters' => $request->only(['search', 'month', 'year', 'barangay', 'renewal']), // Add 'renewal' here
+            'officials' => $officials,
         ]);
     }
 
@@ -103,30 +109,30 @@ class MtopApplicationController extends Controller
     {
         $validated = $request->validate([
             // Applicant
-            'last_name'           => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
-            'first_name'          => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
-            'middle_name'         => ['nullable', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
-            'suffix'              => ['nullable', 'string', 'max:10', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
-            'address'             => 'required|string|max:100',
-            'contact_number'      => ['nullable', 'regex:/^(09|\+639)\d{9}$/'],
+            'last_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
+            'first_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
+            'middle_name' => ['nullable', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
+            'suffix' => ['nullable', 'string', 'max:10', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
+            'address' => 'required|string|max:100',
+            'contact_number' => ['nullable', 'regex:/^(09|\+639)\d{9}$/'],
 
             // Transaction
-            'transaction_date'    => 'required|date',
-            'mt_number'           => 'nullable|string',
+            'transaction_date' => 'required|date',
+            'mt_number' => 'nullable|string',
 
             // Unit
-            'body_number'         => ['nullable', 'regex:/^[0-9]+$/'],
-            'plate_no'            => ['required', 'string', 'max:30'],
-            'make_type'           => 'required|string|max:30',
-            'engine_motor_no'     => 'required|string|max:30',
-            'chassis_no'          => 'required|string|max:30',
+            'body_number' => ['nullable', 'regex:/^[0-9]+$/'],
+            'plate_no' => ['required', 'string', 'max:30'],
+            'make_type' => 'required|string|max:30',
+            'engine_motor_no' => 'required|string|max:30',
+            'chassis_no' => 'required|string|max:30',
 
             // Docs & Signatories
-            'cedula_number'       => 'required|string|max:20',
-            'cedula_date'         => 'required|date',
-            'or_number'           => 'required|string|max:20',
-            'or_date'             => 'required|date',
-            'punong_bayan'        => ['required', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
+            'cedula_number' => 'required|string|max:20',
+            'cedula_date' => 'required|date',
+            'or_number' => 'required|string|max:20',
+            'or_date' => 'required|date',
+            'punong_bayan' => ['required', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
             'authorized_official' => ['required', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
         ]);
 
@@ -187,23 +193,23 @@ class MtopApplicationController extends Controller
         $application = MtopApplication::findOrFail($id);
 
         $validated = $request->validate([
-            'last_name'           => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
-            'first_name'          => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
-            'middle_name'         => ['nullable', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
-            'suffix'              => ['nullable', 'string', 'max:10', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
-            'address'             => 'required|string|max:100',
-            'transaction_date'    => 'required|date',
-            'mt_number'           => 'nullable|string|max:20',
-            'body_number'         => ['nullable', 'regex:/^[0-9]+$/'],
-            'plate_no'            => ['required', 'string', 'max:30'],
-            'make_type'           => 'required|string|max:30',
-            'engine_motor_no'     => 'required|string|max:30',
-            'chassis_no'          => 'required|string|max:30',
-            'cedula_number'       => 'required|string|max:20',
-            'cedula_date'         => 'required|date',
-            'or_number'           => 'required|string|max:20',
-            'or_date'             => 'required|date',
-            'punong_bayan'        => ['required', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
+            'last_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
+            'first_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
+            'middle_name' => ['nullable', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
+            'suffix' => ['nullable', 'string', 'max:10', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
+            'address' => 'required|string|max:100',
+            'transaction_date' => 'required|date',
+            'mt_number' => 'nullable|string|max:20',
+            'body_number' => ['nullable', 'regex:/^[0-9]+$/'],
+            'plate_no' => ['required', 'string', 'max:30'],
+            'make_type' => 'required|string|max:30',
+            'engine_motor_no' => 'required|string|max:30',
+            'chassis_no' => 'required|string|max:30',
+            'cedula_number' => 'required|string|max:20',
+            'cedula_date' => 'required|date',
+            'or_number' => 'required|string|max:20',
+            'or_date' => 'required|date',
+            'punong_bayan' => ['required', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
             'authorized_official' => ['required', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
         ]);
 
@@ -278,11 +284,11 @@ class MtopApplicationController extends Controller
 
         $csvFileName = 'mtop_records_' . date('Y-m-d_H-i') . '.csv';
         $headers = [
-            "Content-type"        => "text/csv",
+            "Content-type" => "text/csv",
             "Content-Disposition" => "attachment; filename=$csvFileName",
-            "Pragma"              => "no-cache",
-            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
-            "Expires"             => "0"
+            "Pragma" => "no-cache",
+            "Cache-Control" => "must-revalidate, post-check=0, pre-check=0",
+            "Expires" => "0"
         ];
 
         $callback = function () use ($records) {

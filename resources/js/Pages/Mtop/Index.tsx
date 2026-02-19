@@ -30,9 +30,10 @@ interface MtopApplication {
     cedula_date: string;
     or_number: string;
     or_date: string;
-    // New fields for ID printing
+    // New fields for ID printing and validity tracking
     driver_name?: string;
     driver_photo_path?: string;
+    valid_until?: string;
 }
 
 interface Props {
@@ -45,6 +46,7 @@ interface Props {
         month?: string;
         year?: string;
         barangay?: string;
+        renewal?: string;
     };
     // Received from Controller
     officials: { name: string; position: string }[];
@@ -57,6 +59,7 @@ export default function Index({ applications, filters, officials }: Props) {
     const [month, setMonth] = useState(filters.month || "");
     const [year, setYear] = useState(filters.year || "");
     const [barangay, setBarangay] = useState(filters.barangay || "");
+    const [renewal, setRenewal] = useState(filters.renewal || "");
     const [viewingApp, setViewingApp] = useState<MtopApplication | null>(null);
     const [deletingId, setDeletingId] = useState<number | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -65,12 +68,12 @@ export default function Index({ applications, filters, officials }: Props) {
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
     const [showDriverModal, setShowDriverModal] = useState(false);
 
-    // 1. SEARCH & AUTO-REFRESH (POLLING)
+    // 1. SEARCH & AUTO-REFRESH
     useEffect(() => {
         const searchTimer = setTimeout(() => {
             router.get(
                 route("mtop.index"),
-                { search, month, year, barangay },
+                { search, month, year, barangay, renewal },
                 { preserveState: true, replace: true },
             );
         }, 300);
@@ -83,7 +86,7 @@ export default function Index({ applications, filters, officials }: Props) {
             clearTimeout(searchTimer);
             clearInterval(pollInterval);
         };
-    }, [search, month, year, barangay]);
+    }, [search, month, year, barangay, renewal]);
 
     const confirmDelete = (id: number) => {
         setDeletingId(id);
@@ -128,7 +131,6 @@ export default function Index({ applications, filters, officials }: Props) {
             <Head title="MTOP Records" />
 
             <div className="py-6 sm:py-12 pb-24">
-                {/* Added pb-24 above to ensure last item isn't hidden behind the floating bar */}
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     {/* TOOLBAR */}
                     <div className="flex flex-col xl:flex-row justify-between items-center mb-6 gap-4">
@@ -190,14 +192,32 @@ export default function Index({ applications, filters, officials }: Props) {
                                     <option value="2025">2025</option>
                                     <option value="2026">2026</option>
                                 </select>
+
+                                <select
+                                    className="border-gray-300 rounded-md shadow-sm text-base py-3 w-full sm:w-40"
+                                    value={renewal}
+                                    onChange={(e) => setRenewal(e.target.value)}
+                                >
+                                    <option value="">All Status</option>
+                                    <option value="upcoming">
+                                        For Renewal
+                                    </option>
+                                    <option value="expired">Expired</option>
+                                </select>
                             </div>
                         </div>
 
-                        {/* ACTIONS (Removed the inline print button from here) */}
+                        {/* ACTIONS */}
                         <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
                             <a
                                 href={route("mtop.export", {
-                                    _query: { search, month, year, barangay },
+                                    _query: {
+                                        search,
+                                        month,
+                                        year,
+                                        barangay,
+                                        renewal,
+                                    },
                                 })}
                                 target="_blank"
                                 className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg flex items-center justify-center gap-2 shadow-md w-full sm:w-auto text-base transition-transform hover:scale-105"
@@ -224,7 +244,6 @@ export default function Index({ applications, filters, officials }: Props) {
                         <table className="w-full text-sm text-left text-gray-500">
                             <thead className="text-xs text-gray-700 uppercase bg-gray-50 border-b">
                                 <tr>
-                                    {/* CHECKBOX HEADER */}
                                     <th className="px-6 py-4 w-4">
                                         <Checkbox
                                             checked={
@@ -243,6 +262,9 @@ export default function Index({ applications, filters, officials }: Props) {
                                         Address
                                     </th>
                                     <th className="px-6 py-4 text-center">
+                                        Status
+                                    </th>
+                                    <th className="px-6 py-4 text-center">
                                         Details
                                     </th>
                                     <th className="px-6 py-4 text-center">
@@ -254,116 +276,137 @@ export default function Index({ applications, filters, officials }: Props) {
                                 {applications.data.length === 0 ? (
                                     <tr>
                                         <td
-                                            colSpan={6}
+                                            colSpan={7}
                                             className="px-6 py-8 text-center text-gray-400"
                                         >
                                             No records found.
                                         </td>
                                     </tr>
                                 ) : (
-                                    applications.data.map((app) => (
-                                        <tr
-                                            key={app.id}
-                                            className={`border-b transition-colors ${
-                                                selectedIds.includes(app.id)
-                                                    ? "bg-indigo-50"
-                                                    : "bg-white hover:bg-gray-50"
-                                            }`}
-                                        >
-                                            {/* CHECKBOX ROW */}
-                                            <td className="px-6 py-4">
-                                                <Checkbox
-                                                    checked={selectedIds.includes(
-                                                        app.id,
-                                                    )}
-                                                    onChange={() =>
-                                                        toggleSelect(app.id)
-                                                    }
-                                                />
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="font-bold text-gray-900 text-base">
-                                                    {app.mt_number || "-"}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 font-bold text-gray-800 text-base">
-                                                {app.last_name},{" "}
-                                                {app.first_name}{" "}
-                                                {app.middle_name
-                                                    ? app.middle_name[0] + "."
-                                                    : ""}{" "}
-                                                {app.suffix
-                                                    ? app.suffix + ". "
-                                                    : ""}
-                                            </td>
-                                            <td className="px-6 py-4 hidden lg:table-cell text-gray-600">
-                                                {app.address}
-                                            </td>
-                                            <td className="px-6 py-4 text-center">
-                                                <button
-                                                    onClick={() =>
-                                                        setViewingApp(app)
-                                                    }
-                                                    className="inline-flex items-center justify-center gap-2 font-bold text-sm tracking-wider hover:cursor-pointer text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-3 py-1.5 rounded-md hover:bg-indigo-100 transition-colors"
-                                                >
-                                                    <Icon
-                                                        icon="solar:eye-bold"
-                                                        width="18"
+                                    applications.data.map((app) => {
+                                        const isExpired = app.valid_until
+                                            ? new Date(app.valid_until) <
+                                              new Date()
+                                            : false;
+
+                                        return (
+                                            <tr
+                                                key={app.id}
+                                                className={`border-b transition-colors ${
+                                                    selectedIds.includes(app.id)
+                                                        ? "bg-indigo-50"
+                                                        : "bg-white hover:bg-gray-50"
+                                                }`}
+                                            >
+                                                <td className="px-6 py-4">
+                                                    <Checkbox
+                                                        checked={selectedIds.includes(
+                                                            app.id,
+                                                        )}
+                                                        onChange={() =>
+                                                            toggleSelect(app.id)
+                                                        }
                                                     />
-                                                    Details
-                                                </button>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center justify-center gap-2">
-                                                    <a
-                                                        href={route(
-                                                            "mtop.print",
-                                                            app.id,
-                                                        )}
-                                                        target="_blank"
-                                                        className="inline-flex items-center gap-1.5 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 px-3 py-1.5 rounded-md font-bold text-sm transition-colors"
-                                                        title="Print Permit"
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <div className="font-bold text-gray-900 text-base">
+                                                        {app.mt_number || "-"}
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 font-bold text-gray-800 text-base">
+                                                    {app.last_name},{" "}
+                                                    {app.first_name}{" "}
+                                                    {app.middle_name
+                                                        ? app.middle_name[0] +
+                                                          "."
+                                                        : ""}{" "}
+                                                    {app.suffix
+                                                        ? app.suffix + ". "
+                                                        : ""}
+                                                </td>
+                                                <td className="px-6 py-4 hidden lg:table-cell text-gray-600">
+                                                    {app.address}
+                                                </td>
+                                                <td className="px-6 py-4 text-center">
+                                                    <span
+                                                        className={`px-2 py-1 rounded-full text-xs font-bold uppercase ${
+                                                            isExpired
+                                                                ? "bg-red-100 text-red-700"
+                                                                : "bg-green-100 text-green-700"
+                                                        }`}
+                                                    >
+                                                        {isExpired
+                                                            ? "Expired"
+                                                            : "Active"}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 text-center">
+                                                    <button
+                                                        onClick={() =>
+                                                            setViewingApp(app)
+                                                        }
+                                                        className="inline-flex items-center justify-center gap-2 font-bold text-sm tracking-wider hover:cursor-pointer text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-3 py-1.5 rounded-md hover:bg-indigo-100 transition-colors"
                                                     >
                                                         <Icon
-                                                            icon="solar:printer-bold"
+                                                            icon="solar:eye-bold"
                                                             width="18"
                                                         />
-                                                        Print
-                                                    </a>
-                                                    <Link
-                                                        href={route(
-                                                            "mtop.edit",
-                                                            app.id,
-                                                        )}
-                                                        className="inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800 hover:cursor-pointer px-3 py-1.5 rounded-md font-bold text-sm transition-colors"
-                                                        title="Edit Application"
-                                                    >
-                                                        <Icon
-                                                            icon="solar:pen-new-square-bold"
-                                                            width="18"
-                                                        />
-                                                        Edit
-                                                    </Link>
-                                                    {user.role === "admin" && (
-                                                        <button
-                                                            onClick={() =>
-                                                                confirmDelete(
-                                                                    app.id,
-                                                                )
-                                                            }
-                                                            className="inline-flex items-center justify-center bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 p-1.5 rounded-md transition-colors"
-                                                            title="Delete"
+                                                        Details
+                                                    </button>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-center justify-center gap-2">
+                                                        <a
+                                                            href={route(
+                                                                "mtop.print",
+                                                                app.id,
+                                                            )}
+                                                            target="_blank"
+                                                            className="inline-flex items-center gap-1.5 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 px-3 py-1.5 rounded-md font-bold text-sm transition-colors"
+                                                            title="Print Permit"
                                                         >
                                                             <Icon
-                                                                icon="solar:trash-bin-trash-bold"
+                                                                icon="solar:printer-bold"
                                                                 width="18"
                                                             />
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))
+                                                            Print
+                                                        </a>
+                                                        <Link
+                                                            href={route(
+                                                                "mtop.edit",
+                                                                app.id,
+                                                            )}
+                                                            className="inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800 hover:cursor-pointer px-3 py-1.5 rounded-md font-bold text-sm transition-colors"
+                                                            title="Edit Application"
+                                                        >
+                                                            <Icon
+                                                                icon="solar:pen-new-square-bold"
+                                                                width="18"
+                                                            />
+                                                            Edit
+                                                        </Link>
+                                                        {user.role ===
+                                                            "admin" && (
+                                                            <button
+                                                                onClick={() =>
+                                                                    confirmDelete(
+                                                                        app.id,
+                                                                    )
+                                                                }
+                                                                className="inline-flex items-center justify-center bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 p-1.5 rounded-md transition-colors"
+                                                                title="Delete"
+                                                            >
+                                                                <Icon
+                                                                    icon="solar:trash-bin-trash-bold"
+                                                                    width="18"
+                                                                />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })
                                 )}
                             </tbody>
                         </table>
@@ -376,98 +419,126 @@ export default function Index({ applications, filters, officials }: Props) {
                                 No records found.
                             </div>
                         ) : (
-                            applications.data.map((app) => (
-                                <div
-                                    key={app.id}
-                                    className={`bg-white rounded-xl border p-4 shadow-sm transition-all ${
-                                        selectedIds.includes(app.id)
-                                            ? "border-indigo-500 ring-1 ring-indigo-500"
-                                            : "border-gray-200"
-                                    }`}
-                                >
-                                    <div className="flex justify-between items-start mb-3">
-                                        <div className="flex items-center gap-3">
-                                            <Checkbox
-                                                checked={selectedIds.includes(
-                                                    app.id,
-                                                )}
-                                                onChange={() =>
-                                                    toggleSelect(app.id)
-                                                }
-                                            />
-                                            <div>
-                                                <span className="text-xs font-bold text-indigo-600 uppercase">
-                                                    Control No.
-                                                </span>
-                                                <p className="font-bold text-gray-900">
-                                                    {app.mt_number || "-"}
-                                                </p>
+                            applications.data.map((app) => {
+                                const isExpired =
+                                    app.valid_until &&
+                                    new Date(app.valid_until) < new Date();
+
+                                return (
+                                    <div
+                                        key={app.id}
+                                        className={`bg-white rounded-xl border p-4 shadow-sm transition-all ${
+                                            selectedIds.includes(app.id)
+                                                ? "border-indigo-500 ring-1 ring-indigo-500"
+                                                : "border-gray-200"
+                                        }`}
+                                    >
+                                        <div className="flex justify-between items-start mb-3">
+                                            <div className="flex items-center gap-3">
+                                                <Checkbox
+                                                    checked={selectedIds.includes(
+                                                        app.id,
+                                                    )}
+                                                    onChange={() =>
+                                                        toggleSelect(app.id)
+                                                    }
+                                                />
+                                                <div>
+                                                    <span className="text-xs font-bold text-indigo-600 uppercase">
+                                                        Control No.
+                                                    </span>
+                                                    <p className="font-bold text-gray-900">
+                                                        {app.mt_number || "-"}
+                                                    </p>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <button
-                                            onClick={() => setViewingApp(app)}
-                                            className="p-2 bg-gray-50 rounded-full text-gray-500"
-                                        >
-                                            <Icon
-                                                icon="solar:eye-bold"
-                                                width="20"
-                                            />
-                                        </button>
-                                    </div>
-
-                                    <div className="mb-4">
-                                        <span className="text-xs font-bold text-gray-400 uppercase">
-                                            Applicant
-                                        </span>
-                                        <p className="text-gray-800 font-medium">
-                                            {app.last_name}, {app.first_name}{" "}
-                                            {app.middle_name
-                                                ? app.middle_name[0] + "."
-                                                : ""}
-                                        </p>
-                                        <p className="text-sm text-gray-500 leading-tight mt-1">
-                                            {app.address}
-                                        </p>
-                                    </div>
-
-                                    <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
-                                        <a
-                                            href={route("mtop.print", app.id)}
-                                            target="_blank"
-                                            className="flex-1 flex justify-center items-center gap-1.5 bg-green-50 text-green-700 py-2.5 rounded-lg font-bold text-sm hover:bg-green-100 transition-colors"
-                                        >
-                                            <Icon
-                                                icon="solar:printer-bold"
-                                                width="16"
-                                            />
-                                            Print
-                                        </a>
-                                        <Link
-                                            href={route("mtop.edit", app.id)}
-                                            className="flex-1 flex justify-center items-center gap-1.5 bg-blue-50 text-blue-700 py-2.5 rounded-lg font-bold text-sm hover:bg-blue-100 transition-colors"
-                                        >
-                                            <Icon
-                                                icon="solar:pen-new-square-bold"
-                                                width="16"
-                                            />
-                                            Edit
-                                        </Link>
-                                        {user.role === "admin" && (
                                             <button
                                                 onClick={() =>
-                                                    confirmDelete(app.id)
+                                                    setViewingApp(app)
                                                 }
-                                                className="px-3 py-2.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
+                                                className="p-2 bg-gray-50 rounded-full text-gray-500"
                                             >
                                                 <Icon
-                                                    icon="solar:trash-bin-trash-bold"
-                                                    width="18"
+                                                    icon="solar:eye-bold"
+                                                    width="20"
                                                 />
                                             </button>
-                                        )}
+                                        </div>
+
+                                        <div className="mb-4">
+                                            <div className="flex justify-between items-center mb-1">
+                                                <span className="text-xs font-bold text-gray-400 uppercase">
+                                                    Applicant
+                                                </span>
+                                                <span
+                                                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
+                                                        isExpired
+                                                            ? "bg-red-100 text-red-600"
+                                                            : "bg-green-100 text-green-600"
+                                                    }`}
+                                                >
+                                                    {isExpired
+                                                        ? "Expired"
+                                                        : "Active"}
+                                                </span>
+                                            </div>
+                                            <p className="text-gray-800 font-medium">
+                                                {app.last_name},{" "}
+                                                {app.first_name}{" "}
+                                                {app.middle_name
+                                                    ? app.middle_name[0] + "."
+                                                    : ""}
+                                            </p>
+                                            <p className="text-sm text-gray-500 leading-tight mt-1">
+                                                {app.address}
+                                            </p>
+                                        </div>
+
+                                        <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
+                                            <a
+                                                href={route(
+                                                    "mtop.print",
+                                                    app.id,
+                                                )}
+                                                target="_blank"
+                                                className="flex-1 flex justify-center items-center gap-1.5 bg-green-50 text-green-700 py-2.5 rounded-lg font-bold text-sm hover:bg-green-100 transition-colors"
+                                            >
+                                                <Icon
+                                                    icon="solar:printer-bold"
+                                                    width="16"
+                                                />
+                                                Print
+                                            </a>
+                                            <Link
+                                                href={route(
+                                                    "mtop.edit",
+                                                    app.id,
+                                                )}
+                                                className="flex-1 flex justify-center items-center gap-1.5 bg-blue-50 text-blue-700 py-2.5 rounded-lg font-bold text-sm hover:bg-blue-100 transition-colors"
+                                            >
+                                                <Icon
+                                                    icon="solar:pen-new-square-bold"
+                                                    width="16"
+                                                />
+                                                Edit
+                                            </Link>
+                                            {user.role === "admin" && (
+                                                <button
+                                                    onClick={() =>
+                                                        confirmDelete(app.id)
+                                                    }
+                                                    className="px-3 py-2.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
+                                                >
+                                                    <Icon
+                                                        icon="solar:trash-bin-trash-bold"
+                                                        width="18"
+                                                    />
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
-                            ))
+                                );
+                            })
                         )}
                     </div>
 
@@ -477,7 +548,7 @@ export default function Index({ applications, filters, officials }: Props) {
                 </div>
             </div>
 
-            {/* --- FLOATING BATCH ACTION BAR (NEW) --- */}
+            {/* --- FLOATING BATCH ACTION BAR --- */}
             <div
                 className={`fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50 transition-all duration-300 ${
                     selectedIds.length > 0
