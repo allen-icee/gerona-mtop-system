@@ -1,7 +1,8 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import PrimaryButton from "@/Components/PrimaryButton";
-import { Head, Link, useForm } from "@inertiajs/react";
-import { FormEventHandler, useState } from "react";
+import { Head, Link, useForm, usePage } from "@inertiajs/react";
+import React, { FormEventHandler, useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { Icon } from "@iconify/react";
 import toast from "react-hot-toast";
 import Modal from "@/Components/Modal";
@@ -15,6 +16,59 @@ import OfficialReceiptForm from "./Partials/OfficialReceiptForm";
 import OfficialsForm from "./Partials/OfficialsForm";
 import PermitPreview from "./Partials/PermitPreview";
 import PrintSuccessModal from "./Partials/PrintSuccessModal";
+
+// --- EXTERNAL WINDOW COMPONENT FOR DUAL MONITORS ---
+function ExternalWindow({
+    children,
+    onClose,
+}: {
+    children: React.ReactNode;
+    onClose: () => void;
+}) {
+    const [container, setContainer] = useState<HTMLElement | null>(null);
+    const winRef = useRef<Window | null>(null);
+
+    useEffect(() => {
+        // Open a real OS Window
+        winRef.current = window.open(
+            "",
+            "",
+            "width=600,height=850,left=200,top=100",
+        );
+
+        if (!winRef.current) {
+            toast.error(
+                "Popup blocked! Please allow pop-ups for this site to use the Dual Monitor feature.",
+            );
+            onClose();
+            return;
+        }
+
+        // Copy all CSS and Tailwind styles from the main window to the new window
+        winRef.current.document.head.innerHTML = window.document.head.innerHTML;
+        winRef.current.document.title = "Live Permit Preview (Dual Monitor)";
+        winRef.current.document.body.className = "bg-gray-200 m-0 p-4";
+
+        const div = winRef.current.document.createElement("div");
+        winRef.current.document.body.appendChild(div);
+        setContainer(div);
+
+        // Listen for user closing the popup manually
+        winRef.current.addEventListener("beforeunload", () => {
+            onClose();
+        });
+
+        // Cleanup when the component unmounts
+        return () => {
+            if (winRef.current) {
+                winRef.current.close();
+            }
+        };
+    }, []);
+
+    if (!container) return null;
+    return createPortal(children, container);
+}
 
 interface MtopApplication {
     id: number;
@@ -41,18 +95,10 @@ interface MtopApplication {
 // --- STRICT DATE VALIDATION HELPER ---
 const isValidDate = (dateString: string): boolean => {
     if (!dateString) return false;
-
-    // Check format YYYY-MM-DD
     const regex = /^\d{4}-\d{2}-\d{2}$/;
     if (!regex.test(dateString)) return false;
-
-    // Parse date parts
     const [year, month, day] = dateString.split("-").map(Number);
-
-    // Create Date object
     const date = new Date(year, month - 1, day);
-
-    // Check strict equality (handles "Feb 31" rolling over to "Mar 3")
     return (
         date.getFullYear() === year &&
         date.getMonth() === month - 1 &&
@@ -74,8 +120,11 @@ export default function Edit({
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [updatedRecord, setUpdatedRecord] = useState<any>(null);
 
+    // --- PIP FLOATING STATE ---
+    const [isFloating, setIsFloating] = useState(false);
+
     // 1. INITIALIZE FORM WITH EXISTING DATA
-    const { data, setData, put, processing, errors, isDirty } = useForm({
+    const { data, setData, put, processing, errors, isDirty, reset } = useForm({
         last_name: application.last_name || "",
         first_name: application.first_name || "",
         middle_name: application.middle_name || "",
@@ -99,13 +148,7 @@ export default function Edit({
     // 2. VALIDATION LOGIC
     const requiredFields = {
         1: ["last_name", "first_name", "address", "transaction_date"],
-        2: [
-            // "body_number", <--- REMOVED (Optional now)
-            "plate_no",
-            "make_type",
-            "engine_motor_no",
-            "chassis_no",
-        ],
+        2: ["plate_no", "make_type", "engine_motor_no", "chassis_no"],
         3: [
             "cedula_number",
             "cedula_date",
@@ -119,8 +162,6 @@ export default function Edit({
     const isStepValid = (stepNum: number) => {
         // @ts-ignore
         const fields = requiredFields[stepNum];
-
-        // 1. Basic Empty Check
         const basicCheck = fields.every(
             (field: string) =>
                 data[field as keyof typeof data] &&
@@ -129,17 +170,12 @@ export default function Edit({
 
         if (!basicCheck) return false;
 
-        // 2. Strict Step 1 Checks (Address & Date)
         if (stepNum === 1) {
-            if (!data.address.toUpperCase().includes("GERONA, TARLAC")) {
+            if (!data.address.toUpperCase().includes("GERONA, TARLAC"))
                 return false;
-            }
-            if (!isValidDate(data.transaction_date)) {
-                return false;
-            }
+            if (!isValidDate(data.transaction_date)) return false;
         }
 
-        // 3. Strict Step 3 Checks (Cedula & OR Dates)
         if (stepNum === 3) {
             if (!isValidDate(data.cedula_date)) return false;
             if (!isValidDate(data.or_date)) return false;
@@ -148,25 +184,17 @@ export default function Edit({
         return true;
     };
 
-    // Check if WHOLE form is valid
     const isFormValid = isStepValid(1) && isStepValid(2) && isStepValid(3);
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
 
-        // --- FINAL DATE GUARD ---
-        if (!isValidDate(data.transaction_date)) {
-            toast.error("Invalid Transaction Date.");
-            return;
-        }
-        if (!isValidDate(data.cedula_date)) {
-            toast.error("Invalid Cedula Date.");
-            return;
-        }
-        if (!isValidDate(data.or_date)) {
-            toast.error("Invalid Official Receipt Date.");
-            return;
-        }
+        if (!isValidDate(data.transaction_date))
+            return toast.error("Invalid Transaction Date.");
+        if (!isValidDate(data.cedula_date))
+            return toast.error("Invalid Cedula Date.");
+        if (!isValidDate(data.or_date))
+            return toast.error("Invalid Official Receipt Date.");
 
         put(route("mtop.update", application.id), {
             onSuccess: (page: any) => {
@@ -174,36 +202,34 @@ export default function Edit({
                 if (successData) {
                     setUpdatedRecord(successData);
                     setShowSuccessModal(true);
+                    setIsFloating(false); // Close Dual Monitor window on success
                 }
             },
             onError: (errs) => {
-                console.error("Update Errors:", errs);
-                toast.error("Failed to update record. Check inputs.");
+                if (errs.body_number) {
+                    setStep(2);
+                    toast.error(errs.body_number);
+                } else {
+                    toast.error("Failed to update record. Check inputs.");
+                }
             },
         });
     };
 
     const handleNext = () => {
-        // Explicit validation feedback
         if (step === 1) {
-            if (!isValidDate(data.transaction_date)) {
-                toast.error("Invalid Transaction Date! Check calendar.");
-                return;
-            }
-            if (!data.address.toUpperCase().includes("GERONA, TARLAC")) {
-                toast.error("Invalid Address! Please select a Barangay.");
-                return;
-            }
+            if (!isValidDate(data.transaction_date))
+                return toast.error("Invalid Transaction Date! Check calendar.");
+            if (!data.address.toUpperCase().includes("GERONA, TARLAC"))
+                return toast.error(
+                    "Invalid Address! Please select a Barangay.",
+                );
         }
         if (step === 3) {
-            if (!isValidDate(data.cedula_date)) {
-                toast.error("Invalid Cedula Date! Check calendar.");
-                return;
-            }
-            if (!isValidDate(data.or_date)) {
-                toast.error("Invalid OR Date! Check calendar.");
-                return;
-            }
+            if (!isValidDate(data.cedula_date))
+                return toast.error("Invalid Cedula Date! Check calendar.");
+            if (!isValidDate(data.or_date))
+                return toast.error("Invalid OR Date! Check calendar.");
         }
 
         if (isStepValid(step)) {
@@ -221,9 +247,7 @@ export default function Edit({
                         (el) => (el as HTMLElement).offsetParent !== null,
                     ) as HTMLElement[];
 
-                    if (visibleInputs.length > 0) {
-                        visibleInputs[0].focus();
-                    }
+                    if (visibleInputs.length > 0) visibleInputs[0].focus();
                 }
             }, 100);
         } else {
@@ -233,22 +257,18 @@ export default function Edit({
         }
     };
 
-    // --- HANDLE ENTER KEY NAVIGATION ---
     const handleEnterKey = (
         e: React.KeyboardEvent<HTMLInputElement | HTMLSelectElement>,
     ) => {
         if (e.key === "Enter") {
             e.preventDefault();
-
-            // Address Check
             if (
                 e.currentTarget.name === "address" ||
                 e.currentTarget.closest('[name="address"]')
             ) {
                 const currentVal = (e.currentTarget as HTMLInputElement).value;
-                if (!currentVal.toUpperCase().includes("GERONA, TARLAC")) {
+                if (!currentVal.toUpperCase().includes("GERONA, TARLAC"))
                     return;
-                }
             }
 
             const form = e.currentTarget.form;
@@ -263,7 +283,6 @@ export default function Edit({
             const visibleInputs = allInputs.filter(
                 (el) => el.offsetParent !== null,
             );
-
             const index = visibleInputs.indexOf(e.currentTarget as any);
 
             if (index > -1) {
@@ -272,22 +291,10 @@ export default function Edit({
                 } else {
                     if (step < 3) {
                         handleNext();
+                    } else if (isFormValid) {
+                        submit(e as unknown as React.FormEvent);
                     } else {
-                        // FIX: On final step, trigger Submit if valid.
-                        if (isFormValid) {
-                            submit(e as unknown as React.FormEvent);
-                        } else {
-                            if (
-                                !isValidDate(data.cedula_date) ||
-                                !isValidDate(data.or_date)
-                            ) {
-                                toast.error("Invalid Dates in Step 3.");
-                            } else {
-                                toast.error(
-                                    "Please fill in all required fields.",
-                                );
-                            }
-                        }
+                        toast.error("Please fill in all required fields.");
                     }
                 }
             }
@@ -332,14 +339,39 @@ export default function Edit({
                 </div>
             }
         >
-            <Head title="Edit MTOP" />
+            <Head title={`Edit ${application.mt_number}`} />
 
             <div className="py-6 pb-24 sm:pb-12">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+                    {/* DYNAMIC GRID */}
+                    <div
+                        className={`grid grid-cols-1 items-start transition-all duration-500 ease-in-out ${isFloating ? "max-w-4xl mx-auto" : "xl:grid-cols-12 gap-6"}`}
+                    >
                         {/* --- LEFT COLUMN: FORM --- */}
-                        <div className="xl:col-span-7 bg-white rounded-lg shadow-sm border border-gray-200 overflow-visible">
-                            {/* 3-STEP TABS */}
+                        <div
+                            className={`bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden transition-all duration-500 ${isFloating ? "w-full ring-4 ring-indigo-100" : "xl:col-span-7"}`}
+                        >
+                            {/* ACTIVE DUAL MONITOR BANNER */}
+                            {isFloating && (
+                                <div className="bg-indigo-600 p-3 flex justify-between items-center px-6">
+                                    <span className="text-white text-sm font-bold flex items-center gap-2">
+                                        <Icon
+                                            icon="solar:monitor-smartphone-bold"
+                                            width="20"
+                                        />
+                                        Dual Monitor Mode Active
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsFloating(false)}
+                                        className="text-xs font-bold bg-white text-indigo-600 px-4 py-1.5 rounded shadow-sm hover:bg-gray-100 transition-colors"
+                                    >
+                                        Dock Preview Here
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* 3-STEP NAVIGATION TABS */}
                             <div className="flex border-b border-gray-200 bg-gray-50">
                                 <button
                                     type="button"
@@ -402,7 +434,7 @@ export default function Edit({
                                 onSubmit={submit}
                                 className="p-4 sm:p-6 space-y-6"
                             >
-                                {/* STEP 1: APPLICANT */}
+                                {/* STEP 1 */}
                                 <div
                                     className={
                                         step === 1
@@ -425,7 +457,7 @@ export default function Edit({
                                     />
                                 </div>
 
-                                {/* STEP 2: UNIT */}
+                                {/* STEP 2 */}
                                 <div
                                     className={
                                         step === 2
@@ -441,7 +473,7 @@ export default function Edit({
                                     />
                                 </div>
 
-                                {/* STEP 3: DOCS & SIGNATORIES */}
+                                {/* STEP 3 */}
                                 <div
                                     className={
                                         step === 3
@@ -481,7 +513,6 @@ export default function Edit({
                                     >
                                         Cancel
                                     </Link>
-
                                     <div className="flex gap-3">
                                         {step > 1 && (
                                             <button
@@ -495,12 +526,11 @@ export default function Edit({
                                                 Back
                                             </button>
                                         )}
-
                                         {step < 3 ? (
                                             <PrimaryButton
                                                 type="button"
                                                 onClick={(e) => {
-                                                    e.preventDefault(); // Prevent submit
+                                                    e.preventDefault();
                                                     handleNext();
                                                 }}
                                                 className={
@@ -518,13 +548,7 @@ export default function Edit({
                                         ) : (
                                             <PrimaryButton
                                                 type="submit"
-                                                className={`bg-blue-800 hover:bg-blue-900 ${
-                                                    !isDirty ||
-                                                    processing ||
-                                                    !isFormValid
-                                                        ? "opacity-50 cursor-not-allowed"
-                                                        : ""
-                                                }`}
+                                                className={`bg-blue-800 hover:bg-blue-900 ${!isDirty || processing || !isFormValid ? "opacity-50 cursor-not-allowed" : ""}`}
                                                 disabled={
                                                     processing ||
                                                     !isDirty ||
@@ -543,19 +567,51 @@ export default function Edit({
                             </form>
                         </div>
 
-                        {/* RIGHT COLUMN: PREVIEW */}
-                        <div className="hidden xl:block xl:col-span-5 sticky top-6">
-                            <PermitPreview data={data} />
-                        </div>
+                        {/* --- RIGHT COLUMN: STANDARD PREVIEW --- */}
+                        {!isFloating && (
+                            <div className="hidden xl:block xl:col-span-5 sticky top-6 z-20 animate-fade-in">
+                                <div className="relative">
+                                    {/* DUAL MONITOR BUTTON (Now fixed with z-50 and proper wrapper) */}
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsFloating(true)}
+                                        className="absolute -top-3 -right-3 z-50 bg-gray-900 text-white p-3 rounded-full shadow-xl hover:bg-indigo-600 hover:scale-110 transition-all border-2 border-white flex items-center justify-center cursor-pointer"
+                                        title="Open on Second Monitor"
+                                    >
+                                        <Icon
+                                            icon="proicons:expand"
+                                            width="22"
+                                        />
+                                    </button>
+
+                                    {/* Container to keep the preview neat, while letting the button float outside */}
+                                    <div className="rounded-xl overflow-hidden shadow-md border border-gray-200">
+                                        <PermitPreview data={data} />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
+
+            {/* --- THE EXTERNAL OS WINDOW --- */}
+            {isFloating && (
+                <ExternalWindow onClose={() => setIsFloating(false)}>
+                    {/* Render the identical component right into the new window */}
+                    <div className="drop-shadow-xl max-w-lg mx-auto">
+                        <PermitPreview data={data} showHeader={true} />
+                    </div>
+                </ExternalWindow>
+            )}
+
             <PrintSuccessModal
                 show={showSuccessModal}
                 onClose={() => setShowSuccessModal(false)}
                 action="update"
                 data={updatedRecord}
             />
+
             {/* MOBILE STICKY FOOTER */}
             <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 sm:hidden z-40 flex justify-between items-center safe-area-pb">
                 <Link
@@ -584,11 +640,7 @@ export default function Edit({
                                 e.preventDefault();
                                 handleNext();
                             }}
-                            className={`px-6 py-2 bg-blue-600 text-white rounded-lg font-bold text-sm flex items-center ${
-                                !isStepValid(step)
-                                    ? "opacity-70 cursor-not-allowed"
-                                    : ""
-                            }`}
+                            className={`px-6 py-2 bg-blue-600 text-white rounded-lg font-bold text-sm flex items-center ${!isStepValid(step) ? "opacity-70 cursor-not-allowed" : ""}`}
                         >
                             Next{" "}
                             <Icon
@@ -600,11 +652,7 @@ export default function Edit({
                         <button
                             onClick={submit}
                             disabled={processing || !isDirty || !isFormValid}
-                            className={`px-6 py-2 bg-blue-800 text-white rounded-lg font-bold text-sm flex items-center ${
-                                !isDirty || processing || !isFormValid
-                                    ? "opacity-50 cursor-not-allowed"
-                                    : ""
-                            }`}
+                            className={`px-6 py-2 bg-blue-800 text-white rounded-lg font-bold text-sm flex items-center ${!isDirty || processing || !isFormValid ? "opacity-50 cursor-not-allowed" : ""}`}
                         >
                             <Icon icon="solar:diskette-bold" className="mr-1" />{" "}
                             Update

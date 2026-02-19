@@ -8,7 +8,7 @@ export default defineConfig({
         host: "0.0.0.0",
         cors: true, // ✅ ALLOWS YOUR NETWORK TO FETCH ASSETS
         hmr: {
-            host: "192.168.11.137",
+            host: "192.168.100.7",
         },
     },
     plugins: [

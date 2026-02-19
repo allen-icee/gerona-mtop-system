@@ -61,28 +61,38 @@ export default function PrintSuccessModal({
                     <a
                         href={route("mtop.print", data.id)}
                         target="_blank"
-                        className=" w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-sm flex items-center justify-center gap-2 transition-colors"
+                        className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-sm flex items-center justify-center gap-2 transition-colors"
                     >
                         <Icon icon="solar:printer-bold" width="20" />
                         Print Permit
                     </a>
 
-                    {/* SECONDARY ACTION: BACK TO LIST */}
+                    {/* SECONDARY ACTION: EDIT AGAIN */}
+                    {action === "create" ? (
+                        <Link
+                            href={route("mtop.edit", data.id)}
+                            className="w-full py-3 bg-white border-2 border-gray-200 text-gray-700 font-bold rounded-lg hover:bg-gray-50 flex items-center justify-center gap-2 transition-colors"
+                        >
+                            <Icon icon="solar:pen-new-square-bold" width="20" />
+                            Edit Record
+                        </Link>
+                    ) : (
+                        <button
+                            onClick={onClose}
+                            className="w-full py-3 bg-white border-2 border-gray-200 text-gray-700 font-bold rounded-lg hover:bg-gray-50 flex items-center justify-center gap-2 transition-colors"
+                        >
+                            <Icon icon="solar:pen-new-square-bold" width="20" />
+                            Edit Again
+                        </button>
+                    )}
+
+                    {/* TERTIARY ACTION: RETURN TO RECORDS */}
                     <Link
                         href={route("mtop.index")}
-                        className="w-full py-3 bg-white border-2 border-gray-200 text-gray-700 font-bold rounded-lg hover:bg-gray-50 flex items-center justify-center gap-2 transition-colors"
+                        className="block w-full text-sm text-gray-400 hover:text-gray-600 font-semibold underline mt-3 text-center transition-colors"
                     >
-                        <Icon icon="solar:list-bold" width="20" />
                         Return to Records
                     </Link>
-
-                    {/* TERTIARY ACTION: STAY HERE */}
-                    <button
-                        onClick={onClose}
-                        className="block w-full text-sm text-gray-400 hover:text-gray-600 font-semibold underline mt-2"
-                    >
-                        Stay on this page
-                    </button>
                 </div>
             </div>
         </Modal>

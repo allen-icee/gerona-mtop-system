@@ -9,12 +9,7 @@ export default function OfficialReceiptForm({
 }: any) {
     return (
         <div className="space-y-2">
-            <div className="flex items-center gap-2 text-gray-800 border-b border-gray-200 pb-2">
-                <Icon
-                    icon="solar:bill-check-bold"
-                    className="text-purple-600"
-                    width="20"
-                />
+            <div className="flex items-center gap-2 text-purple-700 border-b border-gray-200 pb-2">
                 <h3 className="font-bold text-base uppercase tracking-wide">
                     Official Receipt Details
                 </h3>
@@ -32,7 +27,7 @@ export default function OfficialReceiptForm({
                             .replace(/[^A-Z0-9-]/g, "");
                         setData("or_number", val);
                     }}
-                    icon="solar:hashtag-bold"
+                    icon="solar:hashtag-square-bold"
                     placeholder="e.g. OR-12345"
                     required={true}
                     onKeyDown={onKeyDown}

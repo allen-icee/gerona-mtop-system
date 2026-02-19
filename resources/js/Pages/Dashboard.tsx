@@ -15,13 +15,10 @@ export default function Dashboard({
 }) {
     const user: any = usePage().props.auth.user;
 
-    // ✅ DYNAMIC PORT FIX: Grabs whatever port the browser is currently using
     const port =
         typeof window !== "undefined" ? window.location.port || "80" : "8100";
-    const staffLink = `http://${serverIp}:${port}`;
+    const staffLink = `${serverIp}`;
 
-    // SMART GREETING LOGIC
-    const hour = new Date().getHours();
     const { post: postBackup, processing: backingUp } = useForm();
 
     const handleBackup = () => {
@@ -30,12 +27,21 @@ export default function Dashboard({
         }
     };
 
-    const greeting =
-        hour < 12
-            ? "Good Morning"
-            : hour < 18
-              ? "Good Afternoon"
-              : "Good Evening";
+    const hour = new Date().getHours();
+
+    let greeting = "Good Evening";
+    let greetingIcon = "solar:moon-stars-bold-duotone";
+    let iconColor = "text-indigo-500 bg-indigo-50";
+
+    if (hour < 12) {
+        greeting = "Good Morning";
+        greetingIcon = "solar:sunrise-bold-duotone";
+        iconColor = "text-yellow-500 bg-yellow-50";
+    } else if (hour < 18) {
+        greeting = "Good Afternoon";
+        greetingIcon = "solar:sun-bold-duotone";
+        iconColor = "text-orange-500 bg-orange-50";
+    }
 
     return (
         <AuthenticatedLayout>
@@ -43,7 +49,6 @@ export default function Dashboard({
 
             <div className="py-6 sm:py-12">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    {/* SYSTEM INFO CARD (VISIBLE ONLY TO ADMIN) */}
                     {user.role === "admin" && (
                         <div className="bg-linear-to-r from-blue-900 to-blue-800 text-white overflow-hidden shadow-lg rounded-xl mb-8">
                             <div className="p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -56,7 +61,7 @@ export default function Dashboard({
                                     </div>
                                     <div>
                                         <h3 className="text-lg font-bold">
-                                            System Online
+                                            MTOP System Online
                                         </h3>
                                         <p className="text-blue-100 text-sm">
                                             Staff Access Link:{" "}
@@ -74,33 +79,34 @@ export default function Dashboard({
                         </div>
                     )}
 
-                    {/* 2. WELCOME BANNER */}
                     <div className="bg-white overflow-hidden shadow-sm rounded-lg sm:rounded-lg mb-6 border-l-4 border-blue-900">
                         <div className="p-6 text-gray-900 flex items-center justify-between">
                             <div>
                                 <h3 className="text-xl sm:text-2xl font-bold text-blue-900">
                                     {greeting}, {user.name}!
                                 </h3>
-                                <p className="text-sm sm:text-base text-gray-500 mt-1">
+                                <p className="text-sm sm:text-base text-gray-600 mt-1">
                                     Welcome to the Gerona Municipal Tricycle
                                     Operator Permit (MTOP) System.
                                 </p>
+                                <p className="text-xs sm:text-sm text-gray-500">
+                                    Serbisyong May Puso, Serbisyong Totoo!
+                                </p>
                             </div>
-                            <Icon
-                                icon="solar:sun-fog-bold-duotone"
-                                width="48"
-                                className="text-yellow-500 hidden sm:block shrink-0 ml-4"
-                            />
+
+                            <div
+                                className={`hidden sm:flex items-center justify-center p-4 rounded-full ${iconColor}`}
+                            >
+                                <Icon icon={greetingIcon} width="42" />
+                            </div>
                         </div>
                     </div>
 
-                    {/* 3. QUICK STATS */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 mb-8">
-                        {/* Card 1: Total Records */}
                         <div className="bg-white p-6 rounded-lg shadow-sm border-t-4 border-blue-500 flex items-center justify-between">
                             <div>
                                 <p className="text-gray-500 text-xs sm:text-sm font-medium uppercase tracking-wider">
-                                    Total Records
+                                    Total MTOP Records
                                 </p>
                                 <p className="text-2xl sm:text-3xl font-bold text-gray-800 mt-1">
                                     {totalMtop}
@@ -119,7 +125,7 @@ export default function Dashboard({
                         <div className="bg-white p-6 rounded-lg shadow-sm border-t-4 border-orange-400 flex items-center justify-between">
                             <div>
                                 <p className="text-gray-500 text-xs sm:text-sm font-medium uppercase tracking-wider">
-                                    Added Today
+                                    Added Record Today
                                 </p>
                                 <p className="text-2xl sm:text-3xl font-bold text-gray-800 mt-1">
                                     {newToday}
@@ -134,7 +140,6 @@ export default function Dashboard({
                             </div>
                         </div>
 
-                        {/* Card 3: Active Users */}
                         <div className="bg-white p-6 rounded-lg shadow-sm border-t-4 border-green-500 flex items-center justify-between sm:col-span-2 md:col-span-1">
                             <div>
                                 <p className="text-gray-500 text-xs sm:text-sm font-medium uppercase tracking-wider">
@@ -154,12 +159,10 @@ export default function Dashboard({
                         </div>
                     </div>
 
-                    {/* 4. QUICK ACTIONS GRID */}
                     <h3 className="text-lg font-bold text-gray-700 mb-4 px-1">
                         Quick Actions
                     </h3>
                     <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {/* Action 1: Add New Record (Visible to Everyone) */}
                         <Link
                             href={route("mtop.create")}
                             className="group bg-white p-4 sm:p-6 rounded-xl shadow-sm hover:shadow-md transition-all border border-gray-100 flex flex-col items-center text-center gap-3 hover:-translate-y-1"
@@ -176,7 +179,6 @@ export default function Dashboard({
                             </span>
                         </Link>
 
-                        {/* ✅ FIXED: Print Settings is now accessible to Everyone */}
                         <Link
                             href={route("settings.print.edit")}
                             className="group bg-white p-4 sm:p-6 rounded-xl shadow-sm hover:shadow-md transition-all border border-gray-100 flex flex-col items-center text-center gap-3 hover:-translate-y-1"
@@ -193,10 +195,8 @@ export default function Dashboard({
                             </span>
                         </Link>
 
-                        {/* ADMIN ONLY ACTIONS */}
                         {user.role === "admin" && (
                             <>
-                                {/* Action: Manage Signatories */}
                                 <Link
                                     href={route("signatories.index")}
                                     className="group bg-white p-4 sm:p-6 rounded-xl shadow-sm hover:shadow-md transition-all border border-gray-100 flex flex-col items-center text-center gap-3 hover:-translate-y-1"
@@ -213,7 +213,6 @@ export default function Dashboard({
                                     </span>
                                 </Link>
 
-                                {/* Action: Backup Database */}
                                 <button
                                     onClick={handleBackup}
                                     disabled={backingUp}

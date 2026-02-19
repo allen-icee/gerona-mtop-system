@@ -1,66 +1,63 @@
 import { Head } from "@inertiajs/react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 interface Props {
     applications: any[];
 }
 
 export default function PrintIds({ applications }: Props) {
+    // --- ZOOM STATE ---
+    const [scale, setScale] = useState(1);
+
     useEffect(() => {
         // 1. Auto-print on initial load
-        setTimeout(() => window.print(), 800);
+        setTimeout(() => window.print(), 500);
 
         // 2. Listen for Ctrl+P or Cmd+P
         const handleKeyDown = (e: KeyboardEvent) => {
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "p") {
-                e.preventDefault(); // Stop default browser save/print dialog if any
-                window.print(); // Trigger our print
+                e.preventDefault();
+                window.print();
             }
         };
 
-        window.addEventListener("keydown", handleKeyDown);
+        // 3. Listen for Ctrl + Mouse Wheel for Zooming
+        const handleWheel = (e: WheelEvent) => {
+            if (e.ctrlKey || e.metaKey) {
+                e.preventDefault();
+                if (e.deltaY < 0) {
+                    setScale((s) => Math.min(s + 0.1, 2.5));
+                } else {
+                    setScale((s) => Math.max(s - 0.1, 0.3));
+                }
+            }
+        };
 
-        // 3. Cleanup listener when component unmounts
+        // 4. RESET ZOOM BEFORE PRINTING
+        const handleBeforePrint = () => {
+            setScale(1);
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        window.addEventListener("wheel", handleWheel, { passive: false });
+        window.addEventListener("beforeprint", handleBeforePrint);
+
         return () => {
             window.removeEventListener("keydown", handleKeyDown);
+            window.removeEventListener("wheel", handleWheel);
+            window.removeEventListener("beforeprint", handleBeforePrint);
         };
     }, []);
 
-    // ✅ SAFE OUTLINE STYLE (Web + Electron + Print)
-    const textStyle: any = {
-        color: "black",
-        textShadow: `
-            -2px -2px 0 white,
-             2px -2px 0 white,
-            -2px  2px 0 white,
-             2px  2px 0 white,
-            -3px  0px 0 white,
-             3px  0px 0 white,
-             0px -3px 0 white,
-             0px  3px 0 white
-        `,
-        WebkitPrintColorAdjust: "exact",
-        printColorAdjust: "exact",
-    };
-
-    const smallTextStyle: any = {
-        color: "black",
-        textShadow: `
-            -1px -1px 0 white,
-             1px -1px 0 white,
-            -1px  1px 0 white,
-             1px  1px 0 white
-        `,
-        WebkitPrintColorAdjust: "exact",
-        printColorAdjust: "exact",
-    };
-
     return (
-        <div className="w-full min-h-screen bg-gray-500 p-8 print:p-0 print:bg-white flex flex-col items-center gap-4 relative">
+        <div className="w-full min-h-screen bg-gray-500 p-8 print:p-0 print:bg-white flex flex-col items-center gap-4 relative overflow-auto">
             <Head title="Print IDs" />
 
-            {/* MANUAL PRINT BUTTON FOR ELECTRON & WEB */}
-            <div className="fixed top-4 right-4 print:hidden z-50">
+            {/* FLOATING ACTION BAR (Hidden when printing) */}
+            <div className="fixed top-4 right-4 print:hidden z-50 flex items-center gap-3">
+                <div className="bg-gray-800/80 backdrop-blur-sm text-white px-4 py-2 rounded shadow font-bold text-xs flex items-center gap-2">
+                    🔍 Ctrl + Scroll to Zoom ({Math.round(scale * 100)}%)
+                </div>
                 <button
                     onClick={() => window.print()}
                     className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded shadow font-bold text-sm flex items-center gap-2 transition-colors cursor-pointer"
@@ -69,8 +66,20 @@ export default function PrintIds({ applications }: Props) {
                 </button>
             </div>
 
-            <div className="mx-auto bg-white shadow-lg print:shadow-none w-[210mm] min-h-[297mm] grid grid-cols-2 content-start px-[2mm] py-[5mm]">
+            {/* A4 PAGE CONTAINER
+               - Width: 210mm
+               - Padding: adjusted to approx 5mm top/bottom and very tight sides to fit 2 cards (4in+4in > 200mm)
+            */}
+            <div
+                className="mx-auto bg-white shadow-lg print:shadow-none w-[210mm] min-h-[297mm] grid grid-cols-2 content-start px-[2mm] py-[5mm] origin-top transition-transform duration-75"
+                style={{ zoom: scale }}
+            >
                 {applications.map((app) => (
+                    /* ID CARD CONTAINER
+                       - Dimensions: 4in x 5.5in
+                       - Border: 1px (standard border class)
+                       - Rounded-xl
+                    */
                     <div
                         key={app.id}
                         className="w-[4in] h-[5.5in] border border-black relative overflow-hidden font-sans flex flex-col px-[8mm] py-[2mm] shadow-sm print:shadow-none shrink-0 break-inside-avoid m-auto mt-2"
@@ -80,45 +89,59 @@ export default function PrintIds({ applications }: Props) {
                             backgroundSize: "cover",
                             backgroundPosition: "center",
                             backgroundRepeat: "no-repeat",
-                            WebkitPrintColorAdjust: "exact",
-                            printColorAdjust: "exact",
                         }}
                     >
-                        {/* HEADER */}
+                        {/* HEADER SECTION: 2 COLUMNS
+                           - Col 1: Logo (Adjust w-[60px] to change logo space)
+                           - Col 2: Text (Centered)
+                        */}
                         <div className="relative z-10 grid grid-cols-[60px_1fr] items-center mb-6">
-                            <div></div>
+                            {/* Column 1: Logo */}
+                            <div className="flex justify-center"></div>
+
+                            {/* Column 2: Text */}
                             <div className="text-center leading-tight mt-4 ml-2">
                                 <h1
-                                    className="text-[11pt] font-['LEMONMILK'] font-light uppercase tracking-wider"
-                                    style={smallTextStyle}
+                                    className="text-[11pt] font-['LEMONMILK'] font-light uppercase tracking-wider
+                                    [-webkit-text-stroke:1.5px_white]
+                                    [paint-order:stroke_fill]
+                                   "
                                 >
                                     Republic of the Philippines
                                 </h1>
                                 <h1
-                                    className="text-[11pt] font-['LEMONMILK'] font-light uppercase tracking-wider"
-                                    style={smallTextStyle}
+                                    className="text-[11pt] font-['LEMONMILK'] font-light uppercase tracking-wider
+                                    [-webkit-text-stroke:1.5px_white]
+                                    [paint-order:stroke_fill]
+                                  "
                                 >
                                     Province of Tarlac
                                 </h1>
                                 <h1
-                                    className="text-[11pt] font-['LEMONMILK'] font-bold uppercase tracking-wider"
-                                    style={smallTextStyle}
+                                    className="text-[11pt] font-['LEMONMILK'] font-bold uppercase tracking-wider
+                                    [-webkit-text-stroke:1.5px_white]
+                                    [paint-order:stroke_fill]
+                                  "
                                 >
                                     Municipality of Gerona
                                 </h1>
                             </div>
                         </div>
 
-                        {/* TITLE */}
+                        {/* PERMIT TITLE - UPBOLTERS [24pt] */}
                         <h1
-                            className="relative z-10 text-center font-['UPBOLTERS'] text-[15pt] tracking-normal mb-2 leading-none scale-y-[1.5] origin-bottom drop-shadow-[.8px_.8px_0_rgba(0,0,0,0.75)]"
-                            style={smallTextStyle}
+                            className="relative z-10 text-center font-['UPBOLTERS'] text-[15pt] tracking-normal py-0 mb-2 leading-none
+                            scale-y-[1.5] origin-bottom
+                            [-webkit-text-stroke:2px_white]
+                            [paint-order:stroke_fill]
+                            drop-shadow-[.8px_.8px_0_rgba(0,0,0,0.75)]"
                         >
                             MOTORIZED TRICYCLE OPERATOR'S PERMIT
                         </h1>
 
-                        {/* PHOTO + NUMBER */}
+                        {/* PHOTO & SIDECAR SECTION */}
                         <div className="relative z-10 flex justify-between items-end gap-2 mb-1">
+                            {/* PHOTO: 30mm x 30mm, Left Aligned */}
                             <div className="w-[30mm] h-[30mm] border border-black bg-white flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
                                 {app.driver_photo_path ? (
                                     <img
@@ -133,17 +156,23 @@ export default function PrintIds({ applications }: Props) {
                                 )}
                             </div>
 
+                            {/* SIDECAR SECTION: Right Aligned */}
                             <div className="w-[50mm] flex flex-col items-center justify-end">
                                 <label
-                                    className="text-[10.7pt] font-['KeepCalm'] font-bold uppercase -mb-1 tracking-wide text-center w-full drop-shadow-[.8px_.8px_0_rgba(0,0,0,0.65)]"
-                                    style={smallTextStyle}
+                                    className="text-[10.7pt] font-['KeepCalm'] font-bold uppercase mb-0 leading-none -mb-1 tracking-wide text-center w-full
+                                    [-webkit-text-stroke:.8px_white] [paint-order:stroke_fill] drop-shadow-[.8px_.8px_0_rgba(0,0,0,0.65)]"
                                 >
                                     Sidecar Number
                                 </label>
+
+                                {/* Box: Height set to 15mm */}
                                 <div className="border border-black rounded-lg h-[15mm] w-full flex items-center justify-center bg-white">
+                                    {/* Wrap the text in a span and apply the text effects here */}
                                     <span
-                                        className="text-5xl font-['UPBOLTERS'] drop-shadow-[1px_1px_0_rgba(0,0,0,0.85)]"
-                                        style={textStyle}
+                                        className="text-5xl text-black font-['UPBOLTERS']
+                                        [-webkit-text-stroke:2px_white]
+                                        [paint-order:stroke_fill]
+                                        drop-shadow-[1px_1px_0_rgba(0,0,0,0.85)]"
                                     >
                                         {app.body_number || "---"}
                                     </span>
@@ -151,24 +180,24 @@ export default function PrintIds({ applications }: Props) {
                             </div>
                         </div>
 
-                        {/* FIELDS */}
-                        <div className="flex-1 flex flex-col justify-center space-y-1">
+                        {/* FORM FIELDS
+                            - Added 'height' prop to adjust individual field heights
+                        */}
+                        <div className="relative z-10 flex-1 flex flex-col justify-center space-y-1 px-0">
                             <Field
                                 label="DRIVER'S SIGNATURE"
                                 value=""
-                                height="13mm"
-                                style={textStyle}
-                                labelStyle={smallTextStyle}
+                                isSignature={true}
+                                height="13mm" // Requested 10mm height
                             />
                             <Field
                                 label="DRIVER'S NAME"
                                 value={app.driver_name || "---"}
-                                style={textStyle}
-                                labelStyle={smallTextStyle}
+                                height="7mm" // You can change this to your preference
                             />
                             <Field
                                 label="OPERATOR'S NAME AND ADDRESS"
-                                value={`${app.first_name || ""} ${app.last_name || ""} / ${
+                                value={`${app.first_name} ${app.last_name} / ${
                                     app.address
                                         ? app.address
                                               .split(/Gerona|Tarlac/i)[0]
@@ -176,14 +205,12 @@ export default function PrintIds({ applications }: Props) {
                                               .trim()
                                         : "---"
                                 }`}
-                                style={textStyle}
-                                labelStyle={smallTextStyle}
+                                height="7mm"
                             />
                             <Field
                                 label="PLATE NUMBER"
                                 value={app.plate_no || "N/A"}
-                                style={textStyle}
-                                labelStyle={smallTextStyle}
+                                height="7mm"
                             />
                             <Field
                                 label="MTOP EXPIRATION DATE"
@@ -198,91 +225,134 @@ export default function PrintIds({ applications }: Props) {
                                               .toUpperCase()
                                         : "---"
                                 }
-                                style={textStyle}
-                                labelStyle={smallTextStyle}
+                                height="7mm"
                             />
                         </div>
+                        {/* FOOTER SECTION */}
+                        <div className="mt-4 relative z-10 flex justify-between items-end pb-1">
+                            <div className="text-center w-36 flex flex-col items-center">
+                                {/* COMMITTEE NAME */}
+                                <div
+                                    className="text-[8pt] font-['ArialNarrow7'] font-bold uppercase truncate px-1 tracking-tighter w-full
+                                    scale-y-[1.2] origin-bottom pb-1
+                                    [-webkit-text-stroke:2px_white] [paint-order:stroke_fill] drop-shadow-sm relative z-10"
+                                >
+                                    {app.print_committee || "---"}
+                                </div>
 
-                        {/* FOOTER */}
-                        <div className="mt-4 flex justify-between items-end pb-1">
-                            <FooterBlock
-                                name={app.print_committee || "---"}
-                                title="COMMITTEE ON TRANSPORTATION"
-                                style={smallTextStyle}
-                            />
-                            <FooterBlock
-                                name={app.print_mayor || "---"}
-                                title="MUNICIPAL MAYOR"
-                                style={smallTextStyle}
-                            />
+                                {/* THE STROKED UNDERLINE (Black line, White Border) */}
+                                <div className="w-full h-[3px] bg-black border border-white -mt-1.5 relative z-0"></div>
+
+                                {/* COMMITTEE TITLE */}
+                                <div
+                                    className="text-[7pt] font-['DiezmaRd'] font-extrabold leading-none mt-1 tracking-tight
+                                    [-webkit-text-stroke:1px_white] [paint-order:stroke_fill] drop-shadow-sm"
+                                >
+                                    COMMITTEE ON TRANSPORTATION
+                                </div>
+                            </div>
+
+                            <div className="text-center w-36 flex flex-col items-center">
+                                {/* MAYOR NAME */}
+                                <div
+                                    className="text-[8pt] font-['ArialNarrow7'] font-bold uppercase truncate px-1 tracking-tighter w-full
+                                    scale-y-[1.2] origin-bottom pb-1
+                                    [-webkit-text-stroke:2px_white] [paint-order:stroke_fill] drop-shadow-sm relative z-10"
+                                >
+                                    {app.print_mayor || "---"}
+                                </div>
+
+                                {/* THE STROKED UNDERLINE (Black line, White Border) */}
+                                <div className="w-full h-[3px] bg-black border border-white -mt-1.5 relative z-0"></div>
+
+                                {/* MAYOR TITLE */}
+                                <div
+                                    className="text-[7pt] font-['DiezmaRd'] font-extrabold leading-none mt-1 tracking-tight
+                                    [-webkit-text-stroke:1px_white] [paint-order:stroke_fill] drop-shadow-sm"
+                                >
+                                    MUNICIPAL MAYOR
+                                </div>
+                            </div>
                         </div>
                     </div>
                 ))}
             </div>
+
+            <style>{`
+                @font-face {
+                    font-family: 'LEMONMILK';
+                    src: url('/fonts/LEMONMILK-Light.otf') format('opentype');
+                    font-weight: 300;
+                    font-style: normal;
+                }
+                @font-face {
+                    font-family: 'LEMONMILK';
+                    src: url('/fonts/LEMONMILK-Regular.otf') format('opentype');
+                    font-weight: 400;
+                    font-style: normal;
+                }
+                @font-face {
+                    font-family: 'UPBOLTERS';
+                    src: url('/fonts/UPBOLTERS New-Regular.otf') format('opentype');
+                }
+                @font-face {
+                    font-family: 'KeepCalm';
+                    src: url('/fonts/KeepCalm-Medium.ttf') format('truetype');
+                    font-weight: 500;
+                }
+                @font-face {
+                    font-family: 'ArialNarrow7';
+                    src: url('/fonts/arialnarrow.ttf') format('truetype');
+                }
+                @font-face {
+                    font-family: 'DiezmaRd';
+                    src: url('/fonts/Diezma-ExtraBold.otf') format('opentype');
+                    font-weight: 800;
+                }
+
+                @media print {
+                    @page { margin: 0; size: A4 portrait; }
+                    body { background: white; margin: 0; padding: 0; }
+                    .no-print { display: none; }
+                    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+                }
+            `}</style>
         </div>
     );
 }
 
+// Updated Field Component with Adjustable Height Prop
 function Field({
     label,
     value,
+    isSignature = false,
     height = "7mm",
-    style,
-    labelStyle,
 }: {
     label: string;
     value: string;
+    isSignature?: boolean;
     height?: string;
-    style: any;
-    labelStyle: any;
 }) {
     return (
         <div className="flex flex-col items-center w-full">
             <div
-                style={{ height }}
+                style={{ height: height }}
                 className="border border-black rounded-md px-2 w-full flex items-center justify-center bg-white"
             >
+                {/* Value now uses UPBOLTERS, 1px stroke, and your solid shadow */}
                 <span
-                    className="text-[12pt] font-['UPBOLTERS'] text-center truncate tracking-wide w-full block drop-shadow-[.7px_.7px_0_rgba(0,0,0,0.85)]"
-                    style={style}
+                    className="text-[12pt] font-['UPBOLTERS'] text-black uppercase text-center truncate tracking-wide
+                    [-webkit-text-stroke:2px_white] [paint-order:stroke_fill] drop-shadow-[.7px_.7px_0_rgba(0,0,0,0.85)]"
                 >
                     {value}
                 </span>
             </div>
             <span
-                className="text-[6.05pt] font-['KeepCalm'] font-semibold uppercase mt-[2px] leading-none tracking-wide drop-shadow-sm"
-                style={labelStyle}
+                className="text-[6.05pt] font-['KeepCalm'] font-semibold text-black uppercase mt-[2px] leading-none tracking-wide
+                [-webkit-text-stroke:2px_white] [paint-order:stroke_fill] drop-shadow-sm"
             >
                 {label}
             </span>
-        </div>
-    );
-}
-
-function FooterBlock({
-    name,
-    title,
-    style,
-}: {
-    name: string;
-    title: string;
-    style: any;
-}) {
-    return (
-        <div className="text-center w-36 flex flex-col items-center">
-            <div
-                className="text-[8pt] font-['ArialNarrow7'] font-bold uppercase truncate px-1 tracking-tighter w-full scale-y-[1.2] origin-bottom pb-1"
-                style={style}
-            >
-                {name}
-            </div>
-            <div className="w-full h-[3px] bg-black border border-white -mt-1.5"></div>
-            <div
-                className="text-[7pt] font-['DiezmaRd'] font-extrabold leading-none mt-1 tracking-tight"
-                style={style}
-            >
-                {title}
-            </div>
         </div>
     );
 }

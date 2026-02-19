@@ -1,8 +1,8 @@
-import PrimaryButton from "@/Components/PrimaryButton";
 import GuestLayout from "@/Layouts/GuestLayout";
 import InputGroup from "@/Components/InputGroup";
-import { Head, useForm } from "@inertiajs/react";
+import { Head, Link, useForm } from "@inertiajs/react";
 import { FormEventHandler } from "react";
+import { Icon } from "@iconify/react";
 
 export default function Login({ status }: { status?: string }) {
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -10,7 +10,6 @@ export default function Login({ status }: { status?: string }) {
         password: "",
     });
 
-    // VALIDATION: Are both fields filled?
     const isFormValid =
         data.username.trim() !== "" && data.password.trim() !== "";
 
@@ -23,53 +22,55 @@ export default function Login({ status }: { status?: string }) {
 
     return (
         <GuestLayout>
-            <Head title="Log in" />
+            <Head title="Secure Log in" />
 
-            {status && (
-                <div className="mb-4 text-sm font-medium text-green-600 text-center">
-                    {status}
-                </div>
-            )}
-
-            <form onSubmit={submit}>
-                {/* 1. USERNAME FIELD */}
+            <form onSubmit={submit} className="space-y-5">
                 <InputGroup
                     id="username"
                     label="Username"
                     name="username"
                     value={data.username}
-                    onChange={(e) => setData("username", e.target.value)}
+                    onChange={(e: any) => setData("username", e.target.value)}
                     error={errors.username}
                     icon="solar:user-bold"
                     placeholder="Enter your username"
                 />
 
-                {/* 2. PASSWORD FIELD */}
                 <InputGroup
                     id="password"
                     label="Password"
                     name="password"
                     type="password"
                     value={data.password}
-                    onChange={(e) => setData("password", e.target.value)}
+                    onChange={(e: any) => setData("password", e.target.value)}
                     error={errors.password}
                     icon="solar:lock-password-bold"
                     showPasswordToggle={true}
                     placeholder="Enter your password"
                 />
 
-                {/* 3. SUBMIT BUTTON (Smart) */}
-                <div className="mt-6">
-                    <PrimaryButton
-                        className={`w-full justify-center py-3 text-lg font-semibold tracking-wide transition duration-150 ease-in-out ${
-                            isFormValid && !processing
-                                ? "bg-blue-900 hover:bg-blue-800"
-                                : "bg-gray-400 cursor-not-allowed opacity-70"
-                        }`}
+                <div className="pt-4">
+                    <button
+                        type="submit"
                         disabled={!isFormValid || processing}
+                        className={`w-full flex items-center justify-center gap-2 rounded-xl border border-transparent px-6 py-4 text-sm font-bold uppercase tracking-widest text-white transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                            isFormValid && !processing
+                                ? "bg-blue-700 shadow-md hover:bg-blue-800 hover:shadow-lg hover:-translate-y-0.5 active:bg-blue-900"
+                                : "bg-gray-300 cursor-not-allowed text-gray-500"
+                        }`}
                     >
-                        LOG IN
-                    </PrimaryButton>
+                        {processing ? "Authenticating..." : <>Log In</>}
+                    </button>
+                </div>
+
+                <div className="pt-2 text-center">
+                    <Link
+                        href="/"
+                        className="text-[11px] font-bold text-gray-400 hover:text-gray-600 uppercase tracking-wider transition-colors inline-flex items-center gap-1"
+                    >
+                        <Icon icon="solar:arrow-left-bold" width="12" />
+                        Return to Welcome Page
+                    </Link>
                 </div>
             </form>
         </GuestLayout>

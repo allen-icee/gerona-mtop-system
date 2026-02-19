@@ -15,13 +15,8 @@ export default function ApplicantForm({
     };
 
     return (
-        <div className="space-y-4">
-            <div className="flex items-center gap-2 text-gray-800 border-b border-gray-200 pb-2">
-                <Icon
-                    icon="solar:user-id-bold"
-                    className="text-blue-600"
-                    width="20"
-                />
+        <div className="space-y-3">
+            <div className="flex items-center gap-2 text-blue-800 border-b border-gray-200 pb-2">
                 <h3 className="font-bold text-base uppercase tracking-wide">
                     Applicant Information
                 </h3>
@@ -40,7 +35,7 @@ export default function ApplicantForm({
                         }
                         error={errors.last_name}
                         icon="solar:user-bold"
-                        placeholder="DELA CRUZ"
+                        placeholder="DEQUIROS"
                         required={true}
                         onKeyDown={onKeyDown}
                     />
@@ -57,7 +52,7 @@ export default function ApplicantForm({
                             handleNameChange("first_name", e.target.value)
                         }
                         error={errors.first_name}
-                        placeholder="JUAN"
+                        placeholder="ALLEN ICEE"
                         required={true}
                         onKeyDown={onKeyDown}
                     />
@@ -78,7 +73,7 @@ export default function ApplicantForm({
                             setData("middle_name", val);
                         }}
                         error={errors.middle_name}
-                        placeholder="S"
+                        placeholder="A"
                         maxLength={1}
                         onKeyDown={onKeyDown}
                     />

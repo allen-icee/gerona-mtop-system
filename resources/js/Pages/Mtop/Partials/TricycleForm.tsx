@@ -1,5 +1,6 @@
 import InputGroup from "@/Components/InputGroup";
 import { Icon } from "@iconify/react";
+import React, { useState, useEffect } from "react";
 
 export default function TricycleForm({
     data,
@@ -7,59 +8,53 @@ export default function TricycleForm({
     errors,
     onKeyDown,
 }: any) {
-    // Helper to toggle "FOR REGISTRATION"
-    const toggleForRegistration = (checked: boolean) => {
-        if (checked) {
+    const isForRegistration = data.plate_no === "FOR REGISTRATION";
+
+    const [noBodyNumber, setNoBodyNumber] = useState(
+        data.body_number === "" || data.body_number === null,
+    );
+
+    useEffect(() => {
+        setNoBodyNumber(data.body_number === "" || data.body_number === null);
+    }, [data.body_number]);
+
+    const toggleForRegistration = () => {
+        if (!isForRegistration) {
             setData("plate_no", "FOR REGISTRATION");
         } else {
             setData("plate_no", "");
         }
     };
 
-    // Helper to toggle No Body Number (Clear it)
-    const toggleNoBodyNumber = (checked: boolean) => {
-        if (checked) {
+    const toggleNoBodyNumber = () => {
+        const newVal = !noBodyNumber;
+        setNoBodyNumber(newVal);
+        if (newVal) {
             setData("body_number", "");
         }
     };
 
-    const isForRegistration = data.plate_no === "FOR REGISTRATION";
-    // We assume "No Body Number" mode if the field is empty,
-    // but for the checkbox UI, we can just check if it's empty to show it checked?
-    // Or better, let the user check it to force clear it.
-    // Actually, simpler: If they check "No Body Number", we disable the input.
-    const [noBodyNumber, setNoBodyNumber] = React.useState(false);
-
-    // Sync local state if data loads with empty body number (optional, but good for UX)
-    // For now, let's just let the checkbox control the "disabled" state.
-
     return (
         <div className="space-y-6">
-            <div className="flex items-center gap-2 text-gray-800 border-b border-gray-200 pb-2">
-                <Icon
-                    icon="solar:wheel-bold"
-                    className="text-green-600"
-                    width="20"
-                />
+            <div className="flex items-center gap-2 text-green-700 border-b border-gray-200 pb-2">
                 <h3 className="font-bold text-base uppercase tracking-wide">
                     Tricycle Unit Details
                 </h3>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {/* BODY NUMBER */}
+            {/* FLATTENED GRID: All 5 items are direct children so they wrap nicely */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* --- 1. BODY NUMBER WITH TOGGLE --- */}
                 <div className="space-y-2">
                     <InputGroup
                         id="body_number"
-                        label="Body Number (MTOP)"
+                        label="Sidecar Number (MTOP)"
                         name="body_number"
-                        value={data.body_number}
+                        value={data.body_number || ""}
                         onChange={(e: any) => {
                             setData(
                                 "body_number",
-                                e.target.value
-                                    .replace(/\D/g, "") // numbers only
-                                    .slice(0, 5), // 🔥 limit to 6 digits
+                                e.target.value.replace(/\D/g, "").slice(0, 5),
                             );
                         }}
                         error={errors.body_number}
@@ -68,38 +63,39 @@ export default function TricycleForm({
                         required={!noBodyNumber}
                         onKeyDown={onKeyDown}
                         disabled={noBodyNumber}
-                        maxLength={6} // optional but good UX
+                        className={
+                            noBodyNumber ? "bg-gray-100 text-gray-400" : ""
+                        }
                     />
-
-                    <div className="flex items-center">
-                        <input
-                            type="checkbox"
-                            id="no_body_num"
-                            className="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500 cursor-pointer"
-                            checked={noBodyNumber}
-                            onChange={(e) => {
-                                setNoBodyNumber(e.target.checked);
-                                if (e.target.checked) {
-                                    setData("body_number", "");
-                                }
-                            }}
-                        />
-                        <label
-                            htmlFor="no_body_num"
-                            className="ml-2 text-sm text-gray-600 cursor-pointer select-none"
+                    <div className="flex justify-end pt-1">
+                        <button
+                            type="button" // Ignores Enter Key
+                            onClick={toggleNoBodyNumber}
+                            className="flex items-center gap-2 focus:outline-none group"
                         >
-                            No Body Number yet
-                        </label>
+                            <span
+                                className={`text-[10px] font-bold uppercase tracking-wider transition-colors ${noBodyNumber ? "text-indigo-600" : "text-gray-400 group-hover:text-gray-600"}`}
+                            >
+                                No Body Number
+                            </span>
+                            <div
+                                className={`w-8 h-4 flex items-center rounded-full p-1 transition-colors duration-300 ${noBodyNumber ? "bg-indigo-600" : "bg-gray-300"}`}
+                            >
+                                <div
+                                    className={`bg-white w-2.5 h-2.5 rounded-full shadow-sm transform transition-transform duration-300 ${noBodyNumber ? "translate-x-3.5" : "translate-x-0"}`}
+                                ></div>
+                            </div>
+                        </button>
                     </div>
                 </div>
 
-                {/* PLATE NUMBER */}
+                {/* --- 2. PLATE NUMBER WITH TOGGLE --- */}
                 <div className="space-y-2">
                     <InputGroup
                         id="plate_no"
                         label="Plate Number"
                         name="plate_no"
-                        value={data.plate_no}
+                        value={data.plate_no || ""}
                         onChange={(e: any) => {
                             const val = e.target.value
                                 .toUpperCase()
@@ -108,39 +104,46 @@ export default function TricycleForm({
                         }}
                         error={errors.plate_no}
                         icon="solar:plate-bold"
-                        placeholder="123ABC"
+                        placeholder={
+                            isForRegistration ? "FOR REGISTRATION" : "123ABC"
+                        }
                         required={true}
                         onKeyDown={onKeyDown}
                         readOnly={isForRegistration}
                         className={
-                            isForRegistration ? "bg-gray-100 text-gray-500" : ""
+                            isForRegistration
+                                ? "bg-indigo-50 text-indigo-700 font-bold"
+                                : ""
                         }
                     />
-                    <div className="flex items-center">
-                        <input
-                            type="checkbox"
-                            id="for_reg"
-                            className="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500 cursor-pointer"
-                            checked={isForRegistration}
-                            onChange={(e) =>
-                                toggleForRegistration(e.target.checked)
-                            }
-                        />
-                        <label
-                            htmlFor="for_reg"
-                            className="ml-2 text-sm text-gray-600 cursor-pointer select-none"
+                    <div className="flex justify-end pt-1">
+                        <button
+                            type="button"
+                            onClick={toggleForRegistration}
+                            className="flex items-center gap-2 focus:outline-none group"
                         >
-                            For Registration
-                        </label>
+                            <span
+                                className={`text-[10px] font-bold uppercase tracking-wider transition-colors ${isForRegistration ? "text-indigo-600" : "text-gray-400 group-hover:text-gray-600"}`}
+                            >
+                                For Registration
+                            </span>
+                            <div
+                                className={`w-8 h-4 flex items-center rounded-full p-1 transition-colors duration-300 ${isForRegistration ? "bg-indigo-600" : "bg-gray-300"}`}
+                            >
+                                <div
+                                    className={`bg-white w-2.5 h-2.5 rounded-full shadow-sm transform transition-transform duration-300 ${isForRegistration ? "translate-x-3.5" : "translate-x-0"}`}
+                                ></div>
+                            </div>
+                        </button>
                     </div>
                 </div>
 
-                {/* Other Fields - Unchanged */}
+                {/* --- 3. MAKE / TYPE --- */}
                 <InputGroup
                     id="make_type"
                     label="Make / Type"
                     name="make_type"
-                    value={data.make_type}
+                    value={data.make_type || ""}
                     onChange={(e: any) => {
                         const val = e.target.value
                             .toUpperCase()
@@ -154,11 +157,12 @@ export default function TricycleForm({
                     onKeyDown={onKeyDown}
                 />
 
+                {/* --- 4. ENGINE MOTOR NO. --- */}
                 <InputGroup
                     id="engine_motor_no"
                     label="Engine Motor No."
                     name="engine_motor_no"
-                    value={data.engine_motor_no}
+                    value={data.engine_motor_no || ""}
                     onChange={(e: any) => {
                         const val = e.target.value
                             .toUpperCase()
@@ -172,11 +176,12 @@ export default function TricycleForm({
                     onKeyDown={onKeyDown}
                 />
 
+                {/* --- 5. CHASSIS NO. --- */}
                 <InputGroup
                     id="chassis_no"
                     label="Chassis No."
                     name="chassis_no"
-                    value={data.chassis_no}
+                    value={data.chassis_no || ""}
                     onChange={(e: any) => {
                         const val = e.target.value
                             .toUpperCase()
@@ -193,6 +198,3 @@ export default function TricycleForm({
         </div>
     );
 }
-
-// Need to import React for useState
-import React from "react";

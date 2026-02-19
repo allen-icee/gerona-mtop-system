@@ -188,10 +188,6 @@ export default function PrintLayout({ settings }: { settings: any }) {
                                         <h3 className="text-lg font-medium text-gray-900">
                                             Header
                                         </h3>
-                                        <p className="text-sm text-gray-500">
-                                            Manage the branding image at the top
-                                            of documents.
-                                        </p>
                                     </div>
                                     <div className="mt-4 md:mt-0">
                                         <ToggleSwitch
@@ -251,12 +247,8 @@ export default function PrintLayout({ settings }: { settings: any }) {
                                 <div className="md:flex md:items-center md:justify-between mb-4">
                                     <div>
                                         <h3 className="text-lg font-medium text-gray-900">
-                                            Footer
+                                            Footer Image
                                         </h3>
-                                        <p className="text-sm text-gray-500">
-                                            Manage the branding image at the
-                                            bottom of documents.
-                                        </p>
                                     </div>
                                     <div className="mt-4 md:mt-0">
                                         <ToggleSwitch

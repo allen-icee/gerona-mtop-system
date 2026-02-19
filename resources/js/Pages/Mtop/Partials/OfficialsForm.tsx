@@ -22,14 +22,9 @@ export default function OfficialsForm({
 }: Props) {
     return (
         <div className="space-y-2">
-            <div className="flex items-center gap-2 text-gray-800 border-b border-gray-200 pb-2">
-                <Icon
-                    icon="solar:pen-new-square-bold"
-                    className="text-gray-600"
-                    width="20"
-                />
+            <div className="flex items-center gap-2 text-yellow-700 border-b border-gray-200 pb-2">
                 <h3 className="font-bold text-base uppercase tracking-wide">
-                    Signatories (Mga Pumirma)
+                    Signatories
                 </h3>
             </div>
 
@@ -55,14 +50,14 @@ export default function OfficialsForm({
                 />
             </div>
 
-            <div className="flex items-start gap-2 bg-blue-50 p-3 rounded-lg border border-blue-100">
+            <div className="flex items-start gap-2 bg-yellow-50 p-3 rounded-lg border border-yellow-100">
                 <Icon
                     icon="solar:info-circle-bold"
-                    className="text-blue-500 mt-0.5 shrink-0"
+                    className="text-yellow-500 mt-0.5 shrink-0"
                     width="16"
                 />
-                <p className="text-xs text-blue-700 leading-relaxed">
-                    <strong>Pro-tip:</strong> You can type to search existing
+                <p className="text-xs text-yellow-700 leading-relaxed">
+                    <strong>Tip:</strong> You can type to search existing
                     officials or type a new name manually if they aren't on the
                     list.
                 </p>
