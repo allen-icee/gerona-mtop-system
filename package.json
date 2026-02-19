@@ -1,12 +1,45 @@
 {
-    "name": "mtop-gerona",
+    "name": "gerona-mtop-system",
     "version": "1.0.0",
-    "private": true,
+    "description": "Gerona MTOP System",
+    "main": "electron.cjs",
     "type": "module",
+    "author": "Municipality of Gerona",
     "scripts": {
-        "build": "tsc && vite build",
         "dev": "vite",
-        "postinstall": "php artisan native:install --force"
+        "build": "tsc && vite build",
+        "start": "electron electron.cjs",
+        "dist": "electron-builder"
+    },
+    "build": {
+        "appId": "com.gerona.mtop",
+        "productName": "Gerona MTOP System",
+        "win": {
+            "target": "nsis",
+            "icon": "public/images/MunicipalityLogo.png"
+        },
+        "nsis": {
+            "oneClick": false,
+            "allowToChangeInstallationDirectory": true
+        },
+        "files": [
+            "dist/**/*",
+            "public/**/*",
+            "resources/**/*",
+            "routes/**/*",
+            "app/**/*",
+            "bootstrap/**/*",
+            "config/**/*",
+            "database/**/*",
+            "storage/**/*",
+            "vendor/**/*",
+            "electron.cjs",
+            ".env"
+        ],
+        "asar": true
+    },
+    "dependencies": {
+        "react-hot-toast": "^2.4.1"
     },
     "devDependencies": {
         "@headlessui/react": "^2.0.0",
@@ -23,7 +56,8 @@
         "autoprefixer": "^10.4.12",
         "axios": "^1.6.0",
         "concurrently": "^9.0.1",
-        "electron": "^25.0.0",
+        "electron": "^25.9.8",
+        "electron-builder": "^26.7.0",
         "laravel-vite-plugin": "^1.0.0",
         "postcss": "^8.4.31",
         "react": "^18.2.0",
@@ -31,8 +65,5 @@
         "tailwindcss": "^4.0.0",
         "typescript": "^5.0.2",
         "vite": "^5.0.0"
-    },
-    "dependencies": {
-        "react-hot-toast": "^2.4.1"
     }
 }

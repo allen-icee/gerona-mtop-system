@@ -16,7 +16,7 @@ use App\Http\Controllers\PrintSettingController;
 |--------------------------------------------------------------------------
 */
 
-// 1. HOME PAGE: Renders Welcome page directly to avoid redirect loops in NativePHP
+// 1. HOME PAGE: Loads the React Welcome/Login screen
 Route::get('/', function () {
     return Inertia::render('Welcome', [
         'canLogin' => Route::has('login'),
