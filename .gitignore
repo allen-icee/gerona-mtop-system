@@ -22,7 +22,8 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
-# NativePHP Builds
+
+# NativePHP Builds / Old Builds
 /dist
 /nativephp/build
 
@@ -31,7 +32,11 @@ Thumbs.db
 /database/*.sqlite-journal
 
 # MTOP Staff Client (Electron Wrapper)
-
 /mtop-staff-client/node_modules
-
 /mtop-staff-client/dist
+
+# ✅ Main Server Electron Builder Output
+/dist-app/
+
+# ✅ Portable PHP Engine (Optional: Remove this line if you want to push PHP to GitHub)
+/php/

@@ -1,17 +1,22 @@
-const { app, BrowserWindow, shell } = require("electron"); // ✅ ADDED 'shell'
+const { app, BrowserWindow, shell } = require("electron");
 const { spawn } = require("child_process");
 const path = require("path");
 
 let mainWindow;
 let phpServer;
 
+// ✅ Define path to portable PHP
+const phpExe = path.join(__dirname, "php", "php.exe");
+
 function createWindow() {
     console.log("Running Startup Backup...");
-    spawn("php", ["artisan", "backup:run"], { cwd: __dirname, shell: true });
+    // ✅ Use portable PHP
+    spawn(phpExe, ["artisan", "backup:run"], { cwd: __dirname, shell: true });
 
     setInterval(() => {
         console.log("Running Scheduled Backup (4 Hours)...");
-        spawn("php", ["artisan", "backup:run"], {
+        // ✅ Use portable PHP
+        spawn(phpExe, ["artisan", "backup:run"], {
             cwd: __dirname,
             shell: true,
         });
@@ -19,8 +24,9 @@ function createWindow() {
 
     console.log("Starting Laravel Server...");
 
+    // ✅ Use portable PHP for the main server
     phpServer = spawn(
-        "php",
+        phpExe,
         ["artisan", "serve", "--port=8000", "--host=0.0.0.0"],
         {
             cwd: __dirname,
@@ -51,12 +57,11 @@ function createWindow() {
 
     mainWindow.setMenu(null);
 
-    // ✅ ADD THIS BLOCK: Intercept print routes and open in Google Chrome / Edge
+    // ✅ Intercept print routes and open in Google Chrome / Edge
     mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-        // Check if the URL contains your print route
         if (url.includes("/print-ids") || url.includes("/print")) {
-            shell.openExternal(url); // Opens in OS default browser
-            return { action: "deny" }; // Stops Electron from opening a popup
+            shell.openExternal(url);
+            return { action: "deny" };
         }
         return { action: "allow" };
     });

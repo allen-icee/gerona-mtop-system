@@ -21,10 +21,12 @@
         },
         "nsis": {
             "oneClick": false,
-            "allowToChangeInstallationDirectory": true
+            "allowToChangeInstallationDirectory": true,
+            "shortcutName": "Gerona MTOP System"
         },
         "files": [
             "dist/**/*",
+            "php/**/*",
             "public/**/*",
             "resources/**/*",
             "routes/**/*",
@@ -35,9 +37,10 @@
             "storage/**/*",
             "vendor/**/*",
             "electron.cjs",
+            "artisan",
             ".env"
         ],
-        "asar": true
+        "asar": false
     },
     "dependencies": {
         "react-hot-toast": "^2.4.1"
