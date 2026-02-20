@@ -13,7 +13,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rule; // <-- Used for update validation
+use Illuminate\Validation\Rule;
 
 class MtopApplicationController extends Controller
 {
@@ -490,37 +490,90 @@ class MtopApplicationController extends Controller
     }
 
     /**
-     * Phase 3: Renew an existing active application
+     * Phase 3: Show the Renewal Form (Pre-filled with old data)
      */
-    public function renew($id): RedirectResponse
+    public function renew($id): Response
+    {
+        $application = MtopApplication::findOrFail($id);
+        $punong_bayans = Signatory::where('position', 'Punong Bayan')->where('is_active', true)->pluck('name');
+        $officials = Signatory::where('position', 'Authorized Official')->where('is_active', true)->pluck('name');
+
+        return Inertia::render('Mtop/Renew', [
+            'application' => $application,
+            'punong_bayans' => $punong_bayans,
+            'officials' => $officials
+        ]);
+    }
+
+    /**
+     * Phase 3: Store the finalized renewal
+     */
+    public function storeRenewal(Request $request, $id): RedirectResponse
     {
         $oldApp = MtopApplication::findOrFail($id);
 
-        // Return the newly created app directly out of the transaction
-        $newApp = DB::transaction(function () use ($oldApp) {
-            // 1. Duplicate the exact record (this automatically copies the franchise_id too!)
-            $duplicate = $oldApp->replicate();
+        $validated = $request->validate([
+            'last_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
+            'first_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
+            'middle_name' => ['nullable', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
+            'suffix' => ['nullable', 'string', 'max:10', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
+            'address' => 'required|string|max:100',
+            'transaction_date' => 'required|date',
+            'body_number' => [
+                'nullable',
+                'regex:/^[0-9]+$/',
+                Rule::unique('mtop_franchises', 'body_number')->ignore($oldApp->franchise_id)
+            ],
+            'plate_no' => ['required', 'string', 'max:30'],
+            'make_type' => 'required|string|max:30',
+            'engine_motor_no' => 'required|string|max:30',
+            'chassis_no' => 'required|string|max:30',
+            'cedula_number' => 'required|string|max:20',
+            'cedula_date' => 'required|date',
+            'or_number' => 'required|string|max:20',
+            'or_date' => 'required|date',
+            'punong_bayan' => ['required', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
+            'authorized_official' => ['required', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
+        ], [
+            'body_number.unique' => 'This Body Number is already assigned to another operator!'
+        ]);
 
-            // 2. Set as Renewal and Clear out old receipts
-            $duplicate->transaction_type = 'Renewal';
-            $duplicate->status = 'active'; // The new one becomes active
-            $duplicate->transaction_date = now();
-            $duplicate->valid_until = null;
-            $duplicate->or_number = null;
-            $duplicate->or_date = null;
-            $duplicate->cedula_number = null;
-            $duplicate->cedula_date = null;
-            $duplicate->processed_by = Auth::id(); // Audit Trail
-            $duplicate->save();
-
-            // 3. Archive the old application so it is kept in history but no longer active
+        $newApp = DB::transaction(function () use ($oldApp, $validated, $request) {
+            // 1. Archive the old application
             $oldApp->update(['status' => 'archived']);
 
-            return $duplicate; // Return it so $newApp catches it
+            // 2. Update the permanent Franchise with any changed info
+            if ($oldApp->franchise_id) {
+                MtopFranchise::where('id', $oldApp->franchise_id)->update([
+                    'body_number' => $validated['body_number'] ?? null,
+                    'last_name' => $validated['last_name'],
+                    'first_name' => $validated['first_name'],
+                    'middle_name' => $validated['middle_name'],
+                    'suffix' => $validated['suffix'],
+                    'address' => $validated['address'],
+                    'make_type' => $validated['make_type'],
+                    'engine_motor_no' => $validated['engine_motor_no'],
+                    'chassis_no' => $validated['chassis_no'],
+                    'plate_no' => $validated['plate_no'],
+                ]);
+            }
+
+            // 3. Create the brand new active ledger record
+            $applicationData = $validated;
+            $applicationData['mt_number'] = $oldApp->mt_number;
+            $applicationData['valid_until'] = Carbon::parse($request->transaction_date)->addYears(3);
+            $applicationData['status'] = 'active';
+            $applicationData['franchise_id'] = $oldApp->franchise_id;
+            $applicationData['transaction_type'] = 'Renewal';
+            $applicationData['processed_by'] = Auth::id();
+
+            return MtopApplication::create($applicationData);
         });
 
-        // 4. Send them straight to the Edit screen of the newly generated row!
-        return redirect()->route('mtop.edit', $newApp->id)
-            ->with('message', 'Renewal record generated! Please fill in the new OR and Cedula details.');
+        return redirect()->route('mtop.index')->with('success_data', [
+            'id' => $newApp->id,
+            'mt_number' => $newApp->mt_number,
+            'operator_name' => $newApp->first_name . ' ' . $newApp->last_name . ($newApp->suffix ? ' ' . $newApp->suffix : ''),
+        ])->with('message', 'Renewal successful!');
     }
 }

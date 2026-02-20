@@ -466,8 +466,6 @@ export default function Index({ applications, filters, officials }: Props) {
                                                                     "mtop.renew",
                                                                     app.id,
                                                                 )}
-                                                                method="post"
-                                                                as="button"
                                                                 className="inline-flex items-center gap-1.5 bg-yellow-50 text-yellow-700 hover:bg-yellow-100 hover:text-yellow-800 px-3 py-1.5 rounded-md font-bold text-sm transition-colors"
                                                             >
                                                                 <Icon
@@ -665,8 +663,6 @@ export default function Index({ applications, filters, officials }: Props) {
                                                         "mtop.renew",
                                                         app.id,
                                                     )}
-                                                    method="post"
-                                                    as="button"
                                                     className="flex-1 flex justify-center items-center gap-1.5 bg-yellow-50 text-yellow-700 py-2.5 rounded-lg font-bold text-sm hover:bg-yellow-100 transition-colors"
                                                 >
                                                     <Icon

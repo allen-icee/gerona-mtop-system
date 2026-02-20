@@ -6,6 +6,7 @@ import { Icon } from "@iconify/react";
 import { FormEventHandler, useEffect, useRef, useState } from "react";
 import TextInput from "@/Components/TextInput";
 import SignatorySelect from "@/Components/SignatorySelect";
+import toast from "react-hot-toast"; // ✅ Added toast for alerts
 
 interface Props {
     show: boolean;
@@ -24,10 +25,7 @@ export default function DriverInfoModal({
         drivers: [] as any[],
     });
 
-    // Camera state
     const [cameraIndex, setCameraIndex] = useState<number | null>(null);
-    const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
-
     const initialized = useRef(false);
 
     // Sync data when modal opens
@@ -36,7 +34,6 @@ export default function DriverInfoModal({
             const defaultMayor =
                 officials.find((o) => o.position === "Punong Bayan")?.name ||
                 "";
-
             const defaultCommittee =
                 officials.find(
                     (o) => o.position === "Committee on Transportation",
@@ -59,7 +56,6 @@ export default function DriverInfoModal({
                     committee: defaultCommittee,
                 })),
             });
-
             initialized.current = true;
         }
 
@@ -68,7 +64,27 @@ export default function DriverInfoModal({
         }
     }, [show]);
 
-    // --- Handlers for driver data ---
+    // Listen for the image data sent back from the separate camera window
+    useEffect(() => {
+        const handleMessage = (event: MessageEvent) => {
+            if (event.data.type === "CAMERA_CAPTURE" && cameraIndex !== null) {
+                const base64Data = event.data.imageData;
+
+                fetch(base64Data)
+                    .then((res) => res.blob())
+                    .then((blob) => {
+                        const file = new File([blob], "driver_photo.png", {
+                            type: "image/png",
+                        });
+                        handlePhotoChange(cameraIndex, file);
+                    });
+            }
+        };
+
+        window.addEventListener("message", handleMessage);
+        return () => window.removeEventListener("message", handleMessage);
+    }, [cameraIndex]);
+
     const handleDriverChange = (index: number, field: string, value: any) => {
         const newDrivers = [...data.drivers];
         newDrivers[index][field] = value;
@@ -89,65 +105,184 @@ export default function DriverInfoModal({
         setData("drivers", newDrivers);
     };
 
-    // --- Camera Functions ---
+    // OPENS A COMPLETELY NEW WINDOW
     const openCamera = async (index: number) => {
+        // --- 1. Security & Environment Check ---
+        const isSecure =
+            window.isSecureContext ||
+            window.location.hostname === "localhost" ||
+            window.location.hostname === "127.0.0.1";
+
+        if (!isSecure) {
+            // ✅ Replaced confirm dialog with a simple toast alert
+            toast.error(
+                "Camera access is restricted on this client. Please use the Main Application Server to capture photos.",
+                { duration: 5000 },
+            );
+            return;
+        }
+
+        // --- 2. Permission Request (Main Window) ---
         try {
             const stream = await navigator.mediaDevices.getUserMedia({
                 video: true,
             });
-            setCameraStream(stream);
-            setCameraIndex(index);
+            stream.getTracks().forEach((track) => track.stop());
         } catch (err) {
-            alert("Camera access denied or not available.");
-            console.error(err);
+            toast.error(
+                "Permission was not granted. Please allow camera access to use this feature.",
+            );
+            return;
+        }
+
+        // --- 3. Launch Dedicated Capture Window ---
+        setCameraIndex(index);
+
+        const width = 500;
+        const height = 750;
+        const left = window.screen.width / 2 - width / 2;
+        const top = window.screen.height / 2 - height / 2;
+
+        const camWindow = window.open(
+            "",
+            "CameraCapture",
+            `width=${width},height=${height},left=${left},top=${top},menubar=no,status=no,toolbar=no`,
+        );
+
+        if (camWindow) {
+            camWindow.document.write(`
+                <html>
+                <head>
+                    <title>Secure Photo Capture</title>
+                    <script src="https://code.iconify.design/3/3.1.0/iconify.min.js"></script>
+                    <script src="https://cdn.tailwindcss.com"></script>
+                    <style>
+                        body { margin: 0; overflow: hidden; background: #f9fafb; font-family: ui-sans-serif, system-ui; }
+                        .camera-container { position: relative; width: 100%; height: 100%; background: black; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+                        #video, #preview-img { width: 100%; height: 100%; object-fit: cover; }
+                        .guide-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; z-index: 20; }
+                        .circle { width: 280px; height: 280px; border: 3px solid rgba(255,255,255,0.5); border-radius: 50%; box-shadow: 0 0 0 1000px rgba(0,0,0,0.4); }
+                        #preview-img { display: none; z-index: 10; }
+                        .floating-btn { position: absolute; z-index: 50; background: rgba(0, 0, 0, 0.5); color: white; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.2); cursor: pointer; transition: all 0.2s; }
+                        .floating-btn:hover { background: rgba(59, 130, 246, 0.8); }
+                        .btn-switch { top: 1rem; right: 1rem; }
+                    </style>
+                </head>
+                <body>
+                    <div class="flex flex-col h-screen">
+                        <div class="bg-slate-800 p-4 text-white flex justify-between items-center shadow-lg">
+                            <span class="text-xs font-bold uppercase tracking-widest" id="header-title">Secure Photo Capture</span>
+                            <span class="iconify" data-icon="solar:camera-bold"></span>
+                        </div>
+
+                        <div class="camera-container flex-1">
+                            <button id="switch-btn" class="floating-btn btn-switch" style="display: none;">
+                                <span class="iconify text-2xl" data-icon="solar:camera-rotate-bold"></span>
+                            </button>
+                            <video id="video" autoplay playsinline></video>
+                            <img id="preview-img" src="" />
+                            <div id="guide" class="guide-overlay"><div class="circle"></div></div>
+                        </div>
+
+                        <div class="p-6 bg-white border-t">
+                            <div id="instruction-box" class="mb-5 flex items-center gap-3 text-blue-700 bg-blue-50 px-4 py-3 rounded-lg border border-blue-100 shadow-sm">
+                                <span class="iconify text-lg" data-icon="solar:info-circle-bold"></span>
+                                <span class="text-xs font-medium leading-tight">Please align the subject's face within the guide for optimal photo quality.</span>
+                            </div>
+                            <button id="capture-btn" class="w-full py-4 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold text-lg shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2">
+                                <span class="iconify" data-icon="solar:camera-minimalistic-bold"></span> Take Photo
+                            </button>
+                            <div id="review-actions" class="hidden flex gap-3">
+                                <button id="retake-btn" class="flex-1 py-4 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl font-bold transition-all active:scale-95 flex items-center justify-center gap-2">
+                                    <span class="iconify" data-icon="solar:refresh-bold"></span> Retake
+                                </button>
+                                <button id="save-btn" class="flex-1 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2">
+                                    <span class="iconify" data-icon="solar:check-circle-bold"></span> Save Photo
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <canvas id="canvas" style="display:none;"></canvas>
+                    <script>
+                        const video = document.getElementById('video');
+                        const previewImg = document.getElementById('preview-img');
+                        const switchBtn = document.getElementById('switch-btn');
+                        let videoDevices = [];
+                        let currentDeviceIndex = 0;
+
+                        async function initCamera(deviceId) {
+                            try {
+                                if (window.stream) { window.stream.getTracks().forEach(t => t.stop()); }
+                                const stream = await navigator.mediaDevices.getUserMedia({
+                                    video: { deviceId: deviceId ? { exact: deviceId } : undefined, width: 1280, height: 720 }
+                                });
+                                window.stream = stream;
+                                video.srcObject = stream;
+                                const devices = await navigator.mediaDevices.enumerateDevices();
+                                videoDevices = devices.filter(d => d.kind === 'videoinput');
+                                if (videoDevices.length > 1) switchBtn.style.display = 'flex';
+                            } catch (e) { alert("Unable to initialize camera. Please verify device connection."); }
+                        }
+
+                        initCamera();
+
+                        switchBtn.onclick = () => {
+                            currentDeviceIndex = (currentDeviceIndex + 1) % videoDevices.length;
+                            initCamera(videoDevices[currentDeviceIndex].deviceId);
+                        };
+
+                        document.getElementById('capture-btn').onclick = () => {
+                            const canvas = document.getElementById('canvas');
+                            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+                            canvas.getContext('2d').drawImage(video, 0, 0);
+                            canvas.toBlob((blob) => {
+                                window.currentBlob = blob;
+                                previewImg.src = URL.createObjectURL(blob);
+                                previewImg.style.display = 'block'; video.style.display = 'none';
+                                document.getElementById('guide').style.display = 'none';
+                                document.getElementById('instruction-box').style.display = 'none';
+                                document.getElementById('header-title').innerText = "Review Capture";
+                                switchBtn.style.display = 'none';
+                                document.getElementById('capture-btn').classList.add('hidden');
+                                document.getElementById('review-actions').classList.remove('hidden');
+                            }, 'image/png');
+                        };
+
+                        document.getElementById('retake-btn').onclick = () => {
+                            previewImg.style.display = 'none'; video.style.display = 'block';
+                            document.getElementById('guide').style.display = 'flex';
+                            document.getElementById('instruction-box').style.display = 'flex';
+                            document.getElementById('header-title').innerText = "Photo Capture";
+                            if (videoDevices.length > 1) switchBtn.style.display = 'flex';
+                            document.getElementById('capture-btn').classList.remove('hidden');
+                            document.getElementById('review-actions').classList.add('hidden');
+                        };
+
+                        document.getElementById('save-btn').onclick = () => {
+                            const reader = new FileReader();
+                            reader.onloadend = () => {
+                                window.opener.postMessage({ type: 'CAMERA_CAPTURE', imageData: reader.result }, "*");
+                                window.close();
+                            };
+                            reader.readAsDataURL(window.currentBlob);
+                        };
+                    </script>
+                </body>
+                </html>
+            `);
         }
     };
-
-    const capturePhoto = () => {
-        if (cameraIndex === null || !cameraStream) return;
-
-        const video = document.querySelector("video") as HTMLVideoElement;
-        const canvas = document.createElement("canvas");
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        const ctx = canvas.getContext("2d");
-        if (ctx) {
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            canvas.toBlob((blob) => {
-                if (blob) {
-                    const file = new File([blob], "driver_photo.png", {
-                        type: "image/png",
-                    });
-                    handlePhotoChange(cameraIndex, file);
-                }
-            });
-        }
-        closeCamera();
-    };
-
-    const closeCamera = () => {
-        if (cameraStream) {
-            cameraStream.getTracks().forEach((track) => track.stop());
-        }
-        setCameraStream(null);
-        setCameraIndex(null);
-    };
-
-    // --- Form Navigation Logic ---
     const handleFormKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
         if (e.key === "Enter") {
             e.preventDefault();
-
             const form = e.currentTarget;
             const focusableElements = Array.from(
                 form.querySelectorAll(
                     'input:not([type="hidden"]), select, textarea, [tabindex]:not([tabindex="-1"])',
                 ),
             ) as HTMLElement[];
-
             const activeElement = document.activeElement as HTMLElement;
             const currentIndex = focusableElements.indexOf(activeElement);
-
             if (currentIndex > -1) {
                 if (currentIndex < focusableElements.length - 1) {
                     focusableElements[currentIndex + 1].focus();
@@ -168,7 +303,6 @@ export default function DriverInfoModal({
                     params.append(`mayors[${d.id}]`, d.mayor);
                     params.append(`committees[${d.id}]`, d.committee);
                 });
-
                 const url = `${route("mtop.print_ids")}?${params.toString()}`;
                 window.open(url, "_blank");
                 onClose();
@@ -195,7 +329,6 @@ export default function DriverInfoModal({
                 onKeyDown={handleFormKeyDown}
                 className="p-6 flex flex-col h-[85vh]"
             >
-                {/* HEADER */}
                 <div className="flex justify-between items-center mb-6 shrink-0 border-b border-gray-100 pb-4">
                     <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
                         <Icon
@@ -213,19 +346,16 @@ export default function DriverInfoModal({
                     </button>
                 </div>
 
-                {/* DRIVER LIST */}
                 <div className="flex-1 overflow-y-auto pr-2 space-y-6 pb-4">
                     {data.drivers.map((driver, index) => (
                         <div
                             key={driver.id}
                             className="flex flex-col sm:flex-row gap-6 p-5 border border-gray-200 rounded-xl bg-white shadow-sm hover:shadow-md transition-shadow relative"
                         >
-                            {/* CARD NUMBER */}
                             <div className="absolute bottom-0 left-0 bg-gray-100 text-gray-400 font-black text-4xl px-3 py-1 rounded-tr-xl rounded-bl-xl select-none z-0 opacity-50">
                                 #{index + 1}
                             </div>
 
-                            {/* LEFT: PHOTO */}
                             <div className="shrink-0 flex flex-col items-center gap-3 w-full sm:w-40 border-b sm:border-b-0 sm:border-r border-gray-100 pb-4 sm:pb-0 sm:pr-6 z-10">
                                 <div className="w-32 h-32 bg-gray-50 border-2 border-gray-300 border-dashed rounded-lg flex items-center justify-center overflow-hidden relative group">
                                     {driver.preview ? (
@@ -248,15 +378,12 @@ export default function DriverInfoModal({
                                     )}
                                 </div>
 
-                                {/* UPLOAD / REMOVE / CAPTURE BUTTONS */}
                                 <div className="flex gap-2 w-full">
-                                    {/* UPLOAD BUTTON */}
-                                    <label className="flex-1 text-center cursor-pointer bg-blue-50 text-blue-600 border border-blue-100 py-2 rounded-md text-xs font-bold uppercase tracking-wide transition-transform duration-200 ease-in-out hover:scale-105 active:scale-95">
+                                    <label className="flex-1 text-center cursor-pointer bg-blue-50 text-blue-600 border border-blue-100 py-2 rounded-md text-xs font-bold uppercase tracking-wide hover:scale-105 active:scale-95">
                                         Upload
                                         <input
                                             type="file"
                                             accept="image/*"
-                                            capture="user" // ✅ FORCES LOCAL WEBCAM/CAMERA OVER PHONE LINK
                                             className="hidden"
                                             onChange={(e) =>
                                                 e.target.files &&
@@ -267,59 +394,44 @@ export default function DriverInfoModal({
                                             }
                                         />
                                     </label>
-
-                                    {/* REMOVE BUTTON */}
                                     {driver.preview && (
                                         <button
                                             type="button"
                                             onClick={() =>
                                                 handleRemovePhoto(index)
                                             }
-                                            className="mt-0 flex-1 text-center cursor-pointer bg-red-50 text-red-600 border border-red-100 py-2 rounded-md text-xs font-bold uppercase tracking-wide transition-transform duration-200 ease-in-out hover:scale-105 active:scale-95"
+                                            className="flex-1 text-center cursor-pointer bg-red-50 text-red-600 border border-red-100 py-2 rounded-md text-xs font-bold uppercase tracking-wide hover:scale-105 active:scale-95"
                                         >
                                             Remove
                                         </button>
                                     )}
                                 </div>
 
-                                {/* CAPTURE BUTTON BELOW */}
-                                <div className="mt-0 w-full">
+                                <div className="w-full">
                                     <button
                                         type="button"
                                         onClick={() => openCamera(index)}
-                                        className="w-full text-center cursor-pointer bg-green-50 text-green-600 border border-green-100 py-2 rounded-md text-xs font-bold uppercase tracking-wide transition-transform duration-200 ease-in-out hover:scale-105 active:scale-95"
+                                        className="w-full text-center bg-green-50 text-green-600 border border-green-100 py-2 rounded-md text-xs font-bold uppercase tracking-wide hover:scale-105 active:scale-95"
                                     >
                                         Capture
                                     </button>
                                 </div>
                             </div>
 
-                            {/* RIGHT: DETAILS */}
                             <div className="flex-1 flex flex-col gap-4 z-10 pt-2 sm:pt-0">
                                 <div className="flex items-center justify-end gap-3 border-b border-gray-100 pb-2">
                                     <span className="bg-gray-800 text-white text-xs font-bold px-2 py-1 rounded">
                                         MTOP: {driver.mt_number}
                                     </span>
                                 </div>
-
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1 ">
+                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
                                         Driver Name
                                     </label>
-                                    <TextInput
-                                        className="w-full px-3 py-3"
-                                        value={driver.driver_name}
-                                        onChange={(e) =>
-                                            handleDriverChange(
-                                                index,
-                                                "driver_name",
-                                                e.target.value,
-                                            )
-                                        }
-                                        placeholder="Enter Driver Name"
-                                    />
+                                    <span className="w-full px-3 py-3 border border-gray-300 rounded-md bg-gray-50 flex items-center">
+                                        {driver.driver_name}
+                                    </span>
                                 </div>
-
                                 <div>
                                     <SignatorySelect
                                         label="Committee on Transportation"
@@ -335,7 +447,6 @@ export default function DriverInfoModal({
                                         required
                                     />
                                 </div>
-
                                 <div>
                                     <SignatorySelect
                                         label="Municipal Mayor"
@@ -356,7 +467,6 @@ export default function DriverInfoModal({
                     ))}
                 </div>
 
-                {/* FOOTER BUTTONS */}
                 <div className="mt-4 flex justify-end gap-3 pt-4 border-t border-gray-100 shrink-0">
                     <SecondaryButton onClick={onClose} disabled={processing}>
                         Cancel
@@ -371,45 +481,6 @@ export default function DriverInfoModal({
                     </PrimaryButton>
                 </div>
             </form>
-
-            {/* CAMERA MODAL */}
-            {cameraStream && cameraIndex !== null && (
-                <Modal show={true} onClose={closeCamera} maxWidth="md">
-                    <div className="flex flex-col items-center p-6">
-                        <div className="relative w-full h-[450px] bg-black rounded-xl overflow-hidden">
-                            <video
-                                ref={(el) => {
-                                    if (el && cameraStream) {
-                                        el.srcObject = cameraStream;
-                                        el.play();
-                                    }
-                                }}
-                                className="w-full h-full object-cover"
-                            />
-
-                            {/* DARK OVERLAY */}
-                            <div className="absolute inset-0 bg-black/40 pointer-events-none"></div>
-                        </div>
-
-                        <div className="flex gap-3 mt-4">
-                            <button
-                                type="button"
-                                className="px-4 py-2 bg-green-600 text-white rounded"
-                                onClick={capturePhoto}
-                            >
-                                Capture Photo
-                            </button>
-                            <button
-                                type="button"
-                                className="px-4 py-2 bg-gray-200 text-gray-700 rounded"
-                                onClick={closeCamera}
-                            >
-                                Cancel
-                            </button>
-                        </div>
-                    </div>
-                </Modal>
-            )}
         </Modal>
     );
 }

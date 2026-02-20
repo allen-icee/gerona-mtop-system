@@ -28,6 +28,7 @@
             "dist/**/*",
             "php/**/*",
             "public/**/*",
+            "!public/storage",
             "resources/**/*",
             "routes/**/*",
             "app/**/*",

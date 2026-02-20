@@ -51,8 +51,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/mtop/update-driver-info', [MtopApplicationController::class, 'updateDriverInfo'])->name('mtop.update_driver');
     Route::get('/mtop/print-ids', [MtopApplicationController::class, 'printIds'])->name('mtop.print_ids');
 
+    // --- RENEWAL ROUTES ---
+    Route::get('/mtop/{id}/renew', [MtopApplicationController::class, 'renew'])->name('mtop.renew');
+    Route::post('/mtop/{id}/renew', [MtopApplicationController::class, 'storeRenewal'])->name('mtop.store_renewal');
+
     // MTOP SPECIFIC RECORD ROUTES (Accessible to Staff)
-    Route::post('/mtop/{id}/renew', [MtopApplicationController::class, 'renew'])->name('mtop.renew'); // <-- ADD THIS LINE
     Route::get('/mtop/{id}/edit', [MtopApplicationController::class, 'edit'])->name('mtop.edit');
     Route::put('/mtop/{id}', [MtopApplicationController::class, 'update'])->name('mtop.update');
     Route::get('/mtop/{id}/print', [MtopApplicationController::class, 'print'])->name('mtop.print');

@@ -7,7 +7,7 @@ import { Icon } from "@iconify/react";
 import toast from "react-hot-toast";
 import Modal from "@/Components/Modal";
 
-// Import Partials
+// Partials
 import TransactionHeader from "./Partials/TransactionHeader";
 import ApplicantForm from "./Partials/ApplicantForm";
 import TricycleForm from "./Partials/TricycleForm";
@@ -15,7 +15,6 @@ import CedulaForm from "./Partials/CedulaForm";
 import OfficialReceiptForm from "./Partials/OfficialReceiptForm";
 import OfficialsForm from "./Partials/OfficialsForm";
 import PermitPreview from "./Partials/PermitPreview";
-import PrintSuccessModal from "./Partials/PrintSuccessModal";
 
 // --- EXTERNAL WINDOW COMPONENT FOR DUAL MONITORS ---
 function ExternalWindow({
@@ -29,13 +28,11 @@ function ExternalWindow({
     const winRef = useRef<Window | null>(null);
 
     useEffect(() => {
-        // Open a real OS Window
         winRef.current = window.open(
             "",
             "",
             "width=600,height=850,left=200,top=100",
         );
-
         if (!winRef.current) {
             toast.error(
                 "Popup blocked! Please allow pop-ups for this site to use the Dual Monitor feature.",
@@ -44,7 +41,6 @@ function ExternalWindow({
             return;
         }
 
-        // Copy all CSS and Tailwind styles from the main window to the new window
         winRef.current.document.head.innerHTML = window.document.head.innerHTML;
         winRef.current.document.title = "Live Permit Preview (Dual Monitor)";
         winRef.current.document.body.className = "bg-gray-200 m-0 p-4";
@@ -53,16 +49,10 @@ function ExternalWindow({
         winRef.current.document.body.appendChild(div);
         setContainer(div);
 
-        // Listen for user closing the popup manually
-        winRef.current.addEventListener("beforeunload", () => {
-            onClose();
-        });
+        winRef.current.addEventListener("beforeunload", () => onClose());
 
-        // Cleanup when the component unmounts
         return () => {
-            if (winRef.current) {
-                winRef.current.close();
-            }
+            if (winRef.current) winRef.current.close();
         };
     }, []);
 
@@ -70,29 +60,6 @@ function ExternalWindow({
     return createPortal(children, container);
 }
 
-interface MtopApplication {
-    id: number;
-    last_name: string;
-    first_name: string;
-    middle_name: string;
-    suffix?: string;
-    address: string;
-    mt_number: string;
-    transaction_date: string;
-    make_type: string;
-    engine_motor_no: string;
-    chassis_no: string;
-    plate_no: string;
-    body_number: string;
-    cedula_number: string;
-    cedula_date: string;
-    or_number: string;
-    or_date: string;
-    punong_bayan: string;
-    authorized_official: string;
-}
-
-// --- STRICT DATE VALIDATION HELPER ---
 const isValidDate = (dateString: string): boolean => {
     if (!dateString) return false;
     const regex = /^\d{4}-\d{2}-\d{2}$/;
@@ -106,46 +73,41 @@ const isValidDate = (dateString: string): boolean => {
     );
 };
 
-export default function Edit({
+export default function Renew({
     application,
     punong_bayans,
     officials,
 }: {
-    application: MtopApplication;
+    application: any;
     punong_bayans: string[];
     officials: string[];
 }) {
     const [step, setStep] = useState(1);
     const [showMobilePreview, setShowMobilePreview] = useState(false);
-    const [showSuccessModal, setShowSuccessModal] = useState(false);
-    const [updatedRecord, setUpdatedRecord] = useState<any>(null);
-
-    // --- PIP FLOATING STATE ---
     const [isFloating, setIsFloating] = useState(false);
 
-    // 1. INITIALIZE FORM WITH EXISTING DATA
-    const { data, setData, put, processing, errors, isDirty, reset } = useForm({
+    // ✅ PRE-FILL WITH OLD DATA, BUT CLEAR OUT THE DOCS & SET DATE TO TODAY
+    const { data, setData, post, processing, errors } = useForm({
         last_name: application.last_name || "",
         first_name: application.first_name || "",
         middle_name: application.middle_name || "",
         suffix: application.suffix || "",
         address: application.address || "",
         mt_number: application.mt_number || "",
-        transaction_date: application.transaction_date || "",
+        transaction_date: new Date().toISOString().split("T")[0],
         make_type: application.make_type || "",
         engine_motor_no: application.engine_motor_no || "",
         chassis_no: application.chassis_no || "",
         plate_no: application.plate_no || "",
         body_number: application.body_number || "",
-        cedula_number: application.cedula_number || "",
-        cedula_date: application.cedula_date || "",
-        or_number: application.or_number || "",
-        or_date: application.or_date || "",
+        cedula_number: "", // Cleared for renewal
+        cedula_date: "", // Cleared for renewal
+        or_number: "", // Cleared for renewal
+        or_date: "", // Cleared for renewal
         punong_bayan: application.punong_bayan || "",
         authorized_official: application.authorized_official || "",
     });
 
-    // 2. VALIDATION LOGIC
     const requiredFields = {
         1: ["last_name", "first_name", "address", "transaction_date"],
         2: ["plate_no", "make_type", "engine_motor_no", "chassis_no"],
@@ -167,7 +129,6 @@ export default function Edit({
                 data[field as keyof typeof data] &&
                 String(data[field as keyof typeof data]).trim() !== "",
         );
-
         if (!basicCheck) return false;
 
         if (stepNum === 1) {
@@ -196,21 +157,17 @@ export default function Edit({
         if (!isValidDate(data.or_date))
             return toast.error("Invalid Official Receipt Date.");
 
-        put(route("mtop.update", application.id), {
-            onSuccess: (page: any) => {
-                const successData = page.props.flash?.success_data;
-                if (successData) {
-                    setUpdatedRecord(successData);
-                    setShowSuccessModal(true);
-                    setIsFloating(false); // Close Dual Monitor window on success
-                }
+        // ✅ Point to the specific renewal submit route
+        post(route("mtop.store_renewal", application.id), {
+            onSuccess: () => {
+                setIsFloating(false);
             },
             onError: (errs) => {
                 if (errs.body_number) {
                     setStep(2);
                     toast.error(errs.body_number);
                 } else {
-                    toast.error("Failed to update record. Check inputs.");
+                    toast.error("Failed to process renewal. Check inputs.");
                 }
             },
         });
@@ -233,9 +190,7 @@ export default function Edit({
         }
 
         if (isStepValid(step)) {
-            const nextStep = step + 1;
-            setStep(nextStep);
-
+            setStep(step + 1);
             setTimeout(() => {
                 const form = document.querySelector("form");
                 if (form) {
@@ -246,7 +201,6 @@ export default function Edit({
                     ).filter(
                         (el) => (el as HTMLElement).offsetParent !== null,
                     ) as HTMLElement[];
-
                     if (visibleInputs.length > 0) visibleInputs[0].focus();
                 }
             }, 100);
@@ -279,7 +233,6 @@ export default function Edit({
                     'input:not([disabled]):not([readonly]), select:not([disabled]), textarea:not([disabled]), button[type="submit"]',
                 ),
             ) as HTMLElement[];
-
             const visibleInputs = allInputs.filter(
                 (el) => el.offsetParent !== null,
             );
@@ -289,13 +242,10 @@ export default function Edit({
                 if (index < visibleInputs.length - 1) {
                     visibleInputs[index + 1].focus();
                 } else {
-                    if (step < 3) {
-                        handleNext();
-                    } else if (isFormValid) {
+                    if (step < 3) handleNext();
+                    else if (isFormValid)
                         submit(e as unknown as React.FormEvent);
-                    } else {
-                        toast.error("Please fill in all required fields.");
-                    }
+                    else toast.error("Please fill in all required fields.");
                 }
             }
         }
@@ -321,46 +271,39 @@ export default function Edit({
                 <div className="flex justify-between items-center">
                     <div className="flex items-center gap-2">
                         <h2 className="font-bold text-sm sm:text-base text-gray-700 uppercase tracking-widest">
-                            Edit Application
+                            Renew Application
                         </h2>
-                        <span className="text-xs font-black bg-blue-100 text-blue-800 px-2 py-0.5 rounded hidden sm:inline-block">
+                        <span className="text-xs font-black bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded hidden sm:inline-block">
                             {application.mt_number}
                         </span>
                     </div>
-
                     <button
                         type="button"
                         onClick={() => setShowMobilePreview(true)}
                         className="xl:hidden p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 transition-colors"
-                        title="Preview Permit"
                     >
                         <Icon icon="solar:eye-bold" width="24" />
                     </button>
                 </div>
             }
         >
-            <Head title={`Edit ${application.mt_number}`} />
+            <Head title={`Renew ${application.mt_number}`} />
 
             <div className="py-6 pb-24 sm:pb-12">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-                    {/* DYNAMIC GRID */}
                     <div
                         className={`grid grid-cols-1 items-start transition-all duration-500 ease-in-out ${isFloating ? "max-w-4xl mx-auto" : "xl:grid-cols-12 gap-6"}`}
                     >
-                        {/* --- LEFT COLUMN: FORM --- */}
                         <div
-                            // ✅ FIX: Removed "overflow-hidden" from here so the dropdown can escape the card
                             className={`bg-white rounded-lg shadow-sm border border-gray-200 transition-all duration-500 relative ${isFloating ? "w-full ring-4 ring-indigo-100" : "xl:col-span-7"}`}
                         >
-                            {/* ACTIVE DUAL MONITOR BANNER */}
                             {isFloating && (
-                                // ✅ Added rounded-t-lg
                                 <div className="bg-indigo-600 p-3 flex justify-between items-center px-6 rounded-t-lg">
                                     <span className="text-white text-sm font-bold flex items-center gap-2">
                                         <Icon
                                             icon="solar:monitor-smartphone-bold"
                                             width="20"
-                                        />
+                                        />{" "}
                                         Dual Monitor Mode Active
                                     </span>
                                     <button
@@ -373,19 +316,13 @@ export default function Edit({
                                 </div>
                             )}
 
-                            {/* 3-STEP NAVIGATION TABS */}
-                            {/* ✅ Added conditional rounded-t-lg so it looks perfect */}
                             <div
                                 className={`flex border-b border-gray-200 bg-gray-50 ${!isFloating ? "rounded-t-lg" : ""}`}
                             >
                                 <button
                                     type="button"
                                     onClick={() => setStep(1)}
-                                    className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 ${!isFloating ? "rounded-tl-lg" : ""} ${
-                                        step === 1
-                                            ? "bg-white text-blue-600 border-t-2 border-blue-600"
-                                            : "text-gray-400 hover:text-gray-600"
-                                    }`}
+                                    className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 ${!isFloating ? "rounded-tl-lg" : ""} ${step === 1 ? "bg-white text-blue-600 border-t-2 border-blue-600" : "text-gray-400 hover:text-gray-600"}`}
                                 >
                                     <Icon
                                         icon="solar:user-id-bold"
@@ -399,14 +336,10 @@ export default function Edit({
                                         if (isStepValid(1)) setStep(2);
                                         else
                                             toast.error(
-                                                "Complete Step 1 first (Check Date/Address)",
+                                                "Complete Step 1 first",
                                             );
                                     }}
-                                    className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 ${
-                                        step === 2
-                                            ? "bg-white text-blue-600 border-t-2 border-blue-600"
-                                            : "text-gray-400 hover:text-gray-600"
-                                    }`}
+                                    className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 ${step === 2 ? "bg-white text-blue-600 border-t-2 border-blue-600" : "text-gray-400 hover:text-gray-600"}`}
                                 >
                                     <Icon icon="solar:wheel-bold" width="18" />{" "}
                                     Unit
@@ -421,11 +354,7 @@ export default function Edit({
                                                 "Complete Step 1 & 2 first",
                                             );
                                     }}
-                                    className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 ${!isFloating ? "rounded-tr-lg" : ""} ${
-                                        step === 3
-                                            ? "bg-white text-blue-600 border-t-2 border-blue-600"
-                                            : "text-gray-400 hover:text-gray-600"
-                                    }`}
+                                    className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 ${!isFloating ? "rounded-tr-lg" : ""} ${step === 3 ? "bg-white text-blue-600 border-t-2 border-blue-600" : "text-gray-400 hover:text-gray-600"}`}
                                 >
                                     <Icon
                                         icon="solar:file-check-bold"
@@ -439,7 +368,6 @@ export default function Edit({
                                 onSubmit={submit}
                                 className="p-4 sm:p-6 space-y-6"
                             >
-                                {/* STEP 1 */}
                                 <div
                                     className={
                                         step === 1
@@ -461,8 +389,6 @@ export default function Edit({
                                         onKeyDown={handleEnterKey}
                                     />
                                 </div>
-
-                                {/* STEP 2 */}
                                 <div
                                     className={
                                         step === 2
@@ -477,8 +403,6 @@ export default function Edit({
                                         onKeyDown={handleEnterKey}
                                     />
                                 </div>
-
-                                {/* STEP 3 */}
                                 <div
                                     className={
                                         step === 3
@@ -510,7 +434,6 @@ export default function Edit({
                                     />
                                 </div>
 
-                                {/* DESKTOP FOOTER */}
                                 <div className="hidden sm:flex items-center justify-between mt-8 pt-4 border-t border-gray-100">
                                     <Link
                                         href={route("mtop.index")}
@@ -522,10 +445,9 @@ export default function Edit({
                                         {step > 1 && (
                                             <button
                                                 type="button"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    setStep(step - 1);
-                                                }}
+                                                onClick={() =>
+                                                    setStep(step - 1)
+                                                }
                                                 className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md font-bold hover:bg-gray-200 text-sm"
                                             >
                                                 Back
@@ -534,10 +456,7 @@ export default function Edit({
                                         {step < 3 ? (
                                             <PrimaryButton
                                                 type="button"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    handleNext();
-                                                }}
+                                                onClick={handleNext}
                                                 className={
                                                     !isStepValid(step)
                                                         ? "opacity-50 cursor-not-allowed"
@@ -553,18 +472,16 @@ export default function Edit({
                                         ) : (
                                             <PrimaryButton
                                                 type="submit"
-                                                className={`bg-blue-800 hover:bg-blue-900 ${!isDirty || processing || !isFormValid ? "opacity-50 cursor-not-allowed" : ""}`}
+                                                className={`bg-yellow-600 hover:bg-yellow-700 text-white ${processing || !isFormValid ? "opacity-50 cursor-not-allowed" : ""}`}
                                                 disabled={
-                                                    processing ||
-                                                    !isDirty ||
-                                                    !isFormValid
+                                                    processing || !isFormValid
                                                 }
                                             >
                                                 <Icon
                                                     icon="solar:diskette-bold"
                                                     className="mr-2"
                                                 />{" "}
-                                                Update Record
+                                                Process Renewal
                                             </PrimaryButton>
                                         )}
                                     </div>
@@ -572,23 +489,19 @@ export default function Edit({
                             </form>
                         </div>
 
-                        {/* --- RIGHT COLUMN: STANDARD PREVIEW --- */}
                         {!isFloating && (
                             <div className="hidden xl:block xl:col-span-5 sticky top-6 z-20 animate-fade-in">
                                 <div className="relative">
-                                    {/* DUAL MONITOR BUTTON */}
                                     <button
                                         type="button"
                                         onClick={() => setIsFloating(true)}
                                         className="absolute -top-3 -right-3 z-50 bg-gray-900 text-white p-3 rounded-full shadow-xl hover:bg-indigo-600 hover:scale-110 transition-all border-2 border-white flex items-center justify-center cursor-pointer"
-                                        title="Open on Second Monitor"
                                     >
                                         <Icon
                                             icon="proicons:expand"
                                             width="22"
                                         />
                                     </button>
-
                                     <div className="rounded-xl overflow-hidden shadow-md border border-gray-200">
                                         <PermitPreview data={data} />
                                     </div>
@@ -599,7 +512,6 @@ export default function Edit({
                 </div>
             </div>
 
-            {/* --- THE EXTERNAL OS WINDOW --- */}
             {isFloating && (
                 <ExternalWindow onClose={() => setIsFloating(false)}>
                     <div className="drop-shadow-xl max-w-lg mx-auto">
@@ -608,14 +520,6 @@ export default function Edit({
                 </ExternalWindow>
             )}
 
-            <PrintSuccessModal
-                show={showSuccessModal}
-                onClose={() => setShowSuccessModal(false)}
-                action="update"
-                data={updatedRecord}
-            />
-
-            {/* MOBILE STICKY FOOTER */}
             <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 sm:hidden z-40 flex justify-between items-center safe-area-pb">
                 <Link
                     href={route("mtop.index")}
@@ -627,10 +531,7 @@ export default function Edit({
                     {step > 1 && (
                         <button
                             type="button"
-                            onClick={(e) => {
-                                e.preventDefault();
-                                setStep(step - 1);
-                            }}
+                            onClick={() => setStep(step - 1)}
                             className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-bold text-sm"
                         >
                             Back
@@ -639,10 +540,7 @@ export default function Edit({
                     {step < 3 ? (
                         <button
                             type="button"
-                            onClick={(e) => {
-                                e.preventDefault();
-                                handleNext();
-                            }}
+                            onClick={handleNext}
                             className={`px-6 py-2 bg-blue-600 text-white rounded-lg font-bold text-sm flex items-center ${!isStepValid(step) ? "opacity-70 cursor-not-allowed" : ""}`}
                         >
                             Next{" "}
@@ -654,17 +552,16 @@ export default function Edit({
                     ) : (
                         <button
                             onClick={submit}
-                            disabled={processing || !isDirty || !isFormValid}
-                            className={`px-6 py-2 bg-blue-800 text-white rounded-lg font-bold text-sm flex items-center ${!isDirty || processing || !isFormValid ? "opacity-50 cursor-not-allowed" : ""}`}
+                            disabled={processing || !isFormValid}
+                            className={`px-6 py-2 bg-yellow-600 text-white rounded-lg font-bold text-sm flex items-center ${processing || !isFormValid ? "opacity-50 cursor-not-allowed" : ""}`}
                         >
                             <Icon icon="solar:diskette-bold" className="mr-1" />{" "}
-                            Update
+                            Renew
                         </button>
                     )}
                 </div>
             </div>
 
-            {/* MOBILE PREVIEW MODAL */}
             <Modal
                 show={showMobilePreview}
                 onClose={() => setShowMobilePreview(false)}

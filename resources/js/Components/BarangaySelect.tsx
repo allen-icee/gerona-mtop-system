@@ -113,7 +113,8 @@ export default function BarangaySelect({
     };
 
     return (
-        <div className="mb-4 relative">
+        // ✅ Dynamically boost the parent z-index when open so it overlays subsequent sibling elements
+        <div className={`mb-4 relative ${isOpen ? "z-50" : "z-10"}`}>
             <label className="block font-medium text-sm text-gray-700 mb-1">
                 Barangay / Address
                 {required && <span className="text-red-500 ml-1">*</span>}
@@ -125,7 +126,7 @@ export default function BarangaySelect({
 
                 <input
                     type="text"
-                    name="address" // Added name for Create.tsx detection
+                    name="address"
                     className={`block w-full pl-10 pr-10 py-3 border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 ${
                         error ? "border-red-500" : ""
                     }`}
@@ -158,7 +159,8 @@ export default function BarangaySelect({
             {isOpen && filtered.length > 0 && (
                 <ul
                     ref={listRef}
-                    className="absolute z-100 w-full bg-white border border-gray-200 mt-1 max-h-60 overflow-y-auto shadow-xl rounded-md text-sm py-1"
+                    // ✅ Changed to z-50 (a valid Tailwind class) to prevent clipping
+                    className="absolute z-50 w-full bg-white border border-gray-200 mt-1 max-h-60 overflow-y-auto shadow-xl rounded-md text-sm py-1"
                 >
                     {filtered.map((brgy, index) => (
                         <li

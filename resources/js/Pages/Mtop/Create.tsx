@@ -321,11 +321,13 @@ export default function Create({
                     >
                         {/* --- LEFT COLUMN: FORM --- */}
                         <div
-                            className={`bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden transition-all duration-500 ${isFloating ? "w-full ring-4 ring-indigo-100" : "xl:col-span-7"}`}
+                            // ✅ FIX: Removed "overflow-hidden" from here so the dropdown can escape the card
+                            className={`bg-white rounded-lg shadow-sm border border-gray-200 transition-all duration-500 relative ${isFloating ? "w-full ring-4 ring-indigo-100" : "xl:col-span-7"}`}
                         >
                             {/* ACTIVE DUAL MONITOR BANNER */}
                             {isFloating && (
-                                <div className="bg-indigo-600 p-3 flex justify-between items-center px-6">
+                                // ✅ Added rounded-t-lg
+                                <div className="bg-indigo-600 p-3 flex justify-between items-center px-6 rounded-t-lg">
                                     <span className="text-white text-sm font-bold flex items-center gap-2">
                                         <Icon
                                             icon="solar:monitor-smartphone-bold"
@@ -344,11 +346,14 @@ export default function Create({
                             )}
 
                             {/* 3-STEP NAVIGATION TABS */}
-                            <div className="flex border-b border-gray-200 bg-gray-50">
+                            {/* ✅ Added conditional rounded-t-lg so it looks perfect */}
+                            <div
+                                className={`flex border-b border-gray-200 bg-gray-50 ${!isFloating ? "rounded-t-lg" : ""}`}
+                            >
                                 <button
                                     type="button"
                                     onClick={() => setStep(1)}
-                                    className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 ${
+                                    className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 ${!isFloating ? "rounded-tl-lg" : ""} ${
                                         step === 1
                                             ? "bg-white text-blue-600 border-t-2 border-blue-600"
                                             : "text-gray-400 hover:text-gray-600"
@@ -388,7 +393,7 @@ export default function Create({
                                                 "Complete Step 1 & 2 first",
                                             );
                                     }}
-                                    className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 ${
+                                    className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 ${!isFloating ? "rounded-tr-lg" : ""} ${
                                         step === 3
                                             ? "bg-white text-blue-600 border-t-2 border-blue-600"
                                             : "text-gray-400 hover:text-gray-600"
@@ -537,7 +542,7 @@ export default function Create({
                         {!isFloating && (
                             <div className="hidden xl:block xl:col-span-5 sticky top-6 z-20 animate-fade-in">
                                 <div className="relative">
-                                    {/* DUAL MONITOR BUTTON (Now fixed with z-50 and proper wrapper) */}
+                                    {/* DUAL MONITOR BUTTON */}
                                     <button
                                         type="button"
                                         onClick={() => setIsFloating(true)}
@@ -550,7 +555,6 @@ export default function Create({
                                         />
                                     </button>
 
-                                    {/* Container to keep the preview neat, while letting the button float outside */}
                                     <div className="rounded-xl overflow-hidden shadow-md border border-gray-200">
                                         <PermitPreview data={data} />
                                     </div>
@@ -564,7 +568,6 @@ export default function Create({
             {/* --- THE EXTERNAL OS WINDOW --- */}
             {isFloating && (
                 <ExternalWindow onClose={() => setIsFloating(false)}>
-                    {/* Render the identical component right into the new window */}
                     <div className="drop-shadow-xl max-w-lg mx-auto">
                         <PermitPreview data={data} showHeader={true} />
                     </div>
