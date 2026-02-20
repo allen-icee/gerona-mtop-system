@@ -1,5 +1,5 @@
 <?php
-
+//GeronaMTOP\app\Http\Controllers\MtopApplicationController.php
 namespace App\Http\Controllers;
 
 use App\Models\MtopApplication;
@@ -17,9 +17,7 @@ use Illuminate\Validation\Rule;
 
 class MtopApplicationController extends Controller
 {
-    /**
-     * Display the main list with Search & Filters.
-     */
+
     public function index(Request $request): Response
     {
         $search = $request->input('search');
@@ -28,7 +26,6 @@ class MtopApplicationController extends Controller
         $barangay = $request->input('barangay');
         $renewal = $request->input('renewal');
 
-        // We still list MtopApplications here because this represents the active ledger
         $query = MtopApplication::query();
 
         if ($search) {
@@ -51,10 +48,10 @@ class MtopApplicationController extends Controller
             $query->where('address', 'like', "%{$barangay}%");
         }
         if ($renewal === 'upcoming') {
-            // Harmonized to 60 days to perfectly match the Frontend UI
+
             $query->where('status', 'active')->whereBetween('valid_until', [now(), now()->addDays(60)]);
         } elseif ($renewal === 'expired') {
-            // Find records the script marked as 'expired', OR ones that just naturally expired today
+
             $query->where(function ($q) {
                 $q->where('status', 'expired')
                     ->orWhere(function ($subQ) {
@@ -62,10 +59,10 @@ class MtopApplicationController extends Controller
                     });
             });
         } elseif ($renewal === 'active') {
-            // Only currently valid, active records
+
             $query->where('status', 'active')->whereDate('valid_until', '>=', now());
         } elseif ($renewal === 'archived') {
-            // Only historical, old records
+
             $query->where('status', 'archived');
         }
 
@@ -84,14 +81,10 @@ class MtopApplicationController extends Controller
         ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create(): Response
     {
         $year = now()->year;
 
-        // Generate Suggested MT Number based on the Permanent Franchise Table
         $lastFranchise = MtopFranchise::where('mt_number', 'like', "$year-%")
             ->orderBy('id', 'desc')
             ->first();
@@ -117,13 +110,10 @@ class MtopApplicationController extends Controller
         ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            // Applicant
+
             'last_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
             'first_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
             'middle_name' => ['nullable', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
@@ -131,22 +121,19 @@ class MtopApplicationController extends Controller
             'address' => 'required|string|max:100',
             'contact_number' => ['nullable', 'regex:/^(09|\+639)\d{9}$/'],
 
-            // Transaction
             'transaction_date' => 'required|date',
             'mt_number' => 'nullable|string',
 
-            // Unit (WITH UNIQUE VALIDATION)
             'body_number' => [
                 'nullable',
                 'regex:/^[0-9]+$/',
-                'unique:mtop_franchises,body_number' // Prevents crash, shows warning
+                'unique:mtop_franchises,body_number'
             ],
             'plate_no' => ['required', 'string', 'max:30'],
             'make_type' => 'required|string|max:30',
             'engine_motor_no' => 'required|string|max:30',
             'chassis_no' => 'required|string|max:30',
 
-            // Docs & Signatories
             'cedula_number' => 'required|string|max:20',
             'cedula_date' => 'required|date',
             'or_number' => 'required|string|max:20',
@@ -154,15 +141,13 @@ class MtopApplicationController extends Controller
             'punong_bayan' => ['required', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
             'authorized_official' => ['required', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
         ], [
-            // Custom friendly error message
+
             'body_number.unique' => 'This Body Number is already assigned to another operator!'
         ]);
 
-        // ATOMIC TRANSACTION: Creates both Franchise and Application Ledger
         $mtop = DB::transaction(function () use ($validated, $request) {
             $year = now()->year;
 
-            // Lock rows to prevent race conditions on Franchises table
             $lastFranchise = MtopFranchise::where('mt_number', 'like', "$year-%")
                 ->orderBy('id', 'desc')
                 ->lockForUpdate()
@@ -176,10 +161,8 @@ class MtopApplicationController extends Controller
                 }
             }
 
-            // Force generated MT Number
             $generated_mt_number = sprintf("%s-%04d", $year, $nextSequence);
 
-            // 1. CREATE PERMANENT FRANCHISE RECORD
             $franchise = MtopFranchise::create([
                 'mt_number' => $generated_mt_number,
                 'body_number' => $validated['body_number'] ?? null,
@@ -196,17 +179,14 @@ class MtopApplicationController extends Controller
                 'status' => 'active',
             ]);
 
-            // 2. CREATE THE SNAPSHOT TRANSACTION IN THE LEDGER
             $applicationData = $validated;
             $applicationData['mt_number'] = $generated_mt_number;
             $applicationData['valid_until'] = Carbon::parse($request->transaction_date)->addYears(3);
-            $applicationData['status'] = 'active'; // No more draft phase
+            $applicationData['status'] = 'active';
 
-            // Add Ledger specific tracker fields
             $applicationData['franchise_id'] = $franchise->id;
             $applicationData['transaction_type'] = 'New';
-            $applicationData['processed_by'] = Auth::id(); // Tracks which user processed this!
-
+            $applicationData['processed_by'] = Auth::id();
             return MtopApplication::create($applicationData);
         });
 
@@ -217,9 +197,6 @@ class MtopApplicationController extends Controller
         ])->with('message', 'Application and Franchise created successfully!');
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit($id): Response
     {
         $application = MtopApplication::findOrFail($id);
@@ -233,9 +210,6 @@ class MtopApplicationController extends Controller
         ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, $id): RedirectResponse
     {
         $application = MtopApplication::findOrFail($id);
@@ -249,7 +223,6 @@ class MtopApplicationController extends Controller
             'transaction_date' => 'required|date',
             'mt_number' => 'nullable|string|max:20',
 
-            // Unit (WITH UNIQUE VALIDATION IGNORING ITSELF)
             'body_number' => [
                 'nullable',
                 'regex:/^[0-9]+$/',
@@ -267,7 +240,7 @@ class MtopApplicationController extends Controller
             'punong_bayan' => ['required', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
             'authorized_official' => ['required', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
         ], [
-            // Custom friendly error message
+
             'body_number.unique' => 'This Body Number is already assigned to another operator!'
         ]);
 
@@ -275,10 +248,8 @@ class MtopApplicationController extends Controller
             $validated['valid_until'] = Carbon::parse($request->transaction_date)->addYears(3);
         }
 
-        // 1. Update the Ledger Application
         $application->update($validated);
 
-        // 2. Sync changes back to the permanent Franchise record so they stay perfectly matched
         if ($application->franchise_id) {
             $franchise = MtopFranchise::find($application->franchise_id);
             if ($franchise) {
@@ -304,15 +275,10 @@ class MtopApplicationController extends Controller
         ])->with('message', 'Record updated successfully!');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy($id): RedirectResponse
     {
         $application = MtopApplication::findOrFail($id);
 
-        // If this is the original "New" application being deleted (e.g. a mistake by staff),
-        // we should completely delete the permanent franchise to keep the database clean.
         if ($application->transaction_type === 'New' && $application->franchise_id) {
             MtopFranchise::where('id', $application->franchise_id)->delete();
         } else {
@@ -322,9 +288,6 @@ class MtopApplicationController extends Controller
         return redirect()->back()->with('message', 'Record deleted successfully.');
     }
 
-    /**
-     * Show the Print View.
-     */
     public function print($id): Response
     {
         $application = MtopApplication::findOrFail($id);
@@ -333,9 +296,6 @@ class MtopApplicationController extends Controller
         ]);
     }
 
-    /**
-     * Export data to CSV
-     */
     public function export(Request $request)
     {
         $search = $request->input('search');
@@ -429,9 +389,6 @@ class MtopApplicationController extends Controller
         return response()->stream($callback, 200, $headers);
     }
 
-    /**
-     * Batch Update Driver Info & Photos
-     */
     public function updateDriverInfo(Request $request)
     {
         $request->validate([
@@ -465,9 +422,6 @@ class MtopApplicationController extends Controller
         return redirect()->back()->with('message', 'Driver information and photos updated successfully!');
     }
 
-    /**
-     * Print IDs View
-     */
     public function printIds(Request $request)
     {
         $ids = explode(',', $request->query('ids', ''));
@@ -489,9 +443,6 @@ class MtopApplicationController extends Controller
         ]);
     }
 
-    /**
-     * Phase 3: Show the Renewal Form (Pre-filled with old data)
-     */
     public function renew($id): Response
     {
         $application = MtopApplication::findOrFail($id);
@@ -505,9 +456,6 @@ class MtopApplicationController extends Controller
         ]);
     }
 
-    /**
-     * Phase 3: Store the finalized renewal
-     */
     public function storeRenewal(Request $request, $id): RedirectResponse
     {
         $oldApp = MtopApplication::findOrFail($id);
@@ -539,10 +487,9 @@ class MtopApplicationController extends Controller
         ]);
 
         $newApp = DB::transaction(function () use ($oldApp, $validated, $request) {
-            // 1. Archive the old application
+
             $oldApp->update(['status' => 'archived']);
 
-            // 2. Update the permanent Franchise with any changed info
             if ($oldApp->franchise_id) {
                 MtopFranchise::where('id', $oldApp->franchise_id)->update([
                     'body_number' => $validated['body_number'] ?? null,
@@ -558,7 +505,6 @@ class MtopApplicationController extends Controller
                 ]);
             }
 
-            // 3. Create the brand new active ledger record
             $applicationData = $validated;
             $applicationData['mt_number'] = $oldApp->mt_number;
             $applicationData['valid_until'] = Carbon::parse($request->transaction_date)->addYears(3);

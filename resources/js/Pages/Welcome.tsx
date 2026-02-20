@@ -1,3 +1,4 @@
+//GeronaMTOP\resources\js\Pages\Welcome.tsx
 import GuestLayout from "@/Layouts/GuestLayout";
 import { PageProps } from "@/types";
 import { Head, Link } from "@inertiajs/react";

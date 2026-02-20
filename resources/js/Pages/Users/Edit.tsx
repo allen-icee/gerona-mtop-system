@@ -1,3 +1,4 @@
+//GeronaMTOP\resources\js\Pages\Users\Edit.tsx
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import InputGroup from "@/Components/InputGroup";
 import PrimaryButton from "@/Components/PrimaryButton";
@@ -13,7 +14,7 @@ export default function Edit({ user }: { user: any }) {
         username: user.username || "",
         email: user.email || "",
         role: user.role || "staff",
-        password: "", // Leave blank to keep current
+        password: "",
         password_confirmation: "",
     });
 
@@ -33,12 +34,10 @@ export default function Edit({ user }: { user: any }) {
         >
             <Head title="Edit User" />
 
-            {/* RESPONSIVE PADDING FIX: Matches Create.tsx */}
             <div className="pt-6 pb-32 sm:py-12">
                 <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
                     <form
                         onSubmit={submit}
-                        // Added relative z-0 for stacking context
                         className="bg-white p-4 sm:p-8 rounded-lg shadow-sm border-t-4 border-blue-600 relative z-0"
                     >
                         <div className="flex items-center gap-2 mb-6 border-b border-gray-100 pb-4">
@@ -50,7 +49,6 @@ export default function Edit({ user }: { user: any }) {
                             </h3>
                         </div>
 
-                        {/* 1. NAME & USERNAME */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <InputGroup
                                 id="name"
@@ -77,7 +75,6 @@ export default function Edit({ user }: { user: any }) {
                             />
                         </div>
 
-                        {/* 2. EMAIL & ROLE */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <InputGroup
                                 id="email"
@@ -92,7 +89,6 @@ export default function Edit({ user }: { user: any }) {
                                 icon="solar:letter-bold"
                             />
 
-                            {/* ROLE DROPDOWN (Fixed Z-Index) */}
                             <div>
                                 <InputLabel
                                     htmlFor="role"
@@ -130,7 +126,6 @@ export default function Edit({ user }: { user: any }) {
                             </div>
                         </div>
 
-                        {/* 3. PASSWORD RESET (Optional) */}
                         <div className="border-t border-gray-100 pt-4 mt-2 mb-6">
                             <h4 className="text-xs font-bold text-gray-500 uppercase mb-1">
                                 Change Password (Optional)
@@ -173,7 +168,6 @@ export default function Edit({ user }: { user: any }) {
                             </div>
                         </div>
 
-                        {/* ACTIONS - Responsive Flex */}
                         <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-3 sm:gap-4 border-t border-gray-100 pt-6">
                             <Link
                                 href={route("users.index")}

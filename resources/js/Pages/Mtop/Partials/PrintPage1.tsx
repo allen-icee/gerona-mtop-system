@@ -1,15 +1,15 @@
+//GeronaMTOP\resources\js\Pages\Mtop\Partials\PrintPage1.tsx
 import React from "react";
 import { usePage } from "@inertiajs/react";
 
 interface Props {
     application: any;
-    operatorName: string; // Ito ay galing sa Print.tsx na pinagsama na ang names
+    operatorName: string;
 }
 
 export default function PrintPage1({ application, operatorName }: Props) {
     const { printSettings } = usePage().props as any;
 
-    // Helper to format date like "February 3, 2026"
     const formatDate = (dateString: string) => {
         if (!dateString) return "";
         return new Date(dateString).toLocaleDateString("en-US", {
@@ -43,22 +43,18 @@ export default function PrintPage1({ application, operatorName }: Props) {
                 </div>
             )}
 
-            {/* CONTENT BODY */}
             <div className="px-12 flex flex-col">
-                {/* 1. OFFICE HEADER */}
                 <div className="text-center font-bold uppercase text-[12pt] leading-none mb-8 mt-4">
                     <p>TANGGAPAN NG</p>
                     <p>MUNICIPAL TRICYCLE FRANCHISING AND REGULATORY BOARD</p>
                 </div>
 
-                {/* 2. DATE */}
                 <div className="flex justify-end mb-8">
                     <div className="text-right font-bold text-[11pt] leading-[1.15]">
                         {transactionDate}
                     </div>
                 </div>
 
-                {/* 3. TITLE */}
                 <div className="text-center font-bold uppercase mb-8 text-[13pt] leading-[1.15]">
                     <p>
                         APLIKASYON PARA SA MOTORIZED TRICYCLE OPERATOR’S PERMIT
@@ -66,7 +62,6 @@ export default function PrintPage1({ application, operatorName }: Props) {
                     </p>
                 </div>
 
-                {/* 4. USAPIN BILANG */}
                 <div className="flex justify-end mb-8 text-[12pt] leading-[1.15]">
                     <div>
                         <span>Usapin Bilang:</span>{" "}
@@ -81,7 +76,6 @@ export default function PrintPage1({ application, operatorName }: Props) {
                     <p>
                         Ako si{" "}
                         <span className="font-bold uppercase underline">
-                            {/* Siguraduhin na ang operatorName ay may kasama nang Suffix galing sa Print.tsx */}
                             {operatorName}
                         </span>
                         , may sapat na taong gulang, may
@@ -97,7 +91,6 @@ export default function PrintPage1({ application, operatorName }: Props) {
                     </p>
                 </div>
 
-                {/* 6. TABLE */}
                 <div className="mb-8">
                     <table className="w-full border border-black border-collapse text-center text-[11pt]">
                         <thead>
@@ -138,7 +131,6 @@ export default function PrintPage1({ application, operatorName }: Props) {
                     </table>
                 </div>
 
-                {/* 7. BODY PARAGRAPHS 2 & 3 */}
                 <div className="space-y-4 mb-2 text-[12pt] leading-[1.15] text-justify">
                     <p className="indent-8">
                         Ako ay may kakayahang panatilihin ang paglilingkod at sa
@@ -155,7 +147,6 @@ export default function PrintPage1({ application, operatorName }: Props) {
                     </p>
                 </div>
 
-                {/* 8. LIST */}
                 <div className="mb-8 text-[12pt] leading-[1.15] text-justify">
                     <ol className="list-decimal ml-10 space-y-1">
                         <li className="pl-2">
@@ -175,7 +166,6 @@ export default function PrintPage1({ application, operatorName }: Props) {
                     </ol>
                 </div>
 
-                {/* 9. FINAL PARAGRAPH */}
                 <div className="text-justify indent-8 mb-8 text-[12pt] leading-[1.15]">
                     <p>
                         Ang hindi ko pagsunod sa mga itinatadhana ng
@@ -184,7 +174,6 @@ export default function PrintPage1({ application, operatorName }: Props) {
                     </p>
                 </div>
 
-                {/* 10. SIGNATURE AREA */}
                 <div className="flex justify-end mb-4">
                     <div className="text-center min-w-65">
                         <div className="font-bold uppercase border-b border-black text-[12pt] leading-[1.15] px-2 mb-1">
@@ -196,7 +185,6 @@ export default function PrintPage1({ application, operatorName }: Props) {
                     </div>
                 </div>
 
-                {/* 11. FOOTER DETAILS */}
                 <div className="flex justify-end">
                     <div className="text-left italic text-[10pt] leading-[1.15]  min-w-65">
                         <div>
@@ -217,7 +205,6 @@ export default function PrintPage1({ application, operatorName }: Props) {
                 </div>
             </div>
 
-            {/* FOOTER */}
             {printSettings?.show_footer && printSettings?.footer_path && (
                 <div className="w-full mt-auto mb-2 px-2">
                     <img

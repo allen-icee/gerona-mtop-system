@@ -6,7 +6,7 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
     server: {
         host: "0.0.0.0",
-        cors: true, // ✅ ALLOWS YOUR NETWORK TO FETCH ASSETS
+        cors: true,
         hmr: {
             host: "192.168.137.76",
         },

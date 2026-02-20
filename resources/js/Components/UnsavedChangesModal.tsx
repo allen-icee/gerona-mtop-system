@@ -1,3 +1,4 @@
+//GeronaMTOP\resources\js\Components\UnsavedChangesModal.tsx
 import Modal from "@/Components/Modal";
 import DangerButton from "@/Components/DangerButton";
 import PrimaryButton from "@/Components/PrimaryButton";
@@ -5,9 +6,9 @@ import { Icon } from "@iconify/react";
 
 interface Props {
     show: boolean;
-    onClose: () => void; // Triggered by clicking background
-    onDiscard: () => void; // Discard & Leave
-    onSave: () => void; // Save & Leave
+    onClose: () => void;
+    onDiscard: () => void;
+    onSave: () => void;
     processing?: boolean;
 }
 
@@ -21,7 +22,6 @@ export default function UnsavedChangesModal({
     return (
         <Modal show={show} onClose={onClose} maxWidth="md">
             <div className="p-6">
-                {/* Header / Icon */}
                 <div className="flex items-center gap-4 mb-4">
                     <div className="p-3 bg-yellow-100 rounded-full shrink-0">
                         <Icon
@@ -34,13 +34,11 @@ export default function UnsavedChangesModal({
                     </h2>
                 </div>
 
-                {/* Body */}
                 <p className="text-gray-600 text-sm mb-6 leading-relaxed">
                     You have unsaved changes. Do you want to save them before
                     leaving?
                 </p>
 
-                {/* Actions: Stack on mobile, Row on desktop */}
                 <div className="flex flex-col sm:flex-row sm:justify-end gap-3">
                     <DangerButton
                         onClick={onDiscard}

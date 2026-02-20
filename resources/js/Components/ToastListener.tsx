@@ -1,3 +1,4 @@
+//GeronaMTOP\resources\js\Components\ToastListener.tsx
 import { usePage } from "@inertiajs/react";
 import { useEffect } from "react";
 import toast, { Toaster, ToastBar } from "react-hot-toast";
@@ -8,10 +9,9 @@ export default function ToastListener() {
     const flash = props.flash as any;
 
     useEffect(() => {
-        // 1. Success Message
         if (flash.message) {
             toast.success(flash.message, {
-                duration: 3000, // Faster auto-dismiss (3 seconds)
+                duration: 3000,
                 icon: (
                     <Icon
                         icon="solar:check-circle-bold"
@@ -21,7 +21,6 @@ export default function ToastListener() {
             });
         }
 
-        // 2. Error Message
         if (flash.error) {
             toast.error(flash.error, {
                 duration: 4000,
@@ -46,7 +45,7 @@ export default function ToastListener() {
                     background: "rgba(255, 255, 255, 0.95)",
                     backdropFilter: "blur(4px)",
                     color: "#1F2937",
-                    padding: "10px 20px", // Balanced padding
+                    padding: "10px 20px",
                     borderRadius: "9999px",
                     boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
                     border: "1px solid #F3F4F6",
@@ -59,10 +58,8 @@ export default function ToastListener() {
                 <ToastBar toast={t}>
                     {({ icon, message }) => (
                         <div className="flex items-center gap-3">
-                            {/* Icon */}
                             <div className="shrink-0">{icon}</div>
 
-                            {/* Message */}
                             <div className="text-gray-700 whitespace-nowrap">
                                 {message}
                             </div>

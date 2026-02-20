@@ -1,3 +1,4 @@
+//GeronaMTOP\resources\js\Pages\Mtop\Partials\PrintSuccessModal.tsx
 import Modal from "@/Components/Modal";
 import { Link } from "@inertiajs/react";
 import { Icon } from "@iconify/react";
@@ -57,7 +58,6 @@ export default function PrintSuccessModal({
                 </div>
 
                 <div className="w-full space-y-3">
-                    {/* PRIMARY ACTION: PRINT */}
                     <a
                         href={route("mtop.print", data.id)}
                         target="_blank"
@@ -67,7 +67,6 @@ export default function PrintSuccessModal({
                         Print Permit
                     </a>
 
-                    {/* SECONDARY ACTION: EDIT AGAIN */}
                     {action === "create" ? (
                         <Link
                             href={route("mtop.edit", data.id)}
@@ -86,7 +85,6 @@ export default function PrintSuccessModal({
                         </button>
                     )}
 
-                    {/* TERTIARY ACTION: RETURN TO RECORDS */}
                     <Link
                         href={route("mtop.index")}
                         className="block w-full text-sm text-gray-400 hover:text-gray-600 font-semibold underline mt-3 text-center transition-colors"

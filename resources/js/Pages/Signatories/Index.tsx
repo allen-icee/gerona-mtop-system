@@ -1,3 +1,4 @@
+//GeronaMTOP\resources\js\Pages\Signatories\Index.tsx
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, router, useForm } from "@inertiajs/react";
 import { useState, useEffect, FormEventHandler } from "react";
@@ -24,7 +25,6 @@ interface Props {
     };
 }
 
-// REMOVED "Municipal Mayor" since it is the same as "Punong Bayan"
 const POSITIONS = [
     "Punong Bayan",
     "Authorized Official",
@@ -36,11 +36,9 @@ export default function Index({ signatories = [], filters = {} }: Props) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
 
-    // DELETE MODAL STATE
     const [deletingId, setDeletingId] = useState<number | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
-    // 1. AUTO-SEARCH
     useEffect(() => {
         const timer = setTimeout(() => {
             router.get(
@@ -52,7 +50,6 @@ export default function Index({ signatories = [], filters = {} }: Props) {
         return () => clearTimeout(timer);
     }, [search]);
 
-    // 2. FORM
     const { data, setData, post, put, reset, errors, processing } = useForm({
         name: "",
         position: "Punong Bayan",
@@ -70,7 +67,7 @@ export default function Index({ signatories = [], filters = {} }: Props) {
         } else {
             setEditingId(null);
             reset();
-            setData("position", "Punong Bayan"); // Reset default
+            setData("position", "Punong Bayan");
         }
         setIsModalOpen(true);
     };
@@ -91,7 +88,6 @@ export default function Index({ signatories = [], filters = {} }: Props) {
         }
     };
 
-    // --- DELETE LOGIC ---
     const confirmDelete = (id: number) => {
         setDeletingId(id);
     };
@@ -108,7 +104,6 @@ export default function Index({ signatories = [], filters = {} }: Props) {
         }
     };
 
-    // Helper: Status Badge
     const getStatusBadge = (isActive: boolean) => (
         <span
             className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide border ${
@@ -127,9 +122,7 @@ export default function Index({ signatories = [], filters = {} }: Props) {
 
             <div className="py-6 sm:py-12">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    {/* TOOLBAR */}
                     <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-                        {/* SEARCH */}
                         <div className="relative w-full sm:w-auto">
                             <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-gray-500">
                                 <Icon icon="iconamoon:search-bold" width="20" />
@@ -142,7 +135,6 @@ export default function Index({ signatories = [], filters = {} }: Props) {
                             />
                         </div>
 
-                        {/* ADD BUTTON */}
                         <button
                             onClick={() => openModal()}
                             className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg flex items-center gap-2 shadow-md transition-transform hover:scale-105 w-full sm:w-auto justify-center"
@@ -152,7 +144,6 @@ export default function Index({ signatories = [], filters = {} }: Props) {
                         </button>
                     </div>
 
-                    {/* --- MOBILE VIEW: CARDS --- */}
                     <div className="grid grid-cols-1 gap-4 md:hidden">
                         {signatories.length === 0 ? (
                             <div className="bg-white p-6 rounded-lg shadow text-center text-gray-500">
@@ -210,7 +201,6 @@ export default function Index({ signatories = [], filters = {} }: Props) {
                         )}
                     </div>
 
-                    {/* --- DESKTOP VIEW: TABLE --- */}
                     <div className="hidden md:block bg-white overflow-hidden shadow-sm sm:rounded-lg border border-gray-100">
                         <table className="w-full text-sm text-left text-gray-500">
                             <thead className="text-xs text-gray-700 uppercase bg-gray-50 border-b">
@@ -289,14 +279,12 @@ export default function Index({ signatories = [], filters = {} }: Props) {
                 </div>
             </div>
 
-            {/* --- MODAL FORM --- */}
             <Modal
                 show={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 maxWidth="lg"
             >
                 <div className="flex flex-col h-full sm:h-auto">
-                    {/* 1. HEADER */}
                     <div className="bg-gray-800 px-6 py-4 flex justify-between items-center shrink-0 sm:rounded-t-lg">
                         <h3 className="text-white font-bold uppercase tracking-wider text-lg flex items-center gap-2">
                             <Icon icon="solar:user-id-bold" />
@@ -310,7 +298,6 @@ export default function Index({ signatories = [], filters = {} }: Props) {
                         </button>
                     </div>
 
-                    {/* 2. BODY */}
                     <div className="p-6 bg-gray-50 overflow-y-auto flex-1">
                         <form id="signatory-form" onSubmit={submit}>
                             <div className="mb-4">
@@ -358,7 +345,6 @@ export default function Index({ signatories = [], filters = {} }: Props) {
                                 required
                             />
 
-                            {/* 3. STATUS TOGGLE (Replaces Checkbox) */}
                             {editingId && (
                                 <div className="mt-6 p-4 bg-white border border-gray-200 rounded-lg flex items-center justify-between shadow-sm">
                                     <div className="flex flex-col">
@@ -399,7 +385,6 @@ export default function Index({ signatories = [], filters = {} }: Props) {
                         </form>
                     </div>
 
-                    {/* 4. FOOTER */}
                     <div className="bg-white border-t px-6 py-4 flex justify-end gap-3 shrink-0 sm:rounded-b-lg pb-safe">
                         <SecondaryButton
                             onClick={() => setIsModalOpen(false)}
@@ -426,7 +411,6 @@ export default function Index({ signatories = [], filters = {} }: Props) {
                 </div>
             </Modal>
 
-            {/* --- CONFIRM DELETE MODAL --- */}
             <ConfirmDeleteModal
                 show={deletingId !== null}
                 onClose={() => setDeletingId(null)}

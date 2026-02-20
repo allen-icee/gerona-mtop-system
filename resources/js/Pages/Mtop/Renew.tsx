@@ -1,3 +1,4 @@
+//GeronaMTOP\resources\js\Pages\Mtop\Renew.tsx
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import PrimaryButton from "@/Components/PrimaryButton";
 import { Head, Link, useForm, usePage } from "@inertiajs/react";
@@ -7,7 +8,6 @@ import { Icon } from "@iconify/react";
 import toast from "react-hot-toast";
 import Modal from "@/Components/Modal";
 
-// Partials
 import TransactionHeader from "./Partials/TransactionHeader";
 import ApplicantForm from "./Partials/ApplicantForm";
 import TricycleForm from "./Partials/TricycleForm";
@@ -16,7 +16,6 @@ import OfficialReceiptForm from "./Partials/OfficialReceiptForm";
 import OfficialsForm from "./Partials/OfficialsForm";
 import PermitPreview from "./Partials/PermitPreview";
 
-// --- EXTERNAL WINDOW COMPONENT FOR DUAL MONITORS ---
 function ExternalWindow({
     children,
     onClose,
@@ -86,7 +85,6 @@ export default function Renew({
     const [showMobilePreview, setShowMobilePreview] = useState(false);
     const [isFloating, setIsFloating] = useState(false);
 
-    // ✅ PRE-FILL WITH OLD DATA, BUT CLEAR OUT THE DOCS & SET DATE TO TODAY
     const { data, setData, post, processing, errors } = useForm({
         last_name: application.last_name || "",
         first_name: application.first_name || "",
@@ -100,10 +98,10 @@ export default function Renew({
         chassis_no: application.chassis_no || "",
         plate_no: application.plate_no || "",
         body_number: application.body_number || "",
-        cedula_number: "", // Cleared for renewal
-        cedula_date: "", // Cleared for renewal
-        or_number: "", // Cleared for renewal
-        or_date: "", // Cleared for renewal
+        cedula_number: "",
+        cedula_date: "",
+        or_number: "",
+        or_date: "",
         punong_bayan: application.punong_bayan || "",
         authorized_official: application.authorized_official || "",
     });
@@ -157,7 +155,6 @@ export default function Renew({
         if (!isValidDate(data.or_date))
             return toast.error("Invalid Official Receipt Date.");
 
-        // ✅ Point to the specific renewal submit route
         post(route("mtop.store_renewal", application.id), {
             onSuccess: () => {
                 setIsFloating(false);

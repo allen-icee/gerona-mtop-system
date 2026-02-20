@@ -1,3 +1,4 @@
+//GeronaMTOP\resources\js\Pages\Mtop\Partials\DriverInfoModal.tsx
 import Modal from "@/Components/Modal";
 import PrimaryButton from "@/Components/PrimaryButton";
 import SecondaryButton from "@/Components/SecondaryButton";
@@ -6,7 +7,7 @@ import { Icon } from "@iconify/react";
 import { FormEventHandler, useEffect, useRef, useState } from "react";
 import TextInput from "@/Components/TextInput";
 import SignatorySelect from "@/Components/SignatorySelect";
-import toast from "react-hot-toast"; // ✅ Added toast for alerts
+import toast from "react-hot-toast";
 
 interface Props {
     show: boolean;
@@ -28,7 +29,6 @@ export default function DriverInfoModal({
     const [cameraIndex, setCameraIndex] = useState<number | null>(null);
     const initialized = useRef(false);
 
-    // Sync data when modal opens
     useEffect(() => {
         if (show && selectedApps.length > 0 && !initialized.current) {
             const defaultMayor =
@@ -107,14 +107,12 @@ export default function DriverInfoModal({
 
     // OPENS A COMPLETELY NEW WINDOW
     const openCamera = async (index: number) => {
-        // --- 1. Security & Environment Check ---
         const isSecure =
             window.isSecureContext ||
             window.location.hostname === "localhost" ||
             window.location.hostname === "127.0.0.1";
 
         if (!isSecure) {
-            // ✅ Replaced confirm dialog with a simple toast alert
             toast.error(
                 "Camera access is restricted on this client. Please use the Main Application Server to capture photos.",
                 { duration: 5000 },
@@ -122,7 +120,6 @@ export default function DriverInfoModal({
             return;
         }
 
-        // --- 2. Permission Request (Main Window) ---
         try {
             const stream = await navigator.mediaDevices.getUserMedia({
                 video: true,
@@ -135,7 +132,6 @@ export default function DriverInfoModal({
             return;
         }
 
-        // --- 3. Launch Dedicated Capture Window ---
         setCameraIndex(index);
 
         const width = 500;
@@ -192,7 +188,7 @@ export default function DriverInfoModal({
                             <button id="capture-btn" class="w-full py-4 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold text-lg shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2">
                                 <span class="iconify" data-icon="solar:camera-minimalistic-bold"></span> Take Photo
                             </button>
-                            <div id="review-actions" class="hidden flex gap-3">
+                            <div id="review-actions" class="hidden gap-3">
                                 <button id="retake-btn" class="flex-1 py-4 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl font-bold transition-all active:scale-95 flex items-center justify-center gap-2">
                                     <span class="iconify" data-icon="solar:refresh-bold"></span> Retake
                                 </button>
@@ -207,6 +203,8 @@ export default function DriverInfoModal({
                         const video = document.getElementById('video');
                         const previewImg = document.getElementById('preview-img');
                         const switchBtn = document.getElementById('switch-btn');
+                        const reviewActions = document.getElementById('review-actions');
+                        const captureBtn = document.getElementById('capture-btn');
                         let videoDevices = [];
                         let currentDeviceIndex = 0;
 
@@ -231,7 +229,7 @@ export default function DriverInfoModal({
                             initCamera(videoDevices[currentDeviceIndex].deviceId);
                         };
 
-                        document.getElementById('capture-btn').onclick = () => {
+                        captureBtn.onclick = () => {
                             const canvas = document.getElementById('canvas');
                             canvas.width = video.videoWidth; canvas.height = video.videoHeight;
                             canvas.getContext('2d').drawImage(video, 0, 0);
@@ -243,8 +241,9 @@ export default function DriverInfoModal({
                                 document.getElementById('instruction-box').style.display = 'none';
                                 document.getElementById('header-title').innerText = "Review Capture";
                                 switchBtn.style.display = 'none';
-                                document.getElementById('capture-btn').classList.add('hidden');
-                                document.getElementById('review-actions').classList.remove('hidden');
+                                captureBtn.classList.add('hidden');
+                                reviewActions.classList.remove('hidden');
+                                reviewActions.classList.add('flex');
                             }, 'image/png');
                         };
 
@@ -254,8 +253,9 @@ export default function DriverInfoModal({
                             document.getElementById('instruction-box').style.display = 'flex';
                             document.getElementById('header-title').innerText = "Photo Capture";
                             if (videoDevices.length > 1) switchBtn.style.display = 'flex';
-                            document.getElementById('capture-btn').classList.remove('hidden');
-                            document.getElementById('review-actions').classList.add('hidden');
+                            captureBtn.classList.remove('hidden');
+                            reviewActions.classList.add('hidden');
+                            reviewActions.classList.remove('flex');
                         };
 
                         document.getElementById('save-btn').onclick = () => {
@@ -272,6 +272,7 @@ export default function DriverInfoModal({
             `);
         }
     };
+
     const handleFormKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
         if (e.key === "Enter") {
             e.preventDefault();

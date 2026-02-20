@@ -1,3 +1,4 @@
+//GeronaMTOP\resources\js\Pages\Mtop\Partials\TricycleForm.tsx
 import InputGroup from "@/Components/InputGroup";
 import { Icon } from "@iconify/react";
 import React, { useState, useEffect } from "react";
@@ -42,9 +43,7 @@ export default function TricycleForm({
                 </h3>
             </div>
 
-            {/* FLATTENED GRID: All 5 items are direct children so they wrap nicely */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {/* --- 1. BODY NUMBER WITH TOGGLE --- */}
                 <div className="space-y-2">
                     <InputGroup
                         id="body_number"
@@ -69,7 +68,7 @@ export default function TricycleForm({
                     />
                     <div className="flex justify-end pt-1">
                         <button
-                            type="button" // Ignores Enter Key
+                            type="button"
                             onClick={toggleNoBodyNumber}
                             className="flex items-center gap-2 focus:outline-none group"
                         >
@@ -89,7 +88,6 @@ export default function TricycleForm({
                     </div>
                 </div>
 
-                {/* --- 2. PLATE NUMBER WITH TOGGLE --- */}
                 <div className="space-y-2">
                     <InputGroup
                         id="plate_no"
@@ -138,7 +136,6 @@ export default function TricycleForm({
                     </div>
                 </div>
 
-                {/* --- 3. MAKE / TYPE --- */}
                 <InputGroup
                     id="make_type"
                     label="Make / Type"
@@ -157,7 +154,6 @@ export default function TricycleForm({
                     onKeyDown={onKeyDown}
                 />
 
-                {/* --- 4. ENGINE MOTOR NO. --- */}
                 <InputGroup
                     id="engine_motor_no"
                     label="Engine Motor No."
@@ -176,7 +172,6 @@ export default function TricycleForm({
                     onKeyDown={onKeyDown}
                 />
 
-                {/* --- 5. CHASSIS NO. --- */}
                 <InputGroup
                     id="chassis_no"
                     label="Chassis No."

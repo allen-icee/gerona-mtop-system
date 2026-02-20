@@ -1,3 +1,4 @@
+//GeronaMTOP\resources\js\Layouts\GuestLayout.tsx
 import { Link } from "@inertiajs/react";
 import { PropsWithChildren } from "react";
 

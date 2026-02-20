@@ -1,6 +1,7 @@
+//GeronaMTOP\resources\js\Pages\Mtop\Partials\ApplicantForm.tsx
 import InputGroup from "@/Components/InputGroup";
 import BarangaySelect from "@/Components/BarangaySelect";
-import SuffixSelect from "@/Components/SuffixSelect"; // Import the new component
+import SuffixSelect from "@/Components/SuffixSelect";
 import { Icon } from "@iconify/react";
 
 export default function ApplicantForm({
@@ -23,7 +24,6 @@ export default function ApplicantForm({
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
-                {/* Last Name */}
                 <div className="sm:col-span-12 md:col-span-4">
                     <InputGroup
                         id="last_name"
@@ -41,7 +41,6 @@ export default function ApplicantForm({
                     />
                 </div>
 
-                {/* First Name */}
                 <div className="sm:col-span-12 md:col-span-4">
                     <InputGroup
                         id="first_name"
@@ -58,7 +57,6 @@ export default function ApplicantForm({
                     />
                 </div>
 
-                {/* Middle Initial */}
                 <div className="sm:col-span-6 md:col-span-2">
                     <InputGroup
                         id="middle_name"
@@ -79,7 +77,6 @@ export default function ApplicantForm({
                     />
                 </div>
 
-                {/* Suffix - UPDATED */}
                 <div className="sm:col-span-6 md:col-span-2">
                     <SuffixSelect
                         value={data.suffix}
@@ -90,7 +87,6 @@ export default function ApplicantForm({
                 </div>
             </div>
 
-            {/* ADDRESS */}
             <div>
                 <BarangaySelect
                     value={data.address}

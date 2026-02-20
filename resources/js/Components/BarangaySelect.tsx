@@ -1,3 +1,4 @@
+//GeronaMTOP\resources\js\Components\BarangaySelect.tsx
 import { useState, useMemo, useEffect, useRef } from "react";
 import { Icon } from "@iconify/react";
 import { BARANGAYS } from "@/Constants/Barangays";
@@ -21,7 +22,6 @@ export default function BarangaySelect({
     const [selectedIndex, setSelectedIndex] = useState(-1);
     const listRef = useRef<HTMLUListElement>(null);
 
-    // Filter list based on input
     const filtered = useMemo(() => {
         if (!value) return BARANGAYS;
         const searchTerms = value
@@ -31,12 +31,10 @@ export default function BarangaySelect({
         return BARANGAYS.filter((b) => b.toUpperCase().includes(searchTerms));
     }, [value]);
 
-    // Reset selection index when filter changes
     useEffect(() => {
         setSelectedIndex(-1);
     }, [filtered]);
 
-    // Scroll active item into view
     useEffect(() => {
         if (isOpen && listRef.current && selectedIndex >= 0) {
             const list = listRef.current;
@@ -56,7 +54,6 @@ export default function BarangaySelect({
         }
     }, [selectedIndex, isOpen]);
 
-    // --- STRICT VALIDATION ON BLUR ---
     const handleBlur = () => {
         setTimeout(() => {
             setIsOpen(false);
@@ -75,7 +72,7 @@ export default function BarangaySelect({
                     onChange(correctFormat);
                 }
             } else {
-                onChange(""); // Force clear if invalid
+                onChange("");
             }
         }, 200);
     };
@@ -113,7 +110,6 @@ export default function BarangaySelect({
     };
 
     return (
-        // ✅ Dynamically boost the parent z-index when open so it overlays subsequent sibling elements
         <div className={`mb-4 relative ${isOpen ? "z-50" : "z-10"}`}>
             <label className="block font-medium text-sm text-gray-700 mb-1">
                 Barangay / Address
@@ -159,7 +155,6 @@ export default function BarangaySelect({
             {isOpen && filtered.length > 0 && (
                 <ul
                     ref={listRef}
-                    // ✅ Changed to z-50 (a valid Tailwind class) to prevent clipping
                     className="absolute z-50 w-full bg-white border border-gray-200 mt-1 max-h-60 overflow-y-auto shadow-xl rounded-md text-sm py-1"
                 >
                     {filtered.map((brgy, index) => (

@@ -1,3 +1,4 @@
+//GeronaMTOP\mtop-staff-client\main.js
 const { app, BrowserWindow, ipcMain, shell } = require("electron"); // ✅ ADDED 'shell'
 const path = require("path");
 const fs = require("fs");
@@ -18,7 +19,6 @@ function createWindow() {
 
     mainWindow.setMenu(null);
 
-    // ✅ ADD THIS BLOCK: Intercept print routes and open in Google Chrome / Edge
     mainWindow.webContents.setWindowOpenHandler(({ url }) => {
         if (url.includes("/print-ids") || url.includes("/print")) {
             shell.openExternal(url);

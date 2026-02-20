@@ -1,3 +1,4 @@
+//GeronaMTOP\resources\js\Pages\Mtop\Partials\PermitPreview.tsx
 import { Icon } from "@iconify/react";
 import React, { useState, useRef, useEffect } from "react";
 
@@ -8,7 +9,6 @@ export default function PermitPreview({
     data: any;
     showHeader?: boolean;
 }) {
-    // --- ZOOM STATE & LOGIC ---
     const [scale, setScale] = useState(1);
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -17,23 +17,20 @@ export default function PermitPreview({
         if (!el) return;
 
         const handleWheel = (e: WheelEvent) => {
-            // Only trigger if holding CTRL (Standard browser zoom key)
             if (e.ctrlKey) {
-                e.preventDefault(); // Stop the entire browser from zooming
+                e.preventDefault();
                 if (e.deltaY < 0) {
-                    setScale((s) => Math.min(s + 0.1, 2.5)); // Zoom In (Max 250%)
+                    setScale((s) => Math.min(s + 0.1, 2.5));
                 } else {
-                    setScale((s) => Math.max(s - 0.1, 0.5)); // Zoom Out (Min 50%)
+                    setScale((s) => Math.max(s - 0.1, 0.5));
                 }
             }
         };
 
-        // We use a manual event listener with { passive: false } to successfully block default browser zoom
         el.addEventListener("wheel", handleWheel, { passive: false });
         return () => el.removeEventListener("wheel", handleWheel);
     }, []);
 
-    // --- DATA FORMATTING HELPERS ---
     const formattedName =
         `${data.last_name || ""} ${data.suffix || ""}, ${data.first_name || ""} ${data.middle_name ? data.middle_name + "." : ""} `
             .trim()
@@ -87,10 +84,7 @@ export default function PermitPreview({
                 </div>
             )}
 
-            {/* THE SCALABLE CONTENT */}
-            {/* We use standard CSS zoom so it perfectly recalculates width and scrollbars! */}
             <div className="p-4 sm:p-6 origin-top" style={{ zoom: scale }}>
-                {/* --- TABLE 1: MAIN INFO --- */}
                 <div className="mb-5">
                     <table className="w-full border-collapse border border-black bg-white shadow-sm table-fixed text-[12pt]">
                         <tbody>
@@ -98,7 +92,7 @@ export default function PermitPreview({
                                 <td className="px-3 py-2 bg-blue-200 font-bold w-[35%] sm:w-[30%] text-blue-900 border-r border-black align-top leading-tight">
                                     NAME
                                 </td>
-                                <td className="px-3 py-2 font-bold text-gray-900 align-top break-words leading-tight text-[13pt]">
+                                <td className="px-3 py-2 font-bold text-gray-900 align-top wrap-break-words leading-tight text-[13pt]">
                                     {val(formattedName)}
                                 </td>
                             </tr>
@@ -122,7 +116,7 @@ export default function PermitPreview({
                                 <td className="px-3 py-2 bg-blue-200 font-bold text-blue-900 border-r border-black align-top leading-tight">
                                     BARANGAY
                                 </td>
-                                <td className="px-3 py-2 font-bold text-gray-800 align-top break-words leading-tight">
+                                <td className="px-3 py-2 font-bold text-gray-800 align-top wrap-break-words leading-tight">
                                     {val(data.address).replace(
                                         /(,\s*GERONA,\s*TARLAC|\s*GERONA,\s*TARLAC)/i,
                                         "",
@@ -141,7 +135,6 @@ export default function PermitPreview({
                     </table>
                 </div>
 
-                {/* --- TABLE 2: UNIT --- */}
                 <div className="mb-5">
                     <table className="w-full border-collapse border border-black bg-white text-center shadow-sm table-fixed">
                         <thead>
@@ -162,16 +155,16 @@ export default function PermitPreview({
                         </thead>
                         <tbody>
                             <tr>
-                                <td className="px-2 py-2 border-r border-black font-bold text-gray-800 break-words align-top leading-tight text-[12pt]">
+                                <td className="px-2 py-2 border-r border-black font-bold text-gray-800 wrap-break-words align-top leading-tight text-[12pt]">
                                     {val(data.make_type)}
                                 </td>
-                                <td className="px-2 py-2 border-r border-black font-bold text-gray-800 break-words align-top leading-tight text-[12pt]">
+                                <td className="px-2 py-2 border-r border-black font-bold text-gray-800 wrap-break-words align-top leading-tight text-[12pt]">
                                     {val(data.engine_motor_no)}
                                 </td>
-                                <td className="px-2 py-2 border-r border-black font-bold text-gray-800 break-words align-top leading-tight text-[12pt]">
+                                <td className="px-2 py-2 border-r border-black font-bold text-gray-800 wrap-break-words align-top leading-tight text-[12pt]">
                                     {val(data.chassis_no)}
                                 </td>
-                                <td className="px-2 py-2 font-bold text-blue-700 break-words align-top leading-tight text-[12pt]">
+                                <td className="px-2 py-2 font-bold text-blue-700 wrap-break-words align-top leading-tight text-[12pt]">
                                     {data.plate_no === "FOR REGISTRATION" ? (
                                         <span className="text-orange-600 block">
                                             FOR REGISTRATION
@@ -190,9 +183,7 @@ export default function PermitPreview({
                     </table>
                 </div>
 
-                {/* --- TABLE 3 & 4: DOCS --- */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
-                    {/* CEDULA */}
                     <table className="w-full border-collapse border border-black bg-white text-[12pt] shadow-sm table-fixed">
                         <thead>
                             <tr className="bg-blue-300 text-blue-900 border-b border-black">
@@ -209,7 +200,7 @@ export default function PermitPreview({
                                 <td className="px-3 py-2 bg-blue-200 font-bold text-blue-900 w-[40%] border-r border-black align-top leading-tight">
                                     NUMBER
                                 </td>
-                                <td className="px-3 py-2 font-mono font-bold text-gray-800 break-words align-top leading-tight">
+                                <td className="px-3 py-2 font-mono font-bold text-gray-800 wrap-break-words align-top leading-tight">
                                     {val(data.cedula_number)}
                                 </td>
                             </tr>
@@ -217,14 +208,13 @@ export default function PermitPreview({
                                 <td className="px-3 py-2 bg-blue-200 font-bold text-blue-900 border-r border-black align-top leading-tight">
                                     DATE
                                 </td>
-                                <td className="px-3 py-2 font-bold text-gray-800 break-words align-top leading-tight">
+                                <td className="px-3 py-2 font-bold text-gray-800 wrap-break-words align-top leading-tight">
                                     {formatDate(data.cedula_date)}
                                 </td>
                             </tr>
                         </tbody>
                     </table>
 
-                    {/* OFFICIAL RECEIPT */}
                     <table className="w-full border-collapse border border-black bg-white text-[12pt] shadow-sm table-fixed">
                         <thead>
                             <tr className="bg-blue-300 text-blue-900 border-b border-black">
@@ -241,7 +231,7 @@ export default function PermitPreview({
                                 <td className="px-3 py-2 bg-blue-200 font-bold text-blue-900 w-[40%] border-r border-black align-top leading-tight">
                                     NUMBER
                                 </td>
-                                <td className="px-3 py-2 font-mono font-bold text-gray-800 break-words align-top leading-tight">
+                                <td className="px-3 py-2 font-mono font-bold text-gray-800 wrap-break-words align-top leading-tight">
                                     {val(data.or_number)}
                                 </td>
                             </tr>
@@ -249,7 +239,7 @@ export default function PermitPreview({
                                 <td className="px-3 py-2 bg-blue-200 font-bold text-blue-900 border-r border-black align-top leading-tight">
                                     DATE
                                 </td>
-                                <td className="px-3 py-2 font-bold text-gray-800 break-words align-top leading-tight">
+                                <td className="px-3 py-2 font-bold text-gray-800 wrap-break-words align-top leading-tight">
                                     {formatDate(data.or_date)}
                                 </td>
                             </tr>
@@ -257,7 +247,6 @@ export default function PermitPreview({
                     </table>
                 </div>
 
-                {/* --- TABLE 5: SIGNATORIES --- */}
                 <table className="w-full border-collapse border border-black bg-white text-[12pt] shadow-sm table-fixed">
                     <thead>
                         <tr className="bg-blue-300 text-blue-900 border-b border-black">
@@ -274,7 +263,7 @@ export default function PermitPreview({
                             <td className="px-3 py-2 bg-blue-200 font-bold text-blue-900 w-[45%] sm:w-[35%] border-r border-black align-top leading-tight">
                                 Auth. Official
                             </td>
-                            <td className="px-3 py-2 font-bold text-gray-800 uppercase break-words align-top leading-tight">
+                            <td className="px-3 py-2 font-bold text-gray-800 uppercase wrap-break-words align-top leading-tight">
                                 {val(data.authorized_official)}
                             </td>
                         </tr>
@@ -282,7 +271,7 @@ export default function PermitPreview({
                             <td className="px-3 py-2 bg-blue-200 font-bold text-blue-900 border-r border-black align-top leading-tight">
                                 Punong Bayan
                             </td>
-                            <td className="px-3 py-2 font-bold text-gray-800 uppercase break-words align-top leading-tight">
+                            <td className="px-3 py-2 font-bold text-gray-800 uppercase wrap-break-words align-top leading-tight">
                                 {val(data.punong_bayan)}
                             </td>
                         </tr>

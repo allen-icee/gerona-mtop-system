@@ -1,3 +1,4 @@
+//GeronaMTOP\resources\js\Pages\Mtop\Print.tsx
 import { Head } from "@inertiajs/react";
 import { useEffect } from "react";
 import PrintPage1 from "./Partials/PrintPage1";
@@ -31,20 +32,17 @@ export default function Print({
     application: MtopApplication;
 }) {
     useEffect(() => {
-        // 1. Auto-print on initial load
         setTimeout(() => window.print(), 500);
 
-        // 2. Listen for Ctrl+P or Cmd+P
         const handleKeyDown = (e: KeyboardEvent) => {
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "p") {
-                e.preventDefault(); // Stop default browser save/print dialog if any
-                window.print(); // Trigger our print
+                e.preventDefault();
+                window.print();
             }
         };
 
         window.addEventListener("keydown", handleKeyDown);
 
-        // 3. Cleanup listener when component unmounts
         return () => {
             window.removeEventListener("keydown", handleKeyDown);
         };
@@ -75,7 +73,6 @@ export default function Print({
                     />
                 </div>
 
-                {/* MANUAL PRINT BUTTON FOR ELECTRON & WEB */}
                 <div className="fixed top-4 right-4 print:hidden z-50">
                     <button
                         onClick={() => window.print()}

@@ -1,3 +1,4 @@
+//GeronaMTOP\resources\js\Components\NavLink.tsx
 import { Link, InertiaLinkProps } from "@inertiajs/react";
 
 export default function NavLink({
@@ -6,7 +7,6 @@ export default function NavLink({
     children,
     ...props
 }: InertiaLinkProps & { active?: boolean }) {
-    // <--- Added '?' here
     return (
         <Link
             {...props}

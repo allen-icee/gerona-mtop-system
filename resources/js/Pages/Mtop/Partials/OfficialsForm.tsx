@@ -1,3 +1,4 @@
+//GeronaMTOP\resources\js\Pages\Mtop\Partials\OfficialsForm.tsx
 import SignatorySelect from "@/Components/SignatorySelect";
 import { Icon } from "@iconify/react";
 
@@ -9,7 +10,7 @@ interface Props {
     officials: string[];
     onKeyDown?: (
         e: React.KeyboardEvent<HTMLInputElement | HTMLSelectElement>,
-    ) => void; // <--- Add this to the Interface
+    ) => void;
 }
 
 export default function OfficialsForm({
@@ -18,7 +19,7 @@ export default function OfficialsForm({
     errors,
     punong_bayans = [],
     officials = [],
-    onKeyDown, // <--- Destructure it
+    onKeyDown,
 }: Props) {
     return (
         <div className="space-y-2">
@@ -36,7 +37,7 @@ export default function OfficialsForm({
                     options={officials}
                     error={errors.authorized_official}
                     required={true}
-                    onKeyDown={onKeyDown} // <--- Pass it down
+                    onKeyDown={onKeyDown}
                 />
 
                 <SignatorySelect
@@ -46,7 +47,7 @@ export default function OfficialsForm({
                     options={punong_bayans}
                     error={errors.punong_bayan}
                     required={true}
-                    onKeyDown={onKeyDown} // <--- Pass it down
+                    onKeyDown={onKeyDown}
                 />
             </div>
 

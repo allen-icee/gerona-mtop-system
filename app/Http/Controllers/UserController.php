@@ -1,5 +1,5 @@
 <?php
-
+//GeronaMTOP\app\Http\Controllers\UserController.php
 namespace App\Http\Controllers;
 
 use App\Models\User;
@@ -8,11 +8,11 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Http\RedirectResponse; // Import this
+use Illuminate\Http\RedirectResponse;
 
 class UserController extends Controller
 {
-    // 1. LIST USERS
+
     public function index(Request $request)
     {
         $search = $request->input('search');
@@ -32,13 +32,11 @@ class UserController extends Controller
         ]);
     }
 
-    // 2. SHOW CREATE FORM (Not strictly needed with Modals, but good to keep)
     public function create()
     {
         return Inertia::render('Users/Create');
     }
 
-    // 3. STORE NEW USER
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
@@ -57,11 +55,9 @@ class UserController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        // CHANGED: Use back() + 'message' for the Green Toast
         return redirect()->back()->with('message', 'User created successfully');
     }
 
-    // 4. SHOW EDIT FORM (Not strictly needed with Modals)
     public function edit($id)
     {
         $user = User::findOrFail($id);
@@ -70,7 +66,6 @@ class UserController extends Controller
         ]);
     }
 
-    // 5. UPDATE USER
     public function update(Request $request, $id): RedirectResponse
     {
         $user = User::findOrFail($id);
@@ -94,30 +89,25 @@ class UserController extends Controller
 
         $user->save();
 
-        // CHANGED: Use back() + 'message' for the Green Toast
         return redirect()->back()->with('message', 'User updated successfully');
     }
 
-    // 6. DELETE USER
     public function destroy($id): RedirectResponse
     {
         $user = User::findOrFail($id);
 
-        // Rule 1: Cannot delete yourself
         if ($user->id === Auth::id()) {
-            // CHANGED: Use 'error' flash key to trigger Red Toast
+
             return back()->with('error', 'You cannot delete your own account.');
         }
 
-        // Rule 2: Cannot delete the Main Super Admin (ID 1)
         if ($user->id === 1) {
-            // CHANGED: Use 'error' flash key to trigger Red Toast
+
             return back()->with('error', 'The Main Administrator cannot be deleted.');
         }
 
         $user->delete();
 
-        // CHANGED: Added 'message' to trigger Green Toast on success
         return redirect()->back()->with('message', 'User deleted successfully');
     }
 }

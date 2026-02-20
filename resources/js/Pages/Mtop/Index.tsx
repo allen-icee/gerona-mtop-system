@@ -1,3 +1,4 @@
+//GeronaMTOP\resources\js\Pages\Mtop\Index.tsx
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, Link, router, usePage } from "@inertiajs/react";
 import { Icon } from "@iconify/react";
@@ -9,8 +10,6 @@ import PermitPreview from "./Partials/PermitPreview";
 import { BARANGAYS } from "@/Constants/Barangays";
 import ConfirmDeleteModal from "@/Components/ConfirmDeleteModal";
 import DriverInfoModal from "./Partials/DriverInfoModal";
-
-// Interfaces
 interface MtopApplication {
     id: number;
     mt_number: string;
@@ -129,7 +128,6 @@ export default function Index({ applications, filters, officials }: Props) {
 
             <div className="py-6 sm:py-12 pb-24">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    {/* TOOLBAR */}
                     <div className="flex flex-col xl:flex-row justify-between items-center mb-6 gap-4">
                         <div className="flex flex-col md:flex-row gap-3 w-full xl:w-auto flex-wrap">
                             <div className="relative w-full md:w-auto">
@@ -185,7 +183,6 @@ export default function Index({ applications, filters, officials }: Props) {
                                     onChange={(e) => setYear(e.target.value)}
                                 >
                                     <option value="">Year</option>
-                                    {/* Generates years from (Next Year) down to the year 2000 */}
                                     {Array.from(
                                         {
                                             length:
@@ -253,7 +250,6 @@ export default function Index({ applications, filters, officials }: Props) {
                         </div>
                     </div>
 
-                    {/* --- DESKTOP VIEW: TABLE --- */}
                     <div className="hidden md:block bg-white overflow-hidden shadow-sm sm:rounded-lg border border-gray-100">
                         <table className="w-full text-sm text-left text-gray-500">
                             <thead className="text-xs text-gray-700 uppercase bg-gray-50 border-b">
@@ -307,7 +303,6 @@ export default function Index({ applications, filters, officials }: Props) {
                                     </tr>
                                 ) : (
                                     applications.data.map((app) => {
-                                        // DATE LOGIC
                                         const validUntilDate = app.valid_until
                                             ? new Date(app.valid_until)
                                             : null;
@@ -402,7 +397,6 @@ export default function Index({ applications, filters, officials }: Props) {
                                                         : ""}
                                                 </td>
                                                 <td className="px-6 py-4 hidden lg:table-cell text-gray-600 uppercase">
-                                                    {/* DISPLAY SHORT ADDRESS */}
                                                     {app.address.replace(
                                                         /(,\s*GERONA,\s*TARLAC|\s*GERONA,\s*TARLAC)/i,
                                                         "",
@@ -459,7 +453,6 @@ export default function Index({ applications, filters, officials }: Props) {
                                                             Edit
                                                         </Link>
 
-                                                        {/* RENEW BUTTON */}
                                                         {canRenew && (
                                                             <Link
                                                                 href={route(
@@ -502,7 +495,6 @@ export default function Index({ applications, filters, officials }: Props) {
                         </table>
                     </div>
 
-                    {/* --- MOBILE VIEW: CARD LIST --- */}
                     <div className="md:hidden space-y-4">
                         {applications.data.length === 0 ? (
                             <div className="bg-white p-8 text-center rounded-lg border border-gray-200 text-gray-400">
@@ -619,7 +611,6 @@ export default function Index({ applications, filters, officials }: Props) {
                                                     : ""}
                                             </p>
                                             <p className="text-sm text-gray-500 leading-tight mt-1">
-                                                {/* DISPLAY SHORT ADDRESS MOBILE */}
                                                 {app.address.replace(
                                                     /(,\s*GERONA,\s*TARLAC|\s*GERONA,\s*TARLAC)/i,
                                                     "",
@@ -656,7 +647,6 @@ export default function Index({ applications, filters, officials }: Props) {
                                                 Edit
                                             </Link>
 
-                                            {/* RENEW BUTTON (MOBILE) */}
                                             {canRenew && (
                                                 <Link
                                                     href={route(
@@ -699,7 +689,6 @@ export default function Index({ applications, filters, officials }: Props) {
                 </div>
             </div>
 
-            {/* --- FLOATING BATCH ACTION BAR --- */}
             <div
                 className={`fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50 transition-all duration-300 ${selectedIds.length > 0 ? "translate-y-0 opacity-100" : "translate-y-24 opacity-0 pointer-events-none"}`}
             >
@@ -735,7 +724,6 @@ export default function Index({ applications, filters, officials }: Props) {
                 officials={officials}
             />
 
-            {/* --- PREVIEW MODAL --- */}
             <Modal
                 show={!!viewingApp}
                 onClose={() => setViewingApp(null)}

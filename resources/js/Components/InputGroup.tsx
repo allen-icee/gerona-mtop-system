@@ -1,3 +1,4 @@
+//GeronaMTOP\resources\js\Components\InputGroup.tsx
 import { useState, InputHTMLAttributes } from "react";
 import { Icon } from "@iconify/react";
 
@@ -7,7 +8,7 @@ interface Props extends InputHTMLAttributes<HTMLInputElement> {
     icon?: string;
     showPasswordToggle?: boolean;
     required?: boolean;
-    onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void; // Added onKeyDown
+    onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
 }
 
 export default function InputGroup({
@@ -20,7 +21,7 @@ export default function InputGroup({
     type = "text",
     showPasswordToggle = false,
     required = false,
-    onKeyDown, // Destructure onKeyDown
+    onKeyDown,
     ...props
 }: Props) {
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -54,7 +55,7 @@ export default function InputGroup({
                     value={value}
                     type={inputType}
                     required={required}
-                    onKeyDown={onKeyDown} // Pass onKeyDown to input
+                    onKeyDown={onKeyDown}
                     className={`border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm w-full py-3 ${
                         icon ? "pl-10" : "pl-3"
                     } ${error ? "border-red-500" : ""}`}

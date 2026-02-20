@@ -1,3 +1,4 @@
+//GeronaMTOP\resources\js\Pages\Mtop\Partials\OfficialReceiptForm.tsx
 import InputGroup from "@/Components/InputGroup";
 import { Icon } from "@iconify/react";
 
@@ -37,7 +38,7 @@ export default function OfficialReceiptForm({
                     label="Date Paid"
                     name="or_date"
                     type="date"
-                    max="9999-12-31" // <--- Stops 5 digit years
+                    max="9999-12-31"
                     value={data.or_date}
                     onChange={(e: any) => setData("or_date", e.target.value)}
                     icon="solar:calendar-date-bold"

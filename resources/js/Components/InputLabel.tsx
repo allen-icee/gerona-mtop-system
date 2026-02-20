@@ -1,18 +1,16 @@
-import { LabelHTMLAttributes } from 'react';
+//GeronaMTOP\resources\js\Components\InputLabel.tsx
+import { LabelHTMLAttributes } from "react";
 
 export default function InputLabel({
     value,
-    className = '',
+    className = "",
     children,
     ...props
 }: LabelHTMLAttributes<HTMLLabelElement> & { value?: string }) {
     return (
         <label
             {...props}
-            className={
-                `block text-sm font-medium text-gray-700 ` +
-                className
-            }
+            className={`block text-sm font-medium text-gray-700 ` + className}
         >
             {value ? value : children}
         </label>

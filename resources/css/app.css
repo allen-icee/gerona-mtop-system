@@ -1,6 +1,5 @@
 @import "tailwindcss";
-
-/* 1. DEFINE FONTS GLOBALLY HERE */
+/*GeronaMTOP\resources\css\app.css*/
 @font-face {
     font-family: "LEMONMILK";
     src: url("/fonts/LEMONMILK-Light.otf") format("opentype");
@@ -34,18 +33,16 @@
 @layer base {
     input::placeholder,
     textarea::placeholder {
-        color: #6b7280 !important; /* Tailwind gray-500 */
-        opacity: 1 !important; /* Forces it to be solid */
+        color: #6b7280 !important;
+        opacity: 1 !important;
     }
 
-    /* Webkit specific override for Electron/Chrome */
     input::-webkit-input-placeholder,
     textarea::-webkit-input-placeholder {
         color: #6b7280 !important;
         opacity: 1 !important;
     }
 }
-/* 2. FORCE PRINT SETTINGS GLOBALLY */
 @media print {
     body {
         -webkit-print-color-adjust: exact !important;

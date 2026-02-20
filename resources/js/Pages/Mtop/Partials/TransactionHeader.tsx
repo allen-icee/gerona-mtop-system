@@ -1,3 +1,4 @@
+//GeronaMTOP\resources\js\Pages\Mtop\Partials\TransactionHeader.tsx
 import InputGroup from "@/Components/InputGroup";
 import { Icon } from "@iconify/react";
 
@@ -10,7 +11,6 @@ export default function TransactionHeader({
 }: any) {
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* 1. CONTROL NUMBER (Read Only) */}
             <div className="relative">
                 <InputGroup
                     id="mt_number"
@@ -28,13 +28,12 @@ export default function TransactionHeader({
                 </div>
             </div>
 
-            {/* 2. TRANSACTION DATE (Updated with Max Date) */}
             <InputGroup
                 id="transaction_date"
                 label="Transaction Date"
                 name="transaction_date"
                 type="date"
-                max="9999-12-31" // <--- Stops 5 digit years
+                max="9999-12-31"
                 value={data.transaction_date}
                 onChange={(e: any) =>
                     setData("transaction_date", e.target.value)
@@ -44,7 +43,6 @@ export default function TransactionHeader({
                 onKeyDown={onKeyDown}
             />
 
-            {/* 3. VALIDITY */}
             <div className="sm:col-span-2 lg:col-span-1">
                 <label className="block font-medium text-sm text-gray-700 mb-1">
                     Validity{" "}

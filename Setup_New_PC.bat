@@ -2,26 +2,32 @@
 title Gerona MTOP System Initial Setup
 color 1f
 
+cd /d "%~dp0"
+
 echo =====================================================
 echo    INITIALIZING GERONA MTOP SYSTEM...
 echo    PLEASE DO NOT CLOSE THIS WINDOW.
 echo =====================================================
 echo.
 
-:: Define Portable PHP Path (Ignores system PHP)
-set PHP_PATH="%~dp0php\php.exe"
+if not exist "php\php.exe" (
+    echo [ERROR] Portable PHP engine is missing!
+    echo Ensure the 'php' folder was placed in the root before building.
+    echo.
+    pause
+    exit /b
+)
 
-:: 1. Create Storage Link (Crucial for displaying photos)
 echo Creating storage link...
-call %PHP_PATH% artisan storage:link
+"php\php.exe" artisan storage:link
 
-:: 2. Run Database Migrations (Creates tables)
+echo.
 echo Setting up the database tables...
-call %PHP_PATH% artisan migrate --force
+"php\php.exe" artisan migrate --force
 
-:: 3. Run Database Seeders (Creates your Admin account & settings)
+echo.
 echo Creating admin account and default settings...
-call %PHP_PATH% artisan db:seed --force
+"php\php.exe" artisan db:seed --force
 
 echo.
 echo =====================================================

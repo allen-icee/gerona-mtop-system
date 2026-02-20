@@ -1,3 +1,4 @@
+//GeronaMTOP\resources\js\Pages\Auth\Register.tsx
 import PrimaryButton from "@/Components/PrimaryButton";
 import GuestLayout from "@/Layouts/GuestLayout";
 import InputGroup from "@/Components/InputGroup";
@@ -14,7 +15,6 @@ export default function Register() {
         password_confirmation: "",
     });
 
-    // STATE: Track requirements
     const [requirements, setRequirements] = useState({
         length: false,
         number: false,
@@ -22,16 +22,12 @@ export default function Register() {
         uppercase: false,
     });
 
-    // STATE: Live Errors
     const [usernameError, setUsernameError] = useState("");
     const [nameError, setNameError] = useState("");
     const [emailError, setEmailError] = useState("");
 
-    // 1. CHECKER: Real Name (Letters & Spaces only)
     useEffect(() => {
         if (data.name.length > 0) {
-            // Regex: Allows a-z, A-Z, and Spaces.
-            // We also allow dots (.) for "Jr." or "Ma." just in case.
             const isValid = /^[a-zA-Z\s.]+$/.test(data.name);
             if (!isValid) {
                 setNameError(
@@ -45,7 +41,6 @@ export default function Register() {
         }
     }, [data.name]);
 
-    // 2. CHECKER: Username Rules (Min 5 chars, No spaces)
     useEffect(() => {
         if (data.username.length > 0) {
             const isFormatValid = /^[a-zA-Z0-9._-]+$/.test(data.username);
@@ -67,10 +62,8 @@ export default function Register() {
         }
     }, [data.username]);
 
-    // 3. CHECKER: Email Format (Only if typed)
     useEffect(() => {
         if (data.email.length > 0) {
-            // Simple Email Regex
             const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email);
             if (!isValid) {
                 setEmailError("Please enter a valid email address.");
@@ -82,7 +75,6 @@ export default function Register() {
         }
     }, [data.email]);
 
-    // 4. CHECKER: Password Rules
     useEffect(() => {
         setRequirements({
             length: data.password.length >= 8,
@@ -102,13 +94,12 @@ export default function Register() {
         data.password === data.password_confirmation &&
         data.password_confirmation.length > 0;
 
-    // VALIDATION: Master Lock
     const isFormValid =
         data.name.trim() !== "" &&
         nameError === "" &&
         data.username.trim() !== "" &&
         usernameError === "" &&
-        emailError === "" && // Email must be valid (or empty)
+        emailError === "" &&
         allRequirementsMet &&
         passwordsMatch;
 
@@ -124,31 +115,28 @@ export default function Register() {
             <Head title="Register" />
 
             <form onSubmit={submit}>
-                {/* 1. FULL NAME */}
                 <InputGroup
                     id="name"
                     label="Full Name"
                     name="name"
                     value={data.name}
                     onChange={(e) => setData("name", e.target.value)}
-                    error={errors.name || nameError} // Live Error
+                    error={errors.name || nameError}
                     icon="solar:user-id-bold"
                     placeholder="Enter full name"
                 />
 
-                {/* 2. USERNAME */}
                 <InputGroup
                     id="username"
                     label="Username"
                     name="username"
                     value={data.username}
                     onChange={(e) => setData("username", e.target.value)}
-                    error={errors.username || usernameError} // Live Error
+                    error={errors.username || usernameError}
                     icon="solar:user-bold"
                     placeholder="Enter username"
                 />
 
-                {/* 3. EMAIL */}
                 <InputGroup
                     id="email"
                     label="Email Address (Optional)"
@@ -156,12 +144,11 @@ export default function Register() {
                     type="email"
                     value={data.email}
                     onChange={(e) => setData("email", e.target.value)}
-                    error={errors.email || emailError} // Live Error
+                    error={errors.email || emailError}
                     icon="solar:letter-bold"
                     placeholder="Enter email address"
                 />
 
-                {/* 4. PASSWORD */}
                 <InputGroup
                     id="password"
                     label="Password"
@@ -175,7 +162,6 @@ export default function Register() {
                     placeholder="Create a password"
                 />
 
-                {/* LIVE PASSWORD CHECKLIST */}
                 {data.password.length > 0 && (
                     <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-100 text-xs">
                         <p className="font-bold text-gray-500 mb-2">
@@ -202,7 +188,6 @@ export default function Register() {
                     </div>
                 )}
 
-                {/* 5. CONFIRM PASSWORD */}
                 <InputGroup
                     id="password_confirmation"
                     label="Confirm Password"
@@ -218,7 +203,6 @@ export default function Register() {
                     placeholder="Retype password"
                 />
 
-                {/* LIVE MATCH INDICATOR */}
                 {data.password_confirmation.length > 0 && (
                     <div
                         className={`mb-4 text-xs font-bold flex items-center gap-2 ${passwordsMatch ? "text-green-600" : "text-red-500"}`}
@@ -237,7 +221,6 @@ export default function Register() {
                     </div>
                 )}
 
-                {/* 6. SUBMIT */}
                 <div className="mt-6 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-4">
                     <Link
                         href={route("login")}

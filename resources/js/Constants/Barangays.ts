@@ -1,3 +1,4 @@
+//GeronaMTOP\resources\js\Constants\Barangays.ts
 export const BARANGAYS = [
     "Abagon",
     "Amacalan",

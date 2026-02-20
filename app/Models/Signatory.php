@@ -1,5 +1,5 @@
 <?php
-
+//GeronaMTOP\app\Models\Signatory.php
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;

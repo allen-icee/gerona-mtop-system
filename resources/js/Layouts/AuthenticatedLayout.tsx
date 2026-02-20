@@ -1,3 +1,4 @@
+//GeronaMTOP\resources\js\Layouts\AuthenticatedLayout.tsx
 import ApplicationLogo from "@/Components/ApplicationLogo";
 import Dropdown from "@/Components/Dropdown";
 import NavLink from "@/Components/NavLink";
@@ -19,12 +20,11 @@ export default function Authenticated({
     return (
         <div className="min-h-dvh bg-gray-50">
             <ToastListener />
-            {/* 1. NAVBAR */}
+
             <nav className="bg-blue-900 border-b border-blue-800 shadow-md">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div className="flex h-16 justify-between">
                         <div className="flex">
-                            {/* LOGO */}
                             <div className="flex shrink-0 items-center">
                                 <Link href="/">
                                     <ApplicationLogo className="block h-10 w-auto fill-current text-white" />
@@ -34,7 +34,6 @@ export default function Authenticated({
                                 </span>
                             </div>
 
-                            {/* NAVIGATION LINKS */}
                             <div className="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                                 <NavLink
                                     href={route("dashboard")}
@@ -52,7 +51,6 @@ export default function Authenticated({
                                     MTOP Records
                                 </NavLink>
 
-                                {/* PRINT SETTINGS (VISIBLE TO EVERYONE) */}
                                 <NavLink
                                     href={route("settings.print.edit")}
                                     active={route().current(
@@ -63,7 +61,6 @@ export default function Authenticated({
                                     Print Settings
                                 </NavLink>
 
-                                {/* RESTRICTED: SIGNATORIES (Admin Only) */}
                                 {user.role === "admin" && (
                                     <NavLink
                                         href={route("signatories.index")}
@@ -76,7 +73,6 @@ export default function Authenticated({
                                     </NavLink>
                                 )}
 
-                                {/* RESTRICTED: SYSTEM USERS (Admin Only) */}
                                 {user.role === "admin" && (
                                     <NavLink
                                         href={route("users.index")}
@@ -89,7 +85,6 @@ export default function Authenticated({
                             </div>
                         </div>
 
-                        {/* USER DROPDOWN */}
                         <div className="hidden sm:ms-6 sm:flex sm:items-center">
                             <div className="relative ms-3">
                                 <Dropdown>
@@ -130,7 +125,6 @@ export default function Authenticated({
                             </div>
                         </div>
 
-                        {/* MOBILE HAMBURGER BUTTON */}
                         <div className="-me-2 flex items-center sm:hidden">
                             <button
                                 onClick={() =>
@@ -174,7 +168,6 @@ export default function Authenticated({
                     </div>
                 </div>
 
-                {/* MOBILE MENU */}
                 <div
                     className={
                         (showingNavigationDropdown ? "block" : "hidden") +
@@ -197,7 +190,6 @@ export default function Authenticated({
                             MTOP Records
                         </ResponsiveNavLink>
 
-                        {/* PRINT SETTINGS (VISIBLE TO EVERYONE) */}
                         <ResponsiveNavLink
                             href={route("settings.print.edit")}
                             active={route().current("settings.print.edit")}
@@ -206,7 +198,6 @@ export default function Authenticated({
                             Print Settings
                         </ResponsiveNavLink>
 
-                        {/* RESTRICTED MOBILE LINKS (Admin Only) */}
                         {user.role === "admin" && (
                             <>
                                 <ResponsiveNavLink
@@ -251,7 +242,6 @@ export default function Authenticated({
                 </div>
             </nav>
 
-            {/* HEADER */}
             {header && (
                 <header className="bg-white shadow">
                     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">

@@ -1,3 +1,4 @@
+//GeronaMTOP\resources\js\Pages\Mtop\Partials\PrintPage2.tsx
 import React from "react";
 import { usePage } from "@inertiajs/react";
 
@@ -9,7 +10,6 @@ interface Props {
 export default function PrintPage2({ application, operatorName }: Props) {
     const { printSettings } = usePage().props as any;
 
-    // Helpers
     const formatDate = (dateString: string) => {
         if (!dateString) return "";
         return new Date(dateString).toLocaleDateString("en-US", {
@@ -43,11 +43,9 @@ export default function PrintPage2({ application, operatorName }: Props) {
             .toUpperCase();
     };
 
-    // Helper for address formatting (first part uppercase if it's the barangay)
     const formatAddress = (addr: string) => {
         if (!addr) return "";
 
-        // Split and clean parts
         const parts = addr
             .split(",")
             .map((part) => part.trim())
@@ -55,10 +53,8 @@ export default function PrintPage2({ application, operatorName }: Props) {
 
         if (parts.length === 0) return "";
 
-        // First part (Barangay) → FULL UPPERCASE
         const barangay = parts[0].toUpperCase();
 
-        // Remaining parts → Proper Case (Gerona, Tarlac)
         const properCase = (text: string) =>
             text.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
 
@@ -76,7 +72,6 @@ export default function PrintPage2({ application, operatorName }: Props) {
             className="w-full h-[11.69in] relative flex flex-col bg-white overflow-hidden text-black leading-tight"
             style={{ fontFamily: "Tahoma, sans-serif" }}
         >
-            {/* 3. DYNAMIC HEADER IMAGE */}
             {printSettings?.show_header && printSettings?.header_path && (
                 <div className="w-full mb-2 px-2 mt-2">
                     <img
@@ -87,32 +82,26 @@ export default function PrintPage2({ application, operatorName }: Props) {
                 </div>
             )}
 
-            {/* CONTENT BODY */}
             <div className="px-12 flex flex-col">
-                {/* 1. OFFICE HEADER (Match Page 1: 12pt, Bold, Center, 1.0) */}
                 <div className="text-center font-bold uppercase text-[12pt] leading-none mt-4 mb-8">
                     <p>TANGGAPAN NG</p>
                     <p>MUNICIPAL TRYCICLE FRANCHISING AND REGULATORY BOARD</p>
                 </div>
 
-                {/* 2. DATE (Right, Bold, 11pt, 1.15) - Matching Page 1 style */}
                 <div className="flex justify-end mb-6">
                     <div className="text-right font-bold text-[11pt] leading-[1.15]">
                         {transactionDate}
                     </div>
                 </div>
 
-                {/* 3. TITLE (14pt, Bold, No Underline, Leading 1.0, Spaced) */}
                 <div className="text-center font-bold uppercase mb-8 text-[14pt] leading-none">
                     <p>P A G P A P A T I B A Y</p>
                 </div>
 
-                {/* 4. SALUTATION (12pt, Bold, Leading 1.0) */}
                 <div className="font-bold uppercase mb-5 text-[12pt] leading-none">
                     SA SINUMANG MAAARING KAUKULAN NITO:
                 </div>
 
-                {/* 5. OPENING PARAGRAPH (12pt, Leading 1.0, Indent 8) */}
                 <div className="text-justify indent-8 mb-6 text-[12pt] leading-none">
                     <p>
                         Pinatutunayan nito na ayon sa mga talaan sa tanggapang
@@ -121,7 +110,6 @@ export default function PrintPage2({ application, operatorName }: Props) {
                     </p>
                 </div>
 
-                {/* 6. DETAILS BLOCK (12pt, Leading 1.0) */}
                 <div className="space-y-1 mb-4 text-[12pt] leading-none">
                     <div>
                         <span className="w-56 shrink-0">
@@ -132,7 +120,6 @@ export default function PrintPage2({ application, operatorName }: Props) {
                         </span>
                     </div>
 
-                    {/* Tirahan + Usapin Bilang Line */}
                     <div className="flex justify-between items-end">
                         <div>
                             <span className="w-56 shrink-0">Tirahan:</span>{" "}
@@ -173,12 +160,10 @@ export default function PrintPage2({ application, operatorName }: Props) {
                     </div>
                 </div>
 
-                {/* 7. TABLE INTRO */}
                 <div className="mb-4 text-[12pt] leading-none">
                     <p>Hanggang isinalalarawan ayon sa mga sumusunod:</p>
                 </div>
 
-                {/* 8. TABLE */}
                 <div className="mb-6">
                     <table className="w-full border border-black border-collapse text-center text-[12pt]">
                         <thead>
@@ -219,7 +204,6 @@ export default function PrintPage2({ application, operatorName }: Props) {
                     </table>
                 </div>
 
-                {/* 9. CLOSING PARAGRAPH (No Indent, 12pt, Leading 1.0) */}
                 <div className="text-justify mb-4 text-[12pt] leading-none">
                     <p>
                         Ang Pagtitibay na ito ay pinagkaloob ayon sa kahilingan
@@ -228,12 +212,8 @@ export default function PrintPage2({ application, operatorName }: Props) {
                     </p>
                 </div>
 
-                {/* 10. PINAGTITIBAY Header (Left, 12pt) */}
                 <div className="uppercase mb-4 text-[12pt]">PINAGTITIBAY:</div>
 
-                {/* 11. SIGNATORIES */}
-
-                {/* Authorized Official (Right Aligned) */}
                 <div className="flex justify-end mb-4">
                     <div className="text-center min-w-55">
                         <div className="font-bold uppercase border-b border-black text-[12pt]">
@@ -249,7 +229,6 @@ export default function PrintPage2({ application, operatorName }: Props) {
                     </div>
                 </div>
 
-                {/* Punong Bayan (Left Aligned) */}
                 <div className="flex justify-start mb-4">
                     <div className="text-center min-w-55">
                         <div className="font-bold uppercase border-b border-black text-[12pt]">
@@ -260,7 +239,6 @@ export default function PrintPage2({ application, operatorName }: Props) {
                     </div>
                 </div>
 
-                {/* 12. FOOTER DETAILS (Left, 11pt, Leading 1.0, Values Bold & Underline) */}
                 <div className="text-[11pt] leading-none space-y-1 mb-4">
                     <div>
                         <span className="w-48">Bayad na sa O.R. Bilang:</span>{" "}
@@ -279,7 +257,6 @@ export default function PrintPage2({ application, operatorName }: Props) {
                     </div>
                 </div>
 
-                {/* 13. DISCLAIMER (11pt, Leading 1.0, Not Italic) */}
                 <div className="text-[11pt] leading-none text-justif mb-2">
                     <p>
                         May tibay kung orihinal o may opisyal na resibo ng
@@ -288,8 +265,7 @@ export default function PrintPage2({ application, operatorName }: Props) {
                     </p>
                 </div>
             </div>
-            {/* 4. DYNAMIC FOOTER IMAGE */}
-            {/* Ilalagay ito sa dulo ng 'flex flex-col' container para sa Page 2 */}
+
             {printSettings?.show_footer && printSettings?.footer_path && (
                 <div className="w-full mt-auto mb-2 px-2">
                     <img

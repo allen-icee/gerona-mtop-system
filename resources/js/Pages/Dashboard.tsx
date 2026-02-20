@@ -1,3 +1,4 @@
+//GeronaMTOP\resources\js\Pages\Dashboard.tsx
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, Link, usePage, useForm } from "@inertiajs/react";
 import { Icon } from "@iconify/react";
@@ -121,7 +122,6 @@ export default function Dashboard({
                             </div>
                         </div>
 
-                        {/* Card 2: Added Today */}
                         <div className="bg-white p-6 rounded-lg shadow-sm border-t-4 border-orange-400 flex items-center justify-between">
                             <div>
                                 <p className="text-gray-500 text-xs sm:text-sm font-medium uppercase tracking-wider">

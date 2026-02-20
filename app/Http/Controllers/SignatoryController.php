@@ -1,5 +1,5 @@
 <?php
-
+//GeronaMTOP\app\Http\Controllers\SignatoryController.php
 namespace App\Http\Controllers;
 
 use App\Models\Signatory;
@@ -20,7 +20,7 @@ class SignatoryController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            // FIXED: Added 'Committee on Transportation' to the allowed list
+
             'position' => 'required|string|in:Punong Bayan,Authorized Official,Committee on Transportation',
         ]);
 
@@ -35,7 +35,7 @@ class SignatoryController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            // FIXED: Added 'Committee on Transportation' here too
+
             'position' => 'required|string|in:Punong Bayan,Authorized Official,Committee on Transportation',
             'is_active' => 'boolean'
         ]);

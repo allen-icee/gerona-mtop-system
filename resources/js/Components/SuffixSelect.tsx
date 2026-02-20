@@ -1,3 +1,4 @@
+//GeronaMTOP\resources\js\Components\SuffixSelect.tsx
 import { useState, useEffect, useRef } from "react";
 import { Icon } from "@iconify/react";
 
@@ -20,12 +21,10 @@ export default function SuffixSelect({
     const [selectedIndex, setSelectedIndex] = useState(-1);
     const listRef = useRef<HTMLUListElement>(null);
 
-    // Sync selection index
     useEffect(() => {
         setSelectedIndex(SUFFIXES.indexOf(value));
     }, [value]);
 
-    // Scroll active item into view
     useEffect(() => {
         if (isOpen && listRef.current && selectedIndex >= 0) {
             const list = listRef.current;
@@ -46,7 +45,6 @@ export default function SuffixSelect({
     }, [selectedIndex, isOpen]);
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        // Allow opening with Arrow keys if closed
         if (!isOpen && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
             e.preventDefault();
             setIsOpen(true);
@@ -78,7 +76,6 @@ export default function SuffixSelect({
             }
         }
 
-        // Pass to parent logic (Next Field) if dropdown is closed or key handled
         if (onKeyDown) onKeyDown(e);
     };
 
@@ -94,12 +91,12 @@ export default function SuffixSelect({
                         error ? "border-red-500" : ""
                     }`}
                     value={value || "N/A"}
-                    onClick={() => setIsOpen(true)} // Force open on click
-                    onFocus={() => setIsOpen(true)} // Force open on Tab/Focus
+                    onClick={() => setIsOpen(true)}
+                    onFocus={() => setIsOpen(true)}
                     onBlur={() => setTimeout(() => setIsOpen(false), 200)}
                     onKeyDown={handleKeyDown}
-                    onChange={() => {}} // Prevent typing
-                    readOnly={false} // Keep writable for focus events, but prevent typing via onChange
+                    onChange={() => {}}
+                    readOnly={false}
                 />
 
                 <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">

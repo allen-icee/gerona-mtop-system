@@ -15,13 +15,18 @@
     "build": {
         "appId": "com.gerona.mtop",
         "productName": "Gerona MTOP System",
+        "directories": {
+            "output": "dist-app"
+        },
         "win": {
             "target": "nsis",
             "icon": "public/images/MunicipalityLogo.png"
         },
         "nsis": {
-            "oneClick": false,
-            "allowToChangeInstallationDirectory": true,
+            "oneClick": true,
+            "perMachine": false,
+            "allowElevation": false,
+            "allowToChangeInstallationDirectory": false,
             "shortcutName": "Gerona MTOP System"
         },
         "files": [
@@ -29,6 +34,7 @@
             "php/**/*",
             "public/**/*",
             "!public/storage",
+            "!public/hot",
             "resources/**/*",
             "routes/**/*",
             "app/**/*",
@@ -39,7 +45,9 @@
             "vendor/**/*",
             "electron.cjs",
             "artisan",
-            ".env"
+            ".env",
+            "Setup_New_PC.bat",
+            "composer.json"
         ],
         "asar": false
     },

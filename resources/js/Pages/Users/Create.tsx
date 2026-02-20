@@ -1,3 +1,4 @@
+//GeronaMTOP\resources\js\Pages\Users\Create.tsx
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import InputGroup from "@/Components/InputGroup";
 import PrimaryButton from "@/Components/PrimaryButton";
@@ -12,7 +13,7 @@ export default function Create() {
         name: "",
         username: "",
         email: "",
-        role: "staff", // Default to Staff
+        role: "staff",
         password: "",
         password_confirmation: "",
     });
@@ -36,7 +37,6 @@ export default function Create() {
                 <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
                     <form
                         onSubmit={submit}
-                        // ADDED: relative z-0 to ensure proper stacking context
                         className="bg-white p-4 sm:p-8 rounded-lg shadow-sm border-t-4 border-blue-600 relative z-0"
                     >
                         <div className="flex items-center gap-2 mb-6 border-b border-gray-100 pb-4">
@@ -48,7 +48,6 @@ export default function Create() {
                             </h3>
                         </div>
 
-                        {/* 1. NAME & USERNAME */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <InputGroup
                                 id="name"
@@ -77,7 +76,6 @@ export default function Create() {
                             />
                         </div>
 
-                        {/* 2. EMAIL & ROLE */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <InputGroup
                                 id="email"
@@ -92,14 +90,12 @@ export default function Create() {
                                 icon="solar:letter-bold"
                             />
 
-                            {/* ROLE DROPDOWN */}
                             <div>
                                 <InputLabel
                                     htmlFor="role"
                                     value="System Role"
                                 />
                                 <div className="relative mt-1">
-                                    {/* FIXED: Added z-10 to icon to prevent overlapping issues */}
                                     <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400 z-10">
                                         <Icon
                                             icon="solar:shield-user-bold"
@@ -131,7 +127,6 @@ export default function Create() {
                             </div>
                         </div>
 
-                        {/* 3. PASSWORD */}
                         <div className="border-t border-gray-100 pt-4 mt-2 mb-6">
                             <h4 className="text-xs font-bold text-gray-500 uppercase mb-3 flex items-center gap-1">
                                 <Icon icon="solar:lock-password-bold" />
@@ -171,7 +166,6 @@ export default function Create() {
                             </div>
                         </div>
 
-                        {/* ACTIONS */}
                         <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-3 sm:gap-4 border-t border-gray-100 pt-6">
                             <Link
                                 href={route("users.index")}

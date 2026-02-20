@@ -1,5 +1,5 @@
 <?php
-
+//GeronaMTOP\app\Models\MtopApplication.php
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -35,8 +35,6 @@ class MtopApplication extends Model
         'driver_photo_path',
     ];
 
-    // Helper: Get Full Name automatically
-    // Usage: $application->full_name
     public function getFullNameAttribute()
     {
         return "{$this->last_name}, {$this->first_name} " . ($this->middle_name ? $this->middle_name[0] . '.' : '');

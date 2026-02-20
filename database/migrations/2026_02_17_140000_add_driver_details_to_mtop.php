@@ -1,5 +1,5 @@
 <?php
-
+//GeronaMTOP\database\migrations\2026_02_17_140000_add_driver_details_to_mtop.php
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -9,7 +9,6 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('mtop_applications', function (Blueprint $table) {
-            // These are the columns the error says are missing
             $table->string('driver_name', 100)->nullable()->after('address');
             $table->string('driver_license_no', 30)->nullable()->after('driver_name');
             $table->string('driver_photo_path', 2048)->nullable()->after('driver_license_no');

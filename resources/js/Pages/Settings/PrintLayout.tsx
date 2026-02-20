@@ -1,9 +1,10 @@
+//GeronaMTOP\resources\js\Pages\Settings\PrintLayout.tsx
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, useForm, router } from "@inertiajs/react";
 import PrimaryButton from "@/Components/PrimaryButton";
 import InputLabel from "@/Components/InputLabel";
 import { Switch } from "@headlessui/react";
-import { useState, useEffect, useRef } from "react"; // Added useRef
+import { useState, useEffect, useRef } from "react";
 import UnsavedChangesModal from "@/Components/UnsavedChangesModal";
 
 export default function PrintLayout({ settings }: { settings: any }) {
@@ -19,10 +20,8 @@ export default function PrintLayout({ settings }: { settings: any }) {
     const [showExitModal, setShowExitModal] = useState(false);
     const [pendingUrl, setPendingUrl] = useState<string | null>(null);
 
-    // FIX: Use a Ref to bypass checks immediately after saving
     const allowExitRef = useRef(false);
 
-    // Sync state with settings when they change (after save)
     useEffect(() => {
         setData((prev) => ({
             ...prev,
@@ -43,10 +42,8 @@ export default function PrintLayout({ settings }: { settings: any }) {
         }
     }, [settings]);
 
-    // Handle Unsaved Changes Protection
     useEffect(() => {
         const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-            // Check allowExitRef to see if we should ignore the dirty state
             if (isDirty && !allowExitRef.current) {
                 e.preventDefault();
                 e.returnValue = "";
@@ -54,7 +51,6 @@ export default function PrintLayout({ settings }: { settings: any }) {
         };
 
         const removeInertiaListener = router.on("before", (event) => {
-            // FIX: Check !allowExitRef.current. If true, we skip the block.
             if (
                 !allowExitRef.current &&
                 isDirty &&
@@ -72,9 +68,7 @@ export default function PrintLayout({ settings }: { settings: any }) {
             window.removeEventListener("beforeunload", handleBeforeUnload);
             removeInertiaListener();
         };
-    }, [isDirty]); // Re-bind listener when dirty state changes
-
-    // --- Modal Actions ---
+    }, [isDirty]);
 
     const cancelExit = () => {
         setShowExitModal(false);
@@ -82,7 +76,7 @@ export default function PrintLayout({ settings }: { settings: any }) {
     };
 
     const discardAndExit = () => {
-        allowExitRef.current = true; // Allow exit without saving
+        allowExitRef.current = true;
         setShowExitModal(false);
         reset();
         if (pendingUrl) router.visit(pendingUrl);
@@ -91,27 +85,21 @@ export default function PrintLayout({ settings }: { settings: any }) {
     const saveAndExit = () => {
         post(route("settings.print.update"), {
             onSuccess: () => {
-                // FIX: Set this to true IMMEDIATELY so the router listener lets us pass
                 allowExitRef.current = true;
 
                 setShowExitModal(false);
 
-                // Clear file inputs visually
                 setData("header", null);
                 setData("footer", null);
 
-                // Navigate to the pending URL
                 if (pendingUrl) router.visit(pendingUrl);
             },
             onError: () => {
-                // If error, keep modal closed so user can fix it, but don't allow exit yet
                 setShowExitModal(false);
                 allowExitRef.current = false;
             },
         });
     };
-
-    // --- Form Actions ---
 
     const handleHeaderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -139,7 +127,6 @@ export default function PrintLayout({ settings }: { settings: any }) {
         });
     };
 
-    // Helper Component
     const ToggleSwitch = ({ label, checked, onChange }: any) => (
         <Switch.Group as="div" className="flex items-center justify-between">
             <Switch.Label className="mr-3 text-sm font-medium text-gray-700">
@@ -181,7 +168,6 @@ export default function PrintLayout({ settings }: { settings: any }) {
                             onSubmit={submit}
                             className="p-4 sm:p-8 space-y-8"
                         >
-                            {/* --- HEADER CONFIGURATION --- */}
                             <div className="border-b border-gray-200 pb-8">
                                 <div className="md:flex md:items-center md:justify-between mb-4">
                                     <div>
@@ -242,7 +228,6 @@ export default function PrintLayout({ settings }: { settings: any }) {
                                 </div>
                             </div>
 
-                            {/* --- FOOTER CONFIGURATION --- */}
                             <div className="border-b border-gray-200 pb-8">
                                 <div className="md:flex md:items-center md:justify-between mb-4">
                                     <div>
@@ -303,7 +288,6 @@ export default function PrintLayout({ settings }: { settings: any }) {
                                 </div>
                             </div>
 
-                            {/* --- ACTIONS --- */}
                             <div className="flex items-center justify-end pt-2">
                                 <PrimaryButton
                                     disabled={processing || !isDirty}

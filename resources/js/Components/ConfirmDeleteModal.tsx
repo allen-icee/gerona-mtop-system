@@ -1,3 +1,4 @@
+//GeronaMTOP\resources\js\Components\ConfirmDeleteModal.tsx
 import Modal from "@/Components/Modal";
 import DangerButton from "@/Components/DangerButton";
 import SecondaryButton from "@/Components/SecondaryButton";
@@ -23,7 +24,6 @@ export default function ConfirmDeleteModal({
     return (
         <Modal show={show} onClose={onClose} maxWidth="sm">
             <div className="p-6">
-                {/* Icon Wrapper */}
                 <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-6">
                     <Icon
                         icon="solar:trash-bin-trash-bold"
@@ -32,7 +32,6 @@ export default function ConfirmDeleteModal({
                     />
                 </div>
 
-                {/* Text Content */}
                 <div className="text-center">
                     <h3 className="text-xl font-bold text-gray-900">{title}</h3>
                     <div className="mt-2">
@@ -42,7 +41,6 @@ export default function ConfirmDeleteModal({
                     </div>
                 </div>
 
-                {/* Buttons - Centered */}
                 <div className="mt-8 flex justify-center gap-3">
                     <SecondaryButton
                         onClick={onClose}

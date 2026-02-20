@@ -1,3 +1,4 @@
+//GeronaMTOP\resources\js\Pages\Mtop\Partials\CedulaForm.tsx
 import InputGroup from "@/Components/InputGroup";
 import { Icon } from "@iconify/react";
 
@@ -32,7 +33,7 @@ export default function CedulaForm({ data, setData, errors, onKeyDown }: any) {
                     label="Date Issued"
                     name="cedula_date"
                     type="date"
-                    max="9999-12-31" // <--- Stops 5 digit years
+                    max="9999-12-31"
                     value={data.cedula_date}
                     onChange={(e: any) =>
                         setData("cedula_date", e.target.value)

@@ -1,3 +1,4 @@
+//GeronaMTOP\resources\js\Components\SignatorySelect.tsx
 import { useState, useMemo, useEffect, useRef } from "react";
 import { Icon } from "@iconify/react";
 
@@ -31,12 +32,10 @@ export default function SignatorySelect({
         );
     }, [value, options]);
 
-    // Reset selection index when filter changes
     useEffect(() => {
         setSelectedIndex(-1);
     }, [filtered]);
 
-    // Scroll active item into view
     useEffect(() => {
         if (isOpen && listRef.current && selectedIndex >= 0) {
             const list = listRef.current;
@@ -83,7 +82,6 @@ export default function SignatorySelect({
             }
         }
 
-        // Pass to parent logic
         if (onKeyDown) onKeyDown(e);
     };
 
@@ -111,7 +109,7 @@ export default function SignatorySelect({
                     onBlur={() => setTimeout(() => setIsOpen(false), 200)}
                     required={required}
                     placeholder="Search or type name..."
-                    onKeyDown={handleKeyDown} // Use wrapper handler
+                    onKeyDown={handleKeyDown}
                 />
 
                 <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
@@ -136,7 +134,7 @@ export default function SignatorySelect({
                                 onChange(name);
                                 setIsOpen(false);
                             }}
-                            onMouseEnter={() => setSelectedIndex(index)} // Optional
+                            onMouseEnter={() => setSelectedIndex(index)}
                         >
                             {name}
                         </li>

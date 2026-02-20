@@ -1,3 +1,4 @@
+//GeronaMTOP\resources\js\Pages\Mtop\Edit.tsx
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import PrimaryButton from "@/Components/PrimaryButton";
 import { Head, Link, useForm, usePage } from "@inertiajs/react";
@@ -7,7 +8,6 @@ import { Icon } from "@iconify/react";
 import toast from "react-hot-toast";
 import Modal from "@/Components/Modal";
 
-// Import Partials
 import TransactionHeader from "./Partials/TransactionHeader";
 import ApplicantForm from "./Partials/ApplicantForm";
 import TricycleForm from "./Partials/TricycleForm";
@@ -17,7 +17,6 @@ import OfficialsForm from "./Partials/OfficialsForm";
 import PermitPreview from "./Partials/PermitPreview";
 import PrintSuccessModal from "./Partials/PrintSuccessModal";
 
-// --- EXTERNAL WINDOW COMPONENT FOR DUAL MONITORS ---
 function ExternalWindow({
     children,
     onClose,
@@ -29,7 +28,6 @@ function ExternalWindow({
     const winRef = useRef<Window | null>(null);
 
     useEffect(() => {
-        // Open a real OS Window
         winRef.current = window.open(
             "",
             "",
@@ -44,7 +42,6 @@ function ExternalWindow({
             return;
         }
 
-        // Copy all CSS and Tailwind styles from the main window to the new window
         winRef.current.document.head.innerHTML = window.document.head.innerHTML;
         winRef.current.document.title = "Live Permit Preview (Dual Monitor)";
         winRef.current.document.body.className = "bg-gray-200 m-0 p-4";
@@ -53,12 +50,10 @@ function ExternalWindow({
         winRef.current.document.body.appendChild(div);
         setContainer(div);
 
-        // Listen for user closing the popup manually
         winRef.current.addEventListener("beforeunload", () => {
             onClose();
         });
 
-        // Cleanup when the component unmounts
         return () => {
             if (winRef.current) {
                 winRef.current.close();
@@ -92,7 +87,6 @@ interface MtopApplication {
     authorized_official: string;
 }
 
-// --- STRICT DATE VALIDATION HELPER ---
 const isValidDate = (dateString: string): boolean => {
     if (!dateString) return false;
     const regex = /^\d{4}-\d{2}-\d{2}$/;
@@ -120,10 +114,8 @@ export default function Edit({
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [updatedRecord, setUpdatedRecord] = useState<any>(null);
 
-    // --- PIP FLOATING STATE ---
     const [isFloating, setIsFloating] = useState(false);
 
-    // 1. INITIALIZE FORM WITH EXISTING DATA
     const { data, setData, put, processing, errors, isDirty, reset } = useForm({
         last_name: application.last_name || "",
         first_name: application.first_name || "",
@@ -145,7 +137,6 @@ export default function Edit({
         authorized_official: application.authorized_official || "",
     });
 
-    // 2. VALIDATION LOGIC
     const requiredFields = {
         1: ["last_name", "first_name", "address", "transaction_date"],
         2: ["plate_no", "make_type", "engine_motor_no", "chassis_no"],
@@ -202,7 +193,7 @@ export default function Edit({
                 if (successData) {
                     setUpdatedRecord(successData);
                     setShowSuccessModal(true);
-                    setIsFloating(false); // Close Dual Monitor window on success
+                    setIsFloating(false);
                 }
             },
             onError: (errs) => {
@@ -343,18 +334,13 @@ export default function Edit({
 
             <div className="py-6 pb-24 sm:pb-12">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-                    {/* DYNAMIC GRID */}
                     <div
                         className={`grid grid-cols-1 items-start transition-all duration-500 ease-in-out ${isFloating ? "max-w-4xl mx-auto" : "xl:grid-cols-12 gap-6"}`}
                     >
-                        {/* --- LEFT COLUMN: FORM --- */}
                         <div
-                            // ✅ FIX: Removed "overflow-hidden" from here so the dropdown can escape the card
                             className={`bg-white rounded-lg shadow-sm border border-gray-200 transition-all duration-500 relative ${isFloating ? "w-full ring-4 ring-indigo-100" : "xl:col-span-7"}`}
                         >
-                            {/* ACTIVE DUAL MONITOR BANNER */}
                             {isFloating && (
-                                // ✅ Added rounded-t-lg
                                 <div className="bg-indigo-600 p-3 flex justify-between items-center px-6 rounded-t-lg">
                                     <span className="text-white text-sm font-bold flex items-center gap-2">
                                         <Icon
@@ -373,8 +359,6 @@ export default function Edit({
                                 </div>
                             )}
 
-                            {/* 3-STEP NAVIGATION TABS */}
-                            {/* ✅ Added conditional rounded-t-lg so it looks perfect */}
                             <div
                                 className={`flex border-b border-gray-200 bg-gray-50 ${!isFloating ? "rounded-t-lg" : ""}`}
                             >
@@ -439,7 +423,6 @@ export default function Edit({
                                 onSubmit={submit}
                                 className="p-4 sm:p-6 space-y-6"
                             >
-                                {/* STEP 1 */}
                                 <div
                                     className={
                                         step === 1
@@ -462,7 +445,6 @@ export default function Edit({
                                     />
                                 </div>
 
-                                {/* STEP 2 */}
                                 <div
                                     className={
                                         step === 2
@@ -478,7 +460,6 @@ export default function Edit({
                                     />
                                 </div>
 
-                                {/* STEP 3 */}
                                 <div
                                     className={
                                         step === 3
@@ -510,7 +491,6 @@ export default function Edit({
                                     />
                                 </div>
 
-                                {/* DESKTOP FOOTER */}
                                 <div className="hidden sm:flex items-center justify-between mt-8 pt-4 border-t border-gray-100">
                                     <Link
                                         href={route("mtop.index")}
@@ -572,11 +552,9 @@ export default function Edit({
                             </form>
                         </div>
 
-                        {/* --- RIGHT COLUMN: STANDARD PREVIEW --- */}
                         {!isFloating && (
                             <div className="hidden xl:block xl:col-span-5 sticky top-6 z-20 animate-fade-in">
                                 <div className="relative">
-                                    {/* DUAL MONITOR BUTTON */}
                                     <button
                                         type="button"
                                         onClick={() => setIsFloating(true)}
@@ -599,7 +577,6 @@ export default function Edit({
                 </div>
             </div>
 
-            {/* --- THE EXTERNAL OS WINDOW --- */}
             {isFloating && (
                 <ExternalWindow onClose={() => setIsFloating(false)}>
                     <div className="drop-shadow-xl max-w-lg mx-auto">
@@ -615,7 +592,6 @@ export default function Edit({
                 data={updatedRecord}
             />
 
-            {/* MOBILE STICKY FOOTER */}
             <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 sm:hidden z-40 flex justify-between items-center safe-area-pb">
                 <Link
                     href={route("mtop.index")}
@@ -664,7 +640,6 @@ export default function Edit({
                 </div>
             </div>
 
-            {/* MOBILE PREVIEW MODAL */}
             <Modal
                 show={showMobilePreview}
                 onClose={() => setShowMobilePreview(false)}
