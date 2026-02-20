@@ -1,5 +1,5 @@
 //GeronaMTOP\electron.cjs
-const { app, BrowserWindow, shell } = require("electron");
+const { app, BrowserWindow, shell, dialog } = require("electron");
 const { spawn } = require("child_process");
 const path = require("path");
 const fs = require("fs");
@@ -8,7 +8,6 @@ let mainWindow;
 let phpServer;
 
 const phpExe = path.join(__dirname, "php", "php.exe");
-
 const logFilePath = path.join(app.getPath("userData"), "gerona-error.log");
 
 function writeLog(message) {
@@ -24,40 +23,55 @@ process.on("uncaughtException", (error) => {
 
 function createWindow() {
     writeLog("=== APPLICATION STARTED ===");
-    writeLog("Running Startup Backup...");
 
-    spawn(phpExe, ["artisan", "backup:run"], { cwd: __dirname, shell: true });
+    const isPackaged = app.isPackaged;
 
-    setInterval(() => {
-        writeLog("Running Scheduled Backup (4 Hours)...");
-        spawn(phpExe, ["artisan", "backup:run"], {
-            cwd: __dirname,
-            shell: true,
-        });
-    }, 14400000);
+    const serverEnv = isPackaged
+        ? {
+              ...process.env,
+              APP_ENV: "production",
+              APP_DEBUG: "false",
+          }
+        : process.env;
 
-    writeLog("Starting Laravel Server...");
-
-    phpServer = spawn(
-        phpExe,
-        ["artisan", "serve", "--port=8000", "--host=0.0.0.0"],
-        {
-            cwd: __dirname,
-            shell: true,
-        },
+    writeLog(
+        isPackaged
+            ? "Starting Production Server..."
+            : "Starting Native Development Server...",
     );
 
-    phpServer.stdout.on("data", (data) => {
-        writeLog(`Laravel: ${data.toString().trim()}`);
+    phpServer = spawn(phpExe, ["-S", "0.0.0.0:8000", "server.php"], {
+        cwd: __dirname,
+        env: serverEnv,
     });
 
-    phpServer.stderr.on("data", (data) => {
-        writeLog(`Laravel Error: ${data.toString().trim()}`);
-    });
+    phpServer.stdout.on("data", (data) =>
+        writeLog(`Server: ${data.toString().trim()}`),
+    );
+    phpServer.stderr.on("data", (data) =>
+        writeLog(`Server Error: ${data.toString().trim()}`),
+    );
+    phpServer.on("close", (code) =>
+        writeLog(`PHP SERVER STOPPED with code ${code}`),
+    );
 
-    phpServer.on("close", (code) => {
-        writeLog(`PHP SERVER STOPPED with code ${code}`);
-    });
+    try {
+        writeLog("Running Startup Backup...");
+        spawn(phpExe, ["artisan", "backup:run"], {
+            cwd: __dirname,
+            detached: true,
+        });
+
+        setInterval(() => {
+            writeLog("Running Scheduled Backup (4 Hours)...");
+            spawn(phpExe, ["artisan", "backup:run"], {
+                cwd: __dirname,
+                detached: true,
+            });
+        }, 14400000);
+    } catch (err) {
+        writeLog(`Backup initialization failed: ${err.message}`);
+    }
 
     mainWindow = new BrowserWindow({
         width: 1200,
@@ -88,11 +102,23 @@ function createWindow() {
         return { action: "allow" };
     });
 
-    setTimeout(() => {
+    let retries = 0;
+    const loadApp = () => {
         mainWindow.loadURL("http://127.0.0.1:8000").catch((err) => {
-            writeLog(`Failed to load URL: ${err.message}`);
+            writeLog(`Failed to load URL: ${err.message}. Retrying...`);
+            if (retries < 5) {
+                retries++;
+                setTimeout(loadApp, 2000);
+            } else {
+                dialog.showErrorBox(
+                    "Server Error",
+                    "The MTOP System server took too long to start. Please close and reopen the application.",
+                );
+            }
         });
-    }, 2500);
+    };
+
+    setTimeout(loadApp, 2000);
 
     mainWindow.on("closed", () => {
         mainWindow = null;

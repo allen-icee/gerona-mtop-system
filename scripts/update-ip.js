@@ -29,7 +29,7 @@ if (fs.existsSync(envPath)) {
 
     envContent = envContent.replace(
         /^APP_URL=.*$/m,
-        `APP_URL=http://${ip}:8100`,
+        `APP_URL=http://${ip}:8000`,
     );
     fs.writeFileSync(envPath, envContent);
     console.log(`✅  Updated .env APP_URL`);
@@ -60,12 +60,12 @@ if (fs.existsSync(batPath)) {
 
     batContent = batContent.replace(
         /start http:\/\/[\d\.]+:8100/,
-        `start http://${ip}:8100`,
+        `start http://${ip}:8000`,
     );
 
     batContent = batContent.replace(
         /echo OTHER STAFF should use:\s+http:\/\/[\d\.]+:8100/,
-        `echo OTHER STAFF should use:      http://${ip}:8100`,
+        `echo OTHER STAFF should use:      http://${ip}:8000`,
     );
 
     fs.writeFileSync(batPath, batContent);

@@ -7,7 +7,7 @@
     "author": "Municipality of Gerona",
     "scripts": {
         "dev": "node scripts/update-ip.js && vite",
-        "build": "tsc && vite build",
+        "build": "tsc && vite build && rimraf public/hot",
         "start": "electron electron.cjs",
         "dist": "electron-builder",
         "watch": "concurrently -k \"npm run dev\" \"npm start\""
