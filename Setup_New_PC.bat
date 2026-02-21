@@ -18,16 +18,26 @@ if not exist "php\php.exe" (
     exit /b
 )
 
+echo Creating required system folders...
+if not exist "app\storage\framework\views" mkdir "app\storage\framework\views"
+if not exist "app\storage\framework\sessions" mkdir "app\storage\framework\sessions"
+if not exist "app\storage\framework\cache\data" mkdir "app\storage\framework\cache\data"
+
+echo.
+echo Clearing old development cache...
+"php\php.exe" "app\artisan" optimize:clear
+
+echo.
 echo Creating storage link...
-"php\php.exe" artisan storage:link
+"php\php.exe" "app\artisan" storage:link
 
 echo.
 echo Setting up the database tables...
-"php\php.exe" artisan migrate --force
+"php\php.exe" "app\artisan" migrate --force
 
 echo.
 echo Creating admin account and default settings...
-"php\php.exe" artisan db:seed --force
+"php\php.exe" "app\artisan" db:seed --force
 
 echo.
 echo =====================================================

@@ -66,10 +66,14 @@ function startPHPServer(envVars) {
 
     log("Starting PHP Server...");
 
-    phpServer = spawn(phpExe, ["-S", "0.0.0.0:8000", "server.php"], {
-        cwd: app.isPackaged ? path.dirname(app.getPath("exe")) : __dirname,
-        env: envVars,
-    });
+    phpServer = spawn(
+        phpExe,
+        ["-S", "0.0.0.0:8000", "-t", "public", "server.php"],
+        {
+            cwd: __dirname, // 🟢 FIXED: Always start inside the app folder
+            env: envVars,
+        },
+    );
 
     phpServer.stdout.on("data", (d) => log("PHP: " + d.toString()));
     phpServer.stderr.on("data", (d) => log("PHP ERR: " + d.toString()));

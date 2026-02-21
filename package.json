@@ -7,7 +7,7 @@
     "author": "Municipality of Gerona",
     "scripts": {
         "dev": "node scripts/update-ip.js && vite",
-        "build": "tsc && vite build && rimraf public/hot",
+        "build": "tsc && vite build && rimraf public/hot && node -e \"require('fs').copyFileSync('public/build/.vite/manifest.json', 'public/build/manifest.json')\"",
         "start": "electron electron.cjs",
         "dist": "electron-builder",
         "watch": "concurrently -k \"npm run dev\" \"npm start\""
@@ -15,7 +15,7 @@
     "build": {
         "appId": "com.gerona.mtop",
         "productName": "GeronaMTOPSystem",
-        "asar": true,
+        "asar": false,
         "directories": {
             "output": "dist-app"
         },
@@ -45,6 +45,7 @@
             "vendor/**/*",
             "electron.cjs",
             "artisan",
+            "server.php",
             ".env",
             "composer.json",
             "!dist-app/**/*",
