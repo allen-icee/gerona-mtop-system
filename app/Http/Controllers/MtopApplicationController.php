@@ -14,10 +14,10 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use App\Models\SyncQueue; // 🟢 ALREADY IMPORTED
 
 class MtopApplicationController extends Controller
 {
-
     public function index(Request $request): Response
     {
         $search = $request->input('search');
@@ -48,10 +48,8 @@ class MtopApplicationController extends Controller
             $query->where('address', 'like', "%{$barangay}%");
         }
         if ($renewal === 'upcoming') {
-
             $query->where('status', 'active')->whereBetween('valid_until', [now(), now()->addDays(60)]);
         } elseif ($renewal === 'expired') {
-
             $query->where(function ($q) {
                 $q->where('status', 'expired')
                     ->orWhere(function ($subQ) {
@@ -59,10 +57,8 @@ class MtopApplicationController extends Controller
                     });
             });
         } elseif ($renewal === 'active') {
-
             $query->where('status', 'active')->whereDate('valid_until', '>=', now());
         } elseif ($renewal === 'archived') {
-
             $query->where('status', 'archived');
         }
 
@@ -113,17 +109,14 @@ class MtopApplicationController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-
             'last_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
             'first_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
             'middle_name' => ['nullable', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
             'suffix' => ['nullable', 'string', 'max:10', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
             'address' => 'required|string|max:100',
             'contact_number' => ['nullable', 'regex:/^(09|\+639)\d{9}$/'],
-
             'transaction_date' => 'required|date',
             'mt_number' => 'nullable|string',
-
             'body_number' => [
                 'nullable',
                 'regex:/^[0-9]+$/',
@@ -133,7 +126,6 @@ class MtopApplicationController extends Controller
             'make_type' => 'required|string|max:30',
             'engine_motor_no' => 'required|string|max:30',
             'chassis_no' => 'required|string|max:30',
-
             'cedula_number' => 'required|string|max:20',
             'cedula_date' => 'required|date',
             'or_number' => 'required|string|max:20',
@@ -141,7 +133,6 @@ class MtopApplicationController extends Controller
             'punong_bayan' => ['required', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
             'authorized_official' => ['required', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
         ], [
-
             'body_number.unique' => 'This Body Number is already assigned to another operator!'
         ]);
 
@@ -183,11 +174,17 @@ class MtopApplicationController extends Controller
             $applicationData['mt_number'] = $generated_mt_number;
             $applicationData['valid_until'] = Carbon::parse($request->transaction_date)->addYears(3);
             $applicationData['status'] = 'active';
-
             $applicationData['franchise_id'] = $franchise->id;
             $applicationData['transaction_type'] = 'New';
             $applicationData['processed_by'] = Auth::id();
-            return MtopApplication::create($applicationData);
+
+            $application = MtopApplication::create($applicationData);
+
+            // 🟢 ELITE FEATURE #1: QUEUE FOR SYNC (CREATE)
+            $this->queueForSync('mtop_franchises', $franchise->toArray());
+            $this->queueForSync('mtop_applications', $application->toArray());
+
+            return $application;
         });
 
         return redirect()->back()->with('success_data', [
@@ -222,13 +219,11 @@ class MtopApplicationController extends Controller
             'address' => 'required|string|max:100',
             'transaction_date' => 'required|date',
             'mt_number' => 'nullable|string|max:20',
-
             'body_number' => [
                 'nullable',
                 'regex:/^[0-9]+$/',
                 Rule::unique('mtop_franchises', 'body_number')->ignore($application->franchise_id)
             ],
-
             'plate_no' => ['required', 'string', 'max:30'],
             'make_type' => 'required|string|max:30',
             'engine_motor_no' => 'required|string|max:30',
@@ -240,7 +235,6 @@ class MtopApplicationController extends Controller
             'punong_bayan' => ['required', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
             'authorized_official' => ['required', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
         ], [
-
             'body_number.unique' => 'This Body Number is already assigned to another operator!'
         ]);
 
@@ -248,25 +242,33 @@ class MtopApplicationController extends Controller
             $validated['valid_until'] = Carbon::parse($request->transaction_date)->addYears(3);
         }
 
-        $application->update($validated);
+        DB::transaction(function () use ($application, $validated) {
+            $application->update($validated);
 
-        if ($application->franchise_id) {
-            $franchise = MtopFranchise::find($application->franchise_id);
-            if ($franchise) {
-                $franchise->update([
-                    'body_number' => $validated['body_number'] ?? $franchise->body_number,
-                    'last_name' => $validated['last_name'],
-                    'first_name' => $validated['first_name'],
-                    'middle_name' => $validated['middle_name'],
-                    'suffix' => $validated['suffix'],
-                    'address' => $validated['address'],
-                    'make_type' => $validated['make_type'],
-                    'engine_motor_no' => $validated['engine_motor_no'],
-                    'chassis_no' => $validated['chassis_no'],
-                    'plate_no' => $validated['plate_no'],
-                ]);
+            // 🟢 ELITE FEATURE #1: QUEUE FOR SYNC (UPDATE)
+            $this->queueForSync('mtop_applications', $application->fresh()->toArray());
+
+            if ($application->franchise_id) {
+                $franchise = MtopFranchise::find($application->franchise_id);
+                if ($franchise) {
+                    $franchise->update([
+                        'body_number' => $validated['body_number'] ?? $franchise->body_number,
+                        'last_name' => $validated['last_name'],
+                        'first_name' => $validated['first_name'],
+                        'middle_name' => $validated['middle_name'],
+                        'suffix' => $validated['suffix'],
+                        'address' => $validated['address'],
+                        'make_type' => $validated['make_type'],
+                        'engine_motor_no' => $validated['engine_motor_no'],
+                        'chassis_no' => $validated['chassis_no'],
+                        'plate_no' => $validated['plate_no'],
+                    ]);
+
+                    // 🟢 ELITE FEATURE #1: QUEUE FOR SYNC (UPDATE)
+                    $this->queueForSync('mtop_franchises', $franchise->fresh()->toArray());
+                }
             }
-        }
+        });
 
         return redirect()->back()->with('success_data', [
             'id' => $application->id,
@@ -279,11 +281,17 @@ class MtopApplicationController extends Controller
     {
         $application = MtopApplication::findOrFail($id);
 
-        if ($application->transaction_type === 'New' && $application->franchise_id) {
-            MtopFranchise::where('id', $application->franchise_id)->delete();
-        } else {
-            $application->delete();
-        }
+        DB::transaction(function () use ($application, $id) {
+            if ($application->transaction_type === 'New' && $application->franchise_id) {
+                MtopFranchise::where('id', $application->franchise_id)->delete();
+                // 🟢 ELITE FEATURE #1: QUEUE FOR SYNC (DELETE)
+                $this->queueForSync('mtop_franchises', ['id' => $application->franchise_id, '_action' => 'delete']);
+            } else {
+                // 🟢 ELITE FEATURE #1: QUEUE FOR SYNC (DELETE)
+                $this->queueForSync('mtop_applications', ['id' => $id, '_action' => 'delete']);
+                $application->delete();
+            }
+        });
 
         return redirect()->back()->with('message', 'Record deleted successfully.');
     }
@@ -400,24 +408,28 @@ class MtopApplicationController extends Controller
 
         $drivers = $request->input('drivers');
 
-        foreach ($drivers as $index => $data) {
-            $app = MtopApplication::find($data['id']);
+        DB::transaction(function () use ($request, $drivers) {
+            foreach ($drivers as $index => $data) {
+                $app = MtopApplication::find($data['id']);
 
-            $updateData = ['driver_name' => $data['driver_name'] ?? $app->driver_name];
+                $updateData = ['driver_name' => $data['driver_name'] ?? $app->driver_name];
 
-            if ($request->hasFile("drivers.{$index}.photo")) {
+                if ($request->hasFile("drivers.{$index}.photo")) {
+                    if ($app->driver_photo_path && Storage::exists('public/' . $app->driver_photo_path)) {
+                        Storage::delete('public/' . $app->driver_photo_path);
+                    }
 
-                if ($app->driver_photo_path && Storage::exists('public/' . $app->driver_photo_path)) {
-                    Storage::delete('public/' . $app->driver_photo_path);
+                    $file = $request->file("drivers.{$index}.photo");
+                    $path = $file->store('driver_photos', 'public');
+                    $updateData['driver_photo_path'] = $path;
                 }
 
-                $file = $request->file("drivers.{$index}.photo");
-                $path = $file->store('driver_photos', 'public');
-                $updateData['driver_photo_path'] = $path;
-            }
+                $app->update($updateData);
 
-            $app->update($updateData);
-        }
+                // 🟢 ELITE FEATURE #1: QUEUE FOR SYNC (DRIVER INFO)
+                $this->queueForSync('mtop_applications', $app->fresh()->toArray());
+            }
+        });
 
         return redirect()->back()->with('message', 'Driver information and photos updated successfully!');
     }
@@ -489,9 +501,12 @@ class MtopApplicationController extends Controller
         $newApp = DB::transaction(function () use ($oldApp, $validated, $request) {
 
             $oldApp->update(['status' => 'archived']);
+            // 🟢 ELITE FEATURE #1: QUEUE FOR SYNC (ARCHIVE OLD)
+            $this->queueForSync('mtop_applications', $oldApp->fresh()->toArray());
 
             if ($oldApp->franchise_id) {
-                MtopFranchise::where('id', $oldApp->franchise_id)->update([
+                $franchise = MtopFranchise::where('id', $oldApp->franchise_id)->first();
+                $franchise->update([
                     'body_number' => $validated['body_number'] ?? null,
                     'last_name' => $validated['last_name'],
                     'first_name' => $validated['first_name'],
@@ -503,6 +518,8 @@ class MtopApplicationController extends Controller
                     'chassis_no' => $validated['chassis_no'],
                     'plate_no' => $validated['plate_no'],
                 ]);
+                // 🟢 ELITE FEATURE #1: QUEUE FOR SYNC (UPDATE FRANCHISE)
+                $this->queueForSync('mtop_franchises', $franchise->fresh()->toArray());
             }
 
             $applicationData = $validated;
@@ -513,7 +530,12 @@ class MtopApplicationController extends Controller
             $applicationData['transaction_type'] = 'Renewal';
             $applicationData['processed_by'] = Auth::id();
 
-            return MtopApplication::create($applicationData);
+            $newAppCreated = MtopApplication::create($applicationData);
+
+            // 🟢 ELITE FEATURE #1: QUEUE FOR SYNC (CREATE RENEWAL)
+            $this->queueForSync('mtop_applications', $newAppCreated->toArray());
+
+            return $newAppCreated;
         });
 
         return redirect()->route('mtop.index')->with('success_data', [
@@ -521,5 +543,17 @@ class MtopApplicationController extends Controller
             'mt_number' => $newApp->mt_number,
             'operator_name' => $newApp->first_name . ' ' . $newApp->last_name . ($newApp->suffix ? ' ' . $newApp->suffix : ''),
         ])->with('message', 'Renewal successful!');
+    }
+
+    /**
+     * Helper method to insert a record into the sync queue.
+     */
+    private function queueForSync(string $tableName, array $payload)
+    {
+        SyncQueue::create([
+            'table_name' => $tableName,
+            'payload_json' => $payload,
+            'status' => 'pending'
+        ]);
     }
 }

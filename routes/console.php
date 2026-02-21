@@ -9,3 +9,5 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote')->hourly();
 
 Schedule::command('mtop:expire-permits')->dailyAt('00:01');
+//Schedule::command('sync:run')->everyMinute()->withoutOverlapping();
+Schedule::command('db:check-health')->everyTenMinutes()->withoutOverlapping();

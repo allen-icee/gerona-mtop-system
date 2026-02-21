@@ -21,10 +21,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        DB::connection()->getPdo()->exec("
-        PRAGMA journal_mode = WAL;
-        PRAGMA synchronous = NORMAL;
-        PRAGMA busy_timeout = 5000;
-    ");
+        Vite::prefetch(concurrency: 3);
+        // Apply SQLite performance and stability pragmas
+        if (DB::connection()->getDriverName() === 'sqlite') {
+            DB::connection()->getPdo()->exec("
+            PRAGMA journal_mode = WAL;
+            PRAGMA synchronous = NORMAL;
+            PRAGMA busy_timeout = 5000;
+        ");
+        }
     }
 }
