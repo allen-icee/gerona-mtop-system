@@ -15,6 +15,7 @@
     "build": {
         "appId": "com.gerona.mtop",
         "productName": "Gerona MTOP System",
+        "asar": true,
         "directories": {
             "output": "dist-app"
         },
@@ -47,9 +48,10 @@
             "artisan",
             ".env",
             "Setup_New_PC.bat",
-            "composer.json"
-        ],
-        "asar": false
+            "composer.json",
+            "!dist-app/**/*",
+            "!node_modules/.cache/**/*"
+        ]
     },
     "dependencies": {
         "react-hot-toast": "^2.4.1"

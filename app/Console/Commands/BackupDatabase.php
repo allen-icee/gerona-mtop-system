@@ -51,11 +51,11 @@ class BackupDatabase extends Command
 
         if (count($files) > 10) {
 
-            usort($files, function ($a, $b) {
-                return filemtime($a) - filemtime($b);
-            });
+            usort($files, fn($a, $b) => filemtime($a) <=> filemtime($b));
 
-            File::delete($files[0]);
+            for ($i = 0; $i < count($files) - 7; $i++) {
+                File::delete($files[$i]);
+            }
         }
     }
 }

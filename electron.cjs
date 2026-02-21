@@ -1,124 +1,119 @@
-//GeronaMTOP\electron.cjs
 const { app, BrowserWindow, shell, dialog } = require("electron");
 const { spawn } = require("child_process");
 const path = require("path");
 const fs = require("fs");
+const os = require("os");
 
 let mainWindow;
 let phpServer;
 
 const phpExe = path.join(__dirname, "php", "php.exe");
-const logFilePath = path.join(app.getPath("userData"), "gerona-error.log");
+
+const logFilePath = path.join(app.getPath("userData"), "mtop-system.log");
 
 function writeLog(message) {
-    const time = new Date().toLocaleString();
-    const formattedMessage = `[${time}] ${message}\n`;
-    fs.appendFileSync(logFilePath, formattedMessage);
-    console.log(formattedMessage.trim());
+    try {
+        const time = new Date().toLocaleString();
+        fs.appendFileSync(logFilePath, `[${time}] ${message}\n`);
+        console.log(message);
+    } catch {}
 }
 
-process.on("uncaughtException", (error) => {
-    writeLog(`CRITICAL CRASH: ${error.message}\n${error.stack}`);
-});
+function getLocalIP() {
+    const interfaces = os.networkInterfaces();
 
-function createWindow() {
-    writeLog("=== APPLICATION STARTED ===");
+    for (const name of Object.keys(interfaces)) {
+        for (const iface of interfaces[name]) {
+            if (iface.family === "IPv4" && !iface.internal) {
+                return iface.address;
+            }
+        }
+    }
 
-    const isPackaged = app.isPackaged;
+    return "127.0.0.1";
+}
 
-    const serverEnv = isPackaged
-        ? {
-              ...process.env,
-              APP_ENV: "production",
-              APP_DEBUG: "false",
-          }
-        : process.env;
-
-    writeLog(
-        isPackaged
-            ? "Starting Production Server..."
-            : "Starting Native Development Server...",
-    );
+function startPHPServer(envVars) {
+    if (phpServer && !phpServer.killed) {
+        return;
+    }
 
     phpServer = spawn(phpExe, ["-S", "0.0.0.0:8000", "server.php"], {
         cwd: __dirname,
-        env: serverEnv,
+        env: envVars,
     });
 
-    phpServer.stdout.on("data", (data) =>
-        writeLog(`Server: ${data.toString().trim()}`),
-    );
-    phpServer.stderr.on("data", (data) =>
-        writeLog(`Server Error: ${data.toString().trim()}`),
-    );
-    phpServer.on("close", (code) =>
-        writeLog(`PHP SERVER STOPPED with code ${code}`),
-    );
+    phpServer.stdout.on("data", (d) => writeLog(d.toString()));
+    phpServer.stderr.on("data", (d) => writeLog("PHP ERR: " + d));
 
-    try {
-        writeLog("Running Startup Backup...");
-        spawn(phpExe, ["artisan", "backup:run"], {
-            cwd: __dirname,
-            detached: true,
-        });
+    phpServer.on("close", () => {
+        writeLog("PHP Server crashed. Restarting...");
+        setTimeout(() => startPHPServer(envVars), 3000);
+    });
 
-        setInterval(() => {
-            writeLog("Running Scheduled Backup (4 Hours)...");
-            spawn(phpExe, ["artisan", "backup:run"], {
-                cwd: __dirname,
-                detached: true,
-            });
-        }, 14400000);
-    } catch (err) {
-        writeLog(`Backup initialization failed: ${err.message}`);
-    }
+    setInterval(() => {
+        if (!phpServer || phpServer.killed) {
+            writeLog("Watchdog restarting PHP...");
+            startPHPServer(envVars);
+        }
+    }, 15000);
+}
+
+function createWindow() {
+    const isPackaged = app.isPackaged;
+    const localIP = getLocalIP();
+
+    const serverEnv = {
+        ...process.env,
+        APP_ENV: isPackaged ? "production" : "local",
+        APP_DEBUG: isPackaged ? "false" : "true",
+        APP_URL: isPackaged
+            ? `http://${localIP}:8000`
+            : "http://127.0.0.1:8000",
+    };
+
+    startPHPServer(serverEnv);
 
     mainWindow = new BrowserWindow({
         width: 1200,
         height: 800,
         title: "Gerona MTOP System",
-        icon: path.join(__dirname, "public", "images", "MunicipalityLogo.png"),
         autoHideMenuBar: true,
+        icon: path.join(__dirname, "public/images/MunicipalityLogo.png"),
         webPreferences: {
-            nodeIntegration: false,
             contextIsolation: true,
+            nodeIntegration: false,
         },
     });
 
     mainWindow.setMenu(null);
 
-    mainWindow.webContents.on("before-input-event", (event, input) => {
-        if (input.control && input.shift && input.key.toLowerCase() === "d") {
-            mainWindow.webContents.toggleDevTools();
-            event.preventDefault();
-        }
-    });
-
     mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-        if (url.includes("/print-ids") || url.includes("/print")) {
+        if (url.includes("/print")) {
             shell.openExternal(url);
             return { action: "deny" };
         }
+
         return { action: "allow" };
     });
 
     let retries = 0;
+
     const loadApp = () => {
-        mainWindow.loadURL("http://127.0.0.1:8000").catch((err) => {
-            writeLog(`Failed to load URL: ${err.message}. Retrying...`);
-            if (retries < 5) {
+        mainWindow.loadURL("http://127.0.0.1:8000").catch(() => {
+            if (retries < 6) {
                 retries++;
                 setTimeout(loadApp, 2000);
             } else {
                 dialog.showErrorBox(
                     "Server Error",
-                    "The MTOP System server took too long to start. Please close and reopen the application.",
+                    "MTOP System failed to start.",
                 );
             }
         });
     };
 
-    setTimeout(loadApp, 2000);
+    setTimeout(loadApp, 3000);
 
     mainWindow.on("closed", () => {
         mainWindow = null;
@@ -128,11 +123,18 @@ function createWindow() {
 app.whenReady().then(createWindow);
 
 app.on("window-all-closed", () => {
-    writeLog("=== APPLICATION CLOSED ===\n");
+    if (phpServer) {
+        try {
+            spawn("taskkill", ["/pid", phpServer.pid.toString(), "/f", "/t"]);
+        } catch {}
+    }
+
     if (process.platform !== "darwin") {
-        if (phpServer) {
-            spawn("taskkill", ["/pid", phpServer.pid, "/f", "/t"]);
-        }
         app.quit();
     }
+});
+
+app.on("render-process-gone", () => {
+    writeLog("Renderer crashed → Reloading");
+    mainWindow?.reload();
 });
