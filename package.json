@@ -14,7 +14,7 @@
     },
     "build": {
         "appId": "com.gerona.mtop",
-        "productName": "Gerona MTOP System",
+        "productName": "GeronaMTOPSystem",
         "asar": true,
         "directories": {
             "output": "dist-app"
@@ -24,15 +24,14 @@
             "icon": "public/images/MunicipalityLogo.png"
         },
         "nsis": {
-            "oneClick": true,
+            "oneClick": false,
             "perMachine": false,
-            "allowElevation": false,
-            "allowToChangeInstallationDirectory": false,
-            "shortcutName": "Gerona MTOP System"
+            "allowElevation": true,
+            "allowToChangeInstallationDirectory": true,
+            "shortcutName": "GeronaMTOPSystem"
         },
         "files": [
             "dist/**/*",
-            "php/**/*",
             "public/**/*",
             "!public/storage",
             "!public/hot",
@@ -47,10 +46,22 @@
             "electron.cjs",
             "artisan",
             ".env",
-            "Setup_New_PC.bat",
             "composer.json",
             "!dist-app/**/*",
             "!node_modules/.cache/**/*"
+        ],
+        "extraResources": [
+            {
+                "from": "php",
+                "to": "php",
+                "filter": [
+                    "**/*"
+                ]
+            },
+            {
+                "from": "Setup_New_PC.bat",
+                "to": "Setup_New_PC.bat"
+            }
         ]
     },
     "dependencies": {
