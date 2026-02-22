@@ -16,7 +16,7 @@ start /b %PHP_PATH% artisan serve --host=0.0.0.0 --port=8100
 
 timeout /t 3 /nobreak >nul
 
-start http://192.168.137.76:8100
+start http://192.168.100.7:8000
 
 echo System is running!
 echo -----------------------------------------------------

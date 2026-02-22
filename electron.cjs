@@ -172,9 +172,9 @@ function createWindow() {
             .catch((err) => {
                 log("Load Failed: " + err.message);
 
-                if (retries < 6) {
+                if (retries < 10) {
                     retries++;
-                    setTimeout(loadApp, 2000);
+                    setTimeout(loadApp, 3000);
                 } else {
                     dialog.showErrorBox(
                         "Server Error",
@@ -184,7 +184,7 @@ function createWindow() {
             });
     };
 
-    setTimeout(loadApp, 4000);
+    setTimeout(loadApp, 6000);
 
     mainWindow.on("closed", () => {
         mainWindow = null;
@@ -196,6 +196,10 @@ function createWindow() {
 | APP EVENTS
 |--------------------------------------------------------------------------
 */
+app.commandLine.appendSwitch(
+    "unsafely-treat-insecure-origin-as-secure",
+    `http://${getLocalIP()}:8000`,
+);
 
 app.whenReady().then(createWindow);
 

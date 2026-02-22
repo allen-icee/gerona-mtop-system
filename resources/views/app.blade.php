@@ -19,6 +19,9 @@
     {{-- Laravel Routes --}}
     @routes
 
+    {{-- REQUIRED FOR REACT FAST REFRESH IN DEV (Safely ignored in Production) --}}
+    @viteReactRefresh
+
     {{-- Vite Assets (PRODUCTION SAFE) --}}
     @vite(['resources/js/app.tsx'])
 

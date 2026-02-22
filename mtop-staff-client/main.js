@@ -1,9 +1,21 @@
-//GeronaMTOP\mtop-staff-client\main.js
-const { app, BrowserWindow, ipcMain, shell } = require("electron"); // ✅ ADDED 'shell'
+const { app, BrowserWindow, ipcMain, shell } = require("electron");
 const path = require("path");
 const fs = require("fs");
 
 const configPath = path.join(app.getPath("userData"), "server-config.json");
+
+// 🟢 MAGIC FIX: Read the saved IP and force Chromium to allow Camera access
+if (fs.existsSync(configPath)) {
+    try {
+        const config = JSON.parse(fs.readFileSync(configPath));
+        if (config.ip) {
+            app.commandLine.appendSwitch(
+                "unsafely-treat-insecure-origin-as-secure",
+                `http://${config.ip}:8000`,
+            );
+        }
+    } catch (e) {}
+}
 
 function createWindow() {
     const mainWindow = new BrowserWindow({
@@ -45,6 +57,8 @@ function createWindow() {
 
     ipcMain.on("save-ip", (event, ip) => {
         fs.writeFileSync(configPath, JSON.stringify({ ip }));
+
+        // Notify the user they need to restart to apply camera permissions
         loadServer(ip);
     });
 }

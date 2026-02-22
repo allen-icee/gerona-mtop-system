@@ -22,12 +22,9 @@ export default defineConfig(({ mode }) => {
             host: "0.0.0.0",
             port: 5173,
             cors: true,
-
-            hmr: isProduction
-                ? false
-                : {
-                      host: "127.0.0.1",
-                  },
+            hmr: {
+            host: "192.168.100.7",
+            },
         },
 
         build: {
