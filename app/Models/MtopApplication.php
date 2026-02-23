@@ -39,4 +39,35 @@ class MtopApplication extends Model
     {
         return "{$this->last_name}, {$this->first_name} " . ($this->middle_name ? $this->middle_name[0] . '.' : '');
     }
+    public function scopeFilter($query, array $filters)
+    {
+        $query->when($filters['search'] ?? null, function ($q, $search) {
+            $q->where(function ($q) use ($search) {
+                $q->where('last_name', 'like', "%{$search}%")
+                    ->orWhere('first_name', 'like', "%{$search}%")
+                    ->orWhere('body_number', 'like', "%{$search}%")
+                    ->orWhere('mt_number', 'like', "%{$search}%")
+                    ->orWhere('plate_no', 'like', "%{$search}%");
+            });
+        })
+            ->when($filters['month'] ?? null, fn($q, $month) => $q->whereMonth('transaction_date', $month))
+            ->when($filters['year'] ?? null, fn($q, $year) => $q->whereYear('transaction_date', $year))
+            ->when($filters['barangay'] ?? null, fn($q, $barangay) => $q->where('address', 'like', "%{$barangay}%"))
+            ->when($filters['renewal'] ?? null, function ($q, $renewal) {
+                if ($renewal === 'upcoming') {
+                    $q->where('status', 'active')->whereBetween('valid_until', [now(), now()->addDays(60)]);
+                } elseif ($renewal === 'expired') {
+                    $q->where(function ($sub) {
+                        $sub->where('status', 'expired')
+                            ->orWhere(function ($subQ) {
+                                $subQ->where('status', 'active')->whereDate('valid_until', '<', now());
+                            });
+                    });
+                } elseif ($renewal === 'active') {
+                    $q->where('status', 'active')->whereDate('valid_until', '>=', now());
+                } elseif ($renewal === 'archived') {
+                    $q->where('status', 'archived');
+                }
+            });
+    }
 }

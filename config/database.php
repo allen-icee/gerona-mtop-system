@@ -112,6 +112,13 @@ return [
             // 'encrypt' => env('DB_ENCRYPT', 'yes'),
             // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
         ],
+        'sqlite_backup' => [
+            'driver' => 'sqlite',
+            'url' => env('DATABASE_URL'),
+            'database' => storage_path('app/backup.sqlite'), // Drop the file here
+            'prefix' => '',
+            'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
+        ],
 
     ],
 

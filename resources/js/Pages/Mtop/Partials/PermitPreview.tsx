@@ -117,7 +117,7 @@ export default function PermitPreview({
                                 <td className="px-3 py-2 bg-blue-200 font-bold w-[35%] sm:w-[30%] text-blue-900 border-r border-black align-top leading-tight">
                                     NAME
                                 </td>
-                                <td className="px-3 py-2 font-bold text-gray-900 align-top wrap-break-words leading-tight text-[13pt]">
+                                <td className="px-3 py-2 font-bold text-gray-900 align-top wrap-break-words whitespace-normal break-all leading-tight text-[13pt]">
                                     {val(formattedName)}
                                 </td>
                             </tr>
@@ -125,7 +125,7 @@ export default function PermitPreview({
                                 <td className="px-3 py-2 bg-blue-200 font-bold text-blue-900 border-r border-black align-top leading-tight">
                                     USAPIN BILANG
                                 </td>
-                                <td className="px-3 py-2 font-bold text-red-600 align-top leading-tight text-[13pt]">
+                                <td className="px-3 py-2 font-bold text-red-600 align-top wrap-break-words whitespace-normal break-all leading-tight text-[13pt]">
                                     {val(data.mt_number)}
                                 </td>
                             </tr>
@@ -141,7 +141,7 @@ export default function PermitPreview({
                                 <td className="px-3 py-2 bg-blue-200 font-bold text-blue-900 border-r border-black align-top leading-tight">
                                     BARANGAY
                                 </td>
-                                <td className="px-3 py-2 font-bold text-gray-800 align-top wrap-break-words leading-tight">
+                                <td className="px-3 py-2 font-bold text-gray-800 align-top wrap-break-words whitespace-normal break-all leading-tight">
                                     {val(data.address).replace(
                                         /(,\s*GERONA,\s*TARLAC|\s*GERONA,\s*TARLAC)/i,
                                         "",
@@ -183,16 +183,16 @@ export default function PermitPreview({
                         </thead>
                         <tbody>
                             <tr>
-                                <td className="px-2 py-2 border-r border-black font-bold text-gray-800 wrap-break-words align-top leading-tight text-[12pt]">
+                                <td className="px-2 py-2 border-r border-black font-bold text-gray-800 wrap-break-words whitespace-normal break-all align-top leading-tight text-[12pt]">
                                     {val(data.make_type)}
                                 </td>
-                                <td className="px-2 py-2 border-r border-black font-bold text-gray-800 wrap-break-words align-top leading-tight text-[12pt]">
+                                <td className="px-2 py-2 border-r border-black font-bold text-gray-800 wrap-break-words whitespace-normal break-all align-top leading-tight text-[12pt]">
                                     {val(data.engine_motor_no)}
                                 </td>
-                                <td className="px-2 py-2 border-r border-black font-bold text-gray-800 wrap-break-words align-top leading-tight text-[12pt]">
+                                <td className="px-2 py-2 border-r border-black font-bold text-gray-800 wrap-break-words whitespace-normal break-all align-top leading-tight text-[12pt]">
                                     {val(data.chassis_no)}
                                 </td>
-                                <td className="px-2 py-2 font-bold text-blue-700 wrap-break-words align-top leading-tight text-[12pt]">
+                                <td className="px-2 py-2 font-bold text-blue-700 wrap-break-words whitespace-normal break-all align-top leading-tight text-[10pt]">
                                     {data.plate_no === "FOR REGISTRATION" ? (
                                         <span className="text-orange-600 block">
                                             FOR REGISTRATION
@@ -228,7 +228,7 @@ export default function PermitPreview({
                                 <td className="px-3 py-2 bg-blue-200 font-bold text-blue-900 w-[40%] border-r border-black align-top leading-tight">
                                     NUMBER
                                 </td>
-                                <td className="px-3 py-2 font-mono font-bold text-gray-800 wrap-break-words align-top leading-tight">
+                                <td className="px-3 py-2 font-mono font-bold text-gray-800 wrap-break-words whitespace-normal break-all align-top leading-tight">
                                     {val(data.cedula_number)}
                                 </td>
                             </tr>
@@ -236,7 +236,7 @@ export default function PermitPreview({
                                 <td className="px-3 py-2 bg-blue-200 font-bold text-blue-900 border-r border-black align-top leading-tight">
                                     DATE
                                 </td>
-                                <td className="px-3 py-2 font-bold text-gray-800 wrap-break-words align-top leading-tight">
+                                <td className="px-3 py-2 font-bold text-gray-800 wrap-break-words whitespace-normal break-all align-top leading-tight">
                                     {formatDate(data.cedula_date)}
                                 </td>
                             </tr>
@@ -259,7 +259,7 @@ export default function PermitPreview({
                                 <td className="px-3 py-2 bg-blue-200 font-bold text-blue-900 w-[40%] border-r border-black align-top leading-tight">
                                     NUMBER
                                 </td>
-                                <td className="px-3 py-2 font-mono font-bold text-gray-800 wrap-break-words align-top leading-tight">
+                                <td className="px-3 py-2 font-mono font-bold text-gray-800 wrap-break-words whitespace-normal break-all align-top leading-tight">
                                     {val(data.or_number)}
                                 </td>
                             </tr>
@@ -267,7 +267,7 @@ export default function PermitPreview({
                                 <td className="px-3 py-2 bg-blue-200 font-bold text-blue-900 border-r border-black align-top leading-tight">
                                     DATE
                                 </td>
-                                <td className="px-3 py-2 font-bold text-gray-800 wrap-break-words align-top leading-tight">
+                                <td className="px-3 py-2 font-bold text-gray-800 wrap-break-words whitespace-normal break-all align-top leading-tight">
                                     {formatDate(data.or_date)}
                                 </td>
                             </tr>
@@ -289,9 +289,9 @@ export default function PermitPreview({
                     <tbody>
                         <tr className="border-b border-black">
                             <td className="px-3 py-2 bg-blue-200 font-bold text-blue-900 w-[45%] sm:w-[35%] border-r border-black align-top leading-tight">
-                                Auth. Official
+                                Authorized Official
                             </td>
-                            <td className="px-3 py-2 font-bold text-gray-800 uppercase wrap-break-words align-top leading-tight">
+                            <td className="px-3 py-2 font-bold text-gray-800 uppercase wrap-break-words whitespace-normal break-all align-top leading-tight">
                                 {val(data.authorized_official)}
                             </td>
                         </tr>
@@ -299,7 +299,7 @@ export default function PermitPreview({
                             <td className="px-3 py-2 bg-blue-200 font-bold text-blue-900 border-r border-black align-top leading-tight">
                                 Punong Bayan
                             </td>
-                            <td className="px-3 py-2 font-bold text-gray-800 uppercase wrap-break-words align-top leading-tight">
+                            <td className="px-3 py-2 font-bold text-gray-800 uppercase wrap-break-words whitespace-normal break-all align-top leading-tight">
                                 {val(data.punong_bayan)}
                             </td>
                         </tr>

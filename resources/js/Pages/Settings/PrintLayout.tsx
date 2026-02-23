@@ -30,11 +30,14 @@ export default function PrintLayout({ settings }: { settings: any }) {
         }));
 
         const timestamp = new Date().getTime();
+
+        // Use custom header if uploaded, otherwise fallback to default image
         if (settings.header_path) {
             setHeaderPreview(`/storage/${settings.header_path}?t=${timestamp}`);
         } else {
-            setHeaderPreview(null);
+            setHeaderPreview(`/images/Gerona_Header.jpg`);
         }
+
         if (settings.footer_path) {
             setFooterPreview(`/storage/${settings.footer_path}?t=${timestamp}`);
         } else {
@@ -201,7 +204,8 @@ export default function PrintLayout({ settings }: { settings: any }) {
                                         />
                                         <p className="text-xs text-gray-500">
                                             Recommended size: 1000x200px (PNG or
-                                            JPG)
+                                            JPG). Will use default Gerona Header
+                                            if blank.
                                         </p>
                                     </div>
                                     <div
@@ -211,7 +215,13 @@ export default function PrintLayout({ settings }: { settings: any }) {
                                             value="Preview"
                                             className="mb-2"
                                         />
-                                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50 flex items-center justify-center min-h-30">
+                                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50 flex items-center justify-center min-h-30 relative">
+                                            {!settings.header_path &&
+                                                !data.header && (
+                                                    <span className="absolute top-2 right-2 bg-gray-200 text-gray-600 text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">
+                                                        Default
+                                                    </span>
+                                                )}
                                             {headerPreview ? (
                                                 <img
                                                     src={headerPreview}

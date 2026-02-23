@@ -10,6 +10,7 @@ import PermitPreview from "./Partials/PermitPreview";
 import { BARANGAYS } from "@/Constants/Barangays";
 import ConfirmDeleteModal from "@/Components/ConfirmDeleteModal";
 import DriverInfoModal from "./Partials/DriverInfoModal";
+
 interface MtopApplication {
     id: number;
     mt_number: string;
@@ -64,24 +65,39 @@ export default function Index({ applications, filters, officials }: Props) {
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
     const [showDriverModal, setShowDriverModal] = useState(false);
 
+    // Calculate current dates ONCE per render, not per row
+    const { now, sixtyDaysFromNow } = useMemo(() => {
+        const currentDate = new Date();
+        const futureDate = new Date();
+        futureDate.setDate(currentDate.getDate() + 60);
+        return { now: currentDate, sixtyDaysFromNow: futureDate };
+    }, []);
+
+    // Effect 1: Handle Search Debouncing (Preserves Scroll)
     useEffect(() => {
         const searchTimer = setTimeout(() => {
             router.get(
                 route("mtop.index"),
                 { search, month, year, barangay, renewal },
-                { preserveState: true, replace: true },
+                {
+                    preserveState: true,
+                    preserveScroll: true,
+                    replace: true,
+                },
             );
         }, 300);
 
+        return () => clearTimeout(searchTimer);
+    }, [search, month, year, barangay, renewal]);
+
+    // Effect 2: Handle Polling (Isolated so typing doesn't reset it)
+    useEffect(() => {
         const pollInterval = setInterval(() => {
             router.reload({ only: ["applications"] });
         }, 10000);
 
-        return () => {
-            clearTimeout(searchTimer);
-            clearInterval(pollInterval);
-        };
-    }, [search, month, year, barangay, renewal]);
+        return () => clearInterval(pollInterval);
+    }, []);
 
     const confirmDelete = (id: number) => {
         setDeletingId(id);
@@ -306,11 +322,6 @@ export default function Index({ applications, filters, officials }: Props) {
                                         const validUntilDate = app.valid_until
                                             ? new Date(app.valid_until)
                                             : null;
-                                        const now = new Date();
-                                        const sixtyDaysFromNow = new Date();
-                                        sixtyDaysFromNow.setDate(
-                                            now.getDate() + 60,
-                                        );
 
                                         const isExpired = validUntilDate
                                             ? validUntilDate < now
@@ -505,9 +516,6 @@ export default function Index({ applications, filters, officials }: Props) {
                                 const validUntilDate = app.valid_until
                                     ? new Date(app.valid_until)
                                     : null;
-                                const now = new Date();
-                                const sixtyDaysFromNow = new Date();
-                                sixtyDaysFromNow.setDate(now.getDate() + 60);
 
                                 const isExpired = validUntilDate
                                     ? validUntilDate < now

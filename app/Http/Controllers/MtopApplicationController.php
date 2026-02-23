@@ -13,56 +13,18 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rule;
 use App\Models\SyncQueue;
+use App\Http\Requests\MtopApplicationRequest;
 
 class MtopApplicationController extends Controller
 {
     public function index(Request $request): Response
     {
-        $search = $request->input('search');
-        $month = $request->input('month');
-        $year = $request->input('year');
-        $barangay = $request->input('barangay');
-        $renewal = $request->input('renewal');
+        $filters = $request->only(['search', 'month', 'year', 'barangay', 'renewal']);
 
-        $query = MtopApplication::query();
-
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('last_name', 'like', "%{$search}%")
-                    ->orWhere('first_name', 'like', "%{$search}%")
-                    ->orWhere('body_number', 'like', "%{$search}%")
-                    ->orWhere('mt_number', 'like', "%{$search}%")
-                    ->orWhere('plate_no', 'like', "%{$search}%");
-            });
-        }
-
-        if ($month) {
-            $query->whereMonth('transaction_date', $month);
-        }
-        if ($year) {
-            $query->whereYear('transaction_date', $year);
-        }
-        if ($barangay) {
-            $query->where('address', 'like', "%{$barangay}%");
-        }
-        if ($renewal === 'upcoming') {
-            $query->where('status', 'active')->whereBetween('valid_until', [now(), now()->addDays(60)]);
-        } elseif ($renewal === 'expired') {
-            $query->where(function ($q) {
-                $q->where('status', 'expired')
-                    ->orWhere(function ($subQ) {
-                        $subQ->where('status', 'active')->whereDate('valid_until', '<', now());
-                    });
-            });
-        } elseif ($renewal === 'active') {
-            $query->where('status', 'active')->whereDate('valid_until', '>=', now());
-        } elseif ($renewal === 'archived') {
-            $query->where('status', 'archived');
-        }
-
-        $applications = $query->latest()
+        // Uses the new scopeFilter in the Model
+        $applications = MtopApplication::filter($filters)
+            ->latest()
             ->paginate(10)
             ->withQueryString();
 
@@ -72,7 +34,7 @@ class MtopApplicationController extends Controller
 
         return Inertia::render('Mtop/Index', [
             'applications' => $applications,
-            'filters' => $request->only(['search', 'month', 'year', 'barangay', 'renewal']),
+            'filters' => $filters,
             'officials' => $officials,
         ]);
     }
@@ -102,35 +64,10 @@ class MtopApplicationController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(MtopApplicationRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'last_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
-            'first_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
-            'middle_name' => ['nullable', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
-            'suffix' => ['nullable', 'string', 'max:10', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
-            'address' => 'required|string|max:100',
-            'contact_number' => ['nullable', 'regex:/^(09|\+639)\d{9}$/'],
-            'transaction_date' => 'required|date',
-            'mt_number' => 'required|string|max:20',
-            'body_number' => [
-                'nullable',
-                'regex:/^[0-9]+$/',
-                'unique:mtop_franchises,body_number'
-            ],
-            'plate_no' => ['required', 'string', 'max:8'],
-            'make_type' => 'required|string|max:30',
-            'engine_motor_no' => 'required|string|max:30',
-            'chassis_no' => 'required|string|max:30',
-            'cedula_number' => 'required|string|max:20',
-            'cedula_date' => 'required|date',
-            'or_number' => 'required|string|max:20',
-            'or_date' => 'required|date',
-            'punong_bayan' => ['required', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
-            'authorized_official' => ['required', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
-        ], [
-            'body_number.unique' => 'This Body Number is already assigned to another operator!'
-        ]);
+        // Validation is handled automatically by MtopApplicationRequest
+        $validated = $request->validated();
 
         $mtop = DB::transaction(function () use ($validated, $request) {
             $final_mt_number = $validated['mt_number'];
@@ -187,36 +124,12 @@ class MtopApplicationController extends Controller
         ]);
     }
 
-    public function update(Request $request, $id): RedirectResponse
+    public function update(MtopApplicationRequest $request, $id): RedirectResponse
     {
         $application = MtopApplication::findOrFail($id);
 
-        $validated = $request->validate([
-            'last_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
-            'first_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
-            'middle_name' => ['nullable', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
-            'suffix' => ['nullable', 'string', 'max:10', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
-            'address' => 'required|string|max:100',
-            'transaction_date' => 'required|date',
-            'mt_number' => 'required|string|max:20',
-            'body_number' => [
-                'nullable',
-                'regex:/^[0-9]+$/',
-                Rule::unique('mtop_franchises', 'body_number')->ignore($application->franchise_id)
-            ],
-            'plate_no' => ['required', 'string', 'max:8'],
-            'make_type' => 'required|string|max:30',
-            'engine_motor_no' => 'required|string|max:30',
-            'chassis_no' => 'required|string|max:30',
-            'cedula_number' => 'required|string|max:20',
-            'cedula_date' => 'required|date',
-            'or_number' => 'required|string|max:20',
-            'or_date' => 'required|date',
-            'punong_bayan' => ['required', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
-            'authorized_official' => ['required', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
-        ], [
-            'body_number.unique' => 'This Body Number is already assigned to another operator!'
-        ]);
+        // Validation is handled automatically by MtopApplicationRequest
+        $validated = $request->validated();
 
         if ($request->transaction_date) {
             $validated['valid_until'] = $this->calculateValidUntil($request->transaction_date, $validated['plate_no'] ?? null);
@@ -283,34 +196,8 @@ class MtopApplicationController extends Controller
 
     public function export(Request $request)
     {
-        $search = $request->input('search');
-        $month = $request->input('month');
-        $year = $request->input('year');
-        $barangay = $request->input('barangay');
-
-        $query = MtopApplication::query();
-
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('last_name', 'like', "%{$search}%")
-                    ->orWhere('first_name', 'like', "%{$search}%")
-                    ->orWhere('body_number', 'like', "%{$search}%")
-                    ->orWhere('mt_number', 'like', "%{$search}%")
-                    ->orWhere('plate_no', 'like', "%{$search}%");
-            });
-        }
-
-        if ($month) {
-            $query->whereMonth('transaction_date', $month);
-        }
-        if ($year) {
-            $query->whereYear('transaction_date', $year);
-        }
-        if ($barangay) {
-            $query->where('address', 'like', "%{$barangay}%");
-        }
-
-        $records = $query->latest()->get();
+        // Use the same scopeFilter for exact match, and cursor() for MySQL memory safety
+        $records = MtopApplication::filter($request->all())->latest()->cursor();
 
         $csvFileName = 'mtop_records_' . date('Y-m-d_H-i') . '.csv';
         $headers = [
@@ -440,36 +327,12 @@ class MtopApplicationController extends Controller
         ]);
     }
 
-    public function storeRenewal(Request $request, $id): RedirectResponse
+    public function storeRenewal(MtopApplicationRequest $request, $id): RedirectResponse
     {
         $oldApp = MtopApplication::findOrFail($id);
 
-        $validated = $request->validate([
-            'last_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
-            'first_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
-            'middle_name' => ['nullable', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
-            'suffix' => ['nullable', 'string', 'max:10', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
-            'address' => 'required|string|max:100',
-            'transaction_date' => 'required|date',
-            'mt_number' => 'required|string|max:20',
-            'body_number' => [
-                'nullable',
-                'regex:/^[0-9]+$/',
-                Rule::unique('mtop_franchises', 'body_number')->ignore($oldApp->franchise_id)
-            ],
-            'plate_no' => ['required', 'string', 'max:8'],
-            'make_type' => 'required|string|max:30',
-            'engine_motor_no' => 'required|string|max:30',
-            'chassis_no' => 'required|string|max:30',
-            'cedula_number' => 'required|string|max:20',
-            'cedula_date' => 'required|date',
-            'or_number' => 'required|string|max:20',
-            'or_date' => 'required|date',
-            'punong_bayan' => ['required', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
-            'authorized_official' => ['required', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
-        ], [
-            'body_number.unique' => 'This Body Number is already assigned to another operator!'
-        ]);
+        // Validation is handled automatically by MtopApplicationRequest
+        $validated = $request->validated();
 
         $newApp = DB::transaction(function () use ($oldApp, $validated, $request) {
             $oldApp->update(['status' => 'archived']);

@@ -52,8 +52,9 @@ export default function DriverInfoModal({
                     preview: app.driver_photo_path
                         ? `/storage/${app.driver_photo_path}`
                         : null,
-                    mayor: defaultMayor,
-                    committee: defaultCommittee,
+                    // Fix 1: Prioritize the app's saved signatories before falling back to system defaults
+                    mayor: app.punong_bayan || defaultMayor,
+                    committee: app.authorized_official || defaultCommittee,
                 })),
             });
             initialized.current = true;
@@ -62,7 +63,7 @@ export default function DriverInfoModal({
         if (!show) {
             initialized.current = false;
         }
-    }, [show]);
+    }, [show, selectedApps, officials]);
 
     // Listen for the image data sent back from the separate camera window
     useEffect(() => {
@@ -312,16 +313,31 @@ export default function DriverInfoModal({
         });
     };
 
-    const mayorOptions = officials
+    // Fix 2: Dynamically include customized values into the options array
+    // so the HTML <select> allows them to be displayed and chosen
+    const baseMayorOptions = officials
         .filter((o) => o.position === "Punong Bayan")
         .map((o) => o.name);
-    const committeeOptions = officials
+
+    const customMayors = data.drivers.map((d) => d.mayor).filter(Boolean);
+    const mayorOptions = Array.from(
+        new Set([...baseMayorOptions, ...customMayors]),
+    );
+
+    const baseCommitteeOptions = officials
         .filter(
             (o) =>
                 o.position === "Committee on Transportation" ||
                 o.position === "Authorized Official",
         )
         .map((o) => o.name);
+
+    const customCommittees = data.drivers
+        .map((d) => d.committee)
+        .filter(Boolean);
+    const committeeOptions = Array.from(
+        new Set([...baseCommitteeOptions, ...customCommittees]),
+    );
 
     return (
         <Modal show={show} onClose={onClose} maxWidth="xl">
@@ -358,6 +374,11 @@ export default function DriverInfoModal({
                             </div>
 
                             <div className="shrink-0 flex flex-col items-center gap-3 w-full sm:w-40 border-b sm:border-b-0 sm:border-r border-gray-100 pb-4 sm:pb-0 sm:pr-6 z-10">
+                                <div className="flex items-center justify-end gap-3">
+                                    <span className="bg-gray-800 text-white text-xs font-bold px-2 py-1 rounded">
+                                        MTOP: {driver.mt_number}
+                                    </span>
+                                </div>
                                 <div className="w-32 h-32 bg-gray-50 border-2 border-gray-300 border-dashed rounded-lg flex items-center justify-center overflow-hidden relative group">
                                     {driver.preview ? (
                                         <img
@@ -420,11 +441,6 @@ export default function DriverInfoModal({
                             </div>
 
                             <div className="flex-1 flex flex-col gap-4 z-10 pt-2 sm:pt-0">
-                                <div className="flex items-center justify-end gap-3 border-b border-gray-100 pb-2">
-                                    <span className="bg-gray-800 text-white text-xs font-bold px-2 py-1 rounded">
-                                        MTOP: {driver.mt_number}
-                                    </span>
-                                </div>
                                 <div>
                                     <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
                                         Driver Name
@@ -439,7 +455,6 @@ export default function DriverInfoModal({
                                                 e.target.value.toUpperCase(),
                                             )
                                         }
-                                        // Add padding (e.g., py-2.5, py-3) or a fixed height (e.g., h-11, h-[42px]) to match the select components
                                         className="w-full py-2.5 pl-2"
                                         placeholder="Enter driver name"
                                     />
@@ -486,7 +501,7 @@ export default function DriverInfoModal({
                     <PrimaryButton
                         type="submit"
                         disabled={processing}
-                        className="bg-indigo-600 hover:bg-indigo-700 shadow-md transition-transform hover:scale-105"
+                        className="bg-indigo-600 hover:bg-indigo-700 shadow-md transition-transform hover:scale-105 cursor-pointer"
                     >
                         <Icon icon="solar:printer-bold" className="mr-2" />
                         Save & Print

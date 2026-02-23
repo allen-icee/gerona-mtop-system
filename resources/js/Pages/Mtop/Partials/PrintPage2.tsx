@@ -30,7 +30,22 @@ export default function PrintPage2({ application, operatorName }: Props) {
             .toUpperCase();
     };
 
-    const getExpiryDateUpper = (dateString: string) => {
+    // Updated to use the backend calculated valid_until if available
+    const getExpiryDateUpper = (
+        dateString: string,
+        validUntilString?: string,
+    ) => {
+        if (validUntilString) {
+            return new Date(validUntilString)
+                .toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                })
+                .toUpperCase();
+        }
+
+        // Fallback just in case
         if (!dateString) return "";
         const date = new Date(dateString);
         const expiry = new Date(date.setFullYear(date.getFullYear() + 3));
@@ -72,10 +87,14 @@ export default function PrintPage2({ application, operatorName }: Props) {
             className="w-full h-[11.69in] relative flex flex-col bg-white overflow-hidden text-black leading-tight"
             style={{ fontFamily: "Tahoma, sans-serif" }}
         >
-            {printSettings?.show_header && printSettings?.header_path && (
+            {printSettings?.show_header && (
                 <div className="w-full mb-2 px-2 mt-2">
                     <img
-                        src={`/storage/${printSettings.header_path}`}
+                        src={
+                            printSettings?.header_path
+                                ? `/storage/${printSettings.header_path}`
+                                : `/images/Gerona_Header.jpg`
+                        }
                         alt="Header"
                         className="w-full object-contain max-h-32"
                     />
@@ -155,7 +174,10 @@ export default function PrintPage2({ application, operatorName }: Props) {
                         </span>{" "}
                         <span className="font-bold uppercase underline">
                             {formatDateUpper(application.transaction_date)} -{" "}
-                            {getExpiryDateUpper(application.transaction_date)}
+                            {getExpiryDateUpper(
+                                application.transaction_date,
+                                application.valid_until,
+                            )}
                         </span>
                     </div>
                 </div>
