@@ -9,23 +9,56 @@ export default function TransactionHeader({
     expiryDisplay,
     onKeyDown,
 }: any) {
+    // Dynamically grab the existing prefix (e.g. "2026-") and the sequence (e.g. "0001")
+    // This will automatically become "2027-" next year!
+    const prefix = data.mt_number
+        ? data.mt_number.substring(0, 5)
+        : `${new Date().getFullYear()}-`;
+    const sequence = data.mt_number ? data.mt_number.substring(5) : "";
+
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div className="relative">
-                <InputGroup
-                    id="mt_number"
-                    label="Control No."
-                    name="mt_number"
-                    value={data.mt_number}
-                    readOnly
-                    icon="solar:folder-with-files-bold"
-                    placeholder="Auto-Generated"
-                    error={errors?.mt_number}
-                    onKeyDown={onKeyDown}
-                />
-                <div className="absolute right-3 top-9.5 text-gray-400 pointer-events-none">
-                    <Icon icon="solar:lock-bold" width="16" />
+            <div>
+                <label className="block font-medium text-sm text-gray-700 mb-1">
+                    Control No.
+                </label>
+                <div
+                    className={`relative flex items-center h-11.75 border-none rounded-md shadow-sm bg-white overflow-hidden focus-within:ring-1 focus-within:ring-blue-500 focus-within:border-blue-500 transition-colors ${errors?.mt_number ? "border-red-500" : "border-gray-300"}`}
+                >
+                    {/* Locked Prefix Design */}
+                    <div className="px-3 h-full bg-gray-200 text-gray-700 font-bold border-r border-gray-300 flex items-center justify-center cursor-not-allowed select-none">
+                        <Icon
+                            icon="solar:folder-with-files-bold"
+                            className="mr-2 text-gray-500"
+                            width="18"
+                        />
+                        {prefix}
+                    </div>
+
+                    {/* Editable Numbers Design */}
+                    <input
+                        type="text"
+                        name="mt_number"
+                        id="mt_number"
+                        value={sequence}
+                        onChange={(e) => {
+                            // Strip out any non-numbers (no letters, no specials)
+                            let val = e.target.value.replace(/[^0-9]/g, "");
+                            // Cap to exactly 4 digits
+                            if (val.length > 4) val = val.substring(0, 4);
+
+                            setData("mt_number", `${prefix}${val}`);
+                        }}
+                        placeholder="0001"
+                        className="flex-1 block w-full h-full border-none focus:ring-0 sm:text-sm px-3 font-bold text-gray-800"
+                        onKeyDown={onKeyDown}
+                    />
                 </div>
+                {errors?.mt_number && (
+                    <p className="text-sm text-red-600 mt-1">
+                        {errors.mt_number}
+                    </p>
+                )}
             </div>
 
             <InputGroup
@@ -47,17 +80,17 @@ export default function TransactionHeader({
                 <label className="block font-medium text-sm text-gray-700 mb-1">
                     Validity{" "}
                     <span className="text-gray-400 font-normal text-xs">
-                        (Auto-calculated) 3 Years
+                        (Auto-calculated LTO)
                     </span>
                 </label>
-                <div className="relative">
+                <div className="relative h-11.75">
                     <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
                         <Icon icon="solar:clock-circle-bold" width="20" />
                     </div>
                     <input
                         type="text"
                         disabled
-                        className="block w-full pl-10 py-3 border-gray-300 bg-gray-50 text-gray-500 font-bold rounded-md shadow-sm text-sm"
+                        className="block w-full h-full pl-10 py-2 border-gray-300 bg-gray-50 text-gray-500 font-bold rounded-md shadow-sm text-sm"
                         value={
                             typeof expiryDisplay === "function"
                                 ? expiryDisplay()

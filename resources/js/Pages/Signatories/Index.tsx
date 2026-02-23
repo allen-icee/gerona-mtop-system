@@ -308,8 +308,8 @@ export default function Index({ signatories = [], filters = {} }: Props) {
                                 <div className="relative">
                                     <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400 z-10">
                                         <Icon
-                                            icon="solar:badge-bold"
-                                            width="20"
+                                            icon="glyphs:check-badge-bold"
+                                            width="24"
                                         />
                                     </div>
                                     <select

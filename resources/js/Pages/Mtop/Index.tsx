@@ -414,7 +414,7 @@ export default function Index({ applications, filters, officials }: Props) {
                                                         onClick={() =>
                                                             setViewingApp(app)
                                                         }
-                                                        className="inline-flex items-center justify-center gap-2 font-bold text-sm tracking-wider text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-3 py-1.5 rounded-md hover:bg-indigo-100 transition-colors"
+                                                        className="inline-flex hover:cursor-pointer items-center justify-center gap-2 font-bold text-sm tracking-wider text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-3 py-1.5 rounded-md hover:bg-indigo-100 transition-colors"
                                                     >
                                                         <Icon
                                                             icon="solar:eye-bold"
@@ -477,7 +477,7 @@ export default function Index({ applications, filters, officials }: Props) {
                                                                         app.id,
                                                                     )
                                                                 }
-                                                                className="inline-flex items-center justify-center bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 p-1.5 rounded-md transition-colors"
+                                                                className="inline-flex items-center hover:cursor-pointer justify-center bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 p-1.5 rounded-md transition-colors"
                                                             >
                                                                 <Icon
                                                                     icon="solar:trash-bin-trash-bold"
@@ -688,31 +688,46 @@ export default function Index({ applications, filters, officials }: Props) {
                     </div>
                 </div>
             </div>
-
             <div
-                className={`fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50 transition-all duration-300 ${selectedIds.length > 0 ? "translate-y-0 opacity-100" : "translate-y-24 opacity-0 pointer-events-none"}`}
+                className={`fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50 transition-all duration-300 ease-out ${
+                    selectedIds.length > 0
+                        ? "translate-y-0 opacity-100 scale-100"
+                        : "translate-y-12 opacity-0 scale-95 pointer-events-none"
+                }`}
             >
-                <div className="bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-4 sm:gap-6 border border-gray-700 backdrop-blur-md bg-opacity-95">
-                    <div className="flex items-center gap-2 text-sm font-medium">
-                        <div className="bg-indigo-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold">
-                            {selectedIds.length}
+                {/* Outer Shell */}
+                <div className="bg-slate-900/95 backdrop-blur-md border border-slate-700 p-1.5 rounded-full shadow-2xl flex items-center gap-2">
+                    {/* Left Side: Info & Clear Selection */}
+                    <div className="flex items-center gap-3 pl-3 pr-2">
+                        <div className="flex items-center gap-2">
+                            <span className="bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">
+                                {selectedIds.length}
+                            </span>
+                            <span className="text-sm font-medium text-slate-300 hidden sm:block">
+                                Selected
+                            </span>
                         </div>
-                        <span className="hidden sm:inline">Selected</span>
                     </div>
-                    <div className="h-5 w-px bg-gray-600"></div>
+
+                    {/* Subtle Separator */}
+                    <div className="w-px h-6 bg-slate-700"></div>
+
+                    {/* Right Side: Primary Action Button */}
                     <button
                         onClick={() => setShowDriverModal(true)}
-                        className="flex items-center gap-2 text-sm font-bold text-indigo-100 hover:text-white transition-colors"
+                        className="bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white px-5 py-2 rounded-full text-sm font-bold flex items-center gap-2 transition-all shadow-md hover:cursor-pointer"
                     >
-                        <Icon icon="solar:printer-bold" width="20" /> Print IDs
+                        <Icon icon="solar:printer-bold" width="18" />
+                        <span>Print IDs</span>
                     </button>
-                    <div className="h-5 w-px bg-gray-600"></div>
+
+                    {/* Clear Button grouped with the selected count */}
                     <button
                         onClick={() => setSelectedIds([])}
-                        className="text-gray-400 hover:text-white transition-colors p-1"
+                        className="text-slate-500 hover:text-red-400 hover:bg-slate-800 transition-colors rounded-full p-1 hover:cursor-pointer"
                         title="Clear Selection"
                     >
-                        <Icon icon="solar:close-circle-bold" width="22" />
+                        <Icon icon="solar:close-circle-bold" width="18" />
                     </button>
                 </div>
             </div>

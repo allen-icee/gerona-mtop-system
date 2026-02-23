@@ -138,7 +138,13 @@ export default function Edit({
     });
 
     const requiredFields = {
-        1: ["last_name", "first_name", "address", "transaction_date"],
+        1: [
+            "mt_number",
+            "last_name",
+            "first_name",
+            "address",
+            "transaction_date",
+        ],
         2: ["plate_no", "make_type", "engine_motor_no", "chassis_no"],
         3: [
             "cedula_number",
@@ -295,8 +301,37 @@ export default function Edit({
     const expiryDisplay = () => {
         if (!data.transaction_date || !isValidDate(data.transaction_date))
             return "INVALID DATE";
+
         const date = new Date(data.transaction_date);
-        const expiry = new Date(date.setFullYear(date.getFullYear() + 3));
+        let expiry = new Date(
+            date.getFullYear() + 3,
+            date.getMonth(),
+            date.getDate(),
+        );
+
+        // LTO Logic: Adjust expiration month based ONLY on the last number of Plate Number
+        if (data.plate_no && data.plate_no !== "FOR REGISTRATION") {
+            const match = data.plate_no.match(/(\d)[^\d]*$/);
+            if (match) {
+                const digit = parseInt(match[1], 10);
+                // 1=Jan(0), 2=Feb(1)... 9=Sep(8), 0=Oct(9)
+                const targetMonth = digit === 0 ? 9 : digit - 1;
+
+                const targetYear = expiry.getFullYear();
+                const targetDay = date.getDate();
+
+                // Prevent day overflow (e.g., Feb 31 becomes Feb 28/29)
+                const daysInMonth = new Date(
+                    targetYear,
+                    targetMonth + 1,
+                    0,
+                ).getDate();
+                const finalDay = Math.min(targetDay, daysInMonth);
+
+                expiry = new Date(targetYear, targetMonth, finalDay);
+            }
+        }
+
         return expiry
             .toLocaleDateString("en-US", {
                 year: "numeric",

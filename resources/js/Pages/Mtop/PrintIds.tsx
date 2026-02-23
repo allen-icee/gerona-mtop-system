@@ -92,7 +92,7 @@ export default function PrintIds({ applications }: Props) {
                                     Sidecar Number
                                 </label>
 
-                                <div className="border border-black rounded-lg h-[15mm] w-full flex items-center justify-center bg-white">
+                                <div className="border border-black rounded-lg h-[15mm] w-full flex mt-1 items-center justify-center bg-white">
                                     <span
                                         className="text-5xl text-black font-['UPBOLTERS']
                                         [-webkit-text-stroke:2px_white]

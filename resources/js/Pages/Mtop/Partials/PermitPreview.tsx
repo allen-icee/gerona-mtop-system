@@ -49,18 +49,43 @@ export default function PermitPreview({
             .toUpperCase();
     };
 
-    const formatExpiry = (dateString: string) => {
+    // Updated to use the LTO logic with weekend adjustments
+    const formatExpiry = (dateString: string, plateNo: string) => {
         if (!dateString) return "-";
+
         const date = new Date(dateString);
-        const startStr = date
+        let expiry = new Date(
+            date.getFullYear() + 3,
+            date.getMonth(),
+            date.getDate(),
+        );
+
+        if (plateNo && plateNo !== "FOR REGISTRATION") {
+            const match = plateNo.match(/(\d)[^\d]*$/);
+            if (match) {
+                const digit = parseInt(match[1], 10);
+                const targetMonth = digit === 0 ? 9 : digit - 1;
+                const targetYear = expiry.getFullYear();
+                const targetDay = date.getDate();
+
+                const daysInMonth = new Date(
+                    targetYear,
+                    targetMonth + 1,
+                    0,
+                ).getDate();
+                const finalDay = Math.min(targetDay, daysInMonth);
+
+                expiry = new Date(targetYear, targetMonth, finalDay);
+            }
+        }
+
+        return expiry
             .toLocaleDateString("en-US", {
                 month: "long",
                 day: "numeric",
                 year: "numeric",
             })
             .toUpperCase();
-        const endYear = date.getFullYear() + 3;
-        return `${startStr} - ${endYear}`;
     };
 
     return (
@@ -128,7 +153,10 @@ export default function PermitPreview({
                                     EXPIRY DATE
                                 </td>
                                 <td className="px-3 py-2 font-bold text-gray-800 align-top leading-tight">
-                                    {formatExpiry(data.transaction_date)}
+                                    {formatExpiry(
+                                        data.transaction_date,
+                                        data.plate_no,
+                                    )}
                                 </td>
                             </tr>
                         </tbody>

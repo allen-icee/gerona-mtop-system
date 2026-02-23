@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
-use App\Models\SyncQueue; // 🟢 ALREADY IMPORTED
+use App\Models\SyncQueue;
 
 class MtopApplicationController extends Controller
 {
@@ -81,19 +81,15 @@ class MtopApplicationController extends Controller
     {
         $year = now()->year;
 
-        $lastFranchise = MtopFranchise::where('mt_number', 'like', "$year-%")
-            ->orderBy('id', 'desc')
-            ->first();
+        $maxSequence = MtopFranchise::where('mt_number', 'like', "$year-%")
+            ->get()
+            ->map(function ($franchise) {
+                $parts = explode('-', $franchise->mt_number);
+                return isset($parts[1]) ? intval($parts[1]) : 0;
+            })
+            ->max();
 
-        $nextSequence = 1;
-
-        if ($lastFranchise) {
-            $parts = explode('-', $lastFranchise->mt_number);
-            if (count($parts) === 2) {
-                $nextSequence = intval($parts[1]) + 1;
-            }
-        }
-
+        $nextSequence = ($maxSequence ?? 0) + 1;
         $suggested_mt_number = sprintf("%s-%04d", $year, $nextSequence);
 
         $punong_bayans = Signatory::where('position', 'Punong Bayan')->where('is_active', true)->pluck('name');
@@ -116,13 +112,13 @@ class MtopApplicationController extends Controller
             'address' => 'required|string|max:100',
             'contact_number' => ['nullable', 'regex:/^(09|\+639)\d{9}$/'],
             'transaction_date' => 'required|date',
-            'mt_number' => 'nullable|string',
+            'mt_number' => 'required|string|max:20',
             'body_number' => [
                 'nullable',
                 'regex:/^[0-9]+$/',
                 'unique:mtop_franchises,body_number'
             ],
-            'plate_no' => ['required', 'string', 'max:30'],
+            'plate_no' => ['required', 'string', 'max:8'],
             'make_type' => 'required|string|max:30',
             'engine_motor_no' => 'required|string|max:30',
             'chassis_no' => 'required|string|max:30',
@@ -137,25 +133,10 @@ class MtopApplicationController extends Controller
         ]);
 
         $mtop = DB::transaction(function () use ($validated, $request) {
-            $year = now()->year;
-
-            $lastFranchise = MtopFranchise::where('mt_number', 'like', "$year-%")
-                ->orderBy('id', 'desc')
-                ->lockForUpdate()
-                ->first();
-
-            $nextSequence = 1;
-            if ($lastFranchise) {
-                $parts = explode('-', $lastFranchise->mt_number);
-                if (count($parts) === 2) {
-                    $nextSequence = intval($parts[1]) + 1;
-                }
-            }
-
-            $generated_mt_number = sprintf("%s-%04d", $year, $nextSequence);
+            $final_mt_number = $validated['mt_number'];
 
             $franchise = MtopFranchise::create([
-                'mt_number' => $generated_mt_number,
+                'mt_number' => $final_mt_number,
                 'body_number' => $validated['body_number'] ?? null,
                 'last_name' => $validated['last_name'],
                 'first_name' => $validated['first_name'],
@@ -171,8 +152,8 @@ class MtopApplicationController extends Controller
             ]);
 
             $applicationData = $validated;
-            $applicationData['mt_number'] = $generated_mt_number;
-            $applicationData['valid_until'] = Carbon::parse($request->transaction_date)->addYears(3);
+            $applicationData['mt_number'] = $final_mt_number;
+            $applicationData['valid_until'] = $this->calculateValidUntil($request->transaction_date, $validated['plate_no'] ?? null);
             $applicationData['status'] = 'active';
             $applicationData['franchise_id'] = $franchise->id;
             $applicationData['transaction_type'] = 'New';
@@ -180,7 +161,6 @@ class MtopApplicationController extends Controller
 
             $application = MtopApplication::create($applicationData);
 
-            // 🟢 ELITE FEATURE #1: QUEUE FOR SYNC (CREATE)
             $this->queueForSync('mtop_franchises', $franchise->toArray());
             $this->queueForSync('mtop_applications', $application->toArray());
 
@@ -218,13 +198,13 @@ class MtopApplicationController extends Controller
             'suffix' => ['nullable', 'string', 'max:10', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
             'address' => 'required|string|max:100',
             'transaction_date' => 'required|date',
-            'mt_number' => 'nullable|string|max:20',
+            'mt_number' => 'required|string|max:20',
             'body_number' => [
                 'nullable',
                 'regex:/^[0-9]+$/',
                 Rule::unique('mtop_franchises', 'body_number')->ignore($application->franchise_id)
             ],
-            'plate_no' => ['required', 'string', 'max:30'],
+            'plate_no' => ['required', 'string', 'max:8'],
             'make_type' => 'required|string|max:30',
             'engine_motor_no' => 'required|string|max:30',
             'chassis_no' => 'required|string|max:30',
@@ -239,19 +219,19 @@ class MtopApplicationController extends Controller
         ]);
 
         if ($request->transaction_date) {
-            $validated['valid_until'] = Carbon::parse($request->transaction_date)->addYears(3);
+            $validated['valid_until'] = $this->calculateValidUntil($request->transaction_date, $validated['plate_no'] ?? null);
         }
 
         DB::transaction(function () use ($application, $validated) {
             $application->update($validated);
 
-            // 🟢 ELITE FEATURE #1: QUEUE FOR SYNC (UPDATE)
             $this->queueForSync('mtop_applications', $application->fresh()->toArray());
 
             if ($application->franchise_id) {
                 $franchise = MtopFranchise::find($application->franchise_id);
                 if ($franchise) {
                     $franchise->update([
+                        'mt_number' => $validated['mt_number'],
                         'body_number' => $validated['body_number'] ?? $franchise->body_number,
                         'last_name' => $validated['last_name'],
                         'first_name' => $validated['first_name'],
@@ -264,7 +244,6 @@ class MtopApplicationController extends Controller
                         'plate_no' => $validated['plate_no'],
                     ]);
 
-                    // 🟢 ELITE FEATURE #1: QUEUE FOR SYNC (UPDATE)
                     $this->queueForSync('mtop_franchises', $franchise->fresh()->toArray());
                 }
             }
@@ -284,10 +263,8 @@ class MtopApplicationController extends Controller
         DB::transaction(function () use ($application, $id) {
             if ($application->transaction_type === 'New' && $application->franchise_id) {
                 MtopFranchise::where('id', $application->franchise_id)->delete();
-                // 🟢 ELITE FEATURE #1: QUEUE FOR SYNC (DELETE)
                 $this->queueForSync('mtop_franchises', ['id' => $application->franchise_id, '_action' => 'delete']);
             } else {
-                // 🟢 ELITE FEATURE #1: QUEUE FOR SYNC (DELETE)
                 $this->queueForSync('mtop_applications', ['id' => $id, '_action' => 'delete']);
                 $application->delete();
             }
@@ -425,8 +402,6 @@ class MtopApplicationController extends Controller
                 }
 
                 $app->update($updateData);
-
-                // 🟢 ELITE FEATURE #1: QUEUE FOR SYNC (DRIVER INFO)
                 $this->queueForSync('mtop_applications', $app->fresh()->toArray());
             }
         });
@@ -437,16 +412,13 @@ class MtopApplicationController extends Controller
     public function printIds(Request $request)
     {
         $ids = explode(',', $request->query('ids', ''));
-
         $mayors = $request->query('mayors', []);
         $committees = $request->query('committees', []);
 
         $applications = MtopApplication::whereIn('id', $ids)->get()->map(function ($app) use ($mayors, $committees) {
             $data = $app->toArray();
-
             $data['print_mayor'] = $mayors[$app->id] ?? 'Municipal Mayor';
             $data['print_committee'] = $committees[$app->id] ?? 'Committee Chair';
-
             return $data;
         });
 
@@ -479,12 +451,13 @@ class MtopApplicationController extends Controller
             'suffix' => ['nullable', 'string', 'max:10', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
             'address' => 'required|string|max:100',
             'transaction_date' => 'required|date',
+            'mt_number' => 'required|string|max:20',
             'body_number' => [
                 'nullable',
                 'regex:/^[0-9]+$/',
                 Rule::unique('mtop_franchises', 'body_number')->ignore($oldApp->franchise_id)
             ],
-            'plate_no' => ['required', 'string', 'max:30'],
+            'plate_no' => ['required', 'string', 'max:8'],
             'make_type' => 'required|string|max:30',
             'engine_motor_no' => 'required|string|max:30',
             'chassis_no' => 'required|string|max:30',
@@ -499,14 +472,13 @@ class MtopApplicationController extends Controller
         ]);
 
         $newApp = DB::transaction(function () use ($oldApp, $validated, $request) {
-
             $oldApp->update(['status' => 'archived']);
-            // 🟢 ELITE FEATURE #1: QUEUE FOR SYNC (ARCHIVE OLD)
             $this->queueForSync('mtop_applications', $oldApp->fresh()->toArray());
 
             if ($oldApp->franchise_id) {
                 $franchise = MtopFranchise::where('id', $oldApp->franchise_id)->first();
                 $franchise->update([
+                    'mt_number' => $validated['mt_number'],
                     'body_number' => $validated['body_number'] ?? null,
                     'last_name' => $validated['last_name'],
                     'first_name' => $validated['first_name'],
@@ -518,13 +490,12 @@ class MtopApplicationController extends Controller
                     'chassis_no' => $validated['chassis_no'],
                     'plate_no' => $validated['plate_no'],
                 ]);
-                // 🟢 ELITE FEATURE #1: QUEUE FOR SYNC (UPDATE FRANCHISE)
                 $this->queueForSync('mtop_franchises', $franchise->fresh()->toArray());
             }
 
             $applicationData = $validated;
-            $applicationData['mt_number'] = $oldApp->mt_number;
-            $applicationData['valid_until'] = Carbon::parse($request->transaction_date)->addYears(3);
+            $applicationData['mt_number'] = $validated['mt_number'];
+            $applicationData['valid_until'] = $this->calculateValidUntil($request->transaction_date, $validated['plate_no'] ?? null);
             $applicationData['status'] = 'active';
             $applicationData['franchise_id'] = $oldApp->franchise_id;
             $applicationData['transaction_type'] = 'Renewal';
@@ -532,7 +503,6 @@ class MtopApplicationController extends Controller
 
             $newAppCreated = MtopApplication::create($applicationData);
 
-            // 🟢 ELITE FEATURE #1: QUEUE FOR SYNC (CREATE RENEWAL)
             $this->queueForSync('mtop_applications', $newAppCreated->toArray());
 
             return $newAppCreated;
@@ -545,9 +515,6 @@ class MtopApplicationController extends Controller
         ])->with('message', 'Renewal successful!');
     }
 
-    /**
-     * Helper method to insert a record into the sync queue.
-     */
     private function queueForSync(string $tableName, array $payload)
     {
         SyncQueue::create([
@@ -555,5 +522,37 @@ class MtopApplicationController extends Controller
             'payload_json' => $payload,
             'status' => 'pending'
         ]);
+    }
+
+    /**
+     * LTO Rule: 3 Years Validity
+     * Month = Last digit of Plate Number
+     * Week/Day = 7th, 14th, 21st, or Last Day (Adjusted to Monday if it falls on a weekend)
+     */
+    private function calculateValidUntil($transactionDateStr, $plateNo)
+    {
+        $transactionDate = Carbon::parse($transactionDateStr);
+        $validUntil = $transactionDate->copy()->addYears(3);
+
+        if (!empty($plateNo) && $plateNo !== 'FOR REGISTRATION') {
+            // Match the LAST numeric digit in the string
+            if (preg_match('/(\d)[^\d]*$/', $plateNo, $matches)) {
+                $digit = (int)$matches[1];
+
+                // LTO Months: 1=Jan, 2=Feb ... 9=Sep, 0=Oct
+                $targetMonth = $digit === 0 ? 10 : $digit;
+
+                $year = $validUntil->year;
+                $day = $transactionDate->day;
+
+                // Ensure days like 31st don't overflow into the next month (e.g. Feb 31 -> Feb 28)
+                $daysInMonth = Carbon::createFromDate($year, $targetMonth, 1)->daysInMonth;
+                $finalDay = min($day, $daysInMonth);
+
+                $validUntil = Carbon::createFromDate($year, $targetMonth, $finalDay);
+            }
+        }
+
+        return $validUntil;
     }
 }

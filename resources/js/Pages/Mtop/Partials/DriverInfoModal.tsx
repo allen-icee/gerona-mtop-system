@@ -429,9 +429,20 @@ export default function DriverInfoModal({
                                     <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
                                         Driver Name
                                     </label>
-                                    <span className="w-full px-3 py-3 border border-gray-300 rounded-md bg-gray-50 flex items-center">
-                                        {driver.driver_name}
-                                    </span>
+                                    <TextInput
+                                        type="text"
+                                        value={driver.driver_name}
+                                        onChange={(e) =>
+                                            handleDriverChange(
+                                                index,
+                                                "driver_name",
+                                                e.target.value.toUpperCase(),
+                                            )
+                                        }
+                                        // Add padding (e.g., py-2.5, py-3) or a fixed height (e.g., h-11, h-[42px]) to match the select components
+                                        className="w-full py-2.5 pl-2"
+                                        placeholder="Enter driver name"
+                                    />
                                 </div>
                                 <div>
                                     <SignatorySelect
