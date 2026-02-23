@@ -33,12 +33,17 @@ class MtopApplication extends Model
         'status',
         'driver_name',
         'driver_photo_path',
+        // --- THESE ARE THE CRUCIAL MISSING FIELDS ---
+        'franchise_id',
+        'transaction_type',
+        'processed_by',
     ];
 
     public function getFullNameAttribute()
     {
         return "{$this->last_name}, {$this->first_name} " . ($this->middle_name ? $this->middle_name[0] . '.' : '');
     }
+
     public function scopeFilter($query, array $filters)
     {
         $query->when($filters['search'] ?? null, function ($q, $search) {

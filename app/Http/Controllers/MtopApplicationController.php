@@ -174,12 +174,17 @@ class MtopApplicationController extends Controller
         $application = MtopApplication::findOrFail($id);
 
         DB::transaction(function () use ($application, $id) {
-            if ($application->transaction_type === 'New' && $application->franchise_id) {
-                MtopFranchise::where('id', $application->franchise_id)->delete();
-                $this->queueForSync('mtop_franchises', ['id' => $application->franchise_id, '_action' => 'delete']);
-            } else {
-                $this->queueForSync('mtop_applications', ['id' => $id, '_action' => 'delete']);
-                $application->delete();
+            $franchiseId = $application->franchise_id;
+            $isNew = $application->transaction_type === 'New';
+
+            // 1. Explicitly delete the Application first
+            $application->delete();
+            $this->queueForSync('mtop_applications', ['id' => $id, '_action' => 'delete']);
+
+            // 2. If it was a 'New' transaction, explicitly delete the Franchise too
+            if ($isNew && $franchiseId) {
+                MtopFranchise::where('id', $franchiseId)->delete();
+                $this->queueForSync('mtop_franchises', ['id' => $franchiseId, '_action' => 'delete']);
             }
         });
 

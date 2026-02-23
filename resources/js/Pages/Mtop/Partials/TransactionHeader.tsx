@@ -9,12 +9,22 @@ export default function TransactionHeader({
     expiryDisplay,
     onKeyDown,
 }: any) {
-    // Dynamically grab the existing prefix (e.g. "2026-") and the sequence (e.g. "0001")
-    // This will automatically become "2027-" next year!
-    const prefix = data.mt_number
-        ? data.mt_number.substring(0, 5)
-        : `${new Date().getFullYear()}-`;
-    const sequence = data.mt_number ? data.mt_number.substring(5) : "";
+    // SAFELY grab prefix and sequence, accommodating potentially weird legacy SQLite formats
+    let prefix = `${new Date().getFullYear()}-`;
+    let sequence = "";
+
+    if (data.mt_number) {
+        const parts = data.mt_number.split("-");
+        if (parts.length > 1) {
+            // e.g. "2024-0012" -> prefix: "2024-", sequence: "0012"
+            prefix = `${parts[0]}-`;
+            sequence = parts.slice(1).join("-");
+        } else {
+            // e.g. "12345" -> prefix: "", sequence: "12345"
+            prefix = "";
+            sequence = data.mt_number;
+        }
+    }
 
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -26,14 +36,16 @@ export default function TransactionHeader({
                     className={`relative flex items-center h-11.75 border-none rounded-md shadow-sm bg-white overflow-hidden focus-within:ring-1 focus-within:ring-blue-500 focus-within:border-blue-500 transition-colors ${errors?.mt_number ? "border-red-500" : "border-gray-300"}`}
                 >
                     {/* Locked Prefix Design */}
-                    <div className="px-3 h-full bg-gray-200 text-gray-700 font-bold border-r border-gray-300 flex items-center justify-center cursor-not-allowed select-none">
-                        <Icon
-                            icon="solar:folder-with-files-bold"
-                            className="mr-2 text-gray-500"
-                            width="18"
-                        />
-                        {prefix}
-                    </div>
+                    {prefix && (
+                        <div className="px-3 h-full bg-gray-200 text-gray-700 font-bold border-r border-gray-300 flex items-center justify-center cursor-not-allowed select-none">
+                            <Icon
+                                icon="solar:folder-with-files-bold"
+                                className="mr-2 text-gray-500"
+                                width="18"
+                            />
+                            {prefix}
+                        </div>
+                    )}
 
                     {/* Editable Numbers Design */}
                     <input
@@ -44,8 +56,11 @@ export default function TransactionHeader({
                         onChange={(e) => {
                             // Strip out any non-numbers (no letters, no specials)
                             let val = e.target.value.replace(/[^0-9]/g, "");
-                            // Cap to exactly 4 digits
-                            if (val.length > 4) val = val.substring(0, 4);
+
+                            // If it's a legacy record without a prefix, don't restrict to 4 digits
+                            if (prefix && val.length > 4) {
+                                val = val.substring(0, 4);
+                            }
 
                             setData("mt_number", `${prefix}${val}`);
                         }}
