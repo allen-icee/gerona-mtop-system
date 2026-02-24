@@ -185,11 +185,19 @@ export default function Create({
                 }
             },
             onError: (errs) => {
-                if (errs.body_number) {
+                if (errs.mt_number) {
+                    // If someone else took the number, stay on Step 1 and show that specific message
+                    setStep(1);
+                    toast.error(errs.mt_number);
+                } else if (errs.body_number) {
+                    // If body number is taken, move to Step 2
                     setStep(2);
                     toast.error(errs.body_number);
                 } else {
-                    toast.error("Failed to save record. Check inputs.");
+                    // For any other basic input errors
+                    toast.error(
+                        "Failed to save record. Please check the red fields.",
+                    );
                 }
             },
         });
@@ -289,12 +297,9 @@ export default function Create({
             const match = data.plate_no.match(/(\d)[^\d]*$/);
             if (match) {
                 const digit = parseInt(match[1], 10);
-                const ltoMonth = digit === 0 ? 9 : digit - 1;
-
-                // Only apply the LTO month if it doesn't push the validity past exactly 3 years
-                if (ltoMonth <= date.getMonth()) {
-                    targetMonth = ltoMonth;
-                }
+                // 1=Jan(0), 2=Feb(1)... 9=Sep(8), 0=Oct(9)
+                targetMonth = digit === 0 ? 9 : digit - 1;
+                // Just force the month, no year subtraction
             }
         }
 
@@ -312,6 +317,7 @@ export default function Create({
             })
             .toUpperCase();
     };
+
     return (
         <AuthenticatedLayout
             header={

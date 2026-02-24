@@ -20,9 +20,12 @@ class SignatoryController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-
             'position' => 'required|string|in:Punong Bayan,Authorized Official,Committee on Transportation',
         ]);
+
+        // BUG FIX: Explicitly force new signatories to be Active so they
+        // immediately appear in the dropdowns for both Staff and Admin!
+        $validated['is_active'] = true;
 
         Signatory::create($validated);
 
@@ -35,7 +38,6 @@ class SignatoryController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-
             'position' => 'required|string|in:Punong Bayan,Authorized Official,Committee on Transportation',
             'is_active' => 'boolean'
         ]);

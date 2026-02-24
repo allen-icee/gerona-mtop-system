@@ -203,11 +203,19 @@ export default function Edit({
                 }
             },
             onError: (errs) => {
-                if (errs.body_number) {
+                if (errs.mt_number) {
+                    // Displays your custom "taken by another device" message
+                    setStep(1);
+                    toast.error(errs.mt_number);
+                } else if (errs.body_number) {
                     setStep(2);
                     toast.error(errs.body_number);
                 } else {
-                    toast.error("Failed to update record. Check inputs.");
+                    // Shows the first specific validation error instead of a generic message
+                    const firstError = Object.values(errs)[0];
+                    toast.error(
+                        firstError || "Failed to update record. Check inputs.",
+                    );
                 }
             },
         });
@@ -311,12 +319,9 @@ export default function Edit({
             const match = data.plate_no.match(/(\d)[^\d]*$/);
             if (match) {
                 const digit = parseInt(match[1], 10);
-                const ltoMonth = digit === 0 ? 9 : digit - 1;
-
-                // Only apply the LTO month if it doesn't push the validity past exactly 3 years
-                if (ltoMonth <= date.getMonth()) {
-                    targetMonth = ltoMonth;
-                }
+                // 1=Jan(0), 2=Feb(1)... 9=Sep(8), 0=Oct(9)
+                targetMonth = digit === 0 ? 9 : digit - 1;
+                // Just force the month, no year subtraction
             }
         }
 

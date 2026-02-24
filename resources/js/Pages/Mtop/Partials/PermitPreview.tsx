@@ -61,11 +61,8 @@ export default function PermitPreview({
             const match = plateNo.match(/(\d)[^\d]*$/);
             if (match) {
                 const digit = parseInt(match[1], 10);
-                const ltoMonth = digit === 0 ? 9 : digit - 1;
-
-                if (ltoMonth <= date.getMonth()) {
-                    targetMonth = ltoMonth;
-                }
+                targetMonth = digit === 0 ? 9 : digit - 1;
+                // Just force the month, no year subtraction
             }
         }
 

@@ -38,7 +38,15 @@ class MtopApplicationRequest extends FormRequest
             'address' => 'required|string|max:100',
             'contact_number' => ['nullable', 'regex:/^(09|\+639)\d{9}$/'],
             'transaction_date' => 'required|date',
-            'mt_number' => 'required|string|max:20',
+            'mt_number' => [
+                'required',
+                'string',
+                'max:20',
+                // This rule checks if the number exists in the mtop_franchises table
+                $this->route('id')
+                    ? \Illuminate\Validation\Rule::unique('mtop_franchises', 'mt_number')->ignore($franchiseId)
+                    : 'unique:mtop_franchises,mt_number'
+            ],
             'body_number' => [
                 'nullable',
                 'regex:/^[0-9]+$/',

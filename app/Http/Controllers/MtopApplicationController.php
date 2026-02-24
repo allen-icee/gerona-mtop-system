@@ -66,49 +66,59 @@ class MtopApplicationController extends Controller
 
     public function store(MtopApplicationRequest $request): RedirectResponse
     {
-        // Validation is handled automatically by MtopApplicationRequest
         $validated = $request->validated();
 
-        $mtop = DB::transaction(function () use ($validated, $request) {
-            $final_mt_number = $validated['mt_number'];
+        try {
+            $mtop = DB::transaction(function () use ($validated, $request) {
+                $final_mt_number = $validated['mt_number'];
 
-            $franchise = MtopFranchise::create([
-                'mt_number' => $final_mt_number,
-                'body_number' => $validated['body_number'] ?? null,
-                'last_name' => $validated['last_name'],
-                'first_name' => $validated['first_name'],
-                'middle_name' => $validated['middle_name'] ?? null,
-                'suffix' => $validated['suffix'] ?? null,
-                'address' => $validated['address'],
-                'contact_number' => $validated['contact_number'] ?? null,
-                'make_type' => $validated['make_type'],
-                'engine_motor_no' => $validated['engine_motor_no'],
-                'chassis_no' => $validated['chassis_no'],
-                'plate_no' => $validated['plate_no'],
-                'status' => 'active',
-            ]);
+                // PLACE THIS CHECK HERE (Immediately after starting the transaction)
+                $exists = MtopFranchise::where('mt_number', $final_mt_number)->exists();
+                if ($exists) {
+                    throw new \Exception("The Control Numnber {$final_mt_number} was just taken by another user. Please go back and refresh.");
+                }
 
-            $applicationData = $validated;
-            $applicationData['mt_number'] = $final_mt_number;
-            $applicationData['valid_until'] = $this->calculateValidUntil($request->transaction_date, $validated['plate_no'] ?? null);
-            $applicationData['status'] = 'active';
-            $applicationData['franchise_id'] = $franchise->id;
-            $applicationData['transaction_type'] = 'New';
-            $applicationData['processed_by'] = Auth::id();
+                $franchise = MtopFranchise::create([
+                    'mt_number' => $final_mt_number,
+                    'body_number' => $validated['body_number'] ?? null,
+                    'last_name' => $validated['last_name'],
+                    'first_name' => $validated['first_name'],
+                    'middle_name' => $validated['middle_name'] ?? null,
+                    'suffix' => $validated['suffix'] ?? null,
+                    'address' => $validated['address'],
+                    'contact_number' => $validated['contact_number'] ?? null,
+                    'make_type' => $validated['make_type'],
+                    'engine_motor_no' => $validated['engine_motor_no'],
+                    'chassis_no' => $validated['chassis_no'],
+                    'plate_no' => $validated['plate_no'],
+                    'status' => 'active',
+                ]);
 
-            $application = MtopApplication::create($applicationData);
+                $applicationData = $validated;
+                $applicationData['mt_number'] = $final_mt_number;
+                $applicationData['valid_until'] = $this->calculateValidUntil($request->transaction_date, $validated['plate_no'] ?? null);
+                $applicationData['status'] = 'active';
+                $applicationData['franchise_id'] = $franchise->id;
+                $applicationData['transaction_type'] = 'New';
+                $applicationData['processed_by'] = Auth::id();
 
-            $this->queueForSync('mtop_franchises', $franchise->toArray());
-            $this->queueForSync('mtop_applications', $application->toArray());
+                $application = MtopApplication::create($applicationData);
 
-            return $application;
-        });
+                $this->queueForSync('mtop_franchises', $franchise->toArray());
+                $this->queueForSync('mtop_applications', $application->toArray());
 
-        return redirect()->back()->with('success_data', [
-            'id' => $mtop->id,
-            'mt_number' => $mtop->mt_number,
-            'operator_name' => $mtop->first_name . ' ' . $mtop->last_name . ($mtop->suffix ? ' ' . $mtop->suffix : ''),
-        ])->with('message', 'Application and Franchise created successfully!');
+                return $application;
+            });
+
+            return redirect()->back()->with('success_data', [
+                'id' => $mtop->id,
+                'mt_number' => $mtop->mt_number,
+                'operator_name' => $mtop->first_name . ' ' . $mtop->last_name,
+            ])->with('message', 'Application created successfully!');
+        } catch (\Exception $e) {
+            // This catches the "exists" error and sends it back to the user interface
+            return redirect()->back()->withErrors(['mt_number' => $e->getMessage()])->withInput();
+        }
     }
 
     public function edit($id): Response
@@ -135,38 +145,53 @@ class MtopApplicationController extends Controller
             $validated['valid_until'] = $this->calculateValidUntil($request->transaction_date, $validated['plate_no'] ?? null);
         }
 
-        DB::transaction(function () use ($application, $validated) {
-            $application->update($validated);
+        try {
+            DB::transaction(function () use ($application, $validated) {
+                $final_mt_number = $validated['mt_number'];
 
-            $this->queueForSync('mtop_applications', $application->fresh()->toArray());
+                $exists = MtopFranchise::where('mt_number', $final_mt_number)
+                    ->where('id', '!=', $application->franchise_id)
+                    ->exists();
 
-            if ($application->franchise_id) {
-                $franchise = MtopFranchise::find($application->franchise_id);
-                if ($franchise) {
-                    $franchise->update([
-                        'mt_number' => $validated['mt_number'],
-                        'body_number' => $validated['body_number'] ?? $franchise->body_number,
-                        'last_name' => $validated['last_name'],
-                        'first_name' => $validated['first_name'],
-                        'middle_name' => $validated['middle_name'],
-                        'suffix' => $validated['suffix'],
-                        'address' => $validated['address'],
-                        'make_type' => $validated['make_type'],
-                        'engine_motor_no' => $validated['engine_motor_no'],
-                        'chassis_no' => $validated['chassis_no'],
-                        'plate_no' => $validated['plate_no'],
-                    ]);
-
-                    $this->queueForSync('mtop_franchises', $franchise->fresh()->toArray());
+                if ($exists) {
+                    throw new \Exception("The Control Number {$final_mt_number} was just updated by another user. Please use a different number.");
                 }
-            }
-        });
 
-        return redirect()->back()->with('success_data', [
-            'id' => $application->id,
-            'mt_number' => $application->mt_number,
-            'operator_name' => $application->first_name . ' ' . $application->last_name . ($application->suffix ? ' ' . $application->suffix : ''),
-        ])->with('message', 'Record updated successfully!');
+                $application->update($validated);
+
+                $this->queueForSync('mtop_applications', $application->fresh()->toArray());
+
+                if ($application->franchise_id) {
+                    $franchise = MtopFranchise::find($application->franchise_id);
+                    if ($franchise) {
+                        $franchise->update([
+                            'mt_number' => $final_mt_number,
+                            'body_number' => $validated['body_number'] ?? $franchise->body_number,
+                            'last_name' => $validated['last_name'],
+                            'first_name' => $validated['first_name'],
+                            'middle_name' => $validated['middle_name'],
+                            'suffix' => $validated['suffix'],
+                            'address' => $validated['address'],
+                            'make_type' => $validated['make_type'],
+                            'engine_motor_no' => $validated['engine_motor_no'],
+                            'chassis_no' => $validated['chassis_no'],
+                            'plate_no' => $validated['plate_no'],
+                        ]);
+
+                        $this->queueForSync('mtop_franchises', $franchise->fresh()->toArray());
+                    }
+                }
+            });
+
+            return redirect()->back()->with('success_data', [
+                'id' => $application->id,
+                'mt_number' => $application->mt_number,
+                'operator_name' => $application->first_name . ' ' . $application->last_name . ($application->suffix ? ' ' . $application->suffix : ''),
+            ])->with('message', 'Record updated successfully!');
+        } catch (\Exception $e) {
+            // Sends the specific error message back to the mt_number field in the UI
+            return redirect()->back()->withErrors(['mt_number' => $e->getMessage()])->withInput();
+        }
     }
 
     public function destroy($id): RedirectResponse
@@ -339,48 +364,64 @@ class MtopApplicationController extends Controller
         // Validation is handled automatically by MtopApplicationRequest
         $validated = $request->validated();
 
-        $newApp = DB::transaction(function () use ($oldApp, $validated, $request) {
-            $oldApp->update(['status' => 'archived']);
-            $this->queueForSync('mtop_applications', $oldApp->fresh()->toArray());
+        try {
+            $newApp = DB::transaction(function () use ($oldApp, $validated, $request) {
+                $final_mt_number = $validated['mt_number'];
 
-            if ($oldApp->franchise_id) {
-                $franchise = MtopFranchise::where('id', $oldApp->franchise_id)->first();
-                $franchise->update([
-                    'mt_number' => $validated['mt_number'],
-                    'body_number' => $validated['body_number'] ?? null,
-                    'last_name' => $validated['last_name'],
-                    'first_name' => $validated['first_name'],
-                    'middle_name' => $validated['middle_name'],
-                    'suffix' => $validated['suffix'],
-                    'address' => $validated['address'],
-                    'make_type' => $validated['make_type'],
-                    'engine_motor_no' => $validated['engine_motor_no'],
-                    'chassis_no' => $validated['chassis_no'],
-                    'plate_no' => $validated['plate_no'],
-                ]);
-                $this->queueForSync('mtop_franchises', $franchise->fresh()->toArray());
-            }
+                $exists = MtopFranchise::where('mt_number', $final_mt_number)
+                    ->where('id', '!=', $oldApp->franchise_id)
+                    ->exists();
 
-            $applicationData = $validated;
-            $applicationData['mt_number'] = $validated['mt_number'];
-            $applicationData['valid_until'] = $this->calculateValidUntil($request->transaction_date, $validated['plate_no'] ?? null);
-            $applicationData['status'] = 'active';
-            $applicationData['franchise_id'] = $oldApp->franchise_id;
-            $applicationData['transaction_type'] = 'Renewal';
-            $applicationData['processed_by'] = Auth::id();
+                if ($exists) {
 
-            $newAppCreated = MtopApplication::create($applicationData);
+                    throw new \Exception("The Control Number {$final_mt_number} was just updated by another user. Please use a different number.");
+                }
 
-            $this->queueForSync('mtop_applications', $newAppCreated->toArray());
+                $oldApp->update(['status' => 'archived']);
+                $this->queueForSync('mtop_applications', $oldApp->fresh()->toArray());
 
-            return $newAppCreated;
-        });
+                if ($oldApp->franchise_id) {
+                    $franchise = MtopFranchise::where('id', $oldApp->franchise_id)->first();
+                    $franchise->update([
+                        'mt_number' => $final_mt_number,
+                        'body_number' => $validated['body_number'] ?? null,
+                        'last_name' => $validated['last_name'],
+                        'first_name' => $validated['first_name'],
+                        'middle_name' => $validated['middle_name'],
+                        'suffix' => $validated['suffix'],
+                        'address' => $validated['address'],
+                        'make_type' => $validated['make_type'],
+                        'engine_motor_no' => $validated['engine_motor_no'],
+                        'chassis_no' => $validated['chassis_no'],
+                        'plate_no' => $validated['plate_no'],
+                    ]);
+                    $this->queueForSync('mtop_franchises', $franchise->fresh()->toArray());
+                }
 
-        return redirect()->route('mtop.index')->with('success_data', [
-            'id' => $newApp->id,
-            'mt_number' => $newApp->mt_number,
-            'operator_name' => $newApp->first_name . ' ' . $newApp->last_name . ($newApp->suffix ? ' ' . $newApp->suffix : ''),
-        ])->with('message', 'Renewal successful!');
+                $applicationData = $validated;
+                $applicationData['mt_number'] = $final_mt_number;
+                $applicationData['valid_until'] = $this->calculateValidUntil($request->transaction_date, $validated['plate_no'] ?? null);
+                $applicationData['status'] = 'active';
+                $applicationData['franchise_id'] = $oldApp->franchise_id;
+                $applicationData['transaction_type'] = 'Renewal';
+                $applicationData['processed_by'] = Auth::id();
+
+                $newAppCreated = MtopApplication::create($applicationData);
+
+                $this->queueForSync('mtop_applications', $newAppCreated->toArray());
+
+                return $newAppCreated;
+            });
+
+            return redirect()->route('mtop.index')->with('success_data', [
+                'id' => $newApp->id,
+                'mt_number' => $newApp->mt_number,
+                'operator_name' => $newApp->first_name . ' ' . $newApp->last_name . ($newApp->suffix ? ' ' . $newApp->suffix : ''),
+            ])->with('message', 'Renewal successful!');
+        } catch (\Exception $e) {
+
+            return redirect()->back()->withErrors(['mt_number' => $e->getMessage()])->withInput();
+        }
     }
 
     private function queueForSync(string $tableName, array $payload)
@@ -398,19 +439,20 @@ class MtopApplicationController extends Controller
         $validUntil = $transactionDate->copy()->addYears(3);
 
         if (!empty($plateNo) && $plateNo !== 'FOR REGISTRATION') {
+            // Match the LAST numeric digit in the string
             if (preg_match('/(\d)[^\d]*$/', $plateNo, $matches)) {
                 $digit = (int)$matches[1];
+
+                // LTO Months: 1=Jan, 2=Feb ... 9=Sep, 0=Oct
                 $targetMonth = $digit === 0 ? 10 : $digit;
+                $year = $validUntil->year; // Exactly + 3 years
+                $day = $transactionDate->day;
 
-                if ($targetMonth <= $transactionDate->month) {
-                    $year = $validUntil->year;
-                    $day = $transactionDate->day;
+                // Ensure days like 31st don't overflow into the next month
+                $daysInMonth = Carbon::createFromDate($year, $targetMonth, 1)->daysInMonth;
+                $finalDay = min($day, $daysInMonth);
 
-                    $daysInMonth = Carbon::createFromDate($year, $targetMonth, 1)->daysInMonth;
-                    $finalDay = min($day, $daysInMonth);
-
-                    $validUntil = Carbon::createFromDate($year, $targetMonth, $finalDay);
-                }
+                $validUntil = Carbon::createFromDate($year, $targetMonth, $finalDay);
             }
         }
 
