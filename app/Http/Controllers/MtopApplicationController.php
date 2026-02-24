@@ -392,32 +392,25 @@ class MtopApplicationController extends Controller
         ]);
     }
 
-    /**
-     * LTO Rule: 3 Years Validity
-     * Month = Last digit of Plate Number
-     * Week/Day = 7th, 14th, 21st, or Last Day (Adjusted to Monday if it falls on a weekend)
-     */
     private function calculateValidUntil($transactionDateStr, $plateNo)
     {
         $transactionDate = Carbon::parse($transactionDateStr);
         $validUntil = $transactionDate->copy()->addYears(3);
 
         if (!empty($plateNo) && $plateNo !== 'FOR REGISTRATION') {
-            // Match the LAST numeric digit in the string
             if (preg_match('/(\d)[^\d]*$/', $plateNo, $matches)) {
                 $digit = (int)$matches[1];
-
-                // LTO Months: 1=Jan, 2=Feb ... 9=Sep, 0=Oct
                 $targetMonth = $digit === 0 ? 10 : $digit;
 
-                $year = $validUntil->year;
-                $day = $transactionDate->day;
+                if ($targetMonth <= $transactionDate->month) {
+                    $year = $validUntil->year;
+                    $day = $transactionDate->day;
 
-                // Ensure days like 31st don't overflow into the next month (e.g. Feb 31 -> Feb 28)
-                $daysInMonth = Carbon::createFromDate($year, $targetMonth, 1)->daysInMonth;
-                $finalDay = min($day, $daysInMonth);
+                    $daysInMonth = Carbon::createFromDate($year, $targetMonth, 1)->daysInMonth;
+                    $finalDay = min($day, $daysInMonth);
 
-                $validUntil = Carbon::createFromDate($year, $targetMonth, $finalDay);
+                    $validUntil = Carbon::createFromDate($year, $targetMonth, $finalDay);
+                }
             }
         }
 

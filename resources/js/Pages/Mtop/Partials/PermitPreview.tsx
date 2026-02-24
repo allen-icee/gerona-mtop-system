@@ -49,35 +49,30 @@ export default function PermitPreview({
             .toUpperCase();
     };
 
-    // Updated to use the LTO logic with weekend adjustments
     const formatExpiry = (dateString: string, plateNo: string) => {
         if (!dateString) return "-";
 
         const date = new Date(dateString);
-        let expiry = new Date(
-            date.getFullYear() + 3,
-            date.getMonth(),
-            date.getDate(),
-        );
+        let targetYear = date.getFullYear() + 3;
+        let targetMonth = date.getMonth();
+        let targetDay = date.getDate();
 
         if (plateNo && plateNo !== "FOR REGISTRATION") {
             const match = plateNo.match(/(\d)[^\d]*$/);
             if (match) {
                 const digit = parseInt(match[1], 10);
-                const targetMonth = digit === 0 ? 9 : digit - 1;
-                const targetYear = expiry.getFullYear();
-                const targetDay = date.getDate();
+                const ltoMonth = digit === 0 ? 9 : digit - 1;
 
-                const daysInMonth = new Date(
-                    targetYear,
-                    targetMonth + 1,
-                    0,
-                ).getDate();
-                const finalDay = Math.min(targetDay, daysInMonth);
-
-                expiry = new Date(targetYear, targetMonth, finalDay);
+                if (ltoMonth <= date.getMonth()) {
+                    targetMonth = ltoMonth;
+                }
             }
         }
+
+        const daysInMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
+        const finalDay = Math.min(targetDay, daysInMonth);
+
+        const expiry = new Date(targetYear, targetMonth, finalDay);
 
         return expiry
             .toLocaleDateString("en-US", {

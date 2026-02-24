@@ -281,34 +281,28 @@ export default function Create({
             return "INVALID DATE";
 
         const date = new Date(data.transaction_date);
-        let expiry = new Date(
-            date.getFullYear() + 3,
-            date.getMonth(),
-            date.getDate(),
-        );
+        let targetYear = date.getFullYear() + 3;
+        let targetMonth = date.getMonth();
+        let targetDay = date.getDate();
 
-        // LTO Logic: Adjust expiration month based ONLY on the last number of Plate Number
         if (data.plate_no && data.plate_no !== "FOR REGISTRATION") {
             const match = data.plate_no.match(/(\d)[^\d]*$/);
             if (match) {
                 const digit = parseInt(match[1], 10);
-                // 1=Jan(0), 2=Feb(1)... 9=Sep(8), 0=Oct(9)
-                const targetMonth = digit === 0 ? 9 : digit - 1;
+                const ltoMonth = digit === 0 ? 9 : digit - 1;
 
-                const targetYear = expiry.getFullYear();
-                const targetDay = date.getDate();
-
-                // Prevent day overflow (e.g., Feb 31 becomes Feb 28/29)
-                const daysInMonth = new Date(
-                    targetYear,
-                    targetMonth + 1,
-                    0,
-                ).getDate();
-                const finalDay = Math.min(targetDay, daysInMonth);
-
-                expiry = new Date(targetYear, targetMonth, finalDay);
+                // Only apply the LTO month if it doesn't push the validity past exactly 3 years
+                if (ltoMonth <= date.getMonth()) {
+                    targetMonth = ltoMonth;
+                }
             }
         }
+
+        // Prevent day overflow (e.g., Feb 31 becomes Feb 28/29)
+        const daysInMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
+        const finalDay = Math.min(targetDay, daysInMonth);
+
+        const expiry = new Date(targetYear, targetMonth, finalDay);
 
         return expiry
             .toLocaleDateString("en-US", {
@@ -318,21 +312,40 @@ export default function Create({
             })
             .toUpperCase();
     };
-
     return (
         <AuthenticatedLayout
             header={
                 <div className="flex justify-between items-center">
-                    <h2 className="font-semibold text-xl text-gray-800 leading-tight">
-                        New Application
-                    </h2>
+                    <div className="flex items-center gap-3">
+                        <div className="bg-blue-100 p-2 rounded-lg text-blue-600 hidden sm:flex items-center justify-center shadow-inner">
+                            <Icon
+                                icon="solar:document-add-bold-duotone"
+                                width="24"
+                            />
+                        </div>
+                        <div>
+                            <h2 className="font-extrabold text-lg sm:text-xl text-gray-800 tracking-tight flex items-center gap-2">
+                                <Icon
+                                    icon="solar:document-add-bold-duotone"
+                                    width="20"
+                                    className="sm:hidden text-blue-600"
+                                />
+                                New Application
+                            </h2>
+                            <p className="text-xs text-gray-500 font-medium mt-0.5 hidden sm:block">
+                                Fill in the details to create a new MTOP record.
+                            </p>
+                        </div>
+                    </div>
+
                     <button
                         type="button"
                         onClick={() => setShowMobilePreview(true)}
-                        className="xl:hidden p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 transition-colors"
+                        className="xl:hidden flex items-center gap-2 px-3 py-2 bg-indigo-50 text-indigo-600 font-bold text-xs rounded-lg hover:bg-indigo-100 transition-colors border border-indigo-100 shadow-sm"
                         title="Preview Permit"
                     >
-                        <Icon icon="solar:eye-bold" width="24" />
+                        <Icon icon="solar:eye-bold" width="18" />
+                        <span className="hidden sm:inline">Preview Permit</span>
                     </button>
                 </div>
             }
