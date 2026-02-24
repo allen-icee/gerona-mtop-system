@@ -55,7 +55,12 @@ class MtopApplicationController extends Controller
         $suggested_mt_number = sprintf("%s-%04d", $year, $nextSequence);
 
         $punong_bayans = Signatory::where('position', 'Punong Bayan')->where('is_active', true)->pluck('name');
-        $officials = Signatory::where('position', 'Authorized Official')->where('is_active', true)->pluck('name');
+
+        // Edited to include 'Committee on Transportation'
+        $officials = Signatory::whereIn('position', ['Authorized Official', 'Committee on Transportation'])
+            ->where('is_active', true)
+            ->selectRaw("CONCAT(name, ' | ', position) as formatted_name")
+            ->pluck('formatted_name');
 
         return Inertia::render('Mtop/Create', [
             'suggested_mt_number' => $suggested_mt_number,
@@ -72,7 +77,6 @@ class MtopApplicationController extends Controller
             $mtop = DB::transaction(function () use ($validated, $request) {
                 $final_mt_number = $validated['mt_number'];
 
-                // PLACE THIS CHECK HERE (Immediately after starting the transaction)
                 $exists = MtopFranchise::where('mt_number', $final_mt_number)->exists();
                 if ($exists) {
                     throw new \Exception("The Control Numnber {$final_mt_number} was just taken by another user. Please go back and refresh.");
@@ -116,7 +120,6 @@ class MtopApplicationController extends Controller
                 'operator_name' => $mtop->first_name . ' ' . $mtop->last_name,
             ])->with('message', 'Application created successfully!');
         } catch (\Exception $e) {
-            // This catches the "exists" error and sends it back to the user interface
             return redirect()->back()->withErrors(['mt_number' => $e->getMessage()])->withInput();
         }
     }
@@ -125,7 +128,12 @@ class MtopApplicationController extends Controller
     {
         $application = MtopApplication::findOrFail($id);
         $punong_bayans = Signatory::where('position', 'Punong Bayan')->where('is_active', true)->pluck('name');
-        $officials = Signatory::where('position', 'Authorized Official')->where('is_active', true)->pluck('name');
+
+        // Edited to include 'Committee on Transportation'
+        $officials = Signatory::whereIn('position', ['Authorized Official', 'Committee on Transportation'])
+            ->where('is_active', true)
+            ->selectRaw("CONCAT(name, ' | ', position) as formatted_name")
+            ->pluck('formatted_name');
 
         return Inertia::render('Mtop/Edit', [
             'application' => $application,
@@ -137,8 +145,6 @@ class MtopApplicationController extends Controller
     public function update(MtopApplicationRequest $request, $id): RedirectResponse
     {
         $application = MtopApplication::findOrFail($id);
-
-        // Validation is handled automatically by MtopApplicationRequest
         $validated = $request->validated();
 
         if ($request->transaction_date) {
@@ -158,7 +164,6 @@ class MtopApplicationController extends Controller
                 }
 
                 $application->update($validated);
-
                 $this->queueForSync('mtop_applications', $application->fresh()->toArray());
 
                 if ($application->franchise_id) {
@@ -177,7 +182,6 @@ class MtopApplicationController extends Controller
                             'chassis_no' => $validated['chassis_no'],
                             'plate_no' => $validated['plate_no'],
                         ]);
-
                         $this->queueForSync('mtop_franchises', $franchise->fresh()->toArray());
                     }
                 }
@@ -189,7 +193,6 @@ class MtopApplicationController extends Controller
                 'operator_name' => $application->first_name . ' ' . $application->last_name . ($application->suffix ? ' ' . $application->suffix : ''),
             ])->with('message', 'Record updated successfully!');
         } catch (\Exception $e) {
-            // Sends the specific error message back to the mt_number field in the UI
             return redirect()->back()->withErrors(['mt_number' => $e->getMessage()])->withInput();
         }
     }
@@ -202,11 +205,9 @@ class MtopApplicationController extends Controller
             $franchiseId = $application->franchise_id;
             $isNew = $application->transaction_type === 'New';
 
-            // 1. Explicitly delete the Application first
             $application->delete();
             $this->queueForSync('mtop_applications', ['id' => $id, '_action' => 'delete']);
 
-            // 2. If it was a 'New' transaction, explicitly delete the Franchise too
             if ($isNew && $franchiseId) {
                 MtopFranchise::where('id', $franchiseId)->delete();
                 $this->queueForSync('mtop_franchises', ['id' => $franchiseId, '_action' => 'delete']);
@@ -226,7 +227,6 @@ class MtopApplicationController extends Controller
 
     public function export(Request $request)
     {
-        // Use the same scopeFilter for exact match, and cursor() for MySQL memory safety
         $records = MtopApplication::filter($request->all())->latest()->cursor();
 
         $csvFileName = 'mtop_records_' . date('Y-m-d_H-i') . '.csv';
@@ -305,14 +305,12 @@ class MtopApplicationController extends Controller
         DB::transaction(function () use ($request, $drivers) {
             foreach ($drivers as $index => $data) {
                 $app = MtopApplication::find($data['id']);
-
                 $updateData = ['driver_name' => $data['driver_name'] ?? $app->driver_name];
 
                 if ($request->hasFile("drivers.{$index}.photo")) {
                     if ($app->driver_photo_path && Storage::exists('public/' . $app->driver_photo_path)) {
                         Storage::delete('public/' . $app->driver_photo_path);
                     }
-
                     $file = $request->file("drivers.{$index}.photo");
                     $path = $file->store('driver_photos', 'public');
                     $updateData['driver_photo_path'] = $path;
@@ -348,7 +346,12 @@ class MtopApplicationController extends Controller
     {
         $application = MtopApplication::findOrFail($id);
         $punong_bayans = Signatory::where('position', 'Punong Bayan')->where('is_active', true)->pluck('name');
-        $officials = Signatory::where('position', 'Authorized Official')->where('is_active', true)->pluck('name');
+
+        // Edited to include 'Committee on Transportation'
+        $officials = Signatory::whereIn('position', ['Authorized Official', 'Committee on Transportation'])
+            ->where('is_active', true)
+            ->selectRaw("CONCAT(name, ' | ', position) as formatted_name")
+            ->pluck('formatted_name');
 
         return Inertia::render('Mtop/Renew', [
             'application' => $application,
@@ -360,8 +363,6 @@ class MtopApplicationController extends Controller
     public function storeRenewal(MtopApplicationRequest $request, $id): RedirectResponse
     {
         $oldApp = MtopApplication::findOrFail($id);
-
-        // Validation is handled automatically by MtopApplicationRequest
         $validated = $request->validated();
 
         try {
@@ -373,7 +374,6 @@ class MtopApplicationController extends Controller
                     ->exists();
 
                 if ($exists) {
-
                     throw new \Exception("The Control Number {$final_mt_number} was just updated by another user. Please use a different number.");
                 }
 
@@ -407,7 +407,6 @@ class MtopApplicationController extends Controller
                 $applicationData['processed_by'] = Auth::id();
 
                 $newAppCreated = MtopApplication::create($applicationData);
-
                 $this->queueForSync('mtop_applications', $newAppCreated->toArray());
 
                 return $newAppCreated;
@@ -419,7 +418,6 @@ class MtopApplicationController extends Controller
                 'operator_name' => $newApp->first_name . ' ' . $newApp->last_name . ($newApp->suffix ? ' ' . $newApp->suffix : ''),
             ])->with('message', 'Renewal successful!');
         } catch (\Exception $e) {
-
             return redirect()->back()->withErrors(['mt_number' => $e->getMessage()])->withInput();
         }
     }
@@ -439,16 +437,12 @@ class MtopApplicationController extends Controller
         $validUntil = $transactionDate->copy()->addYears(3);
 
         if (!empty($plateNo) && $plateNo !== 'FOR REGISTRATION') {
-            // Match the LAST numeric digit in the string
             if (preg_match('/(\d)[^\d]*$/', $plateNo, $matches)) {
                 $digit = (int)$matches[1];
-
-                // LTO Months: 1=Jan, 2=Feb ... 9=Sep, 0=Oct
                 $targetMonth = $digit === 0 ? 10 : $digit;
-                $year = $validUntil->year; // Exactly + 3 years
+                $year = $validUntil->year;
                 $day = $transactionDate->day;
 
-                // Ensure days like 31st don't overflow into the next month
                 $daysInMonth = Carbon::createFromDate($year, $targetMonth, 1)->daysInMonth;
                 $finalDay = min($day, $daysInMonth);
 

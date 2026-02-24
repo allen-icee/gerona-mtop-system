@@ -2,6 +2,7 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, Link, usePage, useForm } from "@inertiajs/react";
 import { Icon } from "@iconify/react";
+import { useState, useEffect } from "react";
 
 export default function Dashboard({
     totalMtop,
@@ -15,9 +16,6 @@ export default function Dashboard({
     serverIp: string;
 }) {
     const user: any = usePage().props.auth.user;
-
-    const port =
-        typeof window !== "undefined" ? window.location.port || "80" : "8100";
     const staffLink = `${serverIp}`;
 
     const { post: postBackup, processing: backingUp } = useForm();
@@ -28,7 +26,16 @@ export default function Dashboard({
         }
     };
 
-    const hour = new Date().getHours();
+    // --- CLOCK STATE & EFFECT ---
+    const [currentTime, setCurrentTime] = useState(new Date());
+
+    useEffect(() => {
+        const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+        return () => clearInterval(timer);
+    }, []);
+    // ----------------------------
+
+    const hour = currentTime.getHours();
 
     let greeting = "Good Evening";
     let greetingIcon = "solar:moon-stars-bold-duotone";
@@ -53,18 +60,22 @@ export default function Dashboard({
                     {user.role === "admin" && (
                         <div className="bg-linear-to-r from-blue-900 to-blue-800 text-white overflow-hidden shadow-lg rounded-xl mb-8">
                             <div className="p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-                                <div className="flex items-center gap-4">
-                                    <div className="p-3 bg-white/10 rounded-full">
+                                <div className="flex items-center gap-4 w-full sm:w-auto text-center sm:text-left">
+                                    <div className="p-3 bg-white/10 rounded-full shrink-0 hidden sm:block">
                                         <Icon
                                             icon="solar:server-square-bold"
                                             width="32"
                                         />
                                     </div>
-                                    <div>
-                                        <h3 className="text-lg font-bold">
+                                    <div className="w-full">
+                                        <h3 className="text-lg font-bold flex items-center justify-center sm:justify-start gap-2">
                                             MTOP System Online
+                                            <span className="relative flex h-3 w-3">
+                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                                            </span>
                                         </h3>
-                                        <p className="text-blue-100 text-sm">
+                                        <p className="text-blue-100 text-sm mt-1">
                                             Staff Access Link:{" "}
                                             <span className="font-mono bg-black/20 px-2 py-1 rounded select-all font-bold text-yellow-300">
                                                 {staffLink}
@@ -72,9 +83,28 @@ export default function Dashboard({
                                         </p>
                                     </div>
                                 </div>
-                                <div className="text-xs text-blue-200 text-center sm:text-right">
-                                    <p>Host IP: {serverIp}</p>
-                                    <p>Port: {port}</p>
+
+                                <div className="text-center sm:text-right mt-2 sm:mt-0">
+                                    <div className="text-xs sm:text-sm font-medium text-blue-200 uppercase tracking-widest mb-0.5">
+                                        {currentTime.toLocaleDateString(
+                                            "en-US",
+                                            {
+                                                weekday: "long",
+                                                year: "numeric",
+                                                month: "long",
+                                                day: "numeric",
+                                            },
+                                        )}
+                                    </div>
+                                    <div className="text-2xl sm:text-3xl font-black tabular-nums tracking-wide text-white">
+                                        {currentTime.toLocaleTimeString(
+                                            "en-US",
+                                            {
+                                                hour: "2-digit",
+                                                minute: "2-digit",
+                                            },
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>

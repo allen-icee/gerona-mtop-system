@@ -1,4 +1,4 @@
-//GeronaMTOP\resources\js\Components\SignatorySelect.tsx
+// GeronaMTOP\resources\js\Components\SignatorySelect.tsx
 import { useState, useMemo, useEffect, useRef } from "react";
 import { Icon } from "@iconify/react";
 
@@ -71,7 +71,13 @@ export default function SignatorySelect({
             }
             if (e.key === "Enter" && selectedIndex >= 0) {
                 e.preventDefault();
-                onChange(filtered[selectedIndex]);
+                // Extract only the name portion for the input value
+                const selectedOption = filtered[selectedIndex];
+                const nameOnly = selectedOption.includes(" | ")
+                    ? selectedOption.split(" | ")[0]
+                    : selectedOption;
+
+                onChange(nameOnly);
                 setIsOpen(false);
                 setSelectedIndex(-1);
                 return;
@@ -122,23 +128,38 @@ export default function SignatorySelect({
                     ref={listRef}
                     className="absolute z-50 w-full bg-white border border-gray-200 mt-1 max-h-40 overflow-y-auto shadow-lg rounded-md text-sm"
                 >
-                    {filtered.map((name, index) => (
-                        <li
-                            key={index}
-                            className={`px-4 py-2 cursor-pointer text-gray-700 uppercase ${
-                                index === selectedIndex
-                                    ? "bg-blue-100 text-blue-900"
-                                    : "hover:bg-blue-50"
-                            }`}
-                            onMouseDown={() => {
-                                onChange(name);
-                                setIsOpen(false);
-                            }}
-                            onMouseEnter={() => setSelectedIndex(index)}
-                        >
-                            {name}
-                        </li>
-                    ))}
+                    {filtered.map((option, index) => {
+                        // Split name and position for display
+                        const [name, position] = option.includes(" | ")
+                            ? option.split(" | ")
+                            : [option, null];
+
+                        return (
+                            <li
+                                key={index}
+                                className={`px-4 py-2 cursor-pointer uppercase ${
+                                    index === selectedIndex
+                                        ? "bg-blue-100 text-blue-900"
+                                        : "hover:bg-blue-50 text-gray-700"
+                                }`}
+                                onMouseDown={() => {
+                                    // Save only the Name to the database
+                                    onChange(name);
+                                    setIsOpen(false);
+                                }}
+                                onMouseEnter={() => setSelectedIndex(index)}
+                            >
+                                <div className="flex flex-col">
+                                    <span className="font-bold">{name}</span>
+                                    {position && (
+                                        <span className="text-[10px] normal-case italic opacity-60 font-medium -mt-0.5">
+                                            {position}
+                                        </span>
+                                    )}
+                                </div>
+                            </li>
+                        );
+                    })}
                 </ul>
             )}
             {error && <p className="text-sm text-red-600 mt-2">{error}</p>}

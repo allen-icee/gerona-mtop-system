@@ -1,10 +1,11 @@
+// mtop-staff-client/main.js
 const { app, BrowserWindow, ipcMain, shell } = require("electron");
 const path = require("path");
 const fs = require("fs");
 
 const configPath = path.join(app.getPath("userData"), "server-config.json");
 
-// 🟢 MAGIC FIX: Read the saved IP and force Chromium to allow Camera access
+// Force Chromium to allow Camera access for the specific server IP
 if (fs.existsSync(configPath)) {
     try {
         const config = JSON.parse(fs.readFileSync(configPath));
@@ -31,6 +32,7 @@ function createWindow() {
 
     mainWindow.setMenu(null);
 
+    // Ensure printing opens in a way the OS can handle
     mainWindow.webContents.setWindowOpenHandler(({ url }) => {
         if (url.includes("/print-ids") || url.includes("/print")) {
             shell.openExternal(url);
@@ -44,7 +46,10 @@ function createWindow() {
 
         mainWindow.loadURL(serverUrl).catch((err) => {
             console.log("Failed to connect, showing settings...");
-            mainWindow.loadFile("settings.html");
+            // Send the error down to the settings page so we can show a Toast!
+            mainWindow.loadFile("settings.html").then(() => {
+                mainWindow.webContents.send("connection-failed", ip);
+            });
         });
     };
 
@@ -57,8 +62,6 @@ function createWindow() {
 
     ipcMain.on("save-ip", (event, ip) => {
         fs.writeFileSync(configPath, JSON.stringify({ ip }));
-
-        // Notify the user they need to restart to apply camera permissions
         loadServer(ip);
     });
 }
