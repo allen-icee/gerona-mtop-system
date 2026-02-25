@@ -23,6 +23,7 @@ class PrintSettingController extends Controller
         $validated = $request->validate([
             'header' => 'nullable|image|max:2048',
             'footer' => 'nullable|image|max:2048',
+            'id_background' => 'nullable|image|max:2048',
             'show_header' => 'required|boolean',
             'show_footer' => 'required|boolean',
         ]);
@@ -35,6 +36,11 @@ class PrintSettingController extends Controller
         if ($request->hasFile('footer')) {
             if ($settings->footer_path) Storage::disk('public')->delete($settings->footer_path);
             $settings->footer_path = $request->file('footer')->store('print-assets', 'public');
+        }
+
+        if ($request->hasFile('id_background')) {
+            if ($settings->id_background_path) Storage::disk('public')->delete($settings->id_background_path);
+            $settings->id_background_path = $request->file('id_background')->store('print-assets', 'public');
         }
 
         $settings->show_header = $request->boolean('show_header');

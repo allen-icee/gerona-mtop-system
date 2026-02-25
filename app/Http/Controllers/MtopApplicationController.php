@@ -330,7 +330,8 @@ class MtopApplicationController extends Controller
         $mayors = $request->query('mayors', []);
         $committees = $request->query('committees', []);
 
-        $applications = MtopApplication::whereIn('id', $ids)->get()->map(function ($app) use ($mayors, $committees) {
+        // Added type hint here \App\Models\MtopApplication $app
+        $applications = MtopApplication::whereIn('id', $ids)->get()->map(function (MtopApplication $app) use ($mayors, $committees) {
             $data = $app->toArray();
             $data['print_mayor'] = $mayors[$app->id] ?? 'Municipal Mayor';
             $data['print_committee'] = $committees[$app->id] ?? 'Committee Chair';
@@ -339,6 +340,7 @@ class MtopApplicationController extends Controller
 
         return Inertia::render('Mtop/PrintIds', [
             'applications' => $applications,
+            'settings' => \App\Models\PrintSetting::first()
         ]);
     }
 
@@ -362,6 +364,7 @@ class MtopApplicationController extends Controller
 
     public function storeRenewal(MtopApplicationRequest $request, $id): RedirectResponse
     {
+        /** @var \App\Models\MtopApplication $oldApp */
         $oldApp = MtopApplication::findOrFail($id);
         $validated = $request->validated();
 
@@ -378,9 +381,13 @@ class MtopApplicationController extends Controller
                 }
 
                 $oldApp->update(['status' => 'archived']);
-                $this->queueForSync('mtop_applications', $oldApp->fresh()->toArray());
+
+                /** @var \App\Models\MtopApplication $freshOldApp */
+                $freshOldApp = $oldApp->fresh();
+                $this->queueForSync('mtop_applications', $freshOldApp->toArray());
 
                 if ($oldApp->franchise_id) {
+                    /** @var \App\Models\MtopFranchise $franchise */
                     $franchise = MtopFranchise::where('id', $oldApp->franchise_id)->first();
                     $franchise->update([
                         'mt_number' => $final_mt_number,
@@ -395,7 +402,10 @@ class MtopApplicationController extends Controller
                         'chassis_no' => $validated['chassis_no'],
                         'plate_no' => $validated['plate_no'],
                     ]);
-                    $this->queueForSync('mtop_franchises', $franchise->fresh()->toArray());
+
+                    /** @var \App\Models\MtopFranchise $freshFranchise */
+                    $freshFranchise = $franchise->fresh();
+                    $this->queueForSync('mtop_franchises', $freshFranchise->toArray());
                 }
 
                 $applicationData = $validated;
@@ -406,6 +416,7 @@ class MtopApplicationController extends Controller
                 $applicationData['transaction_type'] = 'Renewal';
                 $applicationData['processed_by'] = Auth::id();
 
+                /** @var \App\Models\MtopApplication $newAppCreated */
                 $newAppCreated = MtopApplication::create($applicationData);
                 $this->queueForSync('mtop_applications', $newAppCreated->toArray());
 
@@ -438,7 +449,7 @@ class MtopApplicationController extends Controller
 
         if (!empty($plateNo) && $plateNo !== 'FOR REGISTRATION') {
             if (preg_match('/(\d)[^\d]*$/', $plateNo, $matches)) {
-                $digit = (int)$matches[1];
+                $digit = (int) $matches[1];
                 $targetMonth = $digit === 0 ? 10 : $digit;
                 $year = $validUntil->year;
                 $day = $transactionDate->day;

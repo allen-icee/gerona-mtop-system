@@ -4,12 +4,17 @@ import { useEffect } from "react";
 
 interface Props {
     applications: any[];
+    settings: any;
 }
 
-export default function PrintIds({ applications }: Props) {
+export default function PrintIds({ applications, settings }: Props) {
     useEffect(() => {
         setTimeout(() => window.print(), 500);
     }, []);
+
+    const idBackgroundUrl = settings?.id_background_path
+        ? `/storage/${settings.id_background_path}`
+        : "/images/MTOPIDBackground.png";
 
     return (
         <div className="w-full min-h-screen bg-gray-500 p-8 print:p-0 print:bg-white flex flex-col items-center gap-4">
@@ -21,17 +26,28 @@ export default function PrintIds({ applications }: Props) {
                         key={app.id}
                         className="w-[4in] h-132 border border-black relative overflow-hidden font-sans flex flex-col px-[8mm] py-[2mm] shadow-sm print:shadow-none shrink-0 break-inside-avoid m-auto mt-2"
                         style={{
-                            backgroundImage:
-                                "url('/images/MTOPIDBackground.png')",
+                            backgroundImage: `url('${idBackgroundUrl}')`,
                             backgroundSize: "cover",
                             backgroundPosition: "center",
                             backgroundRepeat: "no-repeat",
                         }}
                     >
+                        {/* We keep the grid at 60px so the text stays perfectly in place */}
                         <div className="relative z-10 grid grid-cols-[60px_1fr] items-center mb-6">
-                            <div className="flex justify-center"></div>
+                            <div className="relative flex justify-center items-center h-full">
+                                <img
+                                    src="/images/3DMunicipalLogo.png"
+                                    alt="Gerona Logo"
+                                    className="absolute max-w-none w-20 h-20 object-contain drop-shadow-md z-10"
+                                    style={{
+                                        left: "-10px",
+                                        top: "55%",
+                                        transform: "translateY(-50%)",
+                                    }}
+                                />
+                            </div>
 
-                            <div className="text-center leading-tight mt-4 ml-2">
+                            <div className="text-center leading-tight mt-3 mb-1 ml-0">
                                 <h1
                                     className="text-[11pt] font-['LEMONMILK'] font-light uppercase tracking-wider
                                     [-webkit-text-stroke:1.5px_white]

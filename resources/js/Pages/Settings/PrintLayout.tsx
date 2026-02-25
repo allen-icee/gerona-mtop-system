@@ -11,12 +11,16 @@ export default function PrintLayout({ settings }: { settings: any }) {
     const { data, setData, post, processing, isDirty, reset } = useForm({
         header: null as File | null,
         footer: null as File | null,
+        id_background: null as File | null,
         show_header: settings.show_header ? true : false,
         show_footer: settings.show_footer ? true : false,
     });
 
     const [headerPreview, setHeaderPreview] = useState<string | null>(null);
     const [footerPreview, setFooterPreview] = useState<string | null>(null);
+    const [idBackgroundPreview, setIdBackgroundPreview] = useState<
+        string | null
+    >(null);
     const [showExitModal, setShowExitModal] = useState(false);
     const [pendingUrl, setPendingUrl] = useState<string | null>(null);
 
@@ -42,6 +46,14 @@ export default function PrintLayout({ settings }: { settings: any }) {
             setFooterPreview(`/storage/${settings.footer_path}?t=${timestamp}`);
         } else {
             setFooterPreview(null);
+        }
+
+        if (settings.id_background_path) {
+            setIdBackgroundPreview(
+                `/storage/${settings.id_background_path}?t=${timestamp}`,
+            );
+        } else {
+            setIdBackgroundPreview(`/images/ID_BG_1.png`);
         }
     }, [settings]);
 
@@ -94,6 +106,7 @@ export default function PrintLayout({ settings }: { settings: any }) {
 
                 setData("header", null);
                 setData("footer", null);
+                setData("id_background", null);
 
                 if (pendingUrl) router.visit(pendingUrl);
             },
@@ -120,12 +133,23 @@ export default function PrintLayout({ settings }: { settings: any }) {
         }
     };
 
+    const handleIdBackgroundChange = (
+        e: React.ChangeEvent<HTMLInputElement>,
+    ) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setData("id_background", file);
+            setIdBackgroundPreview(URL.createObjectURL(file));
+        }
+    };
+
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
         post(route("settings.print.update"), {
             onSuccess: () => {
                 setData("header", null);
                 setData("footer", null);
+                setData("id_background", null);
             },
         });
     };
@@ -287,6 +311,57 @@ export default function PrintLayout({ settings }: { settings: any }) {
                                                     src={footerPreview}
                                                     alt="Footer Preview"
                                                     className="max-h-32 w-auto object-contain"
+                                                />
+                                            ) : (
+                                                <span className="text-gray-400 italic text-sm">
+                                                    No image selected
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="border-b border-gray-200 pb-8 mt-8">
+                                <div className="md:flex md:items-center md:justify-between mb-4">
+                                    <div>
+                                        <h3 className="text-lg font-medium text-gray-900">
+                                            ID Background
+                                        </h3>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                                    <div className="space-y-2">
+                                        <InputLabel value="Upload New Image" />
+                                        <input
+                                            type="file"
+                                            onChange={handleIdBackgroundChange}
+                                            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer border border-gray-300 rounded-lg"
+                                            accept="image/*"
+                                        />
+                                        <p className="text-xs text-gray-500">
+                                            Recommended size: 400x650px (PNG or
+                                            JPG). Will use default if blank.
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <InputLabel
+                                            value="Preview"
+                                            className="mb-2"
+                                        />
+                                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50 flex items-center justify-center min-h-30 relative">
+                                            {!settings.id_background_path &&
+                                                !data.id_background && (
+                                                    <span className="absolute top-2 right-2 bg-gray-200 text-gray-600 text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">
+                                                        Default
+                                                    </span>
+                                                )}
+                                            {idBackgroundPreview ? (
+                                                <img
+                                                    src={idBackgroundPreview}
+                                                    alt="ID Background Preview"
+                                                    className="max-h-64 w-auto object-contain shadow-md"
                                                 />
                                             ) : (
                                                 <span className="text-gray-400 italic text-sm">

@@ -14,6 +14,7 @@ class PrintSetting extends Model
     protected $fillable = [
         'header_path',
         'footer_path',
+        'id_background_path',
         'show_header',
         'show_footer',
     ];
