@@ -434,7 +434,10 @@ export default function Index({ users, auditLogs, filters }: Props) {
                                 href={route("audit-logs.export")}
                                 className="bg-green-600 hover:bg-green-700 text-white border border-emerald-200 hover:border-emerald-600 font-bold py-2.5 px-5 rounded-lg flex items-center gap-2 shadow-sm transition-all whitespace-nowrap"
                             >
-                                <Icon icon="solar:export-bold" width="20" />
+                                <Icon
+                                    icon="solar:file-download-bold"
+                                    width="20"
+                                />
                                 <span className="hidden sm:inline">
                                     Export CSV
                                 </span>

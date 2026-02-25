@@ -237,9 +237,11 @@ class MtopApplicationController extends Controller
 
         $callback = function () use ($records) {
             $file = fopen('php://output', 'w');
+
             fputcsv($file, [
                 'Control No',
                 'Transaction Date',
+                'Transaction Type',
                 'Last Name',
                 'First Name',
                 'Middle Name',
@@ -255,14 +257,18 @@ class MtopApplicationController extends Controller
                 'OR Date',
                 'Cedula No',
                 'Cedula Date',
+                'Punong Bayan',
+                'Authorized Official',
                 'Valid Until',
                 'Status'
             ]);
 
             foreach ($records as $row) {
+
                 fputcsv($file, [
                     $row->mt_number,
                     $row->transaction_date,
+                    $row->transaction_type,
                     $row->last_name,
                     $row->first_name,
                     $row->middle_name,
@@ -278,6 +284,8 @@ class MtopApplicationController extends Controller
                     $row->or_date,
                     $row->cedula_number,
                     $row->cedula_date,
+                    $row->punong_bayan,
+                    $row->authorized_official,
                     $row->valid_until,
                     $row->status
                 ]);
@@ -458,6 +466,7 @@ class MtopApplicationController extends Controller
 
         return $validUntil;
     }
+
     public function importData(Request $request)
     {
         $request->validate([
@@ -479,19 +488,21 @@ class MtopApplicationController extends Controller
             if ($extension === 'csv') {
                 $path = $file->getRealPath();
 
-                $content = file_get_contents($path);
-                $content = preg_replace('/^[\xef\xbb\xbf]+/', '', $content);
-                $lines = explode("\n", $content);
+                $fileHandle = fopen($path, 'r');
 
-                $data = array_map('str_getcsv', array_filter($lines));
-                if (count($data) < 2) throw new \Exception("File is empty or invalid");
+                $bom = fread($fileHandle, 3);
+                if ($bom !== "\xEF\xBB\xBF") {
+                    rewind($fileHandle);
+                }
 
-                $header = array_shift($data);
+                $header = fgetcsv($fileHandle);
+                if (!$header) throw new \Exception("File is empty or invalid");
                 $header = array_map('trim', $header);
 
                 $headerMap = [
                     'Control No' => 'mt_number',
                     'Transaction Date' => 'transaction_date',
+                    'Transaction Type' => 'transaction_type',
                     'Last Name' => 'last_name',
                     'First Name' => 'first_name',
                     'Middle Name' => 'middle_name',
@@ -507,12 +518,14 @@ class MtopApplicationController extends Controller
                     'OR Date' => 'or_date',
                     'Cedula No' => 'cedula_number',
                     'Cedula Date' => 'cedula_date',
+                    'Punong Bayan' => 'punong_bayan',
+                    'Authorized Official' => 'authorized_official',
                     'Valid Until' => 'valid_until',
                     'Status' => 'status'
                 ];
 
-                foreach ($data as $row) {
-                    if (empty($row) || count($header) !== count($row)) continue;
+                while (($row = fgetcsv($fileHandle)) !== false) {
+                    if (empty(array_filter($row)) || count($header) !== count($row)) continue;
 
                     $rowAssoc = array_combine($header, $row);
                     $mappedRow = [];
@@ -522,7 +535,7 @@ class MtopApplicationController extends Controller
                         $mappedRow[$mappedKey] = $value === '' ? null : trim($value);
                     }
 
-                    if (!isset($mappedRow['mt_number'])) continue;
+                    if (empty($mappedRow['mt_number'])) continue;
 
                     $franchise = MtopFranchise::updateOrCreate(
                         ['mt_number' => $mappedRow['mt_number']],
@@ -552,6 +565,7 @@ class MtopApplicationController extends Controller
                     );
                     $importedCount++;
                 }
+                fclose($fileHandle);
             } else {
                 $tempDbPath = $file->getRealPath();
                 config(['database.connections.import_db' => [

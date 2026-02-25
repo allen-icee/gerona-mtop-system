@@ -71,12 +71,14 @@ Route::middleware('auth')->group(function () {
 
         $callback = function () use ($records) {
             $file = fopen('php://output', 'w');
-            fputcsv($file, ['Control No', 'Transaction Date', 'Last Name', 'First Name', 'Middle Name', 'Suffix', 'Address', 'Contact #', 'Body Number', 'Plate No', 'Make/Type', 'Engine No', 'Chassis No', 'OR No', 'OR Date', 'Cedula No', 'Cedula Date', 'Valid Until', 'Status']);
+
+            fputcsv($file, ['Control No', 'Transaction Date', 'Transaction Type', 'Last Name', 'First Name', 'Middle Name', 'Suffix', 'Address', 'Contact #', 'Body Number', 'Plate No', 'Make/Type', 'Engine No', 'Chassis No', 'OR No', 'OR Date', 'Cedula No', 'Cedula Date', 'Punong Bayan', 'Authorized Official', 'Valid Until', 'Status']);
 
             foreach ($records as $row) {
                 fputcsv($file, [
                     $row->mt_number,
                     $row->transaction_date,
+                    $row->transaction_type,
                     $row->last_name,
                     $row->first_name,
                     $row->middle_name,
@@ -92,6 +94,8 @@ Route::middleware('auth')->group(function () {
                     $row->or_date,
                     $row->cedula_number,
                     $row->cedula_date,
+                    $row->punong_bayan,
+                    $row->authorized_official,
                     $row->valid_until,
                     $row->status
                 ]);
@@ -111,6 +115,8 @@ Route::middleware('auth')->group(function () {
 
         Route::resource('users', UserController::class);
 
+        Route::post('/signatories/import', [SignatoryController::class, 'import'])->name('signatories.import');
+        Route::get('/signatories/export', [SignatoryController::class, 'export'])->name('signatories.export');
         Route::resource('signatories', SignatoryController::class)->only(['index', 'store', 'update', 'destroy']);
     });
 });
