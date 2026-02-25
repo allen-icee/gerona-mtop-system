@@ -19,19 +19,17 @@ export default function Authenticated({
 
     return (
         <div className="min-h-dvh bg-gray-50 relative">
-            {/* --- FIXED BACKGROUND WATERMARK LAYER --- */}
             <div
                 className="absolute inset-0 z-0 pointer-events-none opacity-5"
                 style={{
                     backgroundImage: "url('/images/BGTric.png')",
-                    backgroundPosition: "center center", // Change to 'bottom right' or 'top center' etc.
+                    backgroundPosition: "center center",
                     backgroundRepeat: "no-repeat",
-                    backgroundSize: "50%", // Change to 'cover', 'contain', or a specific px/%
-                    backgroundAttachment: "fixed", // Keeps it perfectly still when scrolling
+                    backgroundSize: "50%",
+                    backgroundAttachment: "fixed",
                 }}
             />
 
-            {/* --- MAIN CONTENT LAYER --- */}
             <div className="relative z-10 flex flex-col min-h-dvh">
                 <ToastListener />
 

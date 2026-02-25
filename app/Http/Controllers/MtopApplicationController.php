@@ -22,7 +22,6 @@ class MtopApplicationController extends Controller
     {
         $filters = $request->only(['search', 'month', 'year', 'barangay', 'renewal']);
 
-        // Uses the new scopeFilter in the Model
         $applications = MtopApplication::filter($filters)
             ->latest()
             ->paginate(10)
@@ -56,7 +55,6 @@ class MtopApplicationController extends Controller
 
         $punong_bayans = Signatory::where('position', 'Punong Bayan')->where('is_active', true)->pluck('name');
 
-        // Edited to include 'Committee on Transportation'
         $officials = Signatory::whereIn('position', ['Authorized Official', 'Committee on Transportation'])
             ->where('is_active', true)
             ->selectRaw("CONCAT(name, ' | ', position) as formatted_name")
@@ -129,7 +127,6 @@ class MtopApplicationController extends Controller
         $application = MtopApplication::findOrFail($id);
         $punong_bayans = Signatory::where('position', 'Punong Bayan')->where('is_active', true)->pluck('name');
 
-        // Edited to include 'Committee on Transportation'
         $officials = Signatory::whereIn('position', ['Authorized Official', 'Committee on Transportation'])
             ->where('is_active', true)
             ->selectRaw("CONCAT(name, ' | ', position) as formatted_name")
@@ -330,7 +327,6 @@ class MtopApplicationController extends Controller
         $mayors = $request->query('mayors', []);
         $committees = $request->query('committees', []);
 
-        // Added type hint here \App\Models\MtopApplication $app
         $applications = MtopApplication::whereIn('id', $ids)->get()->map(function (MtopApplication $app) use ($mayors, $committees) {
             $data = $app->toArray();
             $data['print_mayor'] = $mayors[$app->id] ?? 'Municipal Mayor';
@@ -349,7 +345,6 @@ class MtopApplicationController extends Controller
         $application = MtopApplication::findOrFail($id);
         $punong_bayans = Signatory::where('position', 'Punong Bayan')->where('is_active', true)->pluck('name');
 
-        // Edited to include 'Committee on Transportation'
         $officials = Signatory::whereIn('position', ['Authorized Official', 'Committee on Transportation'])
             ->where('is_active', true)
             ->selectRaw("CONCAT(name, ' | ', position) as formatted_name")
@@ -466,7 +461,7 @@ class MtopApplicationController extends Controller
     public function importData(Request $request)
     {
         $request->validate([
-            'import_file' => 'required|file|max:51200', // 50MB max
+            'import_file' => 'required|file|max:51200',
         ]);
 
         $file = $request->file('import_file');
@@ -484,7 +479,6 @@ class MtopApplicationController extends Controller
             if ($extension === 'csv') {
                 $path = $file->getRealPath();
 
-                // Read file and remove BOM (fixes Excel CSV hidden characters)
                 $content = file_get_contents($path);
                 $content = preg_replace('/^[\xef\xbb\xbf]+/', '', $content);
                 $lines = explode("\n", $content);
@@ -495,7 +489,6 @@ class MtopApplicationController extends Controller
                 $header = array_shift($data);
                 $header = array_map('trim', $header);
 
-                // --- TRANSLATE CSV HEADERS TO DATABASE COLUMNS ---
                 $headerMap = [
                     'Control No' => 'mt_number',
                     'Transaction Date' => 'transaction_date',
@@ -519,13 +512,11 @@ class MtopApplicationController extends Controller
                 ];
 
                 foreach ($data as $row) {
-                    // Skip malformed rows
                     if (empty($row) || count($header) !== count($row)) continue;
 
                     $rowAssoc = array_combine($header, $row);
                     $mappedRow = [];
 
-                    // Map the data using our translator
                     foreach ($rowAssoc as $csvKey => $value) {
                         $mappedKey = $headerMap[$csvKey] ?? $csvKey;
                         $mappedRow[$mappedKey] = $value === '' ? null : trim($value);
@@ -533,7 +524,6 @@ class MtopApplicationController extends Controller
 
                     if (!isset($mappedRow['mt_number'])) continue;
 
-                    // 1. MUST Sync Franchise First (prevents database breaking!)
                     $franchise = MtopFranchise::updateOrCreate(
                         ['mt_number' => $mappedRow['mt_number']],
                         [
@@ -556,7 +546,6 @@ class MtopApplicationController extends Controller
                     if (!isset($mappedRow['transaction_type'])) $mappedRow['transaction_type'] = 'Imported';
                     if (!isset($mappedRow['processed_by'])) $mappedRow['processed_by'] = Auth::id();
 
-                    // 2. Create the actual Application
                     MtopApplication::updateOrCreate(
                         ['mt_number' => $mappedRow['mt_number']],
                         $mappedRow
@@ -564,14 +553,12 @@ class MtopApplicationController extends Controller
                     $importedCount++;
                 }
             } else {
-                // SQLite Dynamic Connection Logic
                 $tempDbPath = $file->getRealPath();
                 config(['database.connections.import_db' => [
                     'driver' => 'sqlite',
                     'database' => $tempDbPath,
                 ]]);
 
-                // Import Franchises First to prevent foreign key errors
                 $oldFranchises = DB::connection('import_db')->table('mtop_franchises')->get();
                 foreach ($oldFranchises as $old) {
                     $rowAssoc = (array) $old;
@@ -579,13 +566,11 @@ class MtopApplicationController extends Controller
                     MtopFranchise::updateOrCreate(['mt_number' => $rowAssoc['mt_number']], $rowAssoc);
                 }
 
-                // Import Applications
                 $oldRecords = DB::connection('import_db')->table('mtop_applications')->get();
                 foreach ($oldRecords as $old) {
                     $rowAssoc = (array) $old;
                     unset($rowAssoc['id']);
 
-                    // Link to the correct local franchise
                     $localFranchise = MtopFranchise::where('mt_number', $rowAssoc['mt_number'])->first();
                     if ($localFranchise) {
                         $rowAssoc['franchise_id'] = $localFranchise->id;

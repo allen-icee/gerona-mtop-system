@@ -4,27 +4,41 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Setup - MTOP Client</title>
+
         <script src="https://cdn.tailwindcss.com"></script>
         <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+
         <style>
+            body {
+                background: linear-gradient(135deg, #eef2ff, #f8fafc, #f0f9ff);
+            }
+
+            .glass {
+                backdrop-filter: blur(20px);
+                background: rgba(255, 255, 255, 0.7);
+            }
+
             .toast-enter {
-                transform: translateY(-100%);
+                transform: translateY(-30px);
                 opacity: 0;
             }
+
             .toast-enter-active {
                 transform: translateY(0);
                 opacity: 1;
-                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
             }
+
             .toast-exit {
-                transform: translateY(-100%);
+                transform: translateY(-20px);
                 opacity: 0;
-                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                transition: all 0.3s ease;
             }
         </style>
     </head>
+
     <body
-        class="bg-slate-50 h-screen flex flex-col items-center justify-center font-sans relative overflow-hidden"
+        class="h-screen flex flex-col items-center justify-center font-sans relative overflow-hidden"
     >
         <div
             id="toast-container"
@@ -32,7 +46,14 @@
         ></div>
 
         <div
-            class="absolute inset-0 z-0 opacity-5 flex items-center justify-center pointer-events-none"
+            class="absolute -top-32 -left-32 w-96 h-96 bg-blue-400/20 rounded-full blur-3xl"
+        ></div>
+        <div
+            class="absolute -bottom-32 -right-32 w-96 h-96 bg-purple-400/20 rounded-full blur-3xl"
+        ></div>
+
+        <div
+            class="absolute inset-0 opacity-5 flex items-center justify-center pointer-events-none"
         >
             <img
                 src="MunicipalityLogo.png"
@@ -43,48 +64,55 @@
         </div>
 
         <div
-            class="bg-white p-8 sm:p-10 rounded-2xl shadow-xl max-w-md w-full border border-gray-100 relative z-10"
+            class="glass p-10 rounded-3xl shadow-[0_25px_70px_rgba(0,0,0,0.08)] max-w-md w-full border border-white/50 relative z-10 transition-all duration-500 hover:shadow-[0_35px_90px_rgba(0,0,0,0.12)]"
         >
             <div class="flex justify-center mb-6">
-                <div class="bg-blue-50 p-4 rounded-full text-blue-600">
+                <div
+                    class="bg-linear-to-br from-blue-500 to-purple-500 p-5 rounded-2xl text-white shadow-lg shadow-blue-200 animate-pulse"
+                >
                     <iconify-icon
                         icon="solar:server-square-bold-duotone"
-                        width="48"
+                        width="40"
                     ></iconify-icon>
                 </div>
             </div>
 
             <div class="text-center mb-8">
                 <h1
-                    class="text-2xl font-extrabold text-gray-900 tracking-tight"
+                    class="text-3xl font-black tracking-tight bg-linear-to-r from-gray-900 via-blue-600 to-purple-600 bg-clip-text text-transparent"
                 >
                     Connect to Server
                 </h1>
-                <p class="text-gray-500 text-sm mt-2">
+                <p class="text-gray-500 text-sm mt-3 leading-relaxed">
                     Enter the IPv4 address of the main MTOP Server to establish
-                    a connection.
+                    a secure connection.
                 </p>
             </div>
 
-            <div class="space-y-5">
+            <div class="space-y-6">
                 <div>
                     <label
-                        class="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-2"
-                        >Host IP Address</label
+                        class="block text-xs font-bold text-gray-600 uppercase tracking-widest mb-2"
                     >
-                    <div class="relative flex items-center">
-                        <div class="absolute left-4 text-gray-400">
+                        Host IP Address
+                    </label>
+
+                    <div class="relative group">
+                        <div
+                            class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-600 transition"
+                        >
                             <iconify-icon
                                 icon="solar:laptop-minimalistic-bold"
                                 width="20"
                             ></iconify-icon>
                         </div>
+
                         <input
                             type="text"
                             id="ipInput"
                             placeholder="192.168.1.xxx"
                             onkeydown="handleEnter(event)"
-                            class="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all outline-none text-lg font-mono font-bold text-gray-800 tracking-wider"
+                            class="w-full pl-12 pr-4 py-3.5 bg-white/70 border border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 focus:bg-white transition-all outline-none text-lg font-mono font-bold text-gray-800 tracking-wider shadow-sm"
                             autofocus
                         />
                     </div>
@@ -93,7 +121,7 @@
                 <button
                     id="connectBtn"
                     onclick="saveAndConnect()"
-                    class="w-full bg-blue-700 hover:bg-blue-800 text-white font-bold py-3.5 rounded-lg transition-all shadow-md flex items-center justify-center gap-2 group"
+                    class="w-full bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-[1.02] flex items-center justify-center gap-2 group"
                 >
                     <span id="btnText">Establish Connection</span>
                     <iconify-icon
@@ -106,7 +134,7 @@
             </div>
 
             <div
-                class="mt-8 p-4 bg-amber-50 text-amber-800 rounded-lg text-xs font-medium border border-amber-200 flex gap-3 items-start"
+                class="mt-8 p-4 bg-linear-to-r from-amber-50 to-yellow-50 text-amber-800 rounded-xl text-xs font-medium border border-amber-200 flex gap-3 items-start shadow-sm"
             >
                 <iconify-icon
                     icon="solar:info-circle-bold"
@@ -123,7 +151,6 @@
         <script>
             const { ipcRenderer } = require("electron");
 
-            // Listen for connection failures from main.js
             ipcRenderer.on("connection-failed", (event, attemptedIp) => {
                 showToast(
                     `Could not connect to ${attemptedIp}:8000. Is the server running?`,
@@ -137,13 +164,16 @@
                 const toast = document.createElement("div");
 
                 const bgColor =
-                    type === "error" ? "bg-red-500" : "bg-green-500";
+                    type === "error"
+                        ? "bg-gradient-to-r from-red-500 to-rose-500"
+                        : "bg-gradient-to-r from-green-500 to-emerald-500";
+
                 const icon =
                     type === "error"
                         ? "solar:danger-triangle-bold"
                         : "solar:check-circle-bold";
 
-                toast.className = `flex items-center gap-3 ${bgColor} text-white px-5 py-3 rounded-xl shadow-lg font-medium text-sm toast-enter pointer-events-auto`;
+                toast.className = `flex items-center gap-3 ${bgColor} text-white px-6 py-3 rounded-2xl shadow-xl font-medium text-sm toast-enter pointer-events-auto`;
                 toast.innerHTML = `
                     <iconify-icon icon="${icon}" width="20"></iconify-icon>
                     ${message}
@@ -151,12 +181,10 @@
 
                 container.appendChild(toast);
 
-                // Trigger animation
                 requestAnimationFrame(() => {
                     toast.classList.add("toast-enter-active");
                 });
 
-                // Remove after 4 seconds
                 setTimeout(() => {
                     toast.classList.add("toast-exit");
                     setTimeout(() => toast.remove(), 300);
@@ -208,7 +236,6 @@
             function saveAndConnect() {
                 let rawInput = document.getElementById("ipInput").value.trim();
 
-                // Clean the input (remove http://, port, and trailing slashes)
                 let cleanIp = rawInput
                     .replace(/^https?:\/\//, "")
                     .split(":")[0]

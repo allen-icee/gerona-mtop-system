@@ -9,21 +9,18 @@ use Illuminate\Support\Facades\Log;
 
 class RunSyncWorker extends Command
 {
-    // The command that will run in the background
     protected $signature = 'sync:run';
     protected $description = 'Runs the background sync queue worker to push local LGU data to the cloud.';
 
     public function handle()
     {
         $maxRetries = 5;
-        // You will define these in your .env file
         $cloudEndpoint = env('CLOUD_SYNC_ENDPOINT', 'https://your-cloud-api.com/api/sync');
         $cloudToken = env('CLOUD_SYNC_TOKEN', 'your-secure-lgu-token');
 
-        // Fetch jobs that are pending or failed (but under max retries)
         $pendingJobs = SyncQueue::whereIn('status', ['pending', 'failed'])
             ->where('retry_count', '<', $maxRetries)
-            ->take(20) // Process in chunks to prevent memory overload
+            ->take(20)
             ->get();
 
         if ($pendingJobs->isEmpty()) {
@@ -31,13 +28,11 @@ class RunSyncWorker extends Command
         }
 
         foreach ($pendingJobs as $job) {
-            // Lock the record so it doesn't get synced twice
             $job->update(['status' => 'syncing']);
 
             try {
-                // Send the data to your cloud endpoint safely
                 $response = Http::withToken($cloudToken)
-                    ->timeout(10) // 10 seconds timeout, prevents hanging if LGU net is slow
+                    ->timeout(10)
                     ->post($cloudEndpoint, [
                         'table_name' => $job->table_name,
                         'data'       => $job->payload_json
@@ -50,7 +45,6 @@ class RunSyncWorker extends Command
                     $this->failJob($job, "HTTP Error: " . $response->status());
                 }
             } catch (\Exception $e) {
-                // Catches network drops, DNS errors, timeout, etc.
                 $this->failJob($job, "Network Exception: " . $e->getMessage());
             }
         }

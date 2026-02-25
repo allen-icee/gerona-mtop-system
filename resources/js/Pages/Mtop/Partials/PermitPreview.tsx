@@ -62,7 +62,6 @@ export default function PermitPreview({
             if (match) {
                 const digit = parseInt(match[1], 10);
                 targetMonth = digit === 0 ? 9 : digit - 1;
-                // Just force the month, no year subtraction
             }
         }
 

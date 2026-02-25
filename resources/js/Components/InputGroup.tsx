@@ -24,7 +24,6 @@ export default function InputGroup({
 }: InputGroupProps) {
     const [showPassword, setShowPassword] = useState(false);
 
-    // If toggle is active and clicked, switch type to text
     const currentType = showPasswordToggle && showPassword ? "text" : type;
 
     return (
@@ -35,7 +34,6 @@ export default function InputGroup({
                 className="mb-1 font-semibold text-gray-700"
             />
             <div className="relative">
-                {/* Left Icon */}
                 {icon && (
                     <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-gray-400 z-10">
                         <Icon icon={icon} width="20" height="20" />
@@ -49,7 +47,6 @@ export default function InputGroup({
                     {...props}
                 />
 
-                {/* Right Password Eye Toggle */}
                 {showPasswordToggle && type === "password" && (
                     <button
                         type="button"

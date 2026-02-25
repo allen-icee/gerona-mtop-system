@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use App\Models\AuditLog; // Added to fetch logs
+use App\Models\AuditLog;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Hash;
@@ -17,7 +17,6 @@ class UserController extends Controller
     {
         $search = $request->input('search');
 
-        // Fetch users with isolated pagination variable 'users_page'
         $users = User::query()
             ->when($search, function ($query, $search) {
                 $query->where('name', 'like', "%{$search}%")
@@ -27,7 +26,6 @@ class UserController extends Controller
             ->paginate(10, ['*'], 'users_page')
             ->withQueryString();
 
-        // Fetch audit logs with isolated pagination variable 'logs_page'
         $auditLogs = AuditLog::with('user')
             ->latest()
             ->paginate(15, ['*'], 'logs_page')
@@ -118,7 +116,7 @@ class UserController extends Controller
     }
     public function exportAuditLogs()
     {
-        $logs = AuditLog::with('user')->latest()->cursor(); // Cursor is memory safe for large logs
+        $logs = AuditLog::with('user')->latest()->cursor();
 
         $csvFileName = 'audit_logs_' . date('Y-m-d_H-i-A') . '.csv';
         $headers = [
@@ -131,11 +129,10 @@ class UserController extends Controller
 
         $callback = function () use ($logs) {
             $file = fopen('php://output', 'w');
-            // Add CSV Headers
+
             fputcsv($file, ['ID', 'Timestamp', 'User', 'Action', 'Details', 'IP Address']);
 
             foreach ($logs as $log) {
-                // BUG FIX: Prevent PHP crash by forcing old array/JSON payloads into a safe string
                 $safeDetails = is_string($log->payload)
                     ? $log->payload
                     : json_encode($log->payload);

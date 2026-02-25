@@ -52,7 +52,6 @@ export default function DriverInfoModal({
                     preview: app.driver_photo_path
                         ? `/storage/${app.driver_photo_path}`
                         : null,
-                    // Fix 1: Prioritize the app's saved signatories before falling back to system defaults
                     mayor: app.punong_bayan || defaultMayor,
                     committee: app.authorized_official || defaultCommittee,
                 })),
@@ -65,7 +64,6 @@ export default function DriverInfoModal({
         }
     }, [show, selectedApps, officials]);
 
-    // Listen for the image data sent back from the separate camera window
     useEffect(() => {
         const handleMessage = (event: MessageEvent) => {
             if (event.data.type === "CAMERA_CAPTURE" && cameraIndex !== null) {
@@ -106,7 +104,6 @@ export default function DriverInfoModal({
         setData("drivers", newDrivers);
     };
 
-    // OPENS A COMPLETELY NEW WINDOW
     const openCamera = async (index: number) => {
         const isSecure =
             window.isSecureContext ||
@@ -313,8 +310,6 @@ export default function DriverInfoModal({
         });
     };
 
-    // Fix 2: Dynamically include customized values into the options array
-    // so the HTML <select> allows them to be displayed and chosen
     const baseMayorOptions = officials
         .filter((o) => o.position === "Punong Bayan")
         .map((o) => o.name);

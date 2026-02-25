@@ -14,22 +14,20 @@ class ImportOldSqliteData extends Command
     {
         $this->info('Starting import from backup.sqlite...');
 
-        // 1. Ensure the backup file actually exists
         if (!file_exists(storage_path('app/backup.sqlite'))) {
             $this->error('Backup file not found at storage/app/backup.sqlite!');
             return;
         }
 
-        // 2. Fetch all old records
         $oldFranchises = DB::connection('sqlite_backup')->table('mtop_franchises')->get();
         $oldApplications = DB::connection('sqlite_backup')->table('mtop_applications')->get();
 
         $this->info("Found {$oldFranchises->count()} franchises and {$oldApplications->count()} applications.");
 
         DB::transaction(function () use ($oldFranchises, $oldApplications) {
-            // 3. Import Franchises safely
+
             foreach ($oldFranchises as $franchise) {
-                // Check if it already exists to avoid duplication
+
                 $exists = DB::table('mtop_franchises')->where('mt_number', $franchise->mt_number)->exists();
 
                 if (!$exists) {
@@ -37,7 +35,6 @@ class ImportOldSqliteData extends Command
                 }
             }
 
-            // 4. Import Applications safely
             foreach ($oldApplications as $app) {
                 $exists = DB::table('mtop_applications')->where('id', $app->id)->exists();
 

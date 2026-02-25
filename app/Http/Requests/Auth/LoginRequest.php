@@ -28,8 +28,6 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        // CHANGED: Removed the 'remember' argument.
-        // Now it just checks username & password. Session ends when browser closes.
         if (! Auth::attempt($this->only('username', 'password'))) {
             RateLimiter::hit($this->throttleKey());
 

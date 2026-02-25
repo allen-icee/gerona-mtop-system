@@ -2,12 +2,12 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, Link, usePage, useForm } from "@inertiajs/react";
 import { Icon } from "@iconify/react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Modal from "@/Components/Modal";
 import PrimaryButton from "@/Components/PrimaryButton";
 import SecondaryButton from "@/Components/SecondaryButton";
 import InputError from "@/Components/InputError";
-import axios from "axios"; // Ensure axios is imported
+import axios from "axios";
 
 export default function Dashboard({
     totalMtop,
@@ -38,7 +38,6 @@ export default function Dashboard({
         setBackingUp(true);
 
         try {
-            // Request the backup route as a blob (file)
             const response = await axios.post(
                 route("settings.backup"),
                 {},
@@ -47,18 +46,16 @@ export default function Dashboard({
                 },
             );
 
-            // Create a hidden link to trigger the download
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement("a");
             link.href = url;
 
-            // Generate filename with date
             const date = new Date().toISOString().slice(0, 10);
             link.setAttribute("download", `MTOP_FULL_BACKUP_${date}.csv`);
 
             document.body.appendChild(link);
             link.click();
-            link.remove(); // Clean up
+            link.remove();
 
             alert("Backup Successful! CSV downloaded and Database saved.");
         } catch (error) {
@@ -68,7 +65,6 @@ export default function Dashboard({
             setBackingUp(false);
         }
     };
-    // ------------------------------------------------
 
     // --- IMPORT STATE & LOGIC ---
     const [showImportModal, setShowImportModal] = useState(false);
@@ -92,7 +88,6 @@ export default function Dashboard({
             },
         });
     };
-    // ----------------------------
 
     // --- CLOCK STATE & EFFECT ---
     const [currentTime, setCurrentTime] = useState(new Date());
@@ -101,10 +96,8 @@ export default function Dashboard({
         const timer = setInterval(() => setCurrentTime(new Date()), 1000);
         return () => clearInterval(timer);
     }, []);
-    // ----------------------------
 
     const hour = currentTime.getHours();
-
     let greeting = "Good Evening";
     let greetingIcon = "solar:moon-stars-bold-duotone";
     let iconColor = "text-indigo-500 bg-indigo-50";
@@ -118,6 +111,36 @@ export default function Dashboard({
         greetingIcon = "solar:sun-bold-duotone";
         iconColor = "text-orange-500 bg-orange-50";
     }
+
+    // --- 🎮 EASTER EGG LOGIC 🎮 ---
+    const [showEasterEgg, setShowEasterEgg] = useState(false);
+    const [clickCount, setClickCount] = useState(0);
+    const secretKeys = useRef<string[]>([]);
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            secretKeys.current = [
+                ...secretKeys.current,
+                e.key.toLowerCase(),
+            ].slice(-4);
+            if (secretKeys.current.join("") === "devs") {
+                setShowEasterEgg(true);
+            }
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, []);
+
+    const handleSecretClick = () => {
+        setClickCount((prev) => {
+            if (prev + 1 >= 5) {
+                setShowEasterEgg(true);
+                return 0;
+            }
+            return prev + 1;
+        });
+    };
+    // ------------------------------
 
     return (
         <AuthenticatedLayout>
@@ -180,7 +203,10 @@ export default function Dashboard({
 
                     <div className="bg-white overflow-hidden shadow-sm rounded-lg sm:rounded-lg mb-6 border-l-4 border-blue-900">
                         <div className="p-6 text-gray-900 flex items-center justify-between">
-                            <div>
+                            <div
+                                onClick={handleSecretClick}
+                                className="cursor-pointer select-none rounded-lg transition-colors hover:bg-gray-50 p-2 -ml-2"
+                            >
                                 <h3 className="text-xl sm:text-2xl font-bold text-blue-900">
                                     {greeting}, {user.name}!
                                 </h3>
@@ -188,7 +214,7 @@ export default function Dashboard({
                                     Welcome to the Gerona Municipal Tricycle
                                     Operator Permit (MTOP) System.
                                 </p>
-                                <p className="text-xs sm:text-sm text-gray-500">
+                                <p className="text-xs sm:text-sm text-gray-500 mt-1">
                                     Serbisyong May Puso, Serbisyong Totoo!
                                 </p>
                             </div>
@@ -343,7 +369,7 @@ export default function Dashboard({
                 </div>
             </div>
 
-            {/* IMPORT MODAL */}
+            {/* --- DATA IMPORT MODAL --- */}
             <Modal
                 show={showImportModal}
                 onClose={() => setShowImportModal(false)}
@@ -370,7 +396,6 @@ export default function Dashboard({
                             existing records and add new ones without creating
                             duplicates.
                         </div>
-
                         <div>
                             <input
                                 type="file"
@@ -389,7 +414,6 @@ export default function Dashboard({
                                 className="mt-2"
                             />
                         </div>
-
                         <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
                             <SecondaryButton
                                 onClick={() => setShowImportModal(false)}
@@ -398,12 +422,69 @@ export default function Dashboard({
                             </SecondaryButton>
                             <PrimaryButton
                                 disabled={importing || !importData.import_file}
-                                className="bg-emerald-600 hover:bg-emerald-700 focus:bg-emerald-700 active:bg-emerald-800"
+                                className="bg-emerald-600 hover:bg-emerald-700"
                             >
                                 {importing ? "Importing..." : "Run Import"}
                             </PrimaryButton>
                         </div>
                     </form>
+                </div>
+            </Modal>
+
+            {/* --- 🎮 DEVELOPER EASTER EGG MODAL 🎮 --- */}
+            <Modal
+                show={showEasterEgg}
+                onClose={() => setShowEasterEgg(false)}
+                maxWidth="sm"
+            >
+                <div className="relative p-8 text-center bg-white/80 backdrop-blur-xl rounded-2xl overflow-hidden border border-gray-200 shadow-[0_20px_60px_rgba(0,0,0,0.08)]">
+                    {/* Top Gradient Accent */}
+                    <div className="absolute top-0 left-0 w-full h-1.5 bg-linear-to-r from-blue-500 via-purple-500 to-emerald-500"></div>
+
+                    {/* Floating Glow Background */}
+                    <div className="absolute -top-10 -right-10 w-32 h-32 bg-blue-400/20 rounded-full blur-3xl"></div>
+                    <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-purple-400/20 rounded-full blur-3xl"></div>
+
+                    {/* Icon */}
+                    <div className="relative">
+                        <div className="mx-auto w-20 h-20 flex items-center justify-center rounded-2xl bg-linear-to-br from-blue-500 to-purple-500 shadow-lg shadow-blue-200 animate-pulse">
+                            <Icon
+                                icon="solar:code-square-bold-duotone"
+                                width="40"
+                                className="text-white"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Title */}
+                    <h2 className="mt-6 text-3xl font-black text-gray-900">
+                        <span className="text-blue-600">System</span>{" "}
+                        <span className="text-purple-600">Developers</span>
+                    </h2>
+
+                    {/* Subtitle */}
+                    <p className="text-sm text-gray-500 mt-2 italic">
+                        Hi! We are the first creator as OJT Students:
+                    </p>
+
+                    {/* Names */}
+                    <div className="mt-2 space-y-2">
+                        <div className="p-4 bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 font-semibold text-gray-700 hover:text-blue-600">
+                            Allen Icee A. Dequiros
+                        </div>
+
+                        <div className="p-4 bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 font-semibold text-gray-700 hover:text-purple-600">
+                            Elijah Miguel V. Inocencio
+                        </div>
+                    </div>
+
+                    {/* Button */}
+                    <button
+                        onClick={() => setShowEasterEgg(false)}
+                        className="mt-4 w-full py-3 rounded-xl font-bold text-white bg-linear-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-[1.02]"
+                    >
+                        ⊂⁠(⁠≽^•⩊•^≼⁠)⁠つ
+                    </button>
                 </div>
             </Modal>
         </AuthenticatedLayout>

@@ -14,17 +14,14 @@ class LogStaffActions
     {
         $response = $next($request);
 
-        // Only log POST, PUT, PATCH, DELETE requests if a user is logged in
         if (Auth::check() && in_array($request->method(), ['POST', 'PUT', 'PATCH', 'DELETE'])) {
 
             $method = $request->method();
             $path = $request->path();
 
-            // Default fallback
             $actionName = "System Action";
             $details = "Performed $method on /$path";
 
-            // --- SMART TRANSLATION LOGIC ---
             if ($path === 'logout') {
                 $actionName = 'Logged Out';
                 $details = 'User safely logged out of the system.';
@@ -32,7 +29,6 @@ class LogStaffActions
                 $actionName = 'Logged In';
                 $details = 'User authenticated successfully.';
             } elseif (str_starts_with($path, 'mtop')) {
-                // Try to get the MT Number from the form data
                 $mt = $request->input('mt_number');
                 $id = basename($path);
 
@@ -46,7 +42,6 @@ class LogStaffActions
                     }
                 } elseif (in_array($method, ['PUT', 'PATCH'])) {
                     $actionName = 'Edited Permit';
-                    // If we can't find the MT number in the input, at least show the ID
                     $details = $mt ? "Edited Control No: $mt" : "Edited Database ID: $id";
                 } elseif ($method === 'DELETE') {
                     $actionName = 'Deleted Permit';
@@ -75,7 +70,7 @@ class LogStaffActions
             AuditLog::create([
                 'user_id' => Auth::id(),
                 'action' => $actionName,
-                'payload' => $details, // This saves the READABLE sentence now!
+                'payload' => $details,
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent(),
             ]);

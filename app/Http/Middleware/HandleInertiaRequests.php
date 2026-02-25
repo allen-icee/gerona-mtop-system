@@ -14,9 +14,6 @@ class HandleInertiaRequests extends Middleware
      */
     protected $rootView = 'app';
 
-    /**
-     * Determine the current asset version.
-     */
     public function version(Request $request): ?string
     {
         return parent::version($request);
@@ -29,7 +26,7 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        // We use a try-catch so the app doesn't crash if the table is missing on first run
+
         $printSettings = null;
         try {
             $printSettings = \App\Models\PrintSetting::first();

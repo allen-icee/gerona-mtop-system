@@ -75,7 +75,6 @@ export default function PrintPage1({ application, operatorName }: Props) {
                     </div>
                 </div>
 
-                {/* 5. BODY PARAGRAPH 1 */}
                 <div className="text-justify mb-8 text-[12pt] leading-[1.15]">
                     <p>
                         Ako si{" "}

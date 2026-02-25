@@ -18,7 +18,6 @@ class ExpirePermits extends Command
     {
         $this->info('Checking for expired permits...');
 
-        // 1. Fetch the records instead of bulk updating, so we can sync them
         $expiredApps = MtopApplication::where('status', 'active')
             ->whereNotNull('valid_until')
             ->whereDate('valid_until', '<', Carbon::today())
@@ -28,10 +27,9 @@ class ExpirePermits extends Command
 
         DB::transaction(function () use ($expiredApps, &$count) {
             foreach ($expiredApps as $app) {
-                // 2. Update the status
+
                 $app->update(['status' => 'expired']);
 
-                // 3. Add to SyncQueue so the other server knows it expired!
                 SyncQueue::create([
                     'table_name' => 'mtop_applications',
                     'payload_json' => $app->fresh()->toArray(),

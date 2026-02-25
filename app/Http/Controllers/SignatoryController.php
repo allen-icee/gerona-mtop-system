@@ -23,8 +23,6 @@ class SignatoryController extends Controller
             'position' => 'required|string|in:Punong Bayan,Authorized Official,Committee on Transportation',
         ]);
 
-        // BUG FIX: Explicitly force new signatories to be Active so they
-        // immediately appear in the dropdowns for both Staff and Admin!
         $validated['is_active'] = true;
 
         Signatory::create($validated);

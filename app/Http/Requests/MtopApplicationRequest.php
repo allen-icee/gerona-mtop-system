@@ -8,23 +8,16 @@ use App\Models\MtopApplication;
 
 class MtopApplicationRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
+
     public function authorize(): bool
     {
-        return true; // We return true assuming your auth middleware already protects the routes
+        return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     */
     public function rules(): array
     {
         $franchiseId = null;
 
-        // If we are updating or renewing, we need to grab the current application
-        // to ignore its current franchise_id for the body_number unique rule.
         if ($this->route('id')) {
             $application = MtopApplication::find($this->route('id'));
             $franchiseId = $application ? $application->franchise_id : null;
@@ -42,7 +35,6 @@ class MtopApplicationRequest extends FormRequest
                 'required',
                 'string',
                 'max:20',
-                // This rule checks if the number exists in the mtop_franchises table
                 $this->route('id')
                     ? \Illuminate\Validation\Rule::unique('mtop_franchises', 'mt_number')->ignore($franchiseId)
                     : 'unique:mtop_franchises,mt_number'
@@ -75,9 +67,6 @@ class MtopApplicationRequest extends FormRequest
         ];
     }
 
-    /**
-     * Get custom messages for validator errors.
-     */
     public function messages(): array
     {
         return [

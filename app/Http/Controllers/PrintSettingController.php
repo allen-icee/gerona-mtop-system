@@ -31,7 +31,6 @@ class PrintSettingController extends Controller
             'remove_id_background' => 'nullable|boolean',
         ]);
 
-        // Process Removals First
         if ($request->boolean('remove_header') && $settings->header_path) {
             Storage::disk('public')->delete($settings->header_path);
             $settings->header_path = null;
@@ -47,7 +46,6 @@ class PrintSettingController extends Controller
             $settings->id_background_path = null;
         }
 
-        // Process New Uploads
         if ($request->hasFile('header')) {
             if ($settings->header_path) Storage::disk('public')->delete($settings->header_path);
             $settings->header_path = $request->file('header')->store('print-assets', 'public');

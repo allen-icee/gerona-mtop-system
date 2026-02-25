@@ -16,13 +16,10 @@ class AppServiceProvider extends ServiceProvider
         //
     }
 
-    /**
-     * Bootstrap any application services.
-     */
     public function boot(): void
     {
         Vite::prefetch(concurrency: 3);
-        // Apply SQLite performance and stability pragmas
+
         if (DB::connection()->getDriverName() === 'sqlite') {
             DB::connection()->getPdo()->exec("
             PRAGMA journal_mode = WAL;

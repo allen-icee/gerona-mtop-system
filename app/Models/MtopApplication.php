@@ -33,7 +33,6 @@ class MtopApplication extends Model
         'status',
         'driver_name',
         'driver_photo_path',
-        // --- THESE ARE THE CRUCIAL MISSING FIELDS ---
         'franchise_id',
         'transaction_type',
         'processed_by',

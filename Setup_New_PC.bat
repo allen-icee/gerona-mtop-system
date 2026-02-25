@@ -6,7 +6,7 @@ cd /d "%~dp0"
 
 echo =====================================================
 echo    INITIALIZING GERONA MTOP SYSTEM...
-echo    PLEASE DO NOT CLOSE THIS WINDOW.
+echo    PLEASE DO NOT CLOSE THIS WINDOW AND BE PATIENT.
 echo =====================================================
 echo.
 

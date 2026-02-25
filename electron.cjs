@@ -70,7 +70,7 @@ function startPHPServer(envVars) {
         phpExe,
         ["-S", "0.0.0.0:8000", "-t", "public", "server.php"],
         {
-            cwd: __dirname, // 🟢 FIXED: Always start inside the app folder
+            cwd: __dirname,
             env: envVars,
         },
     );
@@ -83,7 +83,6 @@ function startPHPServer(envVars) {
         setTimeout(() => startPHPServer(envVars), 3000);
     });
 
-    // Watchdog
     setInterval(() => {
         if (!phpServer || phpServer.killed) {
             log("Watchdog detected PHP crash");

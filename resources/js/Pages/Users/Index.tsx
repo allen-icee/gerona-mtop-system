@@ -13,7 +13,6 @@ import InputError from "@/Components/InputError";
 import { useState, useEffect, useRef, FormEventHandler } from "react";
 import ConfirmDeleteModal from "@/Components/ConfirmDeleteModal";
 
-// --- INTERFACES ---
 interface User {
     id: number;
     name: string;
@@ -62,7 +61,6 @@ export default function Index({ users, auditLogs, filters }: Props) {
         password_confirmation: "",
     });
 
-    // --- LIVE VALIDATION STATES ---
     const [requirements, setRequirements] = useState({
         length: false,
         number: false,
@@ -73,7 +71,6 @@ export default function Index({ users, auditLogs, filters }: Props) {
     const [nameError, setNameError] = useState("");
     const [emailError, setEmailError] = useState("");
 
-    // --- LIVE VALIDATION EFFECTS ---
     useEffect(() => {
         if (data.name.length > 0) {
             const isValid = /^[a-zA-Z\s.]+$/.test(data.name);
@@ -126,7 +123,6 @@ export default function Index({ users, auditLogs, filters }: Props) {
         });
     }, [data.password]);
 
-    // --- FORM VALIDATION LOGIC ---
     const allRequirementsMet =
         requirements.length &&
         requirements.number &&
@@ -149,7 +145,6 @@ export default function Index({ users, auditLogs, filters }: Props) {
         emailError === "" &&
         isPasswordValid;
 
-    // --- SEARCH EFFECT ---
     useEffect(() => {
         if (initialRender.current) {
             initialRender.current = false;
@@ -241,7 +236,6 @@ export default function Index({ users, auditLogs, filters }: Props) {
 
             <div className="py-6 sm:py-12">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    {/* USER MANAGEMENT HEADER */}
                     <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
                         <div className="relative w-full sm:w-auto">
                             <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-gray-500">
@@ -263,7 +257,6 @@ export default function Index({ users, auditLogs, filters }: Props) {
                         </button>
                     </div>
 
-                    {/* --- MOBILE VIEW: RESPONSIVE CARDS --- */}
                     <div className="grid grid-cols-1 gap-4 md:hidden mb-6">
                         {users.data.length === 0 ? (
                             <div className="bg-white p-6 rounded-lg shadow text-center text-gray-500">
@@ -330,7 +323,6 @@ export default function Index({ users, auditLogs, filters }: Props) {
                         )}
                     </div>
 
-                    {/* --- DESKTOP VIEW: TABLE --- */}
                     <div className="hidden md:block bg-white overflow-hidden shadow-sm sm:rounded-lg border border-gray-100 mb-6">
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm text-left text-gray-500">
@@ -419,7 +411,6 @@ export default function Index({ users, auditLogs, filters }: Props) {
                     </div>
                     <Pagination links={users.links} />
 
-                    {/* --- AUDIT LOGS TABLE --- */}
                     <div className="mt-16">
                         <div className="flex justify-between items-center mb-6">
                             <div className="flex items-center gap-3">
@@ -521,7 +512,6 @@ export default function Index({ users, auditLogs, filters }: Props) {
                 </div>
             </div>
 
-            {/* --- BEAUTIFUL USER MODAL --- */}
             <Modal show={isModalOpen} onClose={closeModal} maxWidth="xl">
                 <div className="flex justify-between items-center bg-gray-800 px-6 py-4 rounded-t-lg">
                     <h3 className="text-white font-bold text-lg flex items-center gap-2">
@@ -761,7 +751,6 @@ export default function Index({ users, auditLogs, filters }: Props) {
     );
 }
 
-// Custom Requirement Item Component for Password Checker
 function RequirementItem({ met, label }: { met: boolean; label: string }) {
     return (
         <li

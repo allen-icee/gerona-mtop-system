@@ -51,14 +51,13 @@ Route::middleware('auth')->group(function () {
     Route::post('/mtop/import', [App\Http\Controllers\MtopApplicationController::class, 'importData'])->name('mtop.import');
 
     Route::post('/settings/backup', function () {
-        // 1. Run Server-Side SQLite Backup
+
         try {
             Artisan::call('backup:run');
         } catch (\Exception $e) {
-            // If server backup fails, we still try to give them the CSV
+            // If server backup fails, we still try to give them the CSV hehe
         }
 
-        // 2. Generate and Stream CSV Download
         $records = MtopApplication::latest()->cursor();
         $csvFileName = 'FULL_BACKUP_MTOP_' . date('Y-m-d_H-i') . '.csv';
 

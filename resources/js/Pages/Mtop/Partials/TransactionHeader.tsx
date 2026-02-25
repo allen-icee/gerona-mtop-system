@@ -9,18 +9,15 @@ export default function TransactionHeader({
     expiryDisplay,
     onKeyDown,
 }: any) {
-    // SAFELY grab prefix and sequence, accommodating potentially weird legacy SQLite formats
     let prefix = `${new Date().getFullYear()}-`;
     let sequence = "";
 
     if (data.mt_number) {
         const parts = data.mt_number.split("-");
         if (parts.length > 1) {
-            // e.g. "2024-0012" -> prefix: "2024-", sequence: "0012"
             prefix = `${parts[0]}-`;
             sequence = parts.slice(1).join("-");
         } else {
-            // e.g. "12345" -> prefix: "", sequence: "12345"
             prefix = "";
             sequence = data.mt_number;
         }
@@ -35,7 +32,6 @@ export default function TransactionHeader({
                 <div
                     className={`relative flex items-center h-11.75 border-none rounded-md shadow-sm bg-white overflow-hidden focus-within:ring-1 focus-within:ring-blue-500 focus-within:border-blue-500 transition-colors ${errors?.mt_number ? "border-red-500" : "border-gray-300"}`}
                 >
-                    {/* Locked Prefix Design */}
                     {prefix && (
                         <div className="px-3 h-full bg-gray-200 text-gray-700 font-bold border-r border-gray-300 flex items-center justify-center cursor-not-allowed select-none">
                             <Icon
@@ -47,17 +43,14 @@ export default function TransactionHeader({
                         </div>
                     )}
 
-                    {/* Editable Numbers Design */}
                     <input
                         type="text"
                         name="mt_number"
                         id="mt_number"
                         value={sequence}
                         onChange={(e) => {
-                            // Strip out any non-numbers (no letters, no specials)
                             let val = e.target.value.replace(/[^0-9]/g, "");
 
-                            // If it's a legacy record without a prefix, don't restrict to 4 digits
                             if (prefix && val.length > 4) {
                                 val = val.substring(0, 4);
                             }

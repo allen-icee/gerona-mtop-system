@@ -32,7 +32,6 @@ function createWindow() {
 
     mainWindow.setMenu(null);
 
-    // Ensure printing opens in a way the OS can handle
     mainWindow.webContents.setWindowOpenHandler(({ url }) => {
         if (url.includes("/print-ids") || url.includes("/print")) {
             shell.openExternal(url);
@@ -46,7 +45,7 @@ function createWindow() {
 
         mainWindow.loadURL(serverUrl).catch((err) => {
             console.log("Failed to connect, showing settings...");
-            // Send the error down to the settings page so we can show a Toast!
+
             mainWindow.loadFile("settings.html").then(() => {
                 mainWindow.webContents.send("connection-failed", ip);
             });

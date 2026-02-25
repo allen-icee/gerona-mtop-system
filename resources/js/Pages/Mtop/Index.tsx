@@ -65,7 +65,6 @@ export default function Index({ applications, filters, officials }: Props) {
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
     const [showDriverModal, setShowDriverModal] = useState(false);
 
-    // Calculate current dates ONCE per render, not per row
     const { now, sixtyDaysFromNow } = useMemo(() => {
         const currentDate = new Date();
         const futureDate = new Date();
@@ -73,7 +72,6 @@ export default function Index({ applications, filters, officials }: Props) {
         return { now: currentDate, sixtyDaysFromNow: futureDate };
     }, []);
 
-    // Effect 1: Handle Search Debouncing (Preserves Scroll)
     useEffect(() => {
         const searchTimer = setTimeout(() => {
             router.get(
@@ -90,7 +88,6 @@ export default function Index({ applications, filters, officials }: Props) {
         return () => clearTimeout(searchTimer);
     }, [search, month, year, barangay, renewal]);
 
-    // Effect 2: Handle Polling (Isolated so typing doesn't reset it)
     useEffect(() => {
         const pollInterval = setInterval(() => {
             router.reload({ only: ["applications"] });
@@ -703,9 +700,7 @@ export default function Index({ applications, filters, officials }: Props) {
                         : "translate-y-12 opacity-0 scale-95 pointer-events-none"
                 }`}
             >
-                {/* Outer Shell */}
                 <div className="bg-slate-900/95 backdrop-blur-md border border-slate-700 p-1.5 rounded-full shadow-2xl flex items-center gap-2">
-                    {/* Left Side: Info & Clear Selection */}
                     <div className="flex items-center gap-3 pl-3 pr-2">
                         <div className="flex items-center gap-2">
                             <span className="bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">
@@ -717,10 +712,8 @@ export default function Index({ applications, filters, officials }: Props) {
                         </div>
                     </div>
 
-                    {/* Subtle Separator */}
                     <div className="w-px h-6 bg-slate-700"></div>
 
-                    {/* Right Side: Primary Action Button */}
                     <button
                         onClick={() => setShowDriverModal(true)}
                         className="bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white px-5 py-2 rounded-full text-sm font-bold flex items-center gap-2 transition-all shadow-md hover:cursor-pointer"
@@ -729,7 +722,6 @@ export default function Index({ applications, filters, officials }: Props) {
                         <span>Print IDs</span>
                     </button>
 
-                    {/* Clear Button grouped with the selected count */}
                     <button
                         onClick={() => setSelectedIds([])}
                         className="text-slate-500 hover:text-red-400 hover:bg-slate-800 transition-colors rounded-full p-1 hover:cursor-pointer"

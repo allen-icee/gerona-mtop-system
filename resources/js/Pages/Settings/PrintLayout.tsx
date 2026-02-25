@@ -30,7 +30,6 @@ export default function PrintLayout({ settings }: { settings: any }) {
 
     const allowExitRef = useRef(false);
 
-    // Sync state when settings prop updates (e.g. after a successful save)
     useEffect(() => {
         setData((prev) => ({
             ...prev,
@@ -63,11 +62,10 @@ export default function PrintLayout({ settings }: { settings: any }) {
                 `/storage/${settings.id_background_path}?t=${timestamp}`,
             );
         } else {
-            setIdBackgroundPreview(`/images/ID_BG_1.png`); // The requested default background
+            setIdBackgroundPreview(`/images/ID_BG_1.png`);
         }
     }, [settings]);
 
-    // Handle Unsaved Changes Modal
     useEffect(() => {
         const handleBeforeUnload = (e: BeforeUnloadEvent) => {
             if (isDirty && !allowExitRef.current) {
@@ -126,7 +124,6 @@ export default function PrintLayout({ settings }: { settings: any }) {
         post(route("settings.print.update"));
     };
 
-    // --- FILE HANDLERS ---
     const handleHeaderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
@@ -137,7 +134,7 @@ export default function PrintLayout({ settings }: { settings: any }) {
             }));
             setHeaderPreview(URL.createObjectURL(file));
         }
-        e.target.value = ""; // Reset input so same file can be selected again
+        e.target.value = "";
     };
 
     const handleRemoveHeader = () => {
@@ -187,7 +184,6 @@ export default function PrintLayout({ settings }: { settings: any }) {
         setIdBackgroundPreview(`/images/ID_BG_1.png`);
     };
 
-    // --- REUSABLE SWITCH COMPONENT ---
     const ToggleSwitch = ({ label, checked, onChange }: any) => (
         <Switch.Group as="div" className="flex items-center justify-between">
             <Switch.Label className="mr-3 text-sm font-medium text-gray-700">
@@ -229,7 +225,6 @@ export default function PrintLayout({ settings }: { settings: any }) {
                             onSubmit={submit}
                             className="p-4 sm:p-8 space-y-8"
                         >
-                            {/* --- HEADER SECTION --- */}
                             <div className="border-b border-gray-200 pb-8">
                                 <div className="md:flex md:items-center md:justify-between mb-6">
                                     <div>
@@ -325,7 +320,6 @@ export default function PrintLayout({ settings }: { settings: any }) {
                                 </div>
                             </div>
 
-                            {/* --- FOOTER SECTION --- */}
                             <div className="border-b border-gray-200 pb-8 mt-8">
                                 <div className="md:flex md:items-center md:justify-between mb-6">
                                     <div>
@@ -413,7 +407,6 @@ export default function PrintLayout({ settings }: { settings: any }) {
                                 </div>
                             </div>
 
-                            {/* --- ID BACKGROUND SECTION --- */}
                             <div className="pb-4 mt-8">
                                 <div className="md:flex md:items-center md:justify-between mb-6">
                                     <div>

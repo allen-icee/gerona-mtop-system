@@ -71,7 +71,7 @@ export default function SignatorySelect({
             }
             if (e.key === "Enter" && selectedIndex >= 0) {
                 e.preventDefault();
-                // Extract only the name portion for the input value
+
                 const selectedOption = filtered[selectedIndex];
                 const nameOnly = selectedOption.includes(" | ")
                     ? selectedOption.split(" | ")[0]
@@ -129,7 +129,6 @@ export default function SignatorySelect({
                     className="absolute z-50 w-full bg-white border border-gray-200 mt-1 max-h-40 overflow-y-auto shadow-lg rounded-md text-sm"
                 >
                     {filtered.map((option, index) => {
-                        // Split name and position for display
                         const [name, position] = option.includes(" | ")
                             ? option.split(" | ")
                             : [option, null];
@@ -143,7 +142,6 @@ export default function SignatorySelect({
                                         : "hover:bg-blue-50 text-gray-700"
                                 }`}
                                 onMouseDown={() => {
-                                    // Save only the Name to the database
                                     onChange(name);
                                     setIsOpen(false);
                                 }}

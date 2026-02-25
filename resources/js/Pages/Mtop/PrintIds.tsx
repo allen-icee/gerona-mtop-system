@@ -32,7 +32,6 @@ export default function PrintIds({ applications, settings }: Props) {
                             backgroundRepeat: "no-repeat",
                         }}
                     >
-                        {/* We keep the grid at 60px so the text stays perfectly in place */}
                         <div className="relative z-10 grid grid-cols-[60px_1fr] items-center mb-6">
                             <div className="relative flex justify-center items-center h-full">
                                 <img

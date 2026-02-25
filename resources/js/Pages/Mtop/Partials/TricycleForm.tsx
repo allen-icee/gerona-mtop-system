@@ -98,7 +98,7 @@ export default function TricycleForm({
                             const val = e.target.value
                                 .toUpperCase()
                                 .replace(/[^A-Z0-9]/g, "")
-                                .slice(0, 8); // Limits input to 8 characters max
+                                .slice(0, 8);
                             setData("plate_no", val);
                         }}
                         error={errors.plate_no}
@@ -107,7 +107,7 @@ export default function TricycleForm({
                             isForRegistration ? "FOR REGISTRATION" : "123ABC"
                         }
                         required={true}
-                        maxLength={8} // Natively restricts user from typing more than 8 chars
+                        maxLength={8}
                         onKeyDown={onKeyDown}
                         readOnly={isForRegistration}
                         className={
