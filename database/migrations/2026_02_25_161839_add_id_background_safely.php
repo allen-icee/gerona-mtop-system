@@ -8,20 +8,20 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // This safely checks if the column is missing before trying to add it
-        if (!Schema::hasColumn('print_settings', 'id_background_path')) {
-            Schema::table('print_settings', function (Blueprint $table) {
+        Schema::table('print_settings', function (Blueprint $table) {
+            // Safely add the column if it doesn't exist
+            if (!Schema::hasColumn('print_settings', 'id_background_path')) {
                 $table->string('id_background_path')->nullable()->after('footer_path');
-            });
-        }
+            }
+        });
     }
 
     public function down(): void
     {
-        if (Schema::hasColumn('print_settings', 'id_background_path')) {
-            Schema::table('print_settings', function (Blueprint $table) {
+        Schema::table('print_settings', function (Blueprint $table) {
+            if (Schema::hasColumn('print_settings', 'id_background_path')) {
                 $table->dropColumn('id_background_path');
-            });
-        }
+            }
+        });
     }
 };

@@ -2,6 +2,7 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import InputGroup from "@/Components/InputGroup";
 import PrimaryButton from "@/Components/PrimaryButton";
+import SecondaryButton from "@/Components/SecondaryButton";
 import { Head, Link, useForm } from "@inertiajs/react";
 import { FormEventHandler } from "react";
 import { Icon } from "@iconify/react";
@@ -24,35 +25,48 @@ export default function Create() {
     };
 
     return (
-        <AuthenticatedLayout
-            header={
-                <h2 className="font-semibold text-xl text-gray-800 leading-tight">
-                    Add New System User
-                </h2>
-            }
-        >
-            <Head title="Add User" />
+        <AuthenticatedLayout>
+            <Head title="Add System User" />
 
-            <div className="py-6 sm:py-12">
-                <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="py-12">
+                <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="mb-6 flex items-center gap-3">
+                        <Link
+                            href={route("users.index")}
+                            className="p-2 bg-white text-gray-500 hover:text-blue-600 rounded-full shadow-sm hover:shadow transition-all border border-gray-100"
+                        >
+                            <Icon icon="solar:arrow-left-bold" width="24" />
+                        </Link>
+                        <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight">
+                            Add New User
+                        </h2>
+                    </div>
+
                     <form
                         onSubmit={submit}
-                        className="bg-white p-4 sm:p-8 rounded-lg shadow-sm border-t-4 border-blue-600 relative z-0"
+                        className="bg-white p-6 sm:p-10 rounded-2xl shadow-sm border border-gray-100 relative z-0"
                     >
-                        <div className="flex items-center gap-2 mb-6 border-b border-gray-100 pb-4">
-                            <div className="p-2 bg-blue-50 rounded-full text-blue-600">
-                                <Icon icon="solar:user-plus-bold" width="24" />
+                        <div className="flex items-center gap-3 mb-8 pb-4 border-b border-gray-100">
+                            <div className="p-3 bg-blue-50 rounded-xl text-blue-600">
+                                <Icon
+                                    icon="solar:user-plus-bold-duotone"
+                                    width="28"
+                                />
                             </div>
-                            <h3 className="text-lg font-bold text-gray-700">
-                                User Details
-                            </h3>
+                            <div>
+                                <h3 className="text-lg font-bold text-gray-800">
+                                    User Profile
+                                </h3>
+                                <p className="text-sm text-gray-500">
+                                    Set up the personal details and role.
+                                </p>
+                            </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                             <InputGroup
                                 id="name"
                                 label="Full Name"
-                                name="name"
                                 value={data.name}
                                 onChange={(e) =>
                                     setData("name", e.target.value)
@@ -60,12 +74,12 @@ export default function Create() {
                                 error={errors.name}
                                 icon="solar:user-id-bold"
                                 placeholder="e.g. Juan Cruz"
+                                required
                             />
 
                             <InputGroup
                                 id="username"
                                 label="Username"
-                                name="username"
                                 value={data.username}
                                 onChange={(e) =>
                                     setData("username", e.target.value)
@@ -73,14 +87,14 @@ export default function Create() {
                                 error={errors.username}
                                 icon="solar:user-bold"
                                 placeholder="e.g. juanc"
+                                required
                             />
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                             <InputGroup
                                 id="email"
                                 label="Email Address (Optional)"
-                                name="email"
                                 type="email"
                                 value={data.email}
                                 onChange={(e) =>
@@ -88,32 +102,32 @@ export default function Create() {
                                 }
                                 error={errors.email}
                                 icon="solar:letter-bold"
+                                placeholder="email@example.com"
                             />
 
                             <div>
                                 <InputLabel
                                     htmlFor="role"
                                     value="System Role"
+                                    className="mb-1 font-semibold text-gray-700"
                                 />
-                                <div className="relative mt-1">
-                                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400 z-10">
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-gray-400 z-10">
                                         <Icon
                                             icon="solar:shield-user-bold"
                                             width="20"
-                                            height="20"
                                         />
                                     </div>
                                     <select
                                         id="role"
-                                        name="role"
                                         value={data.role}
                                         onChange={(e) =>
                                             setData("role", e.target.value)
                                         }
-                                        className="block w-full pl-10 py-3 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm relative z-0"
+                                        className="block w-full pl-11 py-2.5 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg shadow-sm text-sm bg-gray-50 focus:bg-white transition-colors"
                                     >
                                         <option value="staff">
-                                            Staff (Can Edit, No Delete)
+                                            Staff (Limited Access)
                                         </option>
                                         <option value="admin">
                                             Administrator (Full Access)
@@ -122,35 +136,48 @@ export default function Create() {
                                 </div>
                                 <InputError
                                     message={errors.role}
-                                    className="mt-2"
+                                    className="mt-1.5"
                                 />
                             </div>
                         </div>
 
-                        <div className="border-t border-gray-100 pt-4 mt-2 mb-6">
-                            <h4 className="text-xs font-bold text-gray-500 uppercase mb-3 flex items-center gap-1">
-                                <Icon icon="solar:lock-password-bold" />
-                                Set Password
-                            </h4>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="border-t border-gray-100 pt-8 mb-8">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="p-3 bg-amber-50 rounded-xl text-amber-600">
+                                    <Icon
+                                        icon="solar:lock-password-bold-duotone"
+                                        width="28"
+                                    />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-bold text-gray-800">
+                                        Security
+                                    </h3>
+                                    <p className="text-sm text-gray-500">
+                                        Create a secure password for this
+                                        account.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <InputGroup
                                     id="password"
                                     label="Password"
-                                    name="password"
                                     type="password"
                                     value={data.password}
                                     onChange={(e) =>
                                         setData("password", e.target.value)
                                     }
                                     error={errors.password}
-                                    icon="solar:lock-password-bold"
+                                    icon="solar:key-minimalistic-bold"
                                     showPasswordToggle={true}
+                                    required
                                 />
 
                                 <InputGroup
                                     id="password_confirmation"
                                     label="Confirm Password"
-                                    name="password_confirmation"
                                     type="password"
                                     value={data.password_confirmation}
                                     onChange={(e) =>
@@ -162,20 +189,23 @@ export default function Create() {
                                     error={errors.password_confirmation}
                                     icon="solar:shield-check-bold"
                                     showPasswordToggle={true}
+                                    required
                                 />
                             </div>
                         </div>
 
-                        <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-3 sm:gap-4 border-t border-gray-100 pt-6">
+                        <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-3 pt-6 border-t border-gray-100">
                             <Link
                                 href={route("users.index")}
-                                className="w-full sm:w-auto text-center py-3 sm:py-2 text-sm text-gray-600 underline hover:text-gray-900 transition-colors"
+                                className="w-full sm:w-auto text-center"
                             >
-                                Cancel
+                                <SecondaryButton className="w-full justify-center py-3">
+                                    Cancel
+                                </SecondaryButton>
                             </Link>
 
                             <PrimaryButton
-                                className="w-full sm:w-auto justify-center bg-blue-600 hover:bg-blue-700 py-3"
+                                className="w-full sm:w-auto justify-center bg-blue-600 hover:bg-blue-700 py-3 px-8 text-base shadow-lg hover:-translate-y-0.5 transition-all"
                                 disabled={processing}
                             >
                                 <Icon

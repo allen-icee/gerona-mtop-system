@@ -45,15 +45,62 @@ Route::middleware('auth')->group(function () {
     Route::get('/mtop/{id}/edit', [MtopApplicationController::class, 'edit'])->name('mtop.edit');
     Route::put('/mtop/{id}', [MtopApplicationController::class, 'update'])->name('mtop.update');
     Route::get('/mtop/{id}/print', [MtopApplicationController::class, 'print'])->name('mtop.print');
-    Route::get('/mtop/export', [MtopApplicationController::class, 'export'])->name('mtop.export');
+    Route::get('/mtop/export', [MtopApplicationController::class, 'export'])->name('mtop.export'); // Audit Logs Export
+    Route::get('/users/audit-logs/export', [App\Http\Controllers\UserController::class, 'exportAuditLogs'])->name('audit-logs.export');
+
+    Route::post('/mtop/import', [App\Http\Controllers\MtopApplicationController::class, 'importData'])->name('mtop.import');
 
     Route::post('/settings/backup', function () {
+        // 1. Run Server-Side SQLite Backup
         try {
             Artisan::call('backup:run');
-            return back()->with('status', 'Database backup created successfully!');
         } catch (\Exception $e) {
-            return back()->withErrors(['backup' => 'Backup failed: ' . $e->getMessage()]);
+            // If server backup fails, we still try to give them the CSV
         }
+
+        // 2. Generate and Stream CSV Download
+        $records = MtopApplication::latest()->cursor();
+        $csvFileName = 'FULL_BACKUP_MTOP_' . date('Y-m-d_H-i') . '.csv';
+
+        $headers = [
+            "Content-type" => "text/csv",
+            "Content-Disposition" => "attachment; filename=$csvFileName",
+            "Pragma" => "no-cache",
+            "Cache-Control" => "must-revalidate, post-check=0, pre-check=0",
+            "Expires" => "0"
+        ];
+
+        $callback = function () use ($records) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, ['Control No', 'Transaction Date', 'Last Name', 'First Name', 'Middle Name', 'Suffix', 'Address', 'Contact #', 'Body Number', 'Plate No', 'Make/Type', 'Engine No', 'Chassis No', 'OR No', 'OR Date', 'Cedula No', 'Cedula Date', 'Valid Until', 'Status']);
+
+            foreach ($records as $row) {
+                fputcsv($file, [
+                    $row->mt_number,
+                    $row->transaction_date,
+                    $row->last_name,
+                    $row->first_name,
+                    $row->middle_name,
+                    $row->suffix,
+                    $row->address,
+                    $row->contact_number,
+                    $row->body_number,
+                    $row->plate_no,
+                    $row->make_type,
+                    $row->engine_motor_no,
+                    $row->chassis_no,
+                    $row->or_number,
+                    $row->or_date,
+                    $row->cedula_number,
+                    $row->cedula_date,
+                    $row->valid_until,
+                    $row->status
+                ]);
+            }
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     })->name('settings.backup');
 
     Route::get('/settings/print', [PrintSettingController::class, 'edit'])->name('settings.print.edit');

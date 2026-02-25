@@ -6,6 +6,7 @@ import InputLabel from "@/Components/InputLabel";
 import { Switch } from "@headlessui/react";
 import { useState, useEffect, useRef } from "react";
 import UnsavedChangesModal from "@/Components/UnsavedChangesModal";
+import { Icon } from "@iconify/react";
 
 export default function PrintLayout({ settings }: { settings: any }) {
     const { data, setData, post, processing, isDirty, reset } = useForm({
@@ -14,6 +15,9 @@ export default function PrintLayout({ settings }: { settings: any }) {
         id_background: null as File | null,
         show_header: settings.show_header ? true : false,
         show_footer: settings.show_footer ? true : false,
+        remove_header: false,
+        remove_footer: false,
+        remove_id_background: false,
     });
 
     const [headerPreview, setHeaderPreview] = useState<string | null>(null);
@@ -26,16 +30,22 @@ export default function PrintLayout({ settings }: { settings: any }) {
 
     const allowExitRef = useRef(false);
 
+    // Sync state when settings prop updates (e.g. after a successful save)
     useEffect(() => {
         setData((prev) => ({
             ...prev,
             show_header: settings.show_header ? true : false,
             show_footer: settings.show_footer ? true : false,
+            remove_header: false,
+            remove_footer: false,
+            remove_id_background: false,
+            header: null,
+            footer: null,
+            id_background: null,
         }));
 
         const timestamp = new Date().getTime();
 
-        // Use custom header if uploaded, otherwise fallback to default image
         if (settings.header_path) {
             setHeaderPreview(`/storage/${settings.header_path}?t=${timestamp}`);
         } else {
@@ -53,10 +63,11 @@ export default function PrintLayout({ settings }: { settings: any }) {
                 `/storage/${settings.id_background_path}?t=${timestamp}`,
             );
         } else {
-            setIdBackgroundPreview(`/images/ID_BG_1.png`);
+            setIdBackgroundPreview(`/images/ID_BG_1.png`); // The requested default background
         }
     }, [settings]);
 
+    // Handle Unsaved Changes Modal
     useEffect(() => {
         const handleBeforeUnload = (e: BeforeUnloadEvent) => {
             if (isDirty && !allowExitRef.current) {
@@ -78,7 +89,6 @@ export default function PrintLayout({ settings }: { settings: any }) {
         });
 
         window.addEventListener("beforeunload", handleBeforeUnload);
-
         return () => {
             window.removeEventListener("beforeunload", handleBeforeUnload);
             removeInertiaListener();
@@ -101,13 +111,7 @@ export default function PrintLayout({ settings }: { settings: any }) {
         post(route("settings.print.update"), {
             onSuccess: () => {
                 allowExitRef.current = true;
-
                 setShowExitModal(false);
-
-                setData("header", null);
-                setData("footer", null);
-                setData("id_background", null);
-
                 if (pendingUrl) router.visit(pendingUrl);
             },
             onError: () => {
@@ -117,20 +121,46 @@ export default function PrintLayout({ settings }: { settings: any }) {
         });
     };
 
+    const submit = (e: React.FormEvent) => {
+        e.preventDefault();
+        post(route("settings.print.update"));
+    };
+
+    // --- FILE HANDLERS ---
     const handleHeaderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            setData("header", file);
+            setData((prev) => ({
+                ...prev,
+                header: file,
+                remove_header: false,
+            }));
             setHeaderPreview(URL.createObjectURL(file));
         }
+        e.target.value = ""; // Reset input so same file can be selected again
+    };
+
+    const handleRemoveHeader = () => {
+        setData((prev) => ({ ...prev, header: null, remove_header: true }));
+        setHeaderPreview(`/images/Gerona_Header.jpg`);
     };
 
     const handleFooterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            setData("footer", file);
+            setData((prev) => ({
+                ...prev,
+                footer: file,
+                remove_footer: false,
+            }));
             setFooterPreview(URL.createObjectURL(file));
         }
+        e.target.value = "";
+    };
+
+    const handleRemoveFooter = () => {
+        setData((prev) => ({ ...prev, footer: null, remove_footer: true }));
+        setFooterPreview(null);
     };
 
     const handleIdBackgroundChange = (
@@ -138,22 +168,26 @@ export default function PrintLayout({ settings }: { settings: any }) {
     ) => {
         const file = e.target.files?.[0];
         if (file) {
-            setData("id_background", file);
+            setData((prev) => ({
+                ...prev,
+                id_background: file,
+                remove_id_background: false,
+            }));
             setIdBackgroundPreview(URL.createObjectURL(file));
         }
+        e.target.value = "";
     };
 
-    const submit = (e: React.FormEvent) => {
-        e.preventDefault();
-        post(route("settings.print.update"), {
-            onSuccess: () => {
-                setData("header", null);
-                setData("footer", null);
-                setData("id_background", null);
-            },
-        });
+    const handleRemoveIdBackground = () => {
+        setData((prev) => ({
+            ...prev,
+            id_background: null,
+            remove_id_background: true,
+        }));
+        setIdBackgroundPreview(`/images/ID_BG_1.png`);
     };
 
+    // --- REUSABLE SWITCH COMPONENT ---
     const ToggleSwitch = ({ label, checked, onChange }: any) => (
         <Switch.Group as="div" className="flex items-center justify-between">
             <Switch.Label className="mr-3 text-sm font-medium text-gray-700">
@@ -195,12 +229,17 @@ export default function PrintLayout({ settings }: { settings: any }) {
                             onSubmit={submit}
                             className="p-4 sm:p-8 space-y-8"
                         >
+                            {/* --- HEADER SECTION --- */}
                             <div className="border-b border-gray-200 pb-8">
-                                <div className="md:flex md:items-center md:justify-between mb-4">
+                                <div className="md:flex md:items-center md:justify-between mb-6">
                                     <div>
-                                        <h3 className="text-lg font-medium text-gray-900">
-                                            Header
+                                        <h3 className="text-lg font-bold text-gray-900">
+                                            Permit Header Image
                                         </h3>
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            Recommended size: 1000x200px (PNG or
+                                            JPG).
+                                        </p>
                                     </div>
                                     <div className="mt-4 md:mt-0">
                                         <ToggleSwitch
@@ -217,43 +256,67 @@ export default function PrintLayout({ settings }: { settings: any }) {
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-                                    <div className="space-y-2">
-                                        <InputLabel value="Upload New Image" />
-                                        <input
-                                            type="file"
-                                            onChange={handleHeaderChange}
-                                            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer border border-gray-300 rounded-lg"
-                                            accept="image/*"
-                                        />
-                                        <p className="text-xs text-gray-500">
-                                            Recommended size: 1000x200px (PNG or
-                                            JPG). Will use default Gerona Header
-                                            if blank.
-                                        </p>
+                                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                                    <div className="lg:col-span-4 space-y-4">
+                                        <div className="flex flex-col gap-3">
+                                            <label className="cursor-pointer w-full bg-white border border-gray-300 shadow-sm hover:bg-gray-50 text-gray-700 px-4 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 group">
+                                                <Icon
+                                                    icon="solar:gallery-send-bold-duotone"
+                                                    width="22"
+                                                    className="text-blue-600 group-hover:-translate-y-0.5 transition-transform"
+                                                />
+                                                Choose Picture
+                                                <input
+                                                    type="file"
+                                                    className="hidden"
+                                                    accept="image/*"
+                                                    onChange={
+                                                        handleHeaderChange
+                                                    }
+                                                />
+                                            </label>
+
+                                            {((settings.header_path &&
+                                                !data.remove_header) ||
+                                                data.header) && (
+                                                <button
+                                                    type="button"
+                                                    onClick={handleRemoveHeader}
+                                                    className="w-full text-red-600 bg-red-50 hover:bg-red-100 px-4 py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 border border-red-100"
+                                                >
+                                                    <Icon
+                                                        icon="solar:trash-bin-trash-bold"
+                                                        width="18"
+                                                    />
+                                                    Reset to Default
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                     <div
-                                        className={`transition-opacity duration-300 ${data.show_header ? "opacity-100" : "opacity-50 grayscale"}`}
+                                        className={`lg:col-span-8 transition-opacity duration-300 ${data.show_header ? "opacity-100" : "opacity-50 grayscale"}`}
                                     >
-                                        <InputLabel
-                                            value="Preview"
-                                            className="mb-2"
-                                        />
-                                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50 flex items-center justify-center min-h-30 relative">
-                                            {!settings.header_path &&
-                                                !data.header && (
-                                                    <span className="absolute top-2 right-2 bg-gray-200 text-gray-600 text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">
-                                                        Default
-                                                    </span>
-                                                )}
+                                        <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 bg-gray-50 flex items-center justify-center min-h-32 relative overflow-hidden group">
+                                            {(!settings.header_path &&
+                                                !data.header) ||
+                                            data.remove_header ? (
+                                                <span className="absolute top-2 right-2 bg-gray-200 text-gray-600 text-[10px] font-extrabold px-2 py-1 rounded uppercase tracking-wider z-10 shadow-sm">
+                                                    Default
+                                                </span>
+                                            ) : null}
+
                                             {headerPreview ? (
                                                 <img
                                                     src={headerPreview}
                                                     alt="Header Preview"
-                                                    className="max-h-32 w-auto object-contain"
+                                                    className="max-h-32 w-auto object-contain rounded drop-shadow-sm"
                                                 />
                                             ) : (
-                                                <span className="text-gray-400 italic text-sm">
+                                                <span className="text-gray-400 font-medium text-sm flex items-center gap-2">
+                                                    <Icon
+                                                        icon="solar:gallery-remove-bold-duotone"
+                                                        width="24"
+                                                    />
                                                     No image selected
                                                 </span>
                                             )}
@@ -262,12 +325,17 @@ export default function PrintLayout({ settings }: { settings: any }) {
                                 </div>
                             </div>
 
-                            <div className="border-b border-gray-200 pb-8">
-                                <div className="md:flex md:items-center md:justify-between mb-4">
+                            {/* --- FOOTER SECTION --- */}
+                            <div className="border-b border-gray-200 pb-8 mt-8">
+                                <div className="md:flex md:items-center md:justify-between mb-6">
                                     <div>
-                                        <h3 className="text-lg font-medium text-gray-900">
-                                            Footer Image
+                                        <h3 className="text-lg font-bold text-gray-900">
+                                            Permit Footer Image
                                         </h3>
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            Recommended size: 1000x150px (PNG or
+                                            JPG).
+                                        </p>
                                     </div>
                                     <div className="mt-4 md:mt-0">
                                         <ToggleSwitch
@@ -284,36 +352,59 @@ export default function PrintLayout({ settings }: { settings: any }) {
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-                                    <div className="space-y-2">
-                                        <InputLabel value="Upload New Image" />
-                                        <input
-                                            type="file"
-                                            onChange={handleFooterChange}
-                                            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer border border-gray-300 rounded-lg"
-                                            accept="image/*"
-                                        />
-                                        <p className="text-xs text-gray-500">
-                                            Recommended size: 1000x150px (PNG or
-                                            JPG)
-                                        </p>
+                                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                                    <div className="lg:col-span-4 space-y-4">
+                                        <div className="flex flex-col gap-3">
+                                            <label className="cursor-pointer w-full bg-white border border-gray-300 shadow-sm hover:bg-gray-50 text-gray-700 px-4 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 group">
+                                                <Icon
+                                                    icon="solar:gallery-send-bold-duotone"
+                                                    width="22"
+                                                    className="text-blue-600 group-hover:-translate-y-0.5 transition-transform"
+                                                />
+                                                Choose Picture
+                                                <input
+                                                    type="file"
+                                                    className="hidden"
+                                                    accept="image/*"
+                                                    onChange={
+                                                        handleFooterChange
+                                                    }
+                                                />
+                                            </label>
+
+                                            {((settings.footer_path &&
+                                                !data.remove_footer) ||
+                                                data.footer) && (
+                                                <button
+                                                    type="button"
+                                                    onClick={handleRemoveFooter}
+                                                    className="w-full text-red-600 bg-red-50 hover:bg-red-100 px-4 py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 border border-red-100"
+                                                >
+                                                    <Icon
+                                                        icon="solar:trash-bin-trash-bold"
+                                                        width="18"
+                                                    />
+                                                    Remove Picture
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                     <div
-                                        className={`transition-opacity duration-300 ${data.show_footer ? "opacity-100" : "opacity-50 grayscale"}`}
+                                        className={`lg:col-span-8 transition-opacity duration-300 ${data.show_footer ? "opacity-100" : "opacity-50 grayscale"}`}
                                     >
-                                        <InputLabel
-                                            value="Preview"
-                                            className="mb-2"
-                                        />
-                                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50 flex items-center justify-center min-h-30">
+                                        <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 bg-gray-50 flex items-center justify-center min-h-32 relative overflow-hidden">
                                             {footerPreview ? (
                                                 <img
                                                     src={footerPreview}
                                                     alt="Footer Preview"
-                                                    className="max-h-32 w-auto object-contain"
+                                                    className="max-h-32 w-auto object-contain rounded drop-shadow-sm"
                                                 />
                                             ) : (
-                                                <span className="text-gray-400 italic text-sm">
+                                                <span className="text-gray-400 font-medium text-sm flex items-center gap-2">
+                                                    <Icon
+                                                        icon="solar:gallery-remove-bold-duotone"
+                                                        width="24"
+                                                    />
                                                     No image selected
                                                 </span>
                                             )}
@@ -322,49 +413,81 @@ export default function PrintLayout({ settings }: { settings: any }) {
                                 </div>
                             </div>
 
-                            <div className="border-b border-gray-200 pb-8 mt-8">
-                                <div className="md:flex md:items-center md:justify-between mb-4">
+                            {/* --- ID BACKGROUND SECTION --- */}
+                            <div className="pb-4 mt-8">
+                                <div className="md:flex md:items-center md:justify-between mb-6">
                                     <div>
-                                        <h3 className="text-lg font-medium text-gray-900">
-                                            ID Background
+                                        <h3 className="text-lg font-bold text-gray-900">
+                                            Operator ID Background
                                         </h3>
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            Recommended size: 400x650px (PNG or
+                                            JPG).
+                                        </p>
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-                                    <div className="space-y-2">
-                                        <InputLabel value="Upload New Image" />
-                                        <input
-                                            type="file"
-                                            onChange={handleIdBackgroundChange}
-                                            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer border border-gray-300 rounded-lg"
-                                            accept="image/*"
-                                        />
-                                        <p className="text-xs text-gray-500">
-                                            Recommended size: 400x650px (PNG or
-                                            JPG). Will use default if blank.
-                                        </p>
+                                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                                    <div className="lg:col-span-4 space-y-4">
+                                        <div className="flex flex-col gap-3">
+                                            <label className="cursor-pointer w-full bg-white border border-gray-300 shadow-sm hover:bg-gray-50 text-gray-700 px-4 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 group">
+                                                <Icon
+                                                    icon="solar:gallery-send-bold-duotone"
+                                                    width="22"
+                                                    className="text-blue-600 group-hover:-translate-y-0.5 transition-transform"
+                                                />
+                                                Choose Picture
+                                                <input
+                                                    type="file"
+                                                    className="hidden"
+                                                    accept="image/*"
+                                                    onChange={
+                                                        handleIdBackgroundChange
+                                                    }
+                                                />
+                                            </label>
+
+                                            {((settings.id_background_path &&
+                                                !data.remove_id_background) ||
+                                                data.id_background) && (
+                                                <button
+                                                    type="button"
+                                                    onClick={
+                                                        handleRemoveIdBackground
+                                                    }
+                                                    className="w-full text-red-600 bg-red-50 hover:bg-red-100 px-4 py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 border border-red-100"
+                                                >
+                                                    <Icon
+                                                        icon="solar:trash-bin-trash-bold"
+                                                        width="18"
+                                                    />
+                                                    Reset to Default
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
-                                    <div>
-                                        <InputLabel
-                                            value="Preview"
-                                            className="mb-2"
-                                        />
-                                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50 flex items-center justify-center min-h-30 relative">
-                                            {!settings.id_background_path &&
-                                                !data.id_background && (
-                                                    <span className="absolute top-2 right-2 bg-gray-200 text-gray-600 text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">
-                                                        Default
-                                                    </span>
-                                                )}
+                                    <div className="lg:col-span-8">
+                                        <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 bg-gray-50 flex items-center justify-center min-h-75 relative overflow-hidden">
+                                            {(!settings.id_background_path &&
+                                                !data.id_background) ||
+                                            data.remove_id_background ? (
+                                                <span className="absolute top-2 right-2 bg-gray-200 text-gray-600 text-[10px] font-extrabold px-2 py-1 rounded uppercase tracking-wider z-10 shadow-sm">
+                                                    Default
+                                                </span>
+                                            ) : null}
+
                                             {idBackgroundPreview ? (
                                                 <img
                                                     src={idBackgroundPreview}
                                                     alt="ID Background Preview"
-                                                    className="max-h-64 w-auto object-contain shadow-md"
+                                                    className="max-h-80 w-auto object-contain drop-shadow-md rounded-lg"
                                                 />
                                             ) : (
-                                                <span className="text-gray-400 italic text-sm">
+                                                <span className="text-gray-400 font-medium text-sm flex items-center gap-2">
+                                                    <Icon
+                                                        icon="solar:gallery-remove-bold-duotone"
+                                                        width="24"
+                                                    />
                                                     No image selected
                                                 </span>
                                             )}
@@ -373,12 +496,17 @@ export default function PrintLayout({ settings }: { settings: any }) {
                                 </div>
                             </div>
 
-                            <div className="flex items-center justify-end pt-2">
+                            <div className="flex items-center justify-end pt-6 border-t border-gray-100">
                                 <PrimaryButton
                                     disabled={processing || !isDirty}
-                                    className={`w-full sm:w-auto justify-center ${!isDirty ? "opacity-50 cursor-not-allowed" : ""}`}
+                                    className={`w-full sm:w-auto justify-center px-8 py-4 text-base ${!isDirty ? "opacity-50 cursor-not-allowed" : "shadow-lg hover:-translate-y-0.5"}`}
                                 >
-                                    Save Changes
+                                    <Icon
+                                        icon="solar:diskette-bold"
+                                        className="mr-2"
+                                        width="20"
+                                    />
+                                    Save Print Settings
                                 </PrimaryButton>
                             </div>
                         </form>

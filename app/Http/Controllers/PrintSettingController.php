@@ -26,8 +26,28 @@ class PrintSettingController extends Controller
             'id_background' => 'nullable|image|max:2048',
             'show_header' => 'required|boolean',
             'show_footer' => 'required|boolean',
+            'remove_header' => 'nullable|boolean',
+            'remove_footer' => 'nullable|boolean',
+            'remove_id_background' => 'nullable|boolean',
         ]);
 
+        // Process Removals First
+        if ($request->boolean('remove_header') && $settings->header_path) {
+            Storage::disk('public')->delete($settings->header_path);
+            $settings->header_path = null;
+        }
+
+        if ($request->boolean('remove_footer') && $settings->footer_path) {
+            Storage::disk('public')->delete($settings->footer_path);
+            $settings->footer_path = null;
+        }
+
+        if ($request->boolean('remove_id_background') && $settings->id_background_path) {
+            Storage::disk('public')->delete($settings->id_background_path);
+            $settings->id_background_path = null;
+        }
+
+        // Process New Uploads
         if ($request->hasFile('header')) {
             if ($settings->header_path) Storage::disk('public')->delete($settings->header_path);
             $settings->header_path = $request->file('header')->store('print-assets', 'public');

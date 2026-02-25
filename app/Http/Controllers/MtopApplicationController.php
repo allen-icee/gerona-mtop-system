@@ -463,4 +463,161 @@ class MtopApplicationController extends Controller
 
         return $validUntil;
     }
+    public function importData(Request $request)
+    {
+        $request->validate([
+            'import_file' => 'required|file|max:51200', // 50MB max
+        ]);
+
+        $file = $request->file('import_file');
+        $extension = strtolower($file->getClientOriginalExtension());
+
+        if (!in_array($extension, ['csv', 'sqlite', 'db'])) {
+            return back()->withErrors(['import_file' => 'Only CSV and SQLite (.sqlite, .db) files are allowed.']);
+        }
+
+        $importedCount = 0;
+
+        try {
+            DB::beginTransaction();
+
+            if ($extension === 'csv') {
+                $path = $file->getRealPath();
+
+                // Read file and remove BOM (fixes Excel CSV hidden characters)
+                $content = file_get_contents($path);
+                $content = preg_replace('/^[\xef\xbb\xbf]+/', '', $content);
+                $lines = explode("\n", $content);
+
+                $data = array_map('str_getcsv', array_filter($lines));
+                if (count($data) < 2) throw new \Exception("File is empty or invalid");
+
+                $header = array_shift($data);
+                $header = array_map('trim', $header);
+
+                // --- TRANSLATE CSV HEADERS TO DATABASE COLUMNS ---
+                $headerMap = [
+                    'Control No' => 'mt_number',
+                    'Transaction Date' => 'transaction_date',
+                    'Last Name' => 'last_name',
+                    'First Name' => 'first_name',
+                    'Middle Name' => 'middle_name',
+                    'Suffix' => 'suffix',
+                    'Address' => 'address',
+                    'Contact #' => 'contact_number',
+                    'Body Number' => 'body_number',
+                    'Plate No' => 'plate_no',
+                    'Make/Type' => 'make_type',
+                    'Engine No' => 'engine_motor_no',
+                    'Chassis No' => 'chassis_no',
+                    'OR No' => 'or_number',
+                    'OR Date' => 'or_date',
+                    'Cedula No' => 'cedula_number',
+                    'Cedula Date' => 'cedula_date',
+                    'Valid Until' => 'valid_until',
+                    'Status' => 'status'
+                ];
+
+                foreach ($data as $row) {
+                    // Skip malformed rows
+                    if (empty($row) || count($header) !== count($row)) continue;
+
+                    $rowAssoc = array_combine($header, $row);
+                    $mappedRow = [];
+
+                    // Map the data using our translator
+                    foreach ($rowAssoc as $csvKey => $value) {
+                        $mappedKey = $headerMap[$csvKey] ?? $csvKey;
+                        $mappedRow[$mappedKey] = $value === '' ? null : trim($value);
+                    }
+
+                    if (!isset($mappedRow['mt_number'])) continue;
+
+                    // 1. MUST Sync Franchise First (prevents database breaking!)
+                    $franchise = MtopFranchise::updateOrCreate(
+                        ['mt_number' => $mappedRow['mt_number']],
+                        [
+                            'last_name' => $mappedRow['last_name'] ?? '',
+                            'first_name' => $mappedRow['first_name'] ?? '',
+                            'middle_name' => $mappedRow['middle_name'] ?? null,
+                            'suffix' => $mappedRow['suffix'] ?? null,
+                            'address' => $mappedRow['address'] ?? '',
+                            'make_type' => $mappedRow['make_type'] ?? '',
+                            'engine_motor_no' => $mappedRow['engine_motor_no'] ?? '',
+                            'chassis_no' => $mappedRow['chassis_no'] ?? '',
+                            'plate_no' => $mappedRow['plate_no'] ?? '',
+                            'body_number' => $mappedRow['body_number'] ?? null,
+                            'contact_number' => $mappedRow['contact_number'] ?? null,
+                            'status' => 'active',
+                        ]
+                    );
+
+                    $mappedRow['franchise_id'] = $franchise->id;
+                    if (!isset($mappedRow['transaction_type'])) $mappedRow['transaction_type'] = 'Imported';
+                    if (!isset($mappedRow['processed_by'])) $mappedRow['processed_by'] = Auth::id();
+
+                    // 2. Create the actual Application
+                    MtopApplication::updateOrCreate(
+                        ['mt_number' => $mappedRow['mt_number']],
+                        $mappedRow
+                    );
+                    $importedCount++;
+                }
+            } else {
+                // SQLite Dynamic Connection Logic
+                $tempDbPath = $file->getRealPath();
+                config(['database.connections.import_db' => [
+                    'driver' => 'sqlite',
+                    'database' => $tempDbPath,
+                ]]);
+
+                // Import Franchises First to prevent foreign key errors
+                $oldFranchises = DB::connection('import_db')->table('mtop_franchises')->get();
+                foreach ($oldFranchises as $old) {
+                    $rowAssoc = (array) $old;
+                    unset($rowAssoc['id']);
+                    MtopFranchise::updateOrCreate(['mt_number' => $rowAssoc['mt_number']], $rowAssoc);
+                }
+
+                // Import Applications
+                $oldRecords = DB::connection('import_db')->table('mtop_applications')->get();
+                foreach ($oldRecords as $old) {
+                    $rowAssoc = (array) $old;
+                    unset($rowAssoc['id']);
+
+                    // Link to the correct local franchise
+                    $localFranchise = MtopFranchise::where('mt_number', $rowAssoc['mt_number'])->first();
+                    if ($localFranchise) {
+                        $rowAssoc['franchise_id'] = $localFranchise->id;
+                    }
+
+                    MtopApplication::updateOrCreate(
+                        ['mt_number' => $rowAssoc['mt_number']],
+                        $rowAssoc
+                    );
+                    $importedCount++;
+                }
+                DB::purge('import_db');
+            }
+
+            DB::commit();
+
+            if ($importedCount === 0) {
+                return back()->withErrors(['import_file' => '0 records imported. Please ensure the CSV format perfectly matches the exported file.']);
+            }
+
+            \App\Models\AuditLog::create([
+                'user_id' => Auth::id(),
+                'action' => 'Imported Data',
+                'payload' => "Imported $importedCount records from $extension file.",
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ]);
+
+            return back()->with('message', "Success! Synced $importedCount records safely.");
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withErrors(['import_file' => 'Import failed: ' . $e->getMessage()]);
+        }
+    }
 }

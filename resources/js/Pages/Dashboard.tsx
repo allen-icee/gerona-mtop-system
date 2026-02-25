@@ -3,6 +3,11 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, Link, usePage, useForm } from "@inertiajs/react";
 import { Icon } from "@iconify/react";
 import { useState, useEffect } from "react";
+import Modal from "@/Components/Modal";
+import PrimaryButton from "@/Components/PrimaryButton";
+import SecondaryButton from "@/Components/SecondaryButton";
+import InputError from "@/Components/InputError";
+import axios from "axios"; // Ensure axios is imported
 
 export default function Dashboard({
     totalMtop,
@@ -18,13 +23,76 @@ export default function Dashboard({
     const user: any = usePage().props.auth.user;
     const staffLink = `${serverIp}`;
 
-    const { post: postBackup, processing: backingUp } = useForm();
+    // --- DUAL BACKUP LOGIC (SQLite + CSV Download) ---
+    const [backingUp, setBackingUp] = useState(false);
 
-    const handleBackup = () => {
-        if (confirm("Create a database backup now?")) {
-            postBackup(route("settings.backup"));
+    const handleBackup = async () => {
+        if (
+            !confirm(
+                "Create a database backup? This will save a snapshot on the server AND download a CSV file.",
+            )
+        ) {
+            return;
+        }
+
+        setBackingUp(true);
+
+        try {
+            // Request the backup route as a blob (file)
+            const response = await axios.post(
+                route("settings.backup"),
+                {},
+                {
+                    responseType: "blob",
+                },
+            );
+
+            // Create a hidden link to trigger the download
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement("a");
+            link.href = url;
+
+            // Generate filename with date
+            const date = new Date().toISOString().slice(0, 10);
+            link.setAttribute("download", `MTOP_FULL_BACKUP_${date}.csv`);
+
+            document.body.appendChild(link);
+            link.click();
+            link.remove(); // Clean up
+
+            alert("Backup Successful! CSV downloaded and Database saved.");
+        } catch (error) {
+            console.error(error);
+            alert("Backup failed. Please check the server logs.");
+        } finally {
+            setBackingUp(false);
         }
     };
+    // ------------------------------------------------
+
+    // --- IMPORT STATE & LOGIC ---
+    const [showImportModal, setShowImportModal] = useState(false);
+    const {
+        data: importData,
+        setData: setImportData,
+        post: postImport,
+        processing: importing,
+        errors: importErrors,
+        reset: resetImport,
+    } = useForm({
+        import_file: null as File | null,
+    });
+
+    const submitImport = (e: React.FormEvent) => {
+        e.preventDefault();
+        postImport(route("mtop.import"), {
+            onSuccess: () => {
+                setShowImportModal(false);
+                resetImport();
+            },
+        });
+    };
+    // ----------------------------
 
     // --- CLOCK STATE & EFFECT ---
     const [currentTime, setCurrentTime] = useState(new Date());
@@ -227,21 +295,21 @@ export default function Dashboard({
 
                         {user.role === "admin" && (
                             <>
-                                <Link
-                                    href={route("signatories.index")}
-                                    className="group bg-white p-4 sm:p-6 rounded-xl shadow-sm hover:shadow-md transition-all border border-gray-100 flex flex-col items-center text-center gap-3 hover:-translate-y-1"
+                                <button
+                                    onClick={() => setShowImportModal(true)}
+                                    className="group cursor-pointer bg-white p-4 sm:p-6 rounded-xl shadow-sm hover:shadow-md transition-all border border-gray-100 flex flex-col items-center text-center gap-3 hover:-translate-y-1 w-full"
                                 >
-                                    <div className="p-3 sm:p-4 bg-indigo-50 text-indigo-600 rounded-full group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                                    <div className="p-3 sm:p-4 bg-emerald-50 text-emerald-600 rounded-full group-hover:bg-emerald-600 group-hover:text-white transition-colors">
                                         <Icon
-                                            icon="solar:pen-new-square-bold"
+                                            icon="solar:import-bold"
                                             width="24"
                                             className="sm:w-8 sm:h-8"
                                         />
                                     </div>
-                                    <span className="font-semibold text-sm sm:text-base text-gray-700 group-hover:text-indigo-900 leading-tight">
-                                        Manage Signatories
+                                    <span className="font-semibold text-sm sm:text-base text-gray-700 group-hover:text-emerald-900 leading-tight">
+                                        Import Data
                                     </span>
-                                </Link>
+                                </button>
 
                                 <button
                                     onClick={handleBackup}
@@ -274,6 +342,70 @@ export default function Dashboard({
                     </div>
                 </div>
             </div>
+
+            {/* IMPORT MODAL */}
+            <Modal
+                show={showImportModal}
+                onClose={() => setShowImportModal(false)}
+                maxWidth="md"
+            >
+                <div className="bg-gray-800 px-6 py-4 rounded-t-lg flex justify-between items-center">
+                    <h3 className="text-white font-bold flex items-center gap-2">
+                        <Icon icon="solar:import-bold" width="20" /> Import
+                        Database / CSV
+                    </h3>
+                    <button
+                        onClick={() => setShowImportModal(false)}
+                        className="text-gray-400 hover:text-white transition-colors"
+                    >
+                        <Icon icon="solar:close-circle-bold" width="24" />
+                    </button>
+                </div>
+                <div className="p-6 bg-gray-50">
+                    <form onSubmit={submitImport} className="space-y-4">
+                        <div className="bg-blue-50 border border-blue-100 text-blue-800 p-4 rounded-lg text-sm">
+                            Upload an <strong>.sqlite</strong> backup file or a{" "}
+                            <strong>.csv</strong> file. The system will safely
+                            merge the data using Control Numbers to update
+                            existing records and add new ones without creating
+                            duplicates.
+                        </div>
+
+                        <div>
+                            <input
+                                type="file"
+                                accept=".csv,.sqlite,.db"
+                                onChange={(e) =>
+                                    setImportData(
+                                        "import_file",
+                                        e.target.files?.[0] || null,
+                                    )
+                                }
+                                className="block w-full text-sm text-gray-500 file:mr-4 file:py-3 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-bold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 cursor-pointer border border-gray-300 rounded-lg bg-white shadow-sm"
+                                required
+                            />
+                            <InputError
+                                message={importErrors.import_file}
+                                className="mt-2"
+                            />
+                        </div>
+
+                        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
+                            <SecondaryButton
+                                onClick={() => setShowImportModal(false)}
+                            >
+                                Cancel
+                            </SecondaryButton>
+                            <PrimaryButton
+                                disabled={importing || !importData.import_file}
+                                className="bg-emerald-600 hover:bg-emerald-700 focus:bg-emerald-700 active:bg-emerald-800"
+                            >
+                                {importing ? "Importing..." : "Run Import"}
+                            </PrimaryButton>
+                        </div>
+                    </form>
+                </div>
+            </Modal>
         </AuthenticatedLayout>
     );
 }
