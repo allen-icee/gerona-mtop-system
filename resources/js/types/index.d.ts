@@ -15,7 +15,6 @@ export type PageProps<
     };
 };
 
-// --- ADD THIS SECTION ---
 export interface MtopApplication {
     id: number;
     mt_number: string;
