@@ -5,14 +5,14 @@ color 1f
 cd /d "%~dp0"
 
 echo =====================================================
-echo    INITIALIZING GERONA MTOP SYSTEM...
+echo    INITIALIZING GERONA MTOP MAIN SERVER...
 echo    PLEASE DO NOT CLOSE THIS WINDOW AND BE PATIENT.
 echo =====================================================
 echo.
 
 if not exist "php\php.exe" (
     echo [ERROR] Portable PHP engine is missing!
-    echo Ensure the 'php' folder was placed in the root before building.
+    echo Ensure the 'php' folder is present in the resources directory.
     echo.
     pause
     exit /b
@@ -28,7 +28,7 @@ echo Clearing old development cache...
 "php\php.exe" "app\artisan" optimize:clear
 
 echo.
-echo Creating storage link...
+echo Creating storage link for Images/IDs...
 "php\php.exe" "app\artisan" storage:link
 
 echo.
@@ -41,7 +41,8 @@ echo Creating admin account and default settings...
 
 echo.
 echo =====================================================
-echo Setup Complete! You can now close this window and
-echo open the Gerona MTOP System from your Desktop shortcut.
+echo Setup Complete!
+echo You can now close this window and open the
+echo "GeronaMTOPSystem" shortcut on your Desktop.
 echo =====================================================
 pause

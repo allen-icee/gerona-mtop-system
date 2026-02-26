@@ -57,6 +57,33 @@ function getLocalIP() {
 
 /*
 |--------------------------------------------------------------------------
+| DYNAMIC IP UPDATER (Updates Laravel .env before booting)
+|--------------------------------------------------------------------------
+*/
+
+function updateEnvIp(ip) {
+    const envPath = path.join(__dirname, ".env");
+
+    if (fs.existsSync(envPath)) {
+        let envContent = fs.readFileSync(envPath, "utf8");
+
+        if (envContent.includes("SERVER_IP=")) {
+            // Replace existing IP
+            envContent = envContent.replace(/SERVER_IP=.*/g, `SERVER_IP=${ip}`);
+        } else {
+            // Add if it doesn't exist
+            envContent += `\nSERVER_IP=${ip}`;
+        }
+
+        fs.writeFileSync(envPath, envContent);
+        log(`Successfully updated .env with new IP: ${ip}`);
+    } else {
+        log(`Warning: .env file not found at ${envPath}`);
+    }
+}
+
+/*
+|--------------------------------------------------------------------------
 | PHP SERVER ENGINE
 |--------------------------------------------------------------------------
 */
@@ -100,6 +127,9 @@ function startPHPServer(envVars) {
 function createWindow() {
     const isPackaged = app.isPackaged;
     const localIP = getLocalIP();
+
+    // Safely inject the new IP into Laravel's .env file FIRST
+    updateEnvIp(localIP);
 
     const serverEnv = {
         ...process.env,

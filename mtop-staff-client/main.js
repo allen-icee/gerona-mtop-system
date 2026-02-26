@@ -1,11 +1,10 @@
 // mtop-staff-client/main.js
-const { app, BrowserWindow, ipcMain, shell } = require("electron");
+const { app, BrowserWindow, ipcMain, shell, Menu } = require("electron");
 const path = require("path");
 const fs = require("fs");
 
 const configPath = path.join(app.getPath("userData"), "server-config.json");
 
-// Force Chromium to allow Camera access for the specific server IP
 if (fs.existsSync(configPath)) {
     try {
         const config = JSON.parse(fs.readFileSync(configPath));
@@ -30,7 +29,38 @@ function createWindow() {
         },
     });
 
-    mainWindow.setMenu(null);
+    const menuTemplate = [
+        {
+            label: "Settings",
+            submenu: [
+                {
+                    label: "Change Server IP",
+                    accelerator: "CmdOrCtrl+Shift+I",
+                    click: () => {
+                        if (fs.existsSync(configPath)) {
+                            fs.unlinkSync(configPath);
+                        }
+                        mainWindow.loadFile("settings.html");
+                    },
+                },
+                { type: "separator" },
+                { role: "quit", label: "Exit Application" },
+            ],
+        },
+        {
+            label: "View",
+            submenu: [
+                { role: "reload" },
+                { role: "forceReload" },
+                { role: "toggleDevTools" },
+                { type: "separator" },
+                { role: "togglefullscreen" },
+            ],
+        },
+    ];
+
+    const menu = Menu.buildFromTemplate(menuTemplate);
+    mainWindow.setMenu(menu);
 
     mainWindow.webContents.setWindowOpenHandler(({ url }) => {
         if (url.includes("/print-ids") || url.includes("/print")) {
@@ -42,14 +72,29 @@ function createWindow() {
 
     const loadServer = (ip) => {
         const serverUrl = `http://${ip}:8000`;
+        let loaded = false;
 
-        mainWindow.loadURL(serverUrl).catch((err) => {
-            console.log("Failed to connect, showing settings...");
-
-            mainWindow.loadFile("settings.html").then(() => {
-                mainWindow.webContents.send("connection-failed", ip);
+        mainWindow
+            .loadURL(serverUrl)
+            .then(() => {
+                loaded = true;
+            })
+            .catch((err) => {
+                loaded = true;
+                console.log("Failed to connect, showing settings...");
+                mainWindow.loadFile("settings.html").then(() => {
+                    mainWindow.webContents.send("connection-failed", ip);
+                });
             });
-        });
+
+        setTimeout(() => {
+            if (!loaded) {
+                mainWindow.webContents.stop();
+                mainWindow.loadFile("settings.html").then(() => {
+                    mainWindow.webContents.send("connection-failed", ip);
+                });
+            }
+        }, 8000);
     };
 
     if (fs.existsSync(configPath)) {

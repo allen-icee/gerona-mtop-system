@@ -14,7 +14,7 @@ export default function PrintIds({ applications, settings }: Props) {
 
     const idBackgroundUrl = settings?.id_background_path
         ? `/storage/${settings.id_background_path}`
-        : "/images/MTOPIDBackground.png";
+        : "/images/ID_BG_1.png";
 
     return (
         <div className="w-full min-h-screen bg-gray-500 p-8 print:p-0 print:bg-white flex flex-col items-center gap-4">

@@ -53,7 +53,10 @@ class MtopApplicationController extends Controller
         $nextSequence = ($maxSequence ?? 0) + 1;
         $suggested_mt_number = sprintf("%s-%04d", $year, $nextSequence);
 
-        $punong_bayans = Signatory::where('position', 'Punong Bayan')->where('is_active', true)->pluck('name');
+        $punong_bayans = Signatory::where('position', 'Punong Bayan')
+            ->where('is_active', true)
+            ->selectRaw("CONCAT(name, ' | ', position) as formatted_name")
+            ->pluck('formatted_name');
 
         $officials = Signatory::whereIn('position', ['Authorized Official', 'Committee on Transportation'])
             ->where('is_active', true)
@@ -125,7 +128,10 @@ class MtopApplicationController extends Controller
     public function edit($id): Response
     {
         $application = MtopApplication::findOrFail($id);
-        $punong_bayans = Signatory::where('position', 'Punong Bayan')->where('is_active', true)->pluck('name');
+        $punong_bayans = Signatory::where('position', 'Punong Bayan')
+            ->where('is_active', true)
+            ->selectRaw("CONCAT(name, ' | ', position) as formatted_name")
+            ->pluck('formatted_name');
 
         $officials = Signatory::whereIn('position', ['Authorized Official', 'Committee on Transportation'])
             ->where('is_active', true)
@@ -351,7 +357,10 @@ class MtopApplicationController extends Controller
     public function renew($id): Response
     {
         $application = MtopApplication::findOrFail($id);
-        $punong_bayans = Signatory::where('position', 'Punong Bayan')->where('is_active', true)->pluck('name');
+        $punong_bayans = Signatory::where('position', 'Punong Bayan')
+            ->where('is_active', true)
+            ->selectRaw("CONCAT(name, ' | ', position) as formatted_name")
+            ->pluck('formatted_name');
 
         $officials = Signatory::whereIn('position', ['Authorized Official', 'Committee on Transportation'])
             ->where('is_active', true)

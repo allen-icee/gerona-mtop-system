@@ -48,7 +48,7 @@ export default function PrintLayout({ settings }: { settings: any }) {
         if (settings.header_path) {
             setHeaderPreview(`/storage/${settings.header_path}?t=${timestamp}`);
         } else {
-            setHeaderPreview(`/images/Gerona_Header.jpg`);
+            setHeaderPreview(`/images/Gerona_Header.jpg?t=${timestamp}`);
         }
 
         if (settings.footer_path) {
@@ -62,7 +62,7 @@ export default function PrintLayout({ settings }: { settings: any }) {
                 `/storage/${settings.id_background_path}?t=${timestamp}`,
             );
         } else {
-            setIdBackgroundPreview(`/images/ID_BG_1.png`);
+            setIdBackgroundPreview(`/images/ID_BG_1.png?t=${timestamp}`);
         }
     }, [settings]);
 
@@ -139,7 +139,7 @@ export default function PrintLayout({ settings }: { settings: any }) {
 
     const handleRemoveHeader = () => {
         setData((prev) => ({ ...prev, header: null, remove_header: true }));
-        setHeaderPreview(`/images/Gerona_Header.jpg`);
+        setHeaderPreview(`/images/Gerona_Header.jpg?t=${new Date().getTime()}`);
     };
 
     const handleFooterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -181,7 +181,7 @@ export default function PrintLayout({ settings }: { settings: any }) {
             id_background: null,
             remove_id_background: true,
         }));
-        setIdBackgroundPreview(`/images/ID_BG_1.png`);
+        setIdBackgroundPreview(`/images/ID_BG_1.png?t=${new Date().getTime()}`);
     };
 
     const ToggleSwitch = ({ label, checked, onChange }: any) => (
@@ -192,15 +192,11 @@ export default function PrintLayout({ settings }: { settings: any }) {
             <Switch
                 checked={checked}
                 onChange={onChange}
-                className={`${
-                    checked ? "bg-blue-600" : "bg-gray-200"
-                } relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2`}
+                className={`${checked ? "bg-blue-600" : "bg-gray-200"} relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2`}
             >
                 <span
                     aria-hidden="true"
-                    className={`${
-                        checked ? "translate-x-5" : "translate-x-0"
-                    } pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
+                    className={`${checked ? "translate-x-5" : "translate-x-0"} pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
                 />
             </Switch>
         </Switch.Group>
@@ -225,6 +221,7 @@ export default function PrintLayout({ settings }: { settings: any }) {
                             onSubmit={submit}
                             className="p-4 sm:p-8 space-y-8"
                         >
+                            {/* HEADER SECTION */}
                             <div className="border-b border-gray-200 pb-8">
                                 <div className="md:flex md:items-center md:justify-between mb-6">
                                     <div>
@@ -259,7 +256,7 @@ export default function PrintLayout({ settings }: { settings: any }) {
                                                     icon="solar:gallery-send-bold-duotone"
                                                     width="22"
                                                     className="text-blue-600 group-hover:-translate-y-0.5 transition-transform"
-                                                />
+                                                />{" "}
                                                 Choose Picture
                                                 <input
                                                     type="file"
@@ -282,7 +279,7 @@ export default function PrintLayout({ settings }: { settings: any }) {
                                                     <Icon
                                                         icon="solar:trash-bin-trash-bold"
                                                         width="18"
-                                                    />
+                                                    />{" "}
                                                     Reset to Default
                                                 </button>
                                             )}
@@ -305,13 +302,16 @@ export default function PrintLayout({ settings }: { settings: any }) {
                                                     src={headerPreview}
                                                     alt="Header Preview"
                                                     className="max-h-32 w-auto object-contain rounded drop-shadow-sm"
+                                                    onError={(e) => {
+                                                        e.currentTarget.src = `/images/Gerona_Header.jpg?t=${new Date().getTime()}`;
+                                                    }}
                                                 />
                                             ) : (
                                                 <span className="text-gray-400 font-medium text-sm flex items-center gap-2">
                                                     <Icon
                                                         icon="solar:gallery-remove-bold-duotone"
                                                         width="24"
-                                                    />
+                                                    />{" "}
                                                     No image selected
                                                 </span>
                                             )}
@@ -320,6 +320,7 @@ export default function PrintLayout({ settings }: { settings: any }) {
                                 </div>
                             </div>
 
+                            {/* FOOTER SECTION */}
                             <div className="border-b border-gray-200 pb-8 mt-8">
                                 <div className="md:flex md:items-center md:justify-between mb-6">
                                     <div>
@@ -354,7 +355,7 @@ export default function PrintLayout({ settings }: { settings: any }) {
                                                     icon="solar:gallery-send-bold-duotone"
                                                     width="22"
                                                     className="text-blue-600 group-hover:-translate-y-0.5 transition-transform"
-                                                />
+                                                />{" "}
                                                 Choose Picture
                                                 <input
                                                     type="file"
@@ -377,7 +378,7 @@ export default function PrintLayout({ settings }: { settings: any }) {
                                                     <Icon
                                                         icon="solar:trash-bin-trash-bold"
                                                         width="18"
-                                                    />
+                                                    />{" "}
                                                     Remove Picture
                                                 </button>
                                             )}
@@ -398,7 +399,7 @@ export default function PrintLayout({ settings }: { settings: any }) {
                                                     <Icon
                                                         icon="solar:gallery-remove-bold-duotone"
                                                         width="24"
-                                                    />
+                                                    />{" "}
                                                     No image selected
                                                 </span>
                                             )}
@@ -407,6 +408,7 @@ export default function PrintLayout({ settings }: { settings: any }) {
                                 </div>
                             </div>
 
+                            {/* ID BACKGROUND SECTION */}
                             <div className="pb-4 mt-8">
                                 <div className="md:flex md:items-center md:justify-between mb-6">
                                     <div>
@@ -428,7 +430,7 @@ export default function PrintLayout({ settings }: { settings: any }) {
                                                     icon="solar:gallery-send-bold-duotone"
                                                     width="22"
                                                     className="text-blue-600 group-hover:-translate-y-0.5 transition-transform"
-                                                />
+                                                />{" "}
                                                 Choose Picture
                                                 <input
                                                     type="file"
@@ -453,7 +455,7 @@ export default function PrintLayout({ settings }: { settings: any }) {
                                                     <Icon
                                                         icon="solar:trash-bin-trash-bold"
                                                         width="18"
-                                                    />
+                                                    />{" "}
                                                     Reset to Default
                                                 </button>
                                             )}
@@ -474,13 +476,16 @@ export default function PrintLayout({ settings }: { settings: any }) {
                                                     src={idBackgroundPreview}
                                                     alt="ID Background Preview"
                                                     className="max-h-80 w-auto object-contain drop-shadow-md rounded-lg"
+                                                    onError={(e) => {
+                                                        e.currentTarget.src = `/images/ID_BG_1.png?t=${new Date().getTime()}`;
+                                                    }}
                                                 />
                                             ) : (
                                                 <span className="text-gray-400 font-medium text-sm flex items-center gap-2">
                                                     <Icon
                                                         icon="solar:gallery-remove-bold-duotone"
                                                         width="24"
-                                                    />
+                                                    />{" "}
                                                     No image selected
                                                 </span>
                                             )}
@@ -498,7 +503,7 @@ export default function PrintLayout({ settings }: { settings: any }) {
                                         icon="solar:diskette-bold"
                                         className="mr-2"
                                         width="20"
-                                    />
+                                    />{" "}
                                     Save Print Settings
                                 </PrimaryButton>
                             </div>

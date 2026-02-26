@@ -312,7 +312,7 @@ export default function DriverInfoModal({
 
     const baseMayorOptions = officials
         .filter((o) => o.position === "Punong Bayan")
-        .map((o) => o.name);
+        .map((o) => `${o.name} | ${o.position}`); // <-- Add the formatting here too
 
     const customMayors = data.drivers.map((d) => d.mayor).filter(Boolean);
     const mayorOptions = Array.from(
@@ -325,7 +325,7 @@ export default function DriverInfoModal({
                 o.position === "Committee on Transportation" ||
                 o.position === "Authorized Official",
         )
-        .map((o) => o.name);
+        .map((o) => `${o.name} | ${o.position}`);
 
     const customCommittees = data.drivers
         .map((d) => d.committee)
