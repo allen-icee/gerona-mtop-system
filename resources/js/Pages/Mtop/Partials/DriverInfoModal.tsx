@@ -150,42 +150,34 @@ export default function DriverInfoModal({
             camWindow.document.write(`
                 <html>
                 <head>
-                    <title>Secure Photo Capture</title>
+                    <title>Encoder Camera Control</title>
                     <script src="https://code.iconify.design/3/3.1.0/iconify.min.js"></script>
                     <script src="https://cdn.tailwindcss.com"></script>
                     <style>
                         body { margin: 0; overflow: hidden; background: #f9fafb; font-family: ui-sans-serif, system-ui; }
                         .camera-container { position: relative; width: 100%; height: 100%; background: black; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-                        #video, #preview-img { width: 100%; height: 100%; object-fit: cover; }
+                        #video, #preview-img { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
                         .guide-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; z-index: 20; }
                         .circle { width: 280px; height: 280px; border: 3px solid rgba(255,255,255,0.5); border-radius: 50%; box-shadow: 0 0 0 1000px rgba(0,0,0,0.4); }
                         #preview-img { display: none; z-index: 10; }
-                        .floating-btn { position: absolute; z-index: 50; background: rgba(0, 0, 0, 0.5); color: white; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.2); cursor: pointer; transition: all 0.2s; }
-                        .floating-btn:hover { background: rgba(59, 130, 246, 0.8); }
-                        .btn-switch { top: 1rem; right: 1rem; }
                     </style>
                 </head>
                 <body>
                     <div class="flex flex-col h-screen">
                         <div class="bg-slate-800 p-4 text-white flex justify-between items-center shadow-lg">
-                            <span class="text-xs font-bold uppercase tracking-widest" id="header-title">Secure Photo Capture</span>
-                            <span class="iconify" data-icon="solar:camera-bold"></span>
+                            <span class="text-xs font-bold uppercase tracking-widest" id="header-title">Encoder Control Panel</span>
+                            <button id="cast-btn" class="bg-blue-600 hover:bg-blue-500 px-3 py-1.5 rounded text-xs font-bold flex items-center gap-2 transition-colors">
+                                <span class="iconify" data-icon="solar:monitor-camera-bold"></span> Cast to Client Monitor
+                            </button>
                         </div>
 
                         <div class="camera-container flex-1">
-                            <button id="switch-btn" class="floating-btn btn-switch" style="display: none;">
-                                <span class="iconify text-2xl" data-icon="solar:camera-rotate-bold"></span>
-                            </button>
                             <video id="video" autoplay playsinline></video>
                             <img id="preview-img" src="" />
                             <div id="guide" class="guide-overlay"><div class="circle"></div></div>
                         </div>
 
                         <div class="p-6 bg-white border-t">
-                            <div id="instruction-box" class="mb-5 flex items-center gap-3 text-blue-700 bg-blue-50 px-4 py-3 rounded-lg border border-blue-100 shadow-sm">
-                                <span class="iconify text-lg" data-icon="solar:info-circle-bold"></span>
-                                <span class="text-xs font-medium leading-tight">Please align the subject's face within the guide for optimal photo quality.</span>
-                            </div>
                             <button id="capture-btn" class="w-full py-4 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold text-lg shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2">
                                 <span class="iconify" data-icon="solar:camera-minimalistic-bold"></span> Take Photo
                             </button>
@@ -203,45 +195,53 @@ export default function DriverInfoModal({
                     <script>
                         const video = document.getElementById('video');
                         const previewImg = document.getElementById('preview-img');
-                        const switchBtn = document.getElementById('switch-btn');
                         const reviewActions = document.getElementById('review-actions');
                         const captureBtn = document.getElementById('capture-btn');
-                        let videoDevices = [];
-                        let currentDeviceIndex = 0;
 
-                        async function initCamera(deviceId) {
+                        let clientWindow = null;
+
+                        async function initCamera() {
                             try {
-                                if (window.stream) { window.stream.getTracks().forEach(t => t.stop()); }
-                                const stream = await navigator.mediaDevices.getUserMedia({
-                                    video: { deviceId: deviceId ? { exact: deviceId } : undefined, width: 1280, height: 720 }
-                                });
+                                const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 1280, height: 720 } });
                                 window.stream = stream;
                                 video.srcObject = stream;
-                                const devices = await navigator.mediaDevices.enumerateDevices();
-                                videoDevices = devices.filter(d => d.kind === 'videoinput');
-                                if (videoDevices.length > 1) switchBtn.style.display = 'flex';
-                            } catch (e) { alert("Unable to initialize camera. Please verify device connection."); }
+                            } catch (e) { alert("Unable to initialize camera."); }
                         }
-
                         initCamera();
 
-                        switchBtn.onclick = () => {
-                            currentDeviceIndex = (currentDeviceIndex + 1) % videoDevices.length;
-                            initCamera(videoDevices[currentDeviceIndex].deviceId);
+                        document.getElementById('cast-btn').onclick = () => {
+                            if (clientWindow && !clientWindow.closed) {
+                                clientWindow.focus();
+                                return;
+                            }
+                            clientWindow = window.open('', 'ClientMonitor', 'width=800,height=600,menubar=no,toolbar=no');
+                            clientWindow.document.write(\`
+                                <html><head><title>Client Monitor View</title></head>
+                                <body style="margin:0; background:black; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+                                    <video id="c-video" autoplay playsinline style="width:100%; height:100%; object-fit:cover; transform: scaleX(-1);"></video>
+                                    <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none;">
+                                        <div style="width:320px; height:320px; border:4px solid rgba(255,255,255,0.6); border-radius:50%; box-shadow: 0 0 0 2000px rgba(0,0,0,0.5);"></div>
+                                    </div>
+                                </body></html>
+                            \`);
+                            clientWindow.document.getElementById('c-video').srcObject = window.stream;
                         };
 
                         captureBtn.onclick = () => {
                             const canvas = document.getElementById('canvas');
                             canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-                            canvas.getContext('2d').drawImage(video, 0, 0);
+
+                            const ctx = canvas.getContext('2d');
+                            ctx.translate(canvas.width, 0);
+                            ctx.scale(-1, 1);
+                            ctx.drawImage(video, 0, 0);
+
                             canvas.toBlob((blob) => {
                                 window.currentBlob = blob;
                                 previewImg.src = URL.createObjectURL(blob);
                                 previewImg.style.display = 'block'; video.style.display = 'none';
                                 document.getElementById('guide').style.display = 'none';
-                                document.getElementById('instruction-box').style.display = 'none';
                                 document.getElementById('header-title').innerText = "Review Capture";
-                                switchBtn.style.display = 'none';
                                 captureBtn.classList.add('hidden');
                                 reviewActions.classList.remove('hidden');
                                 reviewActions.classList.add('flex');
@@ -251,15 +251,14 @@ export default function DriverInfoModal({
                         document.getElementById('retake-btn').onclick = () => {
                             previewImg.style.display = 'none'; video.style.display = 'block';
                             document.getElementById('guide').style.display = 'flex';
-                            document.getElementById('instruction-box').style.display = 'flex';
-                            document.getElementById('header-title').innerText = "Photo Capture";
-                            if (videoDevices.length > 1) switchBtn.style.display = 'flex';
+                            document.getElementById('header-title').innerText = "Encoder Control Panel";
                             captureBtn.classList.remove('hidden');
                             reviewActions.classList.add('hidden');
                             reviewActions.classList.remove('flex');
                         };
 
                         document.getElementById('save-btn').onclick = () => {
+                            if (clientWindow) clientWindow.close();
                             const reader = new FileReader();
                             reader.onloadend = () => {
                                 window.opener.postMessage({ type: 'CAMERA_CAPTURE', imageData: reader.result }, "*");

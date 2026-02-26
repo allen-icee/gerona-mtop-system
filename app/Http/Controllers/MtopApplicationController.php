@@ -77,10 +77,12 @@ class MtopApplicationController extends Controller
         try {
             $mtop = DB::transaction(function () use ($validated, $request) {
                 $final_mt_number = $validated['mt_number'];
+                $year = now()->year;
 
-                $exists = MtopFranchise::where('mt_number', $final_mt_number)->exists();
-                if ($exists) {
-                    throw new \Exception("The Control Numnber {$final_mt_number} was just taken by another user. Please go back and refresh.");
+                while (MtopFranchise::where('mt_number', $final_mt_number)->exists()) {
+                    $parts = explode('-', $final_mt_number);
+                    $seq = isset($parts[1]) ? intval($parts[1]) : 0;
+                    $final_mt_number = sprintf("%s-%04d", $year, $seq + 1);
                 }
 
                 $franchise = MtopFranchise::create([
@@ -115,11 +117,16 @@ class MtopApplicationController extends Controller
                 return $application;
             });
 
+            $message = 'Application created successfully!';
+            if ($request->mt_number !== $mtop->mt_number) {
+                $message = "Application saved! Note: Control No. {$request->mt_number} was just taken by another staff member, so this was automatically assigned to {$mtop->mt_number}.";
+            }
+
             return redirect()->back()->with('success_data', [
                 'id' => $mtop->id,
                 'mt_number' => $mtop->mt_number,
                 'operator_name' => $mtop->first_name . ' ' . $mtop->last_name,
-            ])->with('message', 'Application created successfully!');
+            ])->with('message', $message);
         } catch (\Exception $e) {
             return redirect()->back()->withErrors(['mt_number' => $e->getMessage()])->withInput();
         }

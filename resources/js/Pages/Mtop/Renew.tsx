@@ -2,8 +2,7 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import PrimaryButton from "@/Components/PrimaryButton";
 import { Head, Link, useForm, usePage } from "@inertiajs/react";
-import React, { FormEventHandler, useState, useEffect, useRef } from "react";
-import { createPortal } from "react-dom";
+import React, { FormEventHandler, useState, useEffect } from "react";
 import { Icon } from "@iconify/react";
 import toast from "react-hot-toast";
 import Modal from "@/Components/Modal";
@@ -14,50 +13,7 @@ import TricycleForm from "./Partials/TricycleForm";
 import CedulaForm from "./Partials/CedulaForm";
 import OfficialReceiptForm from "./Partials/OfficialReceiptForm";
 import OfficialsForm from "./Partials/OfficialsForm";
-import PermitPreview from "./Partials/PermitPreview";
-
-function ExternalWindow({
-    children,
-    onClose,
-}: {
-    children: React.ReactNode;
-    onClose: () => void;
-}) {
-    const [container, setContainer] = useState<HTMLElement | null>(null);
-    const winRef = useRef<Window | null>(null);
-
-    useEffect(() => {
-        winRef.current = window.open(
-            "",
-            "",
-            "width=600,height=850,left=200,top=100",
-        );
-        if (!winRef.current) {
-            toast.error(
-                "Popup blocked! Please allow pop-ups for this site to use the Dual Monitor feature.",
-            );
-            onClose();
-            return;
-        }
-
-        winRef.current.document.head.innerHTML = window.document.head.innerHTML;
-        winRef.current.document.title = "Live Permit Preview (Dual Monitor)";
-        winRef.current.document.body.className = "bg-gray-200 m-0 p-4";
-
-        const div = winRef.current.document.createElement("div");
-        winRef.current.document.body.appendChild(div);
-        setContainer(div);
-
-        winRef.current.addEventListener("beforeunload", () => onClose());
-
-        return () => {
-            if (winRef.current) winRef.current.close();
-        };
-    }, []);
-
-    if (!container) return null;
-    return createPortal(children, container);
-}
+import PermitPreview, { updateClientMonitor } from "./Partials/PermitPreview";
 
 const isValidDate = (dateString: string): boolean => {
     if (!dateString) return false;
@@ -83,7 +39,6 @@ export default function Renew({
 }) {
     const [step, setStep] = useState(1);
     const [showMobilePreview, setShowMobilePreview] = useState(false);
-    const [isFloating, setIsFloating] = useState(false);
 
     const { data, setData, post, processing, errors } = useForm({
         last_name: application.last_name || "",
@@ -105,6 +60,11 @@ export default function Renew({
         punong_bayan: application.punong_bayan || "",
         authorized_official: application.authorized_official || "",
     });
+
+    // --- NEW: Live sync to casted screen ---
+    useEffect(() => {
+        updateClientMonitor(data);
+    }, [data]);
 
     const requiredFields = {
         1: [
@@ -162,9 +122,6 @@ export default function Renew({
             return toast.error("Invalid Official Receipt Date.");
 
         post(route("mtop.store_renewal", application.id), {
-            onSuccess: () => {
-                setIsFloating(false);
-            },
             onError: (errs) => {
                 if (errs.mt_number) {
                     setStep(1);
@@ -282,9 +239,7 @@ export default function Renew({
         const daysInMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
         const finalDay = Math.min(targetDay, daysInMonth);
 
-        const expiry = new Date(targetYear, targetMonth, finalDay);
-
-        return expiry
+        return new Date(targetYear, targetMonth, finalDay)
             .toLocaleDateString("en-US", {
                 year: "numeric",
                 month: "long",
@@ -341,38 +296,17 @@ export default function Renew({
 
             <div className="py-6 pb-24 sm:pb-12">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-                    <div
-                        className={`grid grid-cols-1 items-start transition-all duration-500 ease-in-out ${isFloating ? "max-w-4xl mx-auto" : "xl:grid-cols-12 gap-6"}`}
-                    >
-                        <div
-                            className={`bg-white rounded-lg shadow-sm border border-gray-200 transition-all duration-500 relative ${isFloating ? "w-full ring-4 ring-indigo-100" : "xl:col-span-7"}`}
-                        >
-                            {isFloating && (
-                                <div className="bg-indigo-600 p-3 flex justify-between items-center px-6 rounded-t-lg">
-                                    <span className="text-white text-sm font-bold flex items-center gap-2">
-                                        <Icon
-                                            icon="solar:monitor-smartphone-bold"
-                                            width="20"
-                                        />{" "}
-                                        Dual Monitor Mode Active
-                                    </span>
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsFloating(false)}
-                                        className="text-xs font-bold bg-white text-indigo-600 px-4 py-1.5 rounded shadow-sm hover:bg-gray-100 transition-colors"
-                                    >
-                                        Dock Preview Here
-                                    </button>
-                                </div>
-                            )}
-
-                            <div
-                                className={`flex border-b border-gray-200 bg-gray-50 ${!isFloating ? "rounded-t-lg" : ""}`}
-                            >
+                    <div className="grid grid-cols-1 items-start transition-all duration-500 ease-in-out xl:grid-cols-12 gap-6">
+                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 transition-all duration-500 relative xl:col-span-7">
+                            <div className="flex border-b border-gray-200 bg-gray-50 rounded-t-lg">
                                 <button
                                     type="button"
                                     onClick={() => setStep(1)}
-                                    className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 ${!isFloating ? "rounded-tl-lg" : ""} ${step === 1 ? "bg-white text-blue-600 border-t-2 border-blue-600" : "text-gray-400 hover:text-gray-600"}`}
+                                    className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 rounded-tl-lg ${
+                                        step === 1
+                                            ? "bg-white text-blue-600 border-t-2 border-blue-600"
+                                            : "text-gray-400 hover:text-gray-600"
+                                    }`}
                                 >
                                     <Icon
                                         icon="solar:user-id-bold"
@@ -389,7 +323,11 @@ export default function Renew({
                                                 "Complete Step 1 first",
                                             );
                                     }}
-                                    className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 ${step === 2 ? "bg-white text-blue-600 border-t-2 border-blue-600" : "text-gray-400 hover:text-gray-600"}`}
+                                    className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 ${
+                                        step === 2
+                                            ? "bg-white text-blue-600 border-t-2 border-blue-600"
+                                            : "text-gray-400 hover:text-gray-600"
+                                    }`}
                                 >
                                     <Icon icon="solar:wheel-bold" width="18" />{" "}
                                     Unit
@@ -404,7 +342,11 @@ export default function Renew({
                                                 "Complete Step 1 & 2 first",
                                             );
                                     }}
-                                    className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 ${!isFloating ? "rounded-tr-lg" : ""} ${step === 3 ? "bg-white text-blue-600 border-t-2 border-blue-600" : "text-gray-400 hover:text-gray-600"}`}
+                                    className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 rounded-tr-lg ${
+                                        step === 3
+                                            ? "bg-white text-blue-600 border-t-2 border-blue-600"
+                                            : "text-gray-400 hover:text-gray-600"
+                                    }`}
                                 >
                                     <Icon
                                         icon="solar:file-check-bold"
@@ -539,36 +481,14 @@ export default function Renew({
                             </form>
                         </div>
 
-                        {!isFloating && (
-                            <div className="hidden xl:block xl:col-span-5 sticky top-6 z-20 animate-fade-in">
-                                <div className="relative">
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsFloating(true)}
-                                        className="absolute -top-3 -right-3 z-50 bg-gray-900 text-white p-3 rounded-full shadow-xl hover:bg-indigo-600 hover:scale-110 transition-all border-2 border-white flex items-center justify-center cursor-pointer"
-                                    >
-                                        <Icon
-                                            icon="proicons:expand"
-                                            width="22"
-                                        />
-                                    </button>
-                                    <div className="rounded-xl overflow-hidden shadow-md border border-gray-200">
-                                        <PermitPreview data={data} />
-                                    </div>
-                                </div>
+                        <div className="hidden xl:block xl:col-span-5 sticky top-6 z-20 animate-fade-in">
+                            <div className="rounded-xl overflow-hidden shadow-md border border-gray-200">
+                                <PermitPreview data={data} />
                             </div>
-                        )}
+                        </div>
                     </div>
                 </div>
             </div>
-
-            {isFloating && (
-                <ExternalWindow onClose={() => setIsFloating(false)}>
-                    <div className="drop-shadow-xl max-w-lg mx-auto">
-                        <PermitPreview data={data} showHeader={true} />
-                    </div>
-                </ExternalWindow>
-            )}
 
             <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 sm:hidden z-40 flex justify-between items-center safe-area-pb">
                 <Link

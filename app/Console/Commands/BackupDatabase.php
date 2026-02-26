@@ -5,36 +5,81 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
+use App\Models\MtopApplication;
 
 class BackupDatabase extends Command
 {
     protected $signature = 'backup:run';
-    protected $description = 'Backup the SQLite database file';
+    protected $description = 'Backup the full SQLite database and export MTOP records to CSV';
 
     public function handle()
     {
         $date = now()->format('Y-m-d_H-i-s');
-        $filename = "backup_{$date}.sqlite";
+        $sqliteFilename = "backup_{$date}.sqlite";
+        $csvFilename = "backup_{$date}.csv";
 
         $sourcePath = database_path('database.sqlite');
-
         $backupFolder = storage_path('app/private/backups');
 
         if (!File::exists($backupFolder)) {
             File::makeDirectory($backupFolder, 0755, true);
         }
 
-        $destinationPath = "{$backupFolder}/{$filename}";
+        $sqliteDestinationPath = "{$backupFolder}/{$sqliteFilename}";
+        $csvDestinationPath = "{$backupFolder}/{$csvFilename}";
 
         try {
+
             if (!File::exists($sourcePath)) {
                 $this->error("Database file not found at: {$sourcePath}");
                 return 1;
             }
 
-            File::copy($sourcePath, $destinationPath);
+            File::copy($sourcePath, $sqliteDestinationPath);
+            $this->info("Database backed up successfully: {$sqliteFilename}");
 
-            $this->info("Database backed up successfully: {$filename}");
+            $records = MtopApplication::all();
+
+            if ($records->isNotEmpty()) {
+                $csvContent = fopen('php://temp', 'r+');
+
+                fputcsv($csvContent, [
+                    'Control No',
+                    'Transaction Date',
+                    'Transaction Type',
+                    'Last Name',
+                    'First Name',
+                    'Middle Name',
+                    'Suffix',
+                    'Address',
+                    'Plate No',
+                    'Make/Type',
+                    'Status'
+                ]);
+
+                foreach ($records as $row) {
+                    fputcsv($csvContent, [
+                        $row->mt_number,
+                        $row->transaction_date,
+                        $row->transaction_type,
+                        $row->last_name,
+                        $row->first_name,
+                        $row->middle_name,
+                        $row->suffix,
+                        $row->address,
+                        $row->plate_no,
+                        $row->make_type,
+                        $row->status
+                    ]);
+                }
+
+                rewind($csvContent);
+                $csvData = stream_get_contents($csvContent);
+                fclose($csvContent);
+
+                File::put($csvDestinationPath, $csvData);
+                $this->info("CSV backed up successfully: {$csvFilename}");
+            }
 
             $this->cleanOldBackups($backupFolder);
 
@@ -49,11 +94,10 @@ class BackupDatabase extends Command
     {
         $files = File::files($path);
 
-        if (count($files) > 10) {
-
+        if (count($files) > 20) {
             usort($files, fn($a, $b) => filemtime($a) <=> filemtime($b));
 
-            for ($i = 0; $i < count($files) - 7; $i++) {
+            for ($i = 0; $i < count($files) - 14; $i++) {
                 File::delete($files[$i]);
             }
         }

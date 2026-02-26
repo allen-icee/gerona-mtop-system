@@ -2,8 +2,7 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import PrimaryButton from "@/Components/PrimaryButton";
 import { Head, Link, useForm, usePage } from "@inertiajs/react";
-import React, { FormEventHandler, useState, useEffect, useRef } from "react";
-import { createPortal } from "react-dom";
+import React, { FormEventHandler, useState, useEffect } from "react";
 import { Icon } from "@iconify/react";
 import toast from "react-hot-toast";
 import Modal from "@/Components/Modal";
@@ -14,56 +13,8 @@ import TricycleForm from "./Partials/TricycleForm";
 import CedulaForm from "./Partials/CedulaForm";
 import OfficialReceiptForm from "./Partials/OfficialReceiptForm";
 import OfficialsForm from "./Partials/OfficialsForm";
-import PermitPreview from "./Partials/PermitPreview";
+import PermitPreview, { updateClientMonitor } from "./Partials/PermitPreview";
 import PrintSuccessModal from "./Partials/PrintSuccessModal";
-
-function ExternalWindow({
-    children,
-    onClose,
-}: {
-    children: React.ReactNode;
-    onClose: () => void;
-}) {
-    const [container, setContainer] = useState<HTMLElement | null>(null);
-    const winRef = useRef<Window | null>(null);
-
-    useEffect(() => {
-        winRef.current = window.open(
-            "",
-            "",
-            "width=600,height=850,left=200,top=100",
-        );
-
-        if (!winRef.current) {
-            toast.error(
-                "Popup blocked! Please allow pop-ups for this site to use the Dual Monitor feature.",
-            );
-            onClose();
-            return;
-        }
-
-        winRef.current.document.head.innerHTML = window.document.head.innerHTML;
-        winRef.current.document.title = "Live Permit Preview (Dual Monitor)";
-        winRef.current.document.body.className = "bg-gray-200 m-0 p-4";
-
-        const div = winRef.current.document.createElement("div");
-        winRef.current.document.body.appendChild(div);
-        setContainer(div);
-
-        winRef.current.addEventListener("beforeunload", () => {
-            onClose();
-        });
-
-        return () => {
-            if (winRef.current) {
-                winRef.current.close();
-            }
-        };
-    }, []);
-
-    if (!container) return null;
-    return createPortal(children, container);
-}
 
 interface MtopApplication {
     id: number;
@@ -114,8 +65,6 @@ export default function Edit({
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [updatedRecord, setUpdatedRecord] = useState<any>(null);
 
-    const [isFloating, setIsFloating] = useState(false);
-
     const { data, setData, put, processing, errors, isDirty, reset } = useForm({
         last_name: application.last_name || "",
         first_name: application.first_name || "",
@@ -136,6 +85,11 @@ export default function Edit({
         punong_bayan: application.punong_bayan || "",
         authorized_official: application.authorized_official || "",
     });
+
+    // --- NEW: Live sync to casted screen ---
+    useEffect(() => {
+        updateClientMonitor(data);
+    }, [data]);
 
     const requiredFields = {
         1: [
@@ -199,7 +153,6 @@ export default function Edit({
                 if (successData) {
                     setUpdatedRecord(successData);
                     setShowSuccessModal(true);
-                    setIsFloating(false);
                 }
             },
             onError: (errs) => {
@@ -383,38 +336,13 @@ export default function Edit({
 
             <div className="py-6 pb-24 sm:pb-12">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-                    <div
-                        className={`grid grid-cols-1 items-start transition-all duration-500 ease-in-out ${isFloating ? "max-w-4xl mx-auto" : "xl:grid-cols-12 gap-6"}`}
-                    >
-                        <div
-                            className={`bg-white rounded-lg shadow-sm border border-gray-200 transition-all duration-500 relative ${isFloating ? "w-full ring-4 ring-indigo-100" : "xl:col-span-7"}`}
-                        >
-                            {isFloating && (
-                                <div className="bg-indigo-600 p-3 flex justify-between items-center px-6 rounded-t-lg">
-                                    <span className="text-white text-sm font-bold flex items-center gap-2">
-                                        <Icon
-                                            icon="solar:monitor-smartphone-bold"
-                                            width="20"
-                                        />
-                                        Dual Monitor Mode Active
-                                    </span>
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsFloating(false)}
-                                        className="text-xs font-bold bg-white text-indigo-600 px-4 py-1.5 rounded shadow-sm hover:bg-gray-100 transition-colors"
-                                    >
-                                        Dock Preview Here
-                                    </button>
-                                </div>
-                            )}
-
-                            <div
-                                className={`flex border-b border-gray-200 bg-gray-50 ${!isFloating ? "rounded-t-lg" : ""}`}
-                            >
+                    <div className="grid grid-cols-1 items-start transition-all duration-500 ease-in-out xl:grid-cols-12 gap-6">
+                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 transition-all duration-500 relative xl:col-span-7">
+                            <div className="flex border-b border-gray-200 bg-gray-50 rounded-t-lg">
                                 <button
                                     type="button"
                                     onClick={() => setStep(1)}
-                                    className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 ${!isFloating ? "rounded-tl-lg" : ""} ${
+                                    className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 rounded-tl-lg ${
                                         step === 1
                                             ? "bg-white text-blue-600 border-t-2 border-blue-600"
                                             : "text-gray-400 hover:text-gray-600"
@@ -454,7 +382,7 @@ export default function Edit({
                                                 "Complete Step 1 & 2 first",
                                             );
                                     }}
-                                    className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 ${!isFloating ? "rounded-tr-lg" : ""} ${
+                                    className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 rounded-tr-lg ${
                                         step === 3
                                             ? "bg-white text-blue-600 border-t-2 border-blue-600"
                                             : "text-gray-400 hover:text-gray-600"
@@ -601,38 +529,14 @@ export default function Edit({
                             </form>
                         </div>
 
-                        {!isFloating && (
-                            <div className="hidden xl:block xl:col-span-5 sticky top-6 z-20 animate-fade-in">
-                                <div className="relative">
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsFloating(true)}
-                                        className="absolute -top-3 -right-3 z-50 bg-gray-900 text-white p-3 rounded-full shadow-xl hover:bg-indigo-600 hover:scale-110 transition-all border-2 border-white flex items-center justify-center cursor-pointer"
-                                        title="Open on Second Monitor"
-                                    >
-                                        <Icon
-                                            icon="proicons:expand"
-                                            width="22"
-                                        />
-                                    </button>
-
-                                    <div className="rounded-xl overflow-hidden shadow-md border border-gray-200">
-                                        <PermitPreview data={data} />
-                                    </div>
-                                </div>
+                        <div className="hidden xl:block xl:col-span-5 sticky top-6 z-20 animate-fade-in">
+                            <div className="rounded-xl overflow-hidden shadow-md border border-gray-200">
+                                <PermitPreview data={data} />
                             </div>
-                        )}
+                        </div>
                     </div>
                 </div>
             </div>
-
-            {isFloating && (
-                <ExternalWindow onClose={() => setIsFloating(false)}>
-                    <div className="drop-shadow-xl max-w-lg mx-auto">
-                        <PermitPreview data={data} showHeader={true} />
-                    </div>
-                </ExternalWindow>
-            )}
 
             <PrintSuccessModal
                 show={showSuccessModal}

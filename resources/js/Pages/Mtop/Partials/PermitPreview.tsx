@@ -2,6 +2,228 @@
 import { Icon } from "@iconify/react";
 import React, { useState, useRef, useEffect } from "react";
 
+export const val = (text?: string) => (text ? String(text).toUpperCase() : "-");
+
+export const formatName = (data: any) => {
+    if (!data.last_name && !data.first_name) return "";
+    return `${data.last_name || ""} ${data.suffix || ""}, ${data.first_name || ""} ${data.middle_name ? data.middle_name + "." : ""} `
+        .trim()
+        .toUpperCase();
+};
+
+export const formatDate = (dateString?: string) => {
+    if (!dateString) return "-";
+    return new Date(dateString)
+        .toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+        })
+        .toUpperCase();
+};
+
+export const formatExpiry = (dateString?: string, plateNo?: string) => {
+    if (!dateString) return "-";
+
+    const date = new Date(dateString);
+    let targetYear = date.getFullYear() + 3;
+    let targetMonth = date.getMonth();
+    let targetDay = date.getDate();
+
+    if (plateNo && plateNo !== "FOR REGISTRATION") {
+        const match = plateNo.match(/(\d)[^\d]*$/);
+        if (match) {
+            const digit = parseInt(match[1], 10);
+            targetMonth = digit === 0 ? 9 : digit - 1;
+        }
+    }
+
+    const daysInMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
+    const finalDay = Math.min(targetDay, daysInMonth);
+    const expiry = new Date(targetYear, targetMonth, finalDay);
+
+    return expiry
+        .toLocaleDateString("en-US", {
+            month: "long",
+            day: "numeric",
+            year: "numeric",
+        })
+        .toUpperCase();
+};
+
+// --- GLOBAL LIVE CASTING VARIABLES ---
+let clientMonitorWindow: Window | null = null;
+
+const generatePayload = (data: any) => {
+    const plateDisplay =
+        data.plate_no === "FOR REGISTRATION"
+            ? '<span style="color: #ea580c;">FOR REGISTRATION</span>'
+            : val(data.plate_no);
+
+    const bodyDisplay = data.body_number
+        ? `<br><span style="color: #6b7280; font-size: 12pt;">(#${data.body_number})</span>`
+        : "";
+
+    return {
+        name: val(formatName(data)),
+        mt_number: val(data.mt_number),
+        date: formatDate(data.transaction_date),
+        address: val(data.address).replace(
+            /(,\s*GERONA,\s*TARLAC|\s*GERONA,\s*TARLAC)/i,
+            "",
+        ),
+        expiry: formatExpiry(data.transaction_date, data.plate_no),
+        make_type: val(data.make_type),
+        engine_motor_no: val(data.engine_motor_no),
+        chassis_no: val(data.chassis_no),
+        plate_no_display: plateDisplay + bodyDisplay,
+        cedula_number: val(data.cedula_number),
+        cedula_date: formatDate(data.cedula_date),
+        or_number: val(data.or_number),
+        or_date: formatDate(data.or_date),
+        authorized_official: val(data.authorized_official),
+        punong_bayan: val(data.punong_bayan),
+    };
+};
+
+export const updateClientMonitor = (data: any) => {
+    if (clientMonitorWindow && !clientMonitorWindow.closed) {
+        clientMonitorWindow.postMessage(
+            {
+                type: "UPDATE_DATA",
+                payload: generatePayload(data),
+            },
+            "*",
+        );
+    }
+};
+
+export const openClientMonitor = (data: any) => {
+    if (clientMonitorWindow && !clientMonitorWindow.closed) {
+        clientMonitorWindow.focus();
+        updateClientMonitor(data);
+        return;
+    }
+
+    clientMonitorWindow = window.open(
+        "",
+        "ClientPreview",
+        "width=1000,height=800,menubar=no,toolbar=no,status=no",
+    );
+
+    if (!clientMonitorWindow) {
+        alert(
+            "Pop-up blocked. Please allow pop-ups to use the casting feature.",
+        );
+        return;
+    }
+
+    const payload = generatePayload(data);
+
+    clientMonitorWindow.document.write(`
+        <html>
+        <head>
+            <title>Client Review Monitor</title>
+            <script src="https://cdn.tailwindcss.com"></script>
+            <style>
+                body { background: #e5e7eb; display: flex; align-items: flex-start; justify-content: center; min-height: 100vh; margin: 0; padding: 2rem; font-family: ui-sans-serif, system-ui, sans-serif; overflow-y: auto; }
+                #zoom-wrapper { width: 100%; max-width: 1100px; transform-origin: top center; margin-top: 2rem; margin-bottom: 4rem; transition: zoom 0.1s ease; }
+                .container { background: white; padding: 3rem; border-radius: 1.5rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); width: 100%; }
+                table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; font-size: 14pt; }
+                td, th { border: 2px solid #111827; padding: 1rem; }
+                .label { background-color: #bfdbfe; color: #1e3a8a; font-weight: bold; width: 35%; text-transform: uppercase; }
+                .value { font-weight: 900; color: #111827; text-transform: uppercase; }
+                .header-table th { background-color: #93c5fd; color: #1e3a8a; font-weight: bold; text-align: center; font-size: 13pt; text-transform: uppercase; letter-spacing: 0.05em; }
+                .help-toast { position: fixed; top: 1rem; right: 1rem; background: rgba(17, 24, 39, 0.8); color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.875rem; font-weight: bold; pointer-events: none; z-index: 50; }
+            </style>
+        </head>
+        <body>
+            <div class="help-toast">Ctrl + Scroll to Zoom</div>
+            <div id="zoom-wrapper">
+                <div class="container">
+                    <div style="text-align: center; margin-bottom: 2rem; border-bottom: 4px solid #111827; padding-bottom: 1rem;">
+                        <h1 class="text-4xl font-black uppercase text-gray-900 m-0 tracking-tight">Information Preview</h1>
+                        <p class="text-gray-500 font-bold mt-2 text-lg">Please verify if all details below are correct.</p>
+                    </div>
+
+                    <table>
+                        <tr><td class="label">NAME</td><td class="value text-2xl" id="c-name">${payload.name}</td></tr>
+                        <tr><td class="label">USAPIN BILANG</td><td class="value text-red-600 text-2xl" id="c-mt_number">${payload.mt_number}</td></tr>
+                        <tr><td class="label">DATE</td><td class="value" id="c-date">${payload.date}</td></tr>
+                        <tr><td class="label">BARANGAY</td><td class="value" id="c-address">${payload.address}, GERONA TARLAC</td></tr>
+                        <tr><td class="label">EXPIRY DATE</td><td class="value" id="c-expiry">${payload.expiry}</td></tr>
+                    </table>
+
+                    <table>
+                        <tr class="header-table">
+                            <th>GAWA AT URI</th>
+                            <th>MOTOR BILANG</th>
+                            <th>TSASI BILANG</th>
+                            <th>PLAKA BILANG</th>
+                        </tr>
+                        <tr style="text-align: center;">
+                            <td class="value" id="c-make_type">${payload.make_type}</td>
+                            <td class="value" id="c-engine_motor_no">${payload.engine_motor_no}</td>
+                            <td class="value" id="c-chassis_no">${payload.chassis_no}</td>
+                            <td class="value text-blue-700" id="c-plate_no_display">${payload.plate_no_display}</td>
+                        </tr>
+                    </table>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                        <table>
+                            <tr class="header-table"><th colspan="2">CEDULA</th></tr>
+                            <tr><td class="label" style="width: 40%;">NUMBER</td><td class="value font-mono tracking-wider" id="c-cedula_number">${payload.cedula_number}</td></tr>
+                            <tr><td class="label">DATE</td><td class="value" id="c-cedula_date">${payload.cedula_date}</td></tr>
+                        </table>
+                        <table>
+                            <tr class="header-table"><th colspan="2">OFFICIAL RECEIPT</th></tr>
+                            <tr><td class="label" style="width: 40%;">NUMBER</td><td class="value font-mono tracking-wider" id="c-or_number">${payload.or_number}</td></tr>
+                            <tr><td class="label">DATE</td><td class="value" id="c-or_date">${payload.or_date}</td></tr>
+                        </table>
+                    </div>
+
+                    <table>
+                        <tr class="header-table"><th colspan="2">SIGNATORIES</th></tr>
+                        <tr><td class="label" style="width: 40%;">AUTHORIZED OFFICIAL</td><td class="value" id="c-authorized_official">${payload.authorized_official}</td></tr>
+                        <tr><td class="label">PUNONG BAYAN</td><td class="value" id="c-punong_bayan">${payload.punong_bayan}</td></tr>
+                    </table>
+                </div>
+            </div>
+
+            <script>
+                // LIVE UPDATE LOGIC
+                window.addEventListener('message', (event) => {
+                    if (event.data && event.data.type === 'UPDATE_DATA') {
+                        const p = event.data.payload;
+                        for (const key in p) {
+                            const el = document.getElementById('c-' + key);
+                            if (el) el.innerHTML = p[key];
+                        }
+                    }
+                });
+
+                // ZOOM LOGIC
+                let currentScale = 1;
+                const zoomWrapper = document.getElementById('zoom-wrapper');
+
+                window.addEventListener('wheel', (e) => {
+                    if (e.ctrlKey) {
+                        e.preventDefault();
+                        if (e.deltaY < 0) {
+                            currentScale = Math.min(currentScale + 0.1, 2.5);
+                        } else {
+                            currentScale = Math.max(currentScale - 0.1, 0.5);
+                        }
+                        zoomWrapper.style.zoom = currentScale;
+                    }
+                }, { passive: false });
+            </script>
+        </body>
+        </html>
+    `);
+    clientMonitorWindow.document.close();
+};
+
 export default function PermitPreview({
     data,
     showHeader = true,
@@ -15,69 +237,21 @@ export default function PermitPreview({
     useEffect(() => {
         const el = containerRef.current;
         if (!el) return;
-
         const handleWheel = (e: WheelEvent) => {
             if (e.ctrlKey) {
                 e.preventDefault();
-                if (e.deltaY < 0) {
-                    setScale((s) => Math.min(s + 0.1, 2.5));
-                } else {
-                    setScale((s) => Math.max(s - 0.1, 0.5));
-                }
+                setScale((s) =>
+                    e.deltaY < 0
+                        ? Math.min(s + 0.1, 2.5)
+                        : Math.max(s - 0.1, 0.5),
+                );
             }
         };
-
         el.addEventListener("wheel", handleWheel, { passive: false });
         return () => el.removeEventListener("wheel", handleWheel);
     }, []);
 
-    const formattedName =
-        `${data.last_name || ""} ${data.suffix || ""}, ${data.first_name || ""} ${data.middle_name ? data.middle_name + "." : ""} `
-            .trim()
-            .toUpperCase();
-
-    const val = (text: string) => (text ? text.toUpperCase() : "-");
-
-    const formatDate = (dateString: string) => {
-        if (!dateString) return "-";
-        return new Date(dateString)
-            .toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-            })
-            .toUpperCase();
-    };
-
-    const formatExpiry = (dateString: string, plateNo: string) => {
-        if (!dateString) return "-";
-
-        const date = new Date(dateString);
-        let targetYear = date.getFullYear() + 3;
-        let targetMonth = date.getMonth();
-        let targetDay = date.getDate();
-
-        if (plateNo && plateNo !== "FOR REGISTRATION") {
-            const match = plateNo.match(/(\d)[^\d]*$/);
-            if (match) {
-                const digit = parseInt(match[1], 10);
-                targetMonth = digit === 0 ? 9 : digit - 1;
-            }
-        }
-
-        const daysInMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
-        const finalDay = Math.min(targetDay, daysInMonth);
-
-        const expiry = new Date(targetYear, targetMonth, finalDay);
-
-        return expiry
-            .toLocaleDateString("en-US", {
-                month: "long",
-                day: "numeric",
-                year: "numeric",
-            })
-            .toUpperCase();
-    };
+    const payload = generatePayload(data);
 
     return (
         <div
@@ -85,21 +259,24 @@ export default function PermitPreview({
             className="font-sans w-full h-full overflow-auto relative rounded-b-lg"
         >
             {showHeader && (
-                <div className="bg-gray-800 text-white py-3 px-4 font-bold uppercase tracking-wider text-[12pt] flex justify-between items-center border-b border-black sticky top-0 z-10">
-                    <div className="flex items-center gap-2">
-                        <Icon icon="solar:document-text-bold" width="20" />
-                        Information Preview
-                    </div>
-                    <div className="flex items-center gap-2 text-[10pt] font-medium opacity-80 normal-case tracking-normal">
+                <div className="bg-gray-800 text-white py-3 px-4 flex justify-between items-center border-b border-black sticky top-0 z-10">
+                    <div className="flex items-center gap-1.5 text-[10pt] font-medium opacity-80">
                         <Icon icon="solar:mouse-circle-bold" width="18" />
                         <span className="hidden sm:inline">
                             Ctrl + Scroll to Zoom
                         </span>
                         <span className="sm:hidden">Pinch to Zoom</span>
                     </div>
+                    <button
+                        type="button"
+                        onClick={() => openClientMonitor(data)}
+                        className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-1.5 rounded-md text-[10pt] font-bold uppercase tracking-wider flex items-center gap-2 transition-colors active:scale-95 shadow-sm border border-blue-400"
+                    >
+                        <Icon icon="solar:monitor-smartphone-bold" width="18" />{" "}
+                        Cast to Screen
+                    </button>
                 </div>
             )}
-
             <div className="p-4 sm:p-6 origin-top" style={{ zoom: scale }}>
                 <div className="mb-5">
                     <table className="w-full border-collapse border border-black bg-white shadow-sm table-fixed text-[12pt]">
@@ -109,7 +286,7 @@ export default function PermitPreview({
                                     NAME
                                 </td>
                                 <td className="px-3 py-2 font-bold text-gray-900 align-top wrap-break-words whitespace-normal break-all leading-tight text-[13pt]">
-                                    {val(formattedName)}
+                                    {payload.name}
                                 </td>
                             </tr>
                             <tr className="border-b border-black">
@@ -117,7 +294,7 @@ export default function PermitPreview({
                                     USAPIN BILANG
                                 </td>
                                 <td className="px-3 py-2 font-bold text-red-600 align-top wrap-break-words whitespace-normal break-all leading-tight text-[13pt]">
-                                    {val(data.mt_number)}
+                                    {payload.mt_number}
                                 </td>
                             </tr>
                             <tr className="border-b border-black">
@@ -125,7 +302,7 @@ export default function PermitPreview({
                                     DATE
                                 </td>
                                 <td className="px-3 py-2 font-bold text-gray-800 align-top leading-tight">
-                                    {formatDate(data.transaction_date)}
+                                    {payload.date}
                                 </td>
                             </tr>
                             <tr className="border-b border-black">
@@ -133,10 +310,7 @@ export default function PermitPreview({
                                     BARANGAY
                                 </td>
                                 <td className="px-3 py-2 font-bold text-gray-800 align-top wrap-break-words whitespace-normal break-all leading-tight">
-                                    {val(data.address).replace(
-                                        /(,\s*GERONA,\s*TARLAC|\s*GERONA,\s*TARLAC)/i,
-                                        "",
-                                    )}
+                                    {payload.address}, GERONA TARLAC
                                 </td>
                             </tr>
                             <tr>
@@ -144,10 +318,7 @@ export default function PermitPreview({
                                     EXPIRY DATE
                                 </td>
                                 <td className="px-3 py-2 font-bold text-gray-800 align-top leading-tight">
-                                    {formatExpiry(
-                                        data.transaction_date,
-                                        data.plate_no,
-                                    )}
+                                    {payload.expiry}
                                 </td>
                             </tr>
                         </tbody>
@@ -175,28 +346,20 @@ export default function PermitPreview({
                         <tbody>
                             <tr>
                                 <td className="px-2 py-2 border-r border-black font-bold text-gray-800 wrap-break-words whitespace-normal break-all align-top leading-tight text-[12pt]">
-                                    {val(data.make_type)}
+                                    {payload.make_type}
                                 </td>
                                 <td className="px-2 py-2 border-r border-black font-bold text-gray-800 wrap-break-words whitespace-normal break-all align-top leading-tight text-[12pt]">
-                                    {val(data.engine_motor_no)}
+                                    {payload.engine_motor_no}
                                 </td>
                                 <td className="px-2 py-2 border-r border-black font-bold text-gray-800 wrap-break-words whitespace-normal break-all align-top leading-tight text-[12pt]">
-                                    {val(data.chassis_no)}
+                                    {payload.chassis_no}
                                 </td>
-                                <td className="px-2 py-2 font-bold text-blue-700 wrap-break-words whitespace-normal break-all align-top leading-tight text-[10pt]">
-                                    {data.plate_no === "FOR REGISTRATION" ? (
-                                        <span className="text-orange-600 block">
-                                            FOR REGISTRATION
-                                        </span>
-                                    ) : (
-                                        val(data.plate_no)
-                                    )}
-                                    {data.body_number && (
-                                        <div className="text-gray-500 font-bold mt-1">
-                                            (#{data.body_number})
-                                        </div>
-                                    )}
-                                </td>
+                                <td
+                                    className="px-2 py-2 font-bold text-blue-700 wrap-break-words whitespace-normal break-all align-top leading-tight text-[10pt]"
+                                    dangerouslySetInnerHTML={{
+                                        __html: payload.plate_no_display,
+                                    }}
+                                />
                             </tr>
                         </tbody>
                     </table>
@@ -220,7 +383,7 @@ export default function PermitPreview({
                                     NUMBER
                                 </td>
                                 <td className="px-3 py-2 font-mono font-bold text-gray-800 wrap-break-words whitespace-normal break-all align-top leading-tight">
-                                    {val(data.cedula_number)}
+                                    {payload.cedula_number}
                                 </td>
                             </tr>
                             <tr>
@@ -228,12 +391,11 @@ export default function PermitPreview({
                                     DATE
                                 </td>
                                 <td className="px-3 py-2 font-bold text-gray-800 wrap-break-words whitespace-normal break-all align-top leading-tight">
-                                    {formatDate(data.cedula_date)}
+                                    {payload.cedula_date}
                                 </td>
                             </tr>
                         </tbody>
                     </table>
-
                     <table className="w-full border-collapse border border-black bg-white text-[12pt] shadow-sm table-fixed">
                         <thead>
                             <tr className="bg-blue-300 text-blue-900 border-b border-black">
@@ -251,7 +413,7 @@ export default function PermitPreview({
                                     NUMBER
                                 </td>
                                 <td className="px-3 py-2 font-mono font-bold text-gray-800 wrap-break-words whitespace-normal break-all align-top leading-tight">
-                                    {val(data.or_number)}
+                                    {payload.or_number}
                                 </td>
                             </tr>
                             <tr>
@@ -259,7 +421,7 @@ export default function PermitPreview({
                                     DATE
                                 </td>
                                 <td className="px-3 py-2 font-bold text-gray-800 wrap-break-words whitespace-normal break-all align-top leading-tight">
-                                    {formatDate(data.or_date)}
+                                    {payload.or_date}
                                 </td>
                             </tr>
                         </tbody>
@@ -280,18 +442,18 @@ export default function PermitPreview({
                     <tbody>
                         <tr className="border-b border-black">
                             <td className="px-3 py-2 bg-blue-200 font-bold text-blue-900 w-[45%] sm:w-[35%] border-r border-black align-top leading-tight">
-                                Authorized Official
+                                AUTHORIZED OFFICIAL
                             </td>
                             <td className="px-3 py-2 font-bold text-gray-800 uppercase wrap-break-words whitespace-normal break-all align-top leading-tight">
-                                {val(data.authorized_official)}
+                                {payload.authorized_official}
                             </td>
                         </tr>
                         <tr>
                             <td className="px-3 py-2 bg-blue-200 font-bold text-blue-900 border-r border-black align-top leading-tight">
-                                Punong Bayan
+                                PUNONG BAYAN
                             </td>
                             <td className="px-3 py-2 font-bold text-gray-800 uppercase wrap-break-words whitespace-normal break-all align-top leading-tight">
-                                {val(data.punong_bayan)}
+                                {payload.punong_bayan}
                             </td>
                         </tr>
                     </tbody>
