@@ -52,6 +52,7 @@ export default function DriverInfoModal({
                     preview: app.driver_photo_path
                         ? `/storage/${app.driver_photo_path}`
                         : null,
+                    remove_photo: false,
                     mayor: app.punong_bayan || defaultMayor,
                     committee: app.authorized_official || defaultCommittee,
                 })),
@@ -94,6 +95,7 @@ export default function DriverInfoModal({
         const newDrivers = [...data.drivers];
         newDrivers[index].photo = file;
         newDrivers[index].preview = URL.createObjectURL(file);
+        newDrivers[index].remove_photo = false;
         setData("drivers", newDrivers);
     };
 
@@ -101,6 +103,7 @@ export default function DriverInfoModal({
         const newDrivers = [...data.drivers];
         newDrivers[index].photo = null;
         newDrivers[index].preview = null;
+        newDrivers[index].remove_photo = true;
         setData("drivers", newDrivers);
     };
 

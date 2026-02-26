@@ -318,7 +318,16 @@ class MtopApplicationController extends Controller
                 $app = MtopApplication::find($data['id']);
                 $updateData = ['driver_name' => $data['driver_name'] ?? $app->driver_name];
 
-                if ($request->hasFile("drivers.{$index}.photo")) {
+                $removePhoto = filter_var($data['remove_photo'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
+                if ($removePhoto) {
+
+                    if ($app->driver_photo_path && Storage::exists('public/' . $app->driver_photo_path)) {
+                        Storage::delete('public/' . $app->driver_photo_path);
+                    }
+                    $updateData['driver_photo_path'] = null;
+                } elseif ($request->hasFile("drivers.{$index}.photo")) {
+
                     if ($app->driver_photo_path && Storage::exists('public/' . $app->driver_photo_path)) {
                         Storage::delete('public/' . $app->driver_photo_path);
                     }
