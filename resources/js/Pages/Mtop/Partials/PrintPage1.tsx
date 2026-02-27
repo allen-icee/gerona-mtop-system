@@ -28,6 +28,16 @@ export default function PrintPage1({ application, operatorName }: Props) {
         ? formatDate(application.transaction_date)
         : "_________________";
 
+    let paidByName = "";
+    if (application.show_paid_by) {
+        paidByName = `${application.paid_by_first_name || ""} ${
+            application.paid_by_middle_name
+                ? application.paid_by_middle_name + ". "
+                : ""
+        }${application.paid_by_last_name || ""}${
+            application.paid_by_suffix ? " " + application.paid_by_suffix : ""
+        }`.trim();
+    }
     return (
         <div
             className="w-full h-[11.69in] relative flex flex-col bg-white overflow-hidden text-black leading-tight"
@@ -81,6 +91,18 @@ export default function PrintPage1({ application, operatorName }: Props) {
                         <span className="font-bold uppercase underline">
                             {operatorName}
                         </span>
+                        {application.show_paid_by && paidByName ? (
+                            <>
+                                {" "}
+                                <span className="font-bold underline">
+                                    Paid by:
+                                </span>
+                                <span className="font-bold uppercase underline">
+                                    {" "}
+                                    {paidByName}
+                                </span>
+                            </>
+                        ) : null}
                         , may sapat na taong gulang, may
                         asawa/balo/binata/dalaga, nakatira sa{" "}
                         <span className="font-bold underline">

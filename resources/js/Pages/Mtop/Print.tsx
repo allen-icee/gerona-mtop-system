@@ -86,7 +86,7 @@ export default function Print({
                     @media print {
                         @page {
                             size: A4;
-                            margin: 0; /* Remove browser default margin */
+                            margin: 0;
                         }
                         body {
                             background: white;

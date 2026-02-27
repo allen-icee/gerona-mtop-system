@@ -74,9 +74,19 @@ export default function Index({ applications, filters, officials }: Props) {
 
     useEffect(() => {
         const searchTimer = setTimeout(() => {
+            const queryParams = new URLSearchParams(window.location.search);
+            const currentPage = queryParams.get("page") || 1;
+
             router.get(
                 route("mtop.index"),
-                { search, month, year, barangay, renewal },
+                {
+                    search,
+                    month,
+                    year,
+                    barangay,
+                    renewal,
+                    page: currentPage,
+                },
                 {
                     preserveState: true,
                     preserveScroll: true,

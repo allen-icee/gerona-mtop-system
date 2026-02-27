@@ -36,6 +36,13 @@ class MtopApplication extends Model
         'franchise_id',
         'transaction_type',
         'processed_by',
+        'show_paid_by',
+        'paid_by_last_name',
+        'paid_by_first_name',
+        'paid_by_middle_name',
+        'paid_by_suffix',
+        'event_id',
+        'is_free'
     ];
 
     public function getFullNameAttribute()
@@ -73,5 +80,9 @@ class MtopApplication extends Model
                     $q->where('status', 'archived');
                 }
             });
+    }
+    public function event()
+    {
+        return $this->belongsTo(Event::class, 'event_id');
     }
 }

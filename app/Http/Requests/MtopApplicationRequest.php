@@ -1,5 +1,5 @@
 <?php
-
+//app/Http/Requests/MtopApplicationRequest.php
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
@@ -45,19 +45,23 @@ class MtopApplicationRequest extends FormRequest
             'chassis_no' => 'required|string|max:30',
             'cedula_number' => 'required|string|max:20',
             'cedula_date' => 'required|date',
-            'or_number' => 'required|string|max:20',
-            'or_date' => 'required|date',
+            'or_number' => 'required_unless:is_free,true|nullable|string|max:50',
+            'or_date' => 'required_unless:is_free,true|nullable|date',
             'punong_bayan' => ['required', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
             'authorized_official' => ['required', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
+            'show_paid_by' => 'boolean',
+            'paid_by_last_name' => ['nullable', 'string', 'max:50', 'regex:/^[a-zA-ZñÑ\s\.\,\-]+$/'],
+            'paid_by_first_name' => ['nullable', 'string', 'max:50', 'regex:/^[a-zA-ZñÑ\s\.\,\-]+$/'],
+            'paid_by_middle_name' => ['nullable', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
+            'paid_by_suffix' => ['nullable', 'string', 'max:10', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
+            'is_free' => 'boolean',
+            'event_id' => 'nullable|exists:events,id',
         ];
 
-        // --- CONCURRENCY FIX ---
         if ($this->route('id')) {
-            // It's an UPDATE: Strictly enforce uniqueness (ignoring itself)
             $rules['mt_number'] = ['required', 'string', 'max:20', Rule::unique('mtop_franchises', 'mt_number')->ignore($franchiseId)];
             $rules['body_number'] = ['nullable', 'regex:/^[0-9]+$/', Rule::unique('mtop_franchises', 'body_number')->ignore($franchiseId)];
         } else {
-            // It's a CREATE: Allow the controller to handle mt_number uniqueness safely
             $rules['mt_number'] = ['required', 'string', 'max:20'];
             $rules['body_number'] = ['nullable', 'regex:/^[0-9]+$/', 'unique:mtop_franchises,body_number'];
         }

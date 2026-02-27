@@ -3,6 +3,14 @@ const { app, BrowserWindow, ipcMain, shell, Menu } = require("electron");
 const path = require("path");
 const fs = require("fs");
 
+// Prevent random network/promise errors from completely crashing the application
+process.on("uncaughtException", (error) =>
+    console.error("Uncaught Exception:", error),
+);
+process.on("unhandledRejection", (error) =>
+    console.error("Unhandled Rejection:", error),
+);
+
 const configPath = path.join(app.getPath("userData"), "server-config.json");
 
 if (fs.existsSync(configPath)) {
@@ -40,7 +48,9 @@ function createWindow() {
                         if (fs.existsSync(configPath)) {
                             fs.unlinkSync(configPath);
                         }
-                        mainWindow.loadFile("settings.html");
+                        mainWindow.loadFile(
+                            path.join(__dirname, "settings.html"),
+                        );
                     },
                 },
                 { type: "separator" },
@@ -81,27 +91,51 @@ function createWindow() {
             })
             .catch((err) => {
                 loaded = true;
-                console.log("Failed to connect, showing settings...");
-                mainWindow.loadFile("settings.html").then(() => {
-                    mainWindow.webContents.send("connection-failed", ip);
-                });
+                if (!mainWindow.isDestroyed()) {
+                    mainWindow
+                        .loadFile(path.join(__dirname, "settings.html"))
+                        .then(() => {
+                            // Allow DOM to load before sending the error message
+                            setTimeout(() => {
+                                if (!mainWindow.isDestroyed()) {
+                                    mainWindow.webContents.send(
+                                        "connection-failed",
+                                        ip,
+                                    );
+                                }
+                            }, 800);
+                        });
+                }
             });
 
         setTimeout(() => {
-            if (!loaded) {
+            if (!loaded && !mainWindow.isDestroyed()) {
                 mainWindow.webContents.stop();
-                mainWindow.loadFile("settings.html").then(() => {
-                    mainWindow.webContents.send("connection-failed", ip);
-                });
+                mainWindow
+                    .loadFile(path.join(__dirname, "settings.html"))
+                    .then(() => {
+                        setTimeout(() => {
+                            if (!mainWindow.isDestroyed()) {
+                                mainWindow.webContents.send(
+                                    "connection-failed",
+                                    ip,
+                                );
+                            }
+                        }, 800);
+                    });
             }
         }, 8000);
     };
 
     if (fs.existsSync(configPath)) {
-        const config = JSON.parse(fs.readFileSync(configPath));
-        loadServer(config.ip);
+        try {
+            const config = JSON.parse(fs.readFileSync(configPath));
+            loadServer(config.ip);
+        } catch (e) {
+            mainWindow.loadFile(path.join(__dirname, "settings.html"));
+        }
     } else {
-        mainWindow.loadFile("settings.html");
+        mainWindow.loadFile(path.join(__dirname, "settings.html"));
     }
 
     ipcMain.on("save-ip", (event, ip) => {

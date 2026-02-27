@@ -23,13 +23,18 @@ class MtopApplicationController extends Controller
         $filters = $request->only(['search', 'month', 'year', 'barangay', 'renewal']);
 
         $applications = MtopApplication::filter($filters)
-            ->latest()
+            ->orderBy('mt_number', 'desc')
             ->paginate(10)
             ->withQueryString();
 
         $officials = Signatory::where('is_active', true)->get()->map(function ($s) {
             return ['name' => $s->name, 'position' => $s->position];
         });
+
+        $activeEvent = \App\Models\Event::where('is_active', true)
+            ->whereDate('start_date', '<=', now())
+            ->whereDate('end_date', '>=', now())
+            ->first();
 
         return Inertia::render('Mtop/Index', [
             'applications' => $applications,
@@ -63,10 +68,16 @@ class MtopApplicationController extends Controller
             ->selectRaw("CONCAT(name, ' | ', position) as formatted_name")
             ->pluck('formatted_name');
 
+        $activeEvent = \App\Models\Event::where('is_active', true)
+            ->whereDate('start_date', '<=', now())
+            ->whereDate('end_date', '>=', now())
+            ->first();
+
         return Inertia::render('Mtop/Create', [
             'suggested_mt_number' => $suggested_mt_number,
             'punong_bayans' => $punong_bayans,
-            'officials' => $officials
+            'officials' => $officials,
+            'activeEvent' => $activeEvent
         ]);
     }
 
@@ -99,6 +110,11 @@ class MtopApplicationController extends Controller
                     'chassis_no' => $validated['chassis_no'],
                     'plate_no' => $validated['plate_no'],
                     'status' => 'active',
+                    'show_paid_by' => filter_var($validated['show_paid_by'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                    'paid_by_last_name' => $validated['paid_by_last_name'] ?? null,
+                    'paid_by_first_name' => $validated['paid_by_first_name'] ?? null,
+                    'paid_by_middle_name' => $validated['paid_by_middle_name'] ?? null,
+                    'paid_by_suffix' => $validated['paid_by_suffix'] ?? null,
                 ]);
 
                 $applicationData = $validated;
@@ -108,6 +124,11 @@ class MtopApplicationController extends Controller
                 $applicationData['franchise_id'] = $franchise->id;
                 $applicationData['transaction_type'] = 'New';
                 $applicationData['processed_by'] = Auth::id();
+                $applicationData['is_free'] = filter_var($validated['is_free'] ?? false, FILTER_VALIDATE_BOOLEAN);
+                $applicationData['event_id'] = $validated['event_id'] ?? null;
+
+                // Note the 3rd parameter added here!
+                $applicationData['valid_until'] = $this->calculateValidUntil($request->transaction_date, $validated['plate_no'] ?? null, $validated['event_id'] ?? null);
 
                 $application = MtopApplication::create($applicationData);
 
@@ -145,10 +166,16 @@ class MtopApplicationController extends Controller
             ->selectRaw("CONCAT(name, ' | ', position) as formatted_name")
             ->pluck('formatted_name');
 
+        $activeEvent = \App\Models\Event::where('is_active', true)
+            ->whereDate('start_date', '<=', now())
+            ->whereDate('end_date', '>=', now())
+            ->first();
+
         return Inertia::render('Mtop/Edit', [
             'application' => $application,
             'punong_bayans' => $punong_bayans,
-            'officials' => $officials
+            'officials' => $officials,
+            'activeEvent' => $activeEvent
         ]);
     }
 
@@ -158,7 +185,7 @@ class MtopApplicationController extends Controller
         $validated = $request->validated();
 
         if ($request->transaction_date) {
-            $validated['valid_until'] = $this->calculateValidUntil($request->transaction_date, $validated['plate_no'] ?? null);
+            $validated['valid_until'] = $this->calculateValidUntil($request->transaction_date, $validated['plate_no'] ?? null, $validated['event_id'] ?? null);
         }
 
         try {
@@ -191,6 +218,12 @@ class MtopApplicationController extends Controller
                             'engine_motor_no' => $validated['engine_motor_no'],
                             'chassis_no' => $validated['chassis_no'],
                             'plate_no' => $validated['plate_no'],
+
+                            'show_paid_by' => filter_var($validated['show_paid_by'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                            'paid_by_last_name' => $validated['paid_by_last_name'] ?? null,
+                            'paid_by_first_name' => $validated['paid_by_first_name'] ?? null,
+                            'paid_by_middle_name' => $validated['paid_by_middle_name'] ?? null,
+                            'paid_by_suffix' => $validated['paid_by_suffix'] ?? null,
                         ]);
                         $this->queueForSync('mtop_franchises', $franchise->fresh()->toArray());
                     }
@@ -229,7 +262,7 @@ class MtopApplicationController extends Controller
 
     public function print($id): Response
     {
-        $application = MtopApplication::findOrFail($id);
+        $application = MtopApplication::with('event')->findOrFail($id);
         return Inertia::render('Mtop/Print', [
             'application' => $application
         ]);
@@ -237,7 +270,9 @@ class MtopApplicationController extends Controller
 
     public function export(Request $request)
     {
-        $records = MtopApplication::filter($request->all())->latest()->cursor();
+        $records = MtopApplication::filter($request->all())
+            ->orderBy('mt_number', 'desc')
+            ->cursor();
 
         $csvFileName = 'mtop_records_' . date('Y-m-d_H-i') . '.csv';
         $headers = [
@@ -383,10 +418,16 @@ class MtopApplicationController extends Controller
             ->selectRaw("CONCAT(name, ' | ', position) as formatted_name")
             ->pluck('formatted_name');
 
+        $activeEvent = \App\Models\Event::where('is_active', true)
+            ->whereDate('start_date', '<=', now())
+            ->whereDate('end_date', '>=', now())
+            ->first();
+
         return Inertia::render('Mtop/Renew', [
             'application' => $application,
             'punong_bayans' => $punong_bayans,
-            'officials' => $officials
+            'officials' => $officials,
+            'activeEvent' => $activeEvent
         ]);
     }
 
@@ -429,6 +470,11 @@ class MtopApplicationController extends Controller
                         'engine_motor_no' => $validated['engine_motor_no'],
                         'chassis_no' => $validated['chassis_no'],
                         'plate_no' => $validated['plate_no'],
+                        'show_paid_by' => filter_var($validated['show_paid_by'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                        'paid_by_last_name' => $validated['paid_by_last_name'] ?? null,
+                        'paid_by_first_name' => $validated['paid_by_first_name'] ?? null,
+                        'paid_by_middle_name' => $validated['paid_by_middle_name'] ?? null,
+                        'paid_by_suffix' => $validated['paid_by_suffix'] ?? null,
                     ]);
 
                     /** @var \App\Models\MtopFranchise $freshFranchise */
@@ -438,7 +484,7 @@ class MtopApplicationController extends Controller
 
                 $applicationData = $validated;
                 $applicationData['mt_number'] = $final_mt_number;
-                $applicationData['valid_until'] = $this->calculateValidUntil($request->transaction_date, $validated['plate_no'] ?? null);
+                $applicationData['valid_until'] = $this->calculateValidUntil($request->transaction_date, $validated['plate_no'] ?? null, $validated['event_id'] ?? null);
                 $applicationData['status'] = 'active';
                 $applicationData['franchise_id'] = $oldApp->franchise_id;
                 $applicationData['transaction_type'] = 'Renewal';
@@ -470,18 +516,35 @@ class MtopApplicationController extends Controller
         ]);
     }
 
-    private function calculateValidUntil($transactionDateStr, $plateNo)
+    private function calculateValidUntil($transactionDateStr, $plateNo, $eventId = null)
     {
-        $transactionDate = Carbon::parse($transactionDateStr);
-        $validUntil = $transactionDate->copy()->addYears(3);
+        // 1. If tied to a FREE event, strictly use the event's expiry date
+        if ($eventId) {
+            $event = \App\Models\Event::find($eventId);
+            if ($event) {
+                return Carbon::parse($event->fixed_expiry_date);
+            }
+        }
 
+        $transactionDate = Carbon::parse($transactionDateStr);
+
+        // 2. THE JAN 4, 2027 PAID BUMP LOGIC
+        if ($transactionDate->year === 2026) {
+            $baseDate = Carbon::createFromDate(2027, 1, 4);
+            $validUntil = $baseDate->copy()->addYears(3); // Result: 2030
+        } else {
+            // Normal Logic for future years
+            $validUntil = $transactionDate->copy()->addYears(3);
+        }
+
+        // 3. Apply Plate Number Month calculation
         if (!empty($plateNo) && $plateNo !== 'FOR REGISTRATION') {
             if (preg_match('/(\d)[^\d]*$/', $plateNo, $matches)) {
                 $digit = (int) $matches[1];
                 $targetMonth = $digit === 0 ? 10 : $digit;
                 $year = $validUntil->year;
-                $day = $transactionDate->day;
 
+                $day = $transactionDate->day;
                 $daysInMonth = Carbon::createFromDate($year, $targetMonth, 1)->daysInMonth;
                 $finalDay = min($day, $daysInMonth);
 
