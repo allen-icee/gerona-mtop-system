@@ -23,7 +23,7 @@ class MtopApplicationRequest extends FormRequest
             $franchiseId = $application ? $application->franchise_id : null;
         }
 
-        return [
+        $rules = [
             'last_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-ZñÑ\s\.\,\-]+$/'],
             'first_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-ZñÑ\s\.\,\-]+$/'],
             'middle_name' => ['nullable', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
@@ -31,21 +31,6 @@ class MtopApplicationRequest extends FormRequest
             'address' => 'required|string|max:100',
             'contact_number' => ['nullable', 'regex:/^(09|\+639)\d{9}$/'],
             'transaction_date' => 'required|date',
-            'mt_number' => [
-                'required',
-                'string',
-                'max:20',
-                $this->route('id')
-                    ? \Illuminate\Validation\Rule::unique('mtop_franchises', 'mt_number')->ignore($franchiseId)
-                    : 'unique:mtop_franchises,mt_number'
-            ],
-            'body_number' => [
-                'nullable',
-                'regex:/^[0-9]+$/',
-                $franchiseId
-                    ? Rule::unique('mtop_franchises', 'body_number')->ignore($franchiseId)
-                    : 'unique:mtop_franchises,body_number'
-            ],
             'plate_no' => [
                 'required',
                 'string',
@@ -65,6 +50,19 @@ class MtopApplicationRequest extends FormRequest
             'punong_bayan' => ['required', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
             'authorized_official' => ['required', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
         ];
+
+        // --- CONCURRENCY FIX ---
+        if ($this->route('id')) {
+            // It's an UPDATE: Strictly enforce uniqueness (ignoring itself)
+            $rules['mt_number'] = ['required', 'string', 'max:20', Rule::unique('mtop_franchises', 'mt_number')->ignore($franchiseId)];
+            $rules['body_number'] = ['nullable', 'regex:/^[0-9]+$/', Rule::unique('mtop_franchises', 'body_number')->ignore($franchiseId)];
+        } else {
+            // It's a CREATE: Allow the controller to handle mt_number uniqueness safely
+            $rules['mt_number'] = ['required', 'string', 'max:20'];
+            $rules['body_number'] = ['nullable', 'regex:/^[0-9]+$/', 'unique:mtop_franchises,body_number'];
+        }
+
+        return $rules;
     }
 
     public function messages(): array
