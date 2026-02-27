@@ -32,10 +32,12 @@ export default function Renew({
     application,
     punong_bayans,
     officials,
+    activeEvent,
 }: {
     application: any;
     punong_bayans: string[];
     officials: string[];
+    activeEvent: any;
 }) {
     const [step, setStep] = useState(1);
     const [showMobilePreview, setShowMobilePreview] = useState(false);
@@ -59,6 +61,9 @@ export default function Renew({
         or_date: "",
         punong_bayan: application.punong_bayan || "",
         authorized_official: application.authorized_official || "",
+        event_id: null,
+        is_free: false,
+        or_unlocked: false,
     });
 
     // --- NEW: Live sync to casted screen ---
@@ -103,7 +108,10 @@ export default function Renew({
 
         if (stepNum === 3) {
             if (!isValidDate(data.cedula_date)) return false;
-            if (!isValidDate(data.or_date)) return false;
+            // Only require the OR date if it is NOT a free promo (or if they explicitly unlocked it)
+            if (!data.is_free && !isValidDate(data.or_date)) return false;
+            if (data.is_free && data.or_unlocked && !isValidDate(data.or_date))
+                return false;
         }
 
         return true;
@@ -373,6 +381,7 @@ export default function Renew({
                                         errors={errors}
                                         expiryDisplay={expiryDisplay}
                                         onKeyDown={handleEnterKey}
+                                        activeEvent={activeEvent}
                                     />
                                     <ApplicantForm
                                         data={data}

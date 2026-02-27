@@ -33,10 +33,12 @@ export default function Create({
     suggested_mt_number,
     punong_bayans,
     officials,
+    activeEvent,
 }: {
     suggested_mt_number: string;
     punong_bayans: string[];
     officials: string[];
+    activeEvent: any;
 }) {
     const { props } = usePage();
     const [step, setStep] = useState(1);
@@ -64,6 +66,9 @@ export default function Create({
         or_date: "",
         punong_bayan: "",
         authorized_official: "",
+        event_id: null,
+        is_free: false,
+        or_unlocked: false,
     });
 
     // --- NEW: Live sync to casted screen ---
@@ -109,7 +114,10 @@ export default function Create({
 
         if (stepNum === 3) {
             if (!isValidDate(data.cedula_date)) return false;
-            if (!isValidDate(data.or_date)) return false;
+            // Only require the OR date if it is NOT a free promo (or if they explicitly unlocked it)
+            if (!data.is_free && !isValidDate(data.or_date)) return false;
+            if (data.is_free && data.or_unlocked && !isValidDate(data.or_date))
+                return false;
         }
 
         return true;
@@ -385,6 +393,7 @@ export default function Create({
                                         errors={errors}
                                         expiryDisplay={expiryDisplay}
                                         onKeyDown={handleEnterKey}
+                                        activeEvent={activeEvent}
                                     />
                                     <ApplicantForm
                                         data={data}

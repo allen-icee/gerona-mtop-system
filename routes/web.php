@@ -118,6 +118,12 @@ Route::middleware('auth')->group(function () {
         Route::post('/signatories/import', [SignatoryController::class, 'import'])->name('signatories.import');
         Route::get('/signatories/export', [SignatoryController::class, 'export'])->name('signatories.export');
         Route::resource('signatories', SignatoryController::class)->only(['index', 'store', 'update', 'destroy']);
+
+        // --- EVENT MANAGEMENT ROUTES ---
+        Route::get('/settings/events', [\App\Http\Controllers\EventController::class, 'index'])->name('events.index');
+        Route::post('/settings/events', [\App\Http\Controllers\EventController::class, 'store'])->name('events.store');
+        Route::put('/settings/events/{event}', [\App\Http\Controllers\EventController::class, 'update'])->name('events.update');
+        Route::delete('/settings/events/{event}', [\App\Http\Controllers\EventController::class, 'destroy'])->name('events.destroy');
     });
 });
 

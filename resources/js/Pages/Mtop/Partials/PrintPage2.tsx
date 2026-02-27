@@ -265,20 +265,25 @@ export default function PrintPage2({ application, operatorName }: Props) {
                     <div>
                         <span className="w-48">Bayad na sa O.R. Bilang:</span>{" "}
                         <span className="font-bold underline">
-                            {application.or_number || "_________"}
+                            {application.is_free
+                                ? `WAIVED ${application.event?.mandated_by ? "(" + application.event.mandated_by + ")" : ""}`
+                                : application.or_number || "_________"}
                         </span>
                     </div>
                     <div>
                         <span className="w-48">Inisyu Noong:</span>{" "}
                         <span className="font-bold underline">
-                            {transactionDate}
+                            {application.is_free && !application.or_date
+                                ? transactionDate
+                                : application.or_date
+                                  ? formatDate(application.or_date)
+                                  : "_________"}
                         </span>
                     </div>
                     <div className="flex">
                         <span className="w-48">Sa Gerona, Tarlac</span>
                     </div>
                 </div>
-
                 <div className="text-[11pt] leading-none text-justif mb-2">
                     <p>
                         May tibay kung orihinal o may opisyal na resibo ng

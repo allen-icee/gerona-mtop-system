@@ -73,26 +73,41 @@ export default function Authenticated({
                                         Print Settings
                                     </NavLink>
 
+                                    {/* --- DESKTOP ADMIN LINKS --- */}
                                     {user.role === "admin" && (
-                                        <NavLink
-                                            href={route("signatories.index")}
-                                            active={route().current(
-                                                "signatories.*",
-                                            )}
-                                            className="text-blue-100 hover:text-white focus:text-white border-transparent hover:border-white focus:border-white"
-                                        >
-                                            Signatories
-                                        </NavLink>
-                                    )}
+                                        <>
+                                            <NavLink
+                                                href={route(
+                                                    "signatories.index",
+                                                )}
+                                                active={route().current(
+                                                    "signatories.*",
+                                                )}
+                                                className="text-blue-100 hover:text-white focus:text-white border-transparent hover:border-white focus:border-white"
+                                            >
+                                                Signatories
+                                            </NavLink>
 
-                                    {user.role === "admin" && (
-                                        <NavLink
-                                            href={route("users.index")}
-                                            active={route().current("users.*")}
-                                            className="text-blue-100 hover:text-white focus:text-white border-transparent hover:border-white focus:border-white"
-                                        >
-                                            System Users
-                                        </NavLink>
+                                            <NavLink
+                                                href={route("users.index")}
+                                                active={route().current(
+                                                    "users.*",
+                                                )}
+                                                className="text-blue-100 hover:text-white focus:text-white border-transparent hover:border-white focus:border-white"
+                                            >
+                                                System Users
+                                            </NavLink>
+
+                                            <NavLink
+                                                href={route("events.index")}
+                                                active={route().current(
+                                                    "events.*",
+                                                )}
+                                                className="text-blue-100 hover:text-white focus:text-white border-transparent hover:border-white focus:border-white"
+                                            >
+                                                Events & Promos
+                                            </NavLink>
+                                        </>
                                     )}
                                 </div>
                             </div>
@@ -210,6 +225,7 @@ export default function Authenticated({
                                 Print Settings
                             </ResponsiveNavLink>
 
+                            {/* --- MOBILE ADMIN LINKS --- */}
                             {user.role === "admin" && (
                                 <>
                                     <ResponsiveNavLink
@@ -228,6 +244,13 @@ export default function Authenticated({
                                         className="text-white hover:bg-blue-700 focus:bg-blue-700 border-l-4 border-transparent hover:border-yellow-400"
                                     >
                                         System Users
+                                    </ResponsiveNavLink>
+                                    <ResponsiveNavLink
+                                        href={route("events.index")}
+                                        active={route().current("events.index")}
+                                        className="text-white hover:bg-blue-700 focus:bg-blue-700 border-l-4 border-transparent hover:border-yellow-400"
+                                    >
+                                        Events & Promos
                                     </ResponsiveNavLink>
                                 </>
                             )}
