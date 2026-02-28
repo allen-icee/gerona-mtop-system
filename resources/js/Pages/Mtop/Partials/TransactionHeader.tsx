@@ -97,7 +97,7 @@ export default function TransactionHeader({
         <div className="space-y-6">
             {/* --- EVENT BANNER & SELECTION --- */}
             {activeEvents && activeEvents.length > 0 && (
-                <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-4 rounded-xl shadow-md border-2 border-emerald-400 gap-4">
+                <div className="bg-linear-to-r from-emerald-600 to-teal-600 text-white p-4 rounded-xl shadow-md border-2 border-emerald-400 gap-4">
                     <div className="mb-4 flex gap-4 font-bold items-center border-b border-white/20 pb-4">
                         <label className="flex items-center gap-2 cursor-pointer">
                             <input

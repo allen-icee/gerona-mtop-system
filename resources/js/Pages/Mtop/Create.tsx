@@ -13,7 +13,10 @@ import TricycleForm from "./Partials/TricycleForm";
 import CedulaForm from "./Partials/CedulaForm";
 import OfficialReceiptForm from "./Partials/OfficialReceiptForm";
 import OfficialsForm from "./Partials/OfficialsForm";
-import PermitPreview, { updateClientMonitor } from "./Partials/PermitPreview";
+import PermitPreview, {
+    updateClientMonitor,
+    formatExpiry,
+} from "./Partials/PermitPreview";
 import PrintSuccessModal from "./Partials/PrintSuccessModal";
 
 const isValidDate = (dateString: string): boolean => {
@@ -33,12 +36,12 @@ export default function Create({
     suggested_mt_number,
     punong_bayans,
     officials,
-    activeEvent,
+    activeEvents,
 }: {
     suggested_mt_number: string;
     punong_bayans: string[];
     officials: string[];
-    activeEvent: any;
+    activeEvents: any;
 }) {
     const { props } = usePage();
     const [step, setStep] = useState(1);
@@ -73,8 +76,8 @@ export default function Create({
 
     // --- NEW: Live sync to casted screen ---
     useEffect(() => {
-        updateClientMonitor(data);
-    }, [data]);
+        updateClientMonitor(data, activeEvents);
+    }, [data, activeEvents]);
 
     const requiredFields = {
         1: [
@@ -243,35 +246,12 @@ export default function Create({
     };
 
     const expiryDisplay = () => {
-        if (!data.transaction_date || !isValidDate(data.transaction_date))
+        if (!data.transaction_date || !isValidDate(data.transaction_date)) {
             return "INVALID DATE";
-
-        const date = new Date(data.transaction_date);
-        let targetYear = date.getFullYear() + 3;
-        let targetMonth = date.getMonth();
-        let targetDay = date.getDate();
-
-        if (data.plate_no && data.plate_no !== "FOR REGISTRATION") {
-            const match = data.plate_no.match(/(\d)[^\d]*$/);
-            if (match) {
-                const digit = parseInt(match[1], 10);
-
-                targetMonth = digit === 0 ? 9 : digit - 1;
-            }
         }
 
-        const daysInMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
-        const finalDay = Math.min(targetDay, daysInMonth);
-
-        const expiry = new Date(targetYear, targetMonth, finalDay);
-
-        return expiry
-            .toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-            })
-            .toUpperCase();
+        // Uses the perfectly synced "Next Working Day" math from PermitPreview
+        return formatExpiry(data, activeEvents);
     };
 
     return (
@@ -393,7 +373,7 @@ export default function Create({
                                         errors={errors}
                                         expiryDisplay={expiryDisplay}
                                         onKeyDown={handleEnterKey}
-                                        activeEvent={activeEvent}
+                                        activeEvents={activeEvents}
                                     />
                                     <ApplicantForm
                                         data={data}
@@ -506,7 +486,10 @@ export default function Create({
 
                         <div className="hidden xl:block xl:col-span-5 sticky top-6 z-20 animate-fade-in">
                             <div className="rounded-xl overflow-hidden shadow-md border border-gray-200">
-                                <PermitPreview data={data} />
+                                <PermitPreview
+                                    data={data}
+                                    activeEvents={activeEvents}
+                                />
                             </div>
                         </div>
                     </div>
@@ -539,7 +522,11 @@ export default function Create({
                         </button>
                     </div>
                     <div className="flex-1 overflow-y-auto bg-gray-100">
-                        <PermitPreview data={data} showHeader={false} />
+                        <PermitPreview
+                            data={data}
+                            showHeader={false}
+                            activeEvents={activeEvents}
+                        />
                     </div>
                     <div className="p-4 bg-white border-t border-gray-200 shrink-0">
                         <button

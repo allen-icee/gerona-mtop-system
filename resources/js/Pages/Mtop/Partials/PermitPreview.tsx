@@ -1,4 +1,3 @@
-//GeronaMTOP\resources\js\Pages\Mtop\Partials\PermitPreview.tsx
 import { Icon } from "@iconify/react";
 import React, { useState, useRef, useEffect } from "react";
 
@@ -22,25 +21,63 @@ export const formatDate = (dateString?: string) => {
         .toUpperCase();
 };
 
-export const formatExpiry = (dateString?: string, plateNo?: string) => {
-    if (!dateString) return "-";
+// Perfectly mirrored Backend Math for Dynamic Events
+export const formatExpiry = (data: any, activeEvents?: any[]) => {
+    if (!data.transaction_date) return "-";
 
-    const date = new Date(dateString);
-    let targetYear = date.getFullYear() + 3;
-    let targetMonth = date.getMonth();
-    let targetDay = date.getDate();
+    let baseDate = new Date(data.transaction_date);
+    let validUntil = new Date(baseDate);
+    validUntil.setFullYear(validUntil.getFullYear() + 3);
 
-    if (plateNo && plateNo !== "FOR REGISTRATION") {
-        const match = plateNo.match(/(\d)[^\d]*$/);
-        if (match) {
-            const digit = parseInt(match[1], 10);
-            targetMonth = digit === 0 ? 9 : digit - 1;
+    const currentEvent =
+        activeEvents?.find((e: any) => e.id == data.event_id) ||
+        activeEvents?.[0];
+
+    // Event Logic
+    if (data.event_id && currentEvent) {
+        if (data.is_free) {
+            // Route A: Free (Strictly follows the event expiry)
+            return new Date(currentEvent.fixed_expiry_date + "T00:00:00")
+                .toLocaleDateString("en-US", {
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                })
+                .toUpperCase();
+        } else {
+            // Route B: Paid Bonus (Start 3-year contract on the next working day)
+            let anchorDate = new Date(
+                currentEvent.fixed_expiry_date + "T00:00:00",
+            );
+            anchorDate.setDate(anchorDate.getDate() + 1);
+
+            // Skip weekends
+            while (anchorDate.getDay() === 0 || anchorDate.getDay() === 6) {
+                anchorDate.setDate(anchorDate.getDate() + 1);
+            }
+
+            validUntil = new Date(anchorDate);
+            validUntil.setFullYear(validUntil.getFullYear() + 3);
         }
     }
 
-    const daysInMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
+    let year = validUntil.getFullYear();
+    let targetMonth = validUntil.getMonth();
+    let targetDay = validUntil.getDate();
+
+    // Plate Number Adjustment
+    if (data.plate_no && data.plate_no !== "FOR REGISTRATION") {
+        const match = data.plate_no.match(/(\d)[^\d]*$/);
+        if (match) {
+            const digit = parseInt(match[1], 10);
+            targetMonth = digit === 0 ? 9 : digit - 1;
+            targetDay = baseDate.getDate(); // Always keep the exact day they transacted
+        }
+    }
+
+    const daysInMonth = new Date(year, targetMonth + 1, 0).getDate();
     const finalDay = Math.min(targetDay, daysInMonth);
-    const expiry = new Date(targetYear, targetMonth, finalDay);
+    const expiry = new Date(year, targetMonth, finalDay);
 
     return expiry
         .toLocaleDateString("en-US", {
@@ -54,7 +91,7 @@ export const formatExpiry = (dateString?: string, plateNo?: string) => {
 // --- GLOBAL LIVE CASTING VARIABLES ---
 let clientMonitorWindow: Window | null = null;
 
-const generatePayload = (data: any) => {
+const generatePayload = (data: any, activeEvents?: any[]) => {
     const plateDisplay =
         data.plate_no === "FOR REGISTRATION"
             ? '<span style="color: #ea580c;">FOR REGISTRATION</span>'
@@ -64,6 +101,18 @@ const generatePayload = (data: any) => {
         ? `<br><span style="color: #6b7280; font-size: 12pt;">(#${data.body_number})</span>`
         : "";
 
+    let orNumberDisplay = val(data.or_number);
+
+    // Auto-inject the formal Mandate into the Receipt field
+    if (data.is_free && orNumberDisplay === "WAIVED" && data.event_id) {
+        const currentEvent =
+            activeEvents?.find((e: any) => e.id == data.event_id) ||
+            activeEvents?.[0];
+        if (currentEvent && currentEvent.mandated_by) {
+            orNumberDisplay = `WAIVED <span style="font-size: 10pt; font-weight: normal; color: #4b5563;"><br>(${currentEvent.mandated_by})</span>`;
+        }
+    }
+
     return {
         name: val(formatName(data)),
         mt_number: val(data.mt_number),
@@ -72,36 +121,36 @@ const generatePayload = (data: any) => {
             /(,\s*GERONA,\s*TARLAC|\s*GERONA,\s*TARLAC)/i,
             "",
         ),
-        expiry: formatExpiry(data.transaction_date, data.plate_no),
+        expiry: formatExpiry(data, activeEvents),
         make_type: val(data.make_type),
         engine_motor_no: val(data.engine_motor_no),
         chassis_no: val(data.chassis_no),
         plate_no_display: plateDisplay + bodyDisplay,
         cedula_number: val(data.cedula_number),
         cedula_date: formatDate(data.cedula_date),
-        or_number: val(data.or_number),
+        or_number: orNumberDisplay,
         or_date: formatDate(data.or_date),
         authorized_official: val(data.authorized_official),
         punong_bayan: val(data.punong_bayan),
     };
 };
 
-export const updateClientMonitor = (data: any) => {
+export const updateClientMonitor = (data: any, activeEvents?: any[]) => {
     if (clientMonitorWindow && !clientMonitorWindow.closed) {
         clientMonitorWindow.postMessage(
             {
                 type: "UPDATE_DATA",
-                payload: generatePayload(data),
+                payload: generatePayload(data, activeEvents),
             },
             "*",
         );
     }
 };
 
-export const openClientMonitor = (data: any) => {
+export const openClientMonitor = (data: any, activeEvents?: any[]) => {
     if (clientMonitorWindow && !clientMonitorWindow.closed) {
         clientMonitorWindow.focus();
-        updateClientMonitor(data);
+        updateClientMonitor(data, activeEvents);
         return;
     }
 
@@ -118,7 +167,7 @@ export const openClientMonitor = (data: any) => {
         return;
     }
 
-    const payload = generatePayload(data);
+    const payload = generatePayload(data, activeEvents);
 
     clientMonitorWindow.document.write(`
         <html>
@@ -151,7 +200,7 @@ export const openClientMonitor = (data: any) => {
                         <tr><td class="label">USAPIN BILANG</td><td class="value text-red-600 text-2xl" id="c-mt_number">${payload.mt_number}</td></tr>
                         <tr><td class="label">DATE</td><td class="value" id="c-date">${payload.date}</td></tr>
                         <tr><td class="label">BARANGAY</td><td class="value" id="c-address">${payload.address}, GERONA TARLAC</td></tr>
-                        <tr><td class="label">EXPIRY DATE</td><td class="value" id="c-expiry">${payload.expiry}</td></tr>
+                        <tr><td class="label">EXPIRY DATE</td><td class="value text-indigo-700" id="c-expiry">${payload.expiry}</td></tr>
                     </table>
 
                     <table>
@@ -227,9 +276,11 @@ export const openClientMonitor = (data: any) => {
 export default function PermitPreview({
     data,
     showHeader = true,
+    activeEvents,
 }: {
     data: any;
     showHeader?: boolean;
+    activeEvents?: any[];
 }) {
     const [scale, setScale] = useState(1);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -251,7 +302,7 @@ export default function PermitPreview({
         return () => el.removeEventListener("wheel", handleWheel);
     }, []);
 
-    const payload = generatePayload(data);
+    const payload = generatePayload(data, activeEvents);
 
     return (
         <div
@@ -269,7 +320,7 @@ export default function PermitPreview({
                     </div>
                     <button
                         type="button"
-                        onClick={() => openClientMonitor(data)}
+                        onClick={() => openClientMonitor(data, activeEvents)}
                         className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-1.5 rounded-md text-[10pt] font-bold uppercase tracking-wider flex items-center gap-2 transition-colors active:scale-95 shadow-sm border border-blue-400"
                     >
                         <Icon icon="solar:monitor-smartphone-bold" width="18" />{" "}
@@ -317,7 +368,7 @@ export default function PermitPreview({
                                 <td className="px-3 py-2 bg-blue-200 font-bold text-blue-900 border-r border-black align-top leading-tight">
                                     EXPIRY DATE
                                 </td>
-                                <td className="px-3 py-2 font-bold text-gray-800 align-top leading-tight">
+                                <td className="px-3 py-2 font-bold text-indigo-700 align-top leading-tight">
                                     {payload.expiry}
                                 </td>
                             </tr>
@@ -412,9 +463,12 @@ export default function PermitPreview({
                                 <td className="px-3 py-2 bg-blue-200 font-bold text-blue-900 w-[40%] border-r border-black align-top leading-tight">
                                     NUMBER
                                 </td>
-                                <td className="px-3 py-2 font-mono font-bold text-gray-800 wrap-break-words whitespace-normal break-all align-top leading-tight">
-                                    {payload.or_number}
-                                </td>
+                                <td
+                                    className="px-3 py-2 font-mono font-bold text-gray-800 wrap-break-words whitespace-normal break-all align-top leading-tight"
+                                    dangerouslySetInnerHTML={{
+                                        __html: payload.or_number,
+                                    }}
+                                />
                             </tr>
                             <tr>
                                 <td className="px-3 py-2 bg-blue-200 font-bold text-blue-900 border-r border-black align-top leading-tight">
