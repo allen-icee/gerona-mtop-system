@@ -48,9 +48,16 @@ interface Props {
         renewal?: string;
     };
     officials: { name: string; position: string }[];
+    activeEvents: any[]; // <-- Add this line
 }
 
-export default function Index({ applications, filters, officials }: Props) {
+export default function Index({
+    applications,
+    filters,
+    officials,
+    activeEvents,
+}: Props) {
+    // <-- Add activeEvents here
     const user = usePage().props.auth.user;
 
     const [search, setSearch] = useState(filters.search || "");
@@ -775,6 +782,7 @@ export default function Index({ applications, filters, officials }: Props) {
                             <PermitPreview
                                 data={viewingApp}
                                 showHeader={false}
+                                activeEvents={activeEvents} // <-- Pass it here
                             />
                         </div>
                         <div className="bg-white border-t px-6 py-4 flex justify-end gap-3 shrink-0 sm:rounded-b-lg pb-safe">

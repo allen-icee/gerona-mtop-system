@@ -195,7 +195,12 @@ class MtopApplicationController extends Controller
         $validated = $request->validated();
 
         if ($request->transaction_date) {
-            $validated['valid_until'] = $this->calculateValidUntil($request->transaction_date, $validated['plate_no'] ?? null, $validated['event_id'] ?? null);
+            $validated['valid_until'] = $this->calculateValidUntil(
+                $request->transaction_date,
+                $validated['plate_no'] ?? null,
+                $validated['event_id'] ?? null,
+                filter_var($validated['is_free'] ?? false, FILTER_VALIDATE_BOOLEAN)
+            );
         }
 
         try {

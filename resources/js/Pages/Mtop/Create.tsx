@@ -69,8 +69,10 @@ export default function Create({
         or_date: "",
         punong_bayan: "",
         authorized_official: "",
-        event_id: null,
-        is_free: false,
+        // Automatically default to the event if one is active
+        event_id:
+            activeEvents && activeEvents.length > 0 ? activeEvents[0].id : null,
+        is_free: activeEvents && activeEvents.length > 0 ? true : false,
         or_unlocked: false,
     });
 

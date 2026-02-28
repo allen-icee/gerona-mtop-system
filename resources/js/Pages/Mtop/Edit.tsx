@@ -39,6 +39,9 @@ interface MtopApplication {
     or_date: string;
     punong_bayan: string;
     authorized_official: string;
+
+    event_id?: number | null;
+    is_free?: boolean | number;
 }
 
 const isValidDate = (dateString: string): boolean => {
@@ -89,9 +92,11 @@ export default function Edit({
         or_date: application.or_date || "",
         punong_bayan: application.punong_bayan || "",
         authorized_official: application.authorized_official || "",
-        event_id: null,
-        is_free: false,
-        or_unlocked: false,
+        event_id: application.event_id || null,
+        is_free: !!application.is_free,
+        // If an event is attached but it's not free, it means they used the Padlock to pay
+        or_unlocked:
+            application.event_id && !application.is_free ? true : false,
     });
 
     // --- NEW: Live sync to casted screen ---
