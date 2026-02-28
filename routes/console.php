@@ -11,3 +11,5 @@ Artisan::command('inspire', function () {
 Schedule::command('mtop:expire-permits')->dailyAt('00:01');
 //Schedule::command('sync:run')->everyMinute()->withoutOverlapping();
 Schedule::command('db:check-health')->everyTenMinutes()->withoutOverlapping();
+
+Schedule::command('audit:archive')->weeklyOn(5, '17:00')->withoutOverlapping();

@@ -3,7 +3,6 @@ const { app, BrowserWindow, ipcMain, shell, Menu } = require("electron");
 const path = require("path");
 const fs = require("fs");
 
-// Prevent random network/promise errors from completely crashing the application
 process.on("uncaughtException", (error) =>
     console.error("Uncaught Exception:", error),
 );
@@ -95,7 +94,6 @@ function createWindow() {
                     mainWindow
                         .loadFile(path.join(__dirname, "settings.html"))
                         .then(() => {
-                            // Allow DOM to load before sending the error message
                             setTimeout(() => {
                                 if (!mainWindow.isDestroyed()) {
                                     mainWindow.webContents.send(

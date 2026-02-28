@@ -153,11 +153,8 @@ export default function Index({ signatories = [], filters = {} }: Props) {
 
             <div className="py-6 sm:py-12 pb-24">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    {/* --- CONTROLS SECTION --- */}
                     <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-6 gap-4">
-                        {/* Search & Filters */}
                         <div className="flex flex-wrap gap-3 w-full xl:w-auto">
-                            {/* Search */}
                             <div className="relative w-full sm:w-64 md:w-80">
                                 <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-gray-500">
                                     <Icon
@@ -232,7 +229,6 @@ export default function Index({ signatories = [], filters = {} }: Props) {
                         </div>
                     </div>
 
-                    {/* MOBILE VIEW */}
                     <div className="grid grid-cols-1 gap-4 md:hidden">
                         {signatories.length === 0 ? (
                             <div className="bg-white p-8 text-center rounded-lg border border-gray-200 text-gray-400 shadow-sm">
@@ -285,7 +281,6 @@ export default function Index({ signatories = [], filters = {} }: Props) {
                         )}
                     </div>
 
-                    {/* DESKTOP VIEW */}
                     <div className="hidden md:block bg-white overflow-hidden shadow-sm sm:rounded-lg border border-gray-100">
                         <table className="w-full text-sm text-left text-gray-500">
                             <thead className="text-xs text-gray-700 uppercase bg-gray-50 border-b">
@@ -364,7 +359,6 @@ export default function Index({ signatories = [], filters = {} }: Props) {
                 </div>
             </div>
 
-            {/* --- ADD / EDIT MODAL --- */}
             <Modal
                 show={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
@@ -498,7 +492,6 @@ export default function Index({ signatories = [], filters = {} }: Props) {
                 </div>
             </Modal>
 
-            {/* --- DATA IMPORT MODAL --- */}
             <Modal
                 show={isImportModalOpen}
                 onClose={() => setIsImportModalOpen(false)}

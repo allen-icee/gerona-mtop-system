@@ -221,7 +221,6 @@ export default function PrintLayout({ settings }: { settings: any }) {
                             onSubmit={submit}
                             className="p-4 sm:p-8 space-y-8"
                         >
-                            {/* HEADER SECTION */}
                             <div className="border-b border-gray-200 pb-8">
                                 <div className="md:flex md:items-center md:justify-between mb-6">
                                     <div>
@@ -320,7 +319,6 @@ export default function PrintLayout({ settings }: { settings: any }) {
                                 </div>
                             </div>
 
-                            {/* FOOTER SECTION */}
                             <div className="border-b border-gray-200 pb-8 mt-8">
                                 <div className="md:flex md:items-center md:justify-between mb-6">
                                     <div>
@@ -408,7 +406,6 @@ export default function PrintLayout({ settings }: { settings: any }) {
                                 </div>
                             </div>
 
-                            {/* ID BACKGROUND SECTION */}
                             <div className="pb-4 mt-8">
                                 <div className="md:flex md:items-center md:justify-between mb-6">
                                     <div>

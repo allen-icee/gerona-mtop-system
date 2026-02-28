@@ -1,5 +1,5 @@
 <?php
-
+//GeronaMTOP\app\Http\Requests\MtopApplicationRequest.php
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
@@ -48,7 +48,6 @@ class MtopApplicationRequest extends FormRequest
             'is_free' => 'boolean',
             'event_id' => 'nullable|exists:events,id',
 
-            // Basic plate_no rules. The uniqueness check is handled dynamically below.
             'plate_no' => [
                 'required',
                 'string',
@@ -60,16 +59,12 @@ class MtopApplicationRequest extends FormRequest
             ],
         ];
 
-        // Ensure mt_number is totally unique across franchises
         if ($this->route('id')) {
             $rules['mt_number'] = ['required', 'string', 'max:20', Rule::unique('mtop_franchises', 'mt_number')->ignore($franchiseId)];
         } else {
-            $rules['mt_number'] = ['required', 'string', 'max:20']; // We handle uniqueness via while() loop in Controller for Create
+            $rules['mt_number'] = ['required', 'string', 'max:20'];
         }
 
-        // --- THE REAL-WORLD CONCURRENCY CHECKS --- //
-
-        // 1. Body Number Check: Must be unique ONLY among 'active' franchises
         $bodyNumberRule = Rule::unique('mtop_franchises', 'body_number')->where(function ($query) {
             return $query->where('status', 'active');
         });
@@ -80,8 +75,6 @@ class MtopApplicationRequest extends FormRequest
 
         $rules['body_number'] = ['nullable', 'regex:/^[0-9]+$/', $bodyNumberRule];
 
-
-        // 2. Plate Number Check: Must be unique ONLY among 'active' franchises, ignoring "FOR REGISTRATION"
         if (strtoupper($request->input('plate_no')) !== 'FOR REGISTRATION') {
             $plateRule = Rule::unique('mtop_franchises', 'plate_no')->where(function ($query) {
                 return $query->where('status', 'active');

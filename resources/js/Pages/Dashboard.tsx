@@ -23,7 +23,6 @@ export default function Dashboard({
     const user: any = usePage().props.auth.user;
     const staffLink = `${serverIp}`;
 
-    // --- DUAL BACKUP LOGIC (SQLite + CSV Download) ---
     const [backingUp, setBackingUp] = useState(false);
 
     const handleBackup = async () => {
@@ -66,7 +65,6 @@ export default function Dashboard({
         }
     };
 
-    // --- IMPORT STATE & LOGIC ---
     const [showImportModal, setShowImportModal] = useState(false);
     const {
         data: importData,
@@ -89,7 +87,6 @@ export default function Dashboard({
         });
     };
 
-    // --- CLOCK STATE & EFFECT ---
     const [currentTime, setCurrentTime] = useState(new Date());
 
     useEffect(() => {
@@ -112,7 +109,6 @@ export default function Dashboard({
         iconColor = "text-orange-500 bg-orange-50";
     }
 
-    // --- 🎮 EASTER EGG LOGIC 🎮 ---
     const [showEasterEgg, setShowEasterEgg] = useState(false);
     const [clickCount, setClickCount] = useState(0);
     const secretKeys = useRef<string[]>([]);
@@ -140,7 +136,6 @@ export default function Dashboard({
             return prev + 1;
         });
     };
-    // ------------------------------
 
     return (
         <AuthenticatedLayout>

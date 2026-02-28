@@ -94,12 +94,11 @@ export default function Edit({
         authorized_official: application.authorized_official || "",
         event_id: application.event_id || null,
         is_free: !!application.is_free,
-        // If an event is attached but it's not free, it means they used the Padlock to pay
+
         or_unlocked:
             application.event_id && !application.is_free ? true : false,
     });
 
-    // --- NEW: Live sync to casted screen ---
     useEffect(() => {
         updateClientMonitor(data, activeEvents);
     }, [data, activeEvents]);
@@ -142,7 +141,7 @@ export default function Edit({
 
         if (stepNum === 3) {
             if (!isValidDate(data.cedula_date)) return false;
-            // Only require the OR date if it is NOT a free promo (or if they explicitly unlocked it)
+
             if (!data.is_free && !isValidDate(data.or_date)) return false;
             if (data.is_free && data.or_unlocked && !isValidDate(data.or_date))
                 return false;
@@ -278,7 +277,6 @@ export default function Edit({
             return "INVALID DATE";
         }
 
-        // Uses the perfectly synced "Next Working Day" math from PermitPreview
         return formatExpiry(data, activeEvents);
     };
 
@@ -295,7 +293,7 @@ export default function Edit({
                         </div>
                         <div>
                             <div className="flex items-center gap-3">
-                                <h2 className="font-extrabold text-lg sm:text-xl text-gray-800 tracking-tight flex items-center gap-2">
+                                <h2 className="font-extrabold text-lg sm:text-xl hover:cursor-pointer  text-gray-800 tracking-tight flex items-center gap-2">
                                     <Icon
                                         icon="solar:pen-new-square-bold-duotone"
                                         width="20"
@@ -335,7 +333,7 @@ export default function Edit({
                                 <button
                                     type="button"
                                     onClick={() => setStep(1)}
-                                    className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 rounded-tl-lg ${
+                                    className={`flex-1 py-4 text-xs sm:text-sm hover:cursor-pointer font-bold uppercase tracking-wider flex items-center justify-center gap-2 rounded-tl-lg ${
                                         step === 1
                                             ? "bg-white text-blue-600 border-t-2 border-blue-600"
                                             : "text-gray-400 hover:text-gray-600"
@@ -356,7 +354,7 @@ export default function Edit({
                                                 "Complete Step 1 first (Check Date/Address)",
                                             );
                                     }}
-                                    className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 ${
+                                    className={`flex-1 py-4 text-xs sm:text-sm font-bold hover:cursor-pointer uppercase tracking-wider flex items-center justify-center gap-2 ${
                                         step === 2
                                             ? "bg-white text-blue-600 border-t-2 border-blue-600"
                                             : "text-gray-400 hover:text-gray-600"
@@ -375,7 +373,7 @@ export default function Edit({
                                                 "Complete Step 1 & 2 first",
                                             );
                                     }}
-                                    className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 rounded-tr-lg ${
+                                    className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase hover:cursor-pointer tracking-wider flex items-center justify-center gap-2 rounded-tr-lg ${
                                         step === 3
                                             ? "bg-white text-blue-600 border-t-2 border-blue-600"
                                             : "text-gray-400 hover:text-gray-600"
@@ -477,7 +475,7 @@ export default function Edit({
                                                     e.preventDefault();
                                                     setStep(step - 1);
                                                 }}
-                                                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md font-bold hover:bg-gray-200 text-sm"
+                                                className="px-4 py-2 bg-gray-100 text-gray-700 hover:cursor-pointer rounded-md font-bold hover:bg-gray-200 text-sm"
                                             >
                                                 Back
                                             </button>
@@ -492,7 +490,7 @@ export default function Edit({
                                                 className={
                                                     !isStepValid(step)
                                                         ? "opacity-50 cursor-not-allowed"
-                                                        : ""
+                                                        : "hover:cursor-pointer "
                                                 }
                                             >
                                                 Next Step{" "}
@@ -542,7 +540,7 @@ export default function Edit({
                 data={updatedRecord}
             />
 
-            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 sm:hidden z-40 flex justify-between items-center safe-area-pb">
+            <div className="fixed bottom-0 left-0 right-0 bg-white border-t hover:cursor-pointer  border-gray-200 p-4 sm:hidden z-40 flex justify-between items-center safe-area-pb">
                 <Link
                     href={route("mtop.index")}
                     className="text-gray-500 font-bold text-sm"

@@ -151,4 +151,18 @@ class UserController extends Controller
 
         return response()->stream($callback, 200, $headers);
     }
+    public function flushAuditLogs(Request $request)
+    {
+        \App\Models\AuditLog::truncate();
+
+        \App\Models\AuditLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'Flushed Audit Logs',
+            'payload' => 'Admin manually cleared all system audit logs.',
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]);
+
+        return redirect()->back()->with('message', 'All audit logs have been safely cleared.');
+    }
 }

@@ -50,6 +50,10 @@ export default function Index({ users, auditLogs, filters }: Props) {
     const [deletingId, setDeletingId] = useState<number | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
+    // New states for the Flush Logs feature
+    const [isFlushModalOpen, setIsFlushModalOpen] = useState(false);
+    const [isFlushing, setIsFlushing] = useState(false);
+
     const initialRender = useRef(true);
 
     const { data, setData, post, put, processing, errors, reset } = useForm({
@@ -211,6 +215,16 @@ export default function Index({ users, auditLogs, filters }: Props) {
                 },
             });
         }
+    };
+
+    const handleFlushLogs = () => {
+        setIsFlushing(true);
+        router.delete(route("audit-logs.flush"), {
+            onFinish: () => {
+                setIsFlushModalOpen(false);
+                setIsFlushing(false);
+            },
+        });
     };
 
     const formatDateTime = (dateString: string) => {
@@ -412,7 +426,7 @@ export default function Index({ users, auditLogs, filters }: Props) {
                     <Pagination links={users.links} />
 
                     <div className="mt-16">
-                        <div className="flex justify-between items-center mb-6">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                             <div className="flex items-center gap-3">
                                 <div className="p-3 bg-indigo-50 text-indigo-600 rounded-lg shadow-sm hidden sm:block">
                                     <Icon
@@ -430,18 +444,32 @@ export default function Index({ users, auditLogs, filters }: Props) {
                                 </div>
                             </div>
 
-                            <a
-                                href={route("audit-logs.export")}
-                                className="bg-green-600 hover:bg-green-700 text-white border border-emerald-200 hover:border-emerald-600 font-bold py-2.5 px-5 rounded-lg flex items-center gap-2 shadow-sm transition-all whitespace-nowrap"
-                            >
-                                <Icon
-                                    icon="solar:file-download-bold"
-                                    width="20"
-                                />
-                                <span className="hidden sm:inline">
-                                    Export CSV
-                                </span>
-                            </a>
+                            <div className="flex items-center gap-2 w-full sm:w-auto">
+                                <a
+                                    href={route("audit-logs.export")}
+                                    className="flex-1 sm:flex-none justify-center bg-green-600 hover:bg-green-700 text-white border border-emerald-200 hover:border-emerald-600 font-bold py-2.5 px-5 rounded-lg flex items-center gap-2 shadow-sm transition-all whitespace-nowrap"
+                                >
+                                    <Icon
+                                        icon="solar:file-download-bold"
+                                        width="20"
+                                    />
+                                    <span className="hidden sm:inline">
+                                        Export CSV
+                                    </span>
+                                </a>
+                                <button
+                                    onClick={() => setIsFlushModalOpen(true)}
+                                    className="flex-1 sm:flex-none justify-center bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 px-5 rounded-lg flex items-center gap-2 shadow-sm transition-all whitespace-nowrap"
+                                >
+                                    <Icon
+                                        icon="solar:trash-bin-trash-bold"
+                                        width="20"
+                                    />
+                                    <span className="hidden sm:inline">
+                                        Clear Logs
+                                    </span>
+                                </button>
+                            </div>
                         </div>
 
                         <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg border border-gray-100">
@@ -749,6 +777,15 @@ export default function Index({ users, auditLogs, filters }: Props) {
                 title="Delete User?"
                 message="Are you sure you want to completely remove this user from the system? They will no longer be able to log in."
                 processing={isDeleting}
+            />
+
+            <ConfirmDeleteModal
+                show={isFlushModalOpen}
+                onClose={() => setIsFlushModalOpen(false)}
+                onConfirm={handleFlushLogs}
+                title="Clear All Audit Logs?"
+                message="Are you sure you want to permanently delete ALL system audit logs? Make sure you have exported them to a CSV first. This action cannot be undone."
+                processing={isFlushing}
             />
         </AuthenticatedLayout>
     );

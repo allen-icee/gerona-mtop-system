@@ -23,8 +23,8 @@ export default function OfficialsForm({
 }: Props) {
     return (
         <div className="space-y-2">
-            <div className="flex items-center gap-2 text-yellow-700 border-b border-gray-200 pb-2">
-                <h3 className="font-bold text-base uppercase tracking-wide">
+            <div className="flex items-center gap-2 text-yellow-700 border-b border-yellow-300 pb-1">
+                <h3 className="font-extrabold text-base uppercase tracking-wide">
                     Signatories
                 </h3>
             </div>
@@ -51,7 +51,7 @@ export default function OfficialsForm({
                 />
             </div>
 
-            <div className="flex items-start gap-2 bg-yellow-50 p-3 rounded-lg border border-yellow-100">
+            <div className="flex items-start gap-2 bg-yellow-50 p-2 rounded-lg border border-yellow-100">
                 <Icon
                     icon="solar:info-circle-bold"
                     className="text-yellow-500 mt-0.5 shrink-0"

@@ -313,7 +313,7 @@ export default function Renew({
                                                 "Complete Step 1 first",
                                             );
                                     }}
-                                    className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 ${
+                                    className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase hover:cursor-pointer tracking-wider flex items-center justify-center gap-2 ${
                                         step === 2
                                             ? "bg-white text-blue-600 border-t-2 border-blue-600"
                                             : "text-gray-400 hover:text-gray-600"
@@ -332,7 +332,7 @@ export default function Renew({
                                                 "Complete Step 1 & 2 first",
                                             );
                                     }}
-                                    className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 rounded-tr-lg ${
+                                    className={`flex-1 py-4 text-xs sm:text-sm hover:cursor-pointer font-bold uppercase tracking-wider flex items-center justify-center gap-2 rounded-tr-lg ${
                                         step === 3
                                             ? "bg-white text-blue-600 border-t-2 border-blue-600"
                                             : "text-gray-400 hover:text-gray-600"
@@ -431,7 +431,7 @@ export default function Renew({
                                                 onClick={() =>
                                                     setStep(step - 1)
                                                 }
-                                                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md font-bold hover:bg-gray-200 text-sm"
+                                                className="px-4 py-2 bg-gray-100 hover:cursor-pointer text-gray-700 rounded-md font-bold hover:bg-gray-200 text-sm"
                                             >
                                                 Back
                                             </button>
@@ -443,7 +443,7 @@ export default function Renew({
                                                 className={
                                                     !isStepValid(step)
                                                         ? "opacity-50 cursor-not-allowed"
-                                                        : ""
+                                                        : "hover:cursor-pointer"
                                                 }
                                             >
                                                 Next Step{" "}
@@ -455,7 +455,7 @@ export default function Renew({
                                         ) : (
                                             <PrimaryButton
                                                 type="submit"
-                                                className={`bg-yellow-600 hover:bg-yellow-700 text-white ${processing || !isFormValid ? "opacity-50 cursor-not-allowed" : ""}`}
+                                                className={`bg-yellow-600 hover:cursor-pointer  hover:bg-yellow-700 text-white ${processing || !isFormValid ? "opacity-50 cursor-not-allowed" : ""}`}
                                                 disabled={
                                                     processing || !isFormValid
                                                 }
@@ -484,7 +484,7 @@ export default function Renew({
                 </div>
             </div>
 
-            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 sm:hidden z-40 flex justify-between items-center safe-area-pb">
+            <div className="fixed bottom-0 left-0 right-0 bg-white hover:cursor-pointer border-t border-gray-200 p-4 sm:hidden z-40 flex justify-between items-center safe-area-pb">
                 <Link
                     href={route("mtop.index")}
                     className="text-gray-500 font-bold text-sm"

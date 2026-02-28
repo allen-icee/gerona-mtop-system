@@ -69,14 +69,13 @@ export default function Create({
         or_date: "",
         punong_bayan: "",
         authorized_official: "",
-        // Automatically default to the event if one is active
+
         event_id:
             activeEvents && activeEvents.length > 0 ? activeEvents[0].id : null,
         is_free: activeEvents && activeEvents.length > 0 ? true : false,
         or_unlocked: false,
     });
 
-    // --- NEW: Live sync to casted screen ---
     useEffect(() => {
         updateClientMonitor(data, activeEvents);
     }, [data, activeEvents]);
@@ -119,7 +118,7 @@ export default function Create({
 
         if (stepNum === 3) {
             if (!isValidDate(data.cedula_date)) return false;
-            // Only require the OR date if it is NOT a free promo (or if they explicitly unlocked it)
+
             if (!data.is_free && !isValidDate(data.or_date)) return false;
             if (data.is_free && data.or_unlocked && !isValidDate(data.or_date))
                 return false;
@@ -252,7 +251,6 @@ export default function Create({
             return "INVALID DATE";
         }
 
-        // Uses the perfectly synced "Next Working Day" math from PermitPreview
         return formatExpiry(data, activeEvents);
     };
 
@@ -304,7 +302,7 @@ export default function Create({
                                 <button
                                     type="button"
                                     onClick={() => setStep(1)}
-                                    className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 rounded-tl-lg ${
+                                    className={`flex-1 py-4 text-xs sm:text-sm hover:cursor-pointer  font-bold uppercase tracking-wider flex items-center justify-center gap-2 rounded-tl-lg ${
                                         step === 1
                                             ? "bg-white text-blue-600 border-t-2 border-blue-600"
                                             : "text-gray-400 hover:text-gray-600"
@@ -325,7 +323,7 @@ export default function Create({
                                                 "Complete Step 1 first",
                                             );
                                     }}
-                                    className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 ${
+                                    className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase tracking-wider hover:cursor-pointer flex items-center justify-center gap-2 ${
                                         step === 2
                                             ? "bg-white text-blue-600 border-t-2 border-blue-600"
                                             : "text-gray-400 hover:text-gray-600"
@@ -344,7 +342,7 @@ export default function Create({
                                                 "Complete Step 1 & 2 first",
                                             );
                                     }}
-                                    className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 rounded-tr-lg ${
+                                    className={`flex-1 py-4 text-xs sm:text-sm hover:cursor-pointer font-bold uppercase tracking-wider flex items-center justify-center gap-2 rounded-tr-lg ${
                                         step === 3
                                             ? "bg-white text-blue-600 border-t-2 border-blue-600"
                                             : "text-gray-400 hover:text-gray-600"
@@ -434,7 +432,7 @@ export default function Create({
                                 <div className="flex items-center justify-between mt-8 pt-4 border-t border-gray-100">
                                     <Link
                                         href={route("mtop.index")}
-                                        className="text-gray-500 hover:text-red-600 text-sm font-bold"
+                                        className="text-gray-500 hover:text-red-600 text-sm font-bold hover:cursor-pointer "
                                     >
                                         Cancel
                                     </Link>
@@ -445,7 +443,7 @@ export default function Create({
                                                 onClick={() =>
                                                     setStep(step - 1)
                                                 }
-                                                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md font-bold hover:bg-gray-200 text-sm"
+                                                className="px-4 py-2 bg-gray-100 hover:cursor-pointer  text-gray-700 rounded-md font-bold hover:bg-gray-200 text-sm"
                                             >
                                                 Back
                                             </button>
@@ -457,7 +455,7 @@ export default function Create({
                                                 className={
                                                     !isStepValid(step)
                                                         ? "opacity-50 cursor-not-allowed"
-                                                        : ""
+                                                        : "hover:cursor-pointer"
                                                 }
                                             >
                                                 Next Step{" "}
@@ -469,7 +467,7 @@ export default function Create({
                                         ) : (
                                             <PrimaryButton
                                                 type="submit"
-                                                className={`bg-green-600 hover:bg-green-700 ${processing || !isFormValid ? "opacity-50 cursor-not-allowed" : ""}`}
+                                                className={`bg-green-600 hover:bg-green-700 hover:cursor-pointer  ${processing || !isFormValid ? "opacity-50 cursor-not-allowed" : ""}`}
                                                 disabled={
                                                     processing || !isFormValid
                                                 }

@@ -56,7 +56,7 @@ export default function Login({ status }: { status?: string }) {
                         disabled={!isFormValid || processing}
                         className={`w-full flex items-center justify-center gap-2 rounded-xl border border-transparent px-6 py-4 text-sm font-bold uppercase tracking-widest text-white transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
                             isFormValid && !processing
-                                ? "bg-blue-700 shadow-md hover:bg-blue-800 hover:shadow-lg hover:-translate-y-0.5 active:bg-blue-900"
+                                ? "bg-blue-700 shadow-md hover:bg-blue-800 hover:shadow-lg hover:-translate-y-0.5 active:bg-blue-900 hover:cursor-pointer"
                                 : "bg-gray-300 cursor-not-allowed text-gray-500"
                         }`}
                     >

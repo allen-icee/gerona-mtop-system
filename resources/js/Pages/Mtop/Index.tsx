@@ -1,3 +1,4 @@
+//GeronaMTOP\resources\js\Pages\Mtop\Index.tsx
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, Link, router, usePage } from "@inertiajs/react";
 import { Icon } from "@iconify/react";
@@ -430,7 +431,6 @@ export default function Index({
                                                     </span>
                                                 </td>
 
-                                                {/* --- DESKTOP ICON-ONLY ACTIONS --- */}
                                                 <td className="px-6 py-4 text-center">
                                                     <div className="flex items-center justify-center gap-1.5">
                                                         <button
@@ -654,7 +654,6 @@ export default function Index({
                                             </p>
                                         </div>
 
-                                        {/* --- MOBILE ICON-ONLY ACTIONS --- */}
                                         <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-gray-100">
                                             <a
                                                 href={route(
@@ -742,7 +741,6 @@ export default function Index({
                 </div>
             </div>
 
-            {/* FLOATING ACTION BAR FOR BULK ACTIONS */}
             <div
                 className={`fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50 transition-all duration-300 ease-out ${
                     selectedIds.length > 0
@@ -789,7 +787,6 @@ export default function Index({
                 officials={officials}
             />
 
-            {/* PREVIEW MODAL */}
             <Modal
                 show={!!viewingApp}
                 onClose={() => setViewingApp(null)}

@@ -1,3 +1,4 @@
+//GeronaMTOP\resources\js\Pages\Mtop\Partials\TransactionHeader.tsx
 import InputGroup from "@/Components/InputGroup";
 import { Icon } from "@iconify/react";
 import { useEffect, useState } from "react";
@@ -8,7 +9,7 @@ export default function TransactionHeader({
     errors,
     expiryDisplay,
     onKeyDown,
-    activeEvents, // Array of events passed from controller
+    activeEvents,
 }: any) {
     let prefix = `${new Date().getFullYear()}-`;
     let sequence = "";
@@ -24,17 +25,14 @@ export default function TransactionHeader({
         }
     }
 
-    // Determine currently selected event details
     const currentEvent =
         activeEvents?.find((e: any) => e.id == data.event_id) ||
         activeEvents?.[0];
 
-    // Local state to track "Regular" vs "Event" processing mode
     const [processingMode, setProcessingMode] = useState<"regular" | "event">(
         data.event_id ? "event" : "regular",
     );
 
-    // Auto-select first event if shifting to 'event' mode and none is selected
     useEffect(() => {
         if (
             processingMode === "event" &&
@@ -45,7 +43,6 @@ export default function TransactionHeader({
         }
     }, [processingMode, activeEvents]);
 
-    // Effect: Handle auto-locking the OR fields when Promo is applied
     useEffect(() => {
         if (
             processingMode === "event" &&
@@ -79,12 +76,11 @@ export default function TransactionHeader({
         }
     };
 
-    const handleTogglePadlock = () => {
+    const handleTogglePaymentMode = () => {
         const isNowUnlocked = !data.or_unlocked;
         setData((prev: any) => ({
             ...prev,
             or_unlocked: isNowUnlocked,
-            // If we are unlocking to pay, it is no longer free, but the event_id STAYS attached
             is_free: !isNowUnlocked,
             or_number:
                 isNowUnlocked && prev.or_number === "WAIVED"
@@ -94,121 +90,137 @@ export default function TransactionHeader({
     };
 
     return (
-        <div className="space-y-6">
-            {/* --- EVENT BANNER & SELECTION --- */}
+        <div className="space-y-4">
             {activeEvents && activeEvents.length > 0 && (
-                <div className="bg-linear-to-r from-emerald-600 to-teal-600 text-white p-4 rounded-xl shadow-md border-2 border-emerald-400 gap-4">
-                    <div className="mb-4 flex gap-4 font-bold items-center border-b border-white/20 pb-4">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input
-                                type="radio"
-                                name="processingMode"
-                                value="regular"
-                                checked={processingMode === "regular"}
-                                onChange={() => handleModeChange("regular")}
-                                className="w-4 h-4 text-yellow-400 focus:ring-yellow-400"
-                            />
-                            Regular Processing
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input
-                                type="radio"
-                                name="processingMode"
-                                value="event"
-                                checked={processingMode === "event"}
-                                onChange={() => handleModeChange("event")}
-                                className="w-4 h-4 text-yellow-400 focus:ring-yellow-400"
-                            />
-                            Apply Event / Promo
-                        </label>
-                    </div>
-
-                    {processingMode === "event" && (
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                            <div className="flex-1 w-full">
-                                {activeEvents.length > 1 ? (
-                                    <select
-                                        className="w-full bg-white/10 border border-white/30 text-white rounded-lg p-2 font-bold focus:ring-yellow-400 focus:border-yellow-400"
-                                        value={data.event_id || ""}
-                                        onChange={(e) =>
-                                            setData("event_id", e.target.value)
-                                        }
-                                    >
-                                        {activeEvents.map((ev: any) => (
-                                            <option
-                                                key={ev.id}
-                                                value={ev.id}
-                                                className="text-black"
-                                            >
-                                                {ev.title}
-                                            </option>
-                                        ))}
-                                    </select>
-                                ) : (
-                                    <h3 className="font-black text-lg uppercase tracking-wider text-yellow-300 flex items-center gap-2">
-                                        <Icon
-                                            icon="solar:star-fall-bold-duotone"
-                                            width="24"
-                                        />
-                                        {currentEvent?.title}
-                                    </h3>
-                                )}
-
-                                <p className="text-sm font-medium opacity-90 mt-1">
-                                    {currentEvent?.description}. Event Expiry:{" "}
-                                    {currentEvent &&
-                                        new Date(
-                                            currentEvent.fixed_expiry_date,
-                                        ).toLocaleDateString("en-US", {
-                                            year: "numeric",
-                                            month: "long",
-                                            day: "numeric",
-                                        })}
-                                </p>
-                                <p className="text-xs italic opacity-75 mt-1">
-                                    Mandated by: {currentEvent?.mandated_by}
-                                </p>
-                            </div>
-
-                            {/* THE PADLOCK OVERRIDE UI */}
-                            <div className="flex items-center gap-2 bg-white/10 px-3 py-2 rounded-lg border border-white/20">
-                                <span className="font-bold text-sm">
-                                    {data.is_free
-                                        ? "Status: Free"
-                                        : "Status: Paid (Bonus Mode)"}
-                                </span>
+                <div className="rounded-lg border border-slate-200 bg-white shadow-sm px-4 py-3">
+                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                        <div className="flex flex-wrap items-center gap-3 flex-1">
+                            <div className="flex bg-slate-100 p-1 rounded-md border border-slate-200">
                                 <button
                                     type="button"
-                                    onClick={handleTogglePadlock}
-                                    className="p-1 rounded-full hover:bg-white/20 transition"
-                                    title={
-                                        data.is_free
-                                            ? "Unlock to allow manual payment input"
-                                            : "Lock to set as WAIVED"
-                                    }
+                                    onClick={() => handleModeChange("regular")}
+                                    className={`px-3 py-1.5 text-xs font-bold rounded hover:cursor-pointer ${
+                                        processingMode === "regular"
+                                            ? "bg-white text-slate-800 border border-slate-200"
+                                            : "text-slate-600 hover:text-slate-800 hover:bg-slate-200"
+                                    }`}
                                 >
-                                    <Icon
-                                        icon={
+                                    Standard
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => handleModeChange("event")}
+                                    className={`px-3 py-1.5 text-xs font-bold rounded hover:cursor-pointer ${
+                                        processingMode === "event"
+                                            ? "bg-white  text-blue-700 border border-blue-200 "
+                                            : "text-slate-600 hover:text-slate-800 hover:bg-slate-200 "
+                                    }`}
+                                >
+                                    Apply Promo
+                                </button>
+                            </div>
+
+                            {processingMode === "event" && (
+                                <>
+                                    {activeEvents.length > 1 ? (
+                                        <select
+                                            className="bg-white border border-slate-300 text-slate-800 rounded-md px-3 py-1.5 text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            value={data.event_id || ""}
+                                            onChange={(e) =>
+                                                setData(
+                                                    "event_id",
+                                                    e.target.value,
+                                                )
+                                            }
+                                        >
+                                            {activeEvents.map((ev: any) => (
+                                                <option
+                                                    key={ev.id}
+                                                    value={ev.id}
+                                                >
+                                                    {ev.title}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    ) : (
+                                        <span className="text-sm font-semibold text-slate-800">
+                                            {currentEvent?.title}
+                                        </span>
+                                    )}
+
+                                    <div className="relative group">
+                                        <Icon
+                                            icon="solar:info-circle-bold-duotone"
+                                            width="20"
+                                            className="text-slate-400 hover:text-blue-600 cursor-help"
+                                        />
+
+                                        <div className="absolute left-1/2 bottom-full -translate-x-1/2 mb-3 w-72 p-3 bg-slate-900 text-white text-xs rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none z-50">
+                                            <p className="leading-relaxed">
+                                                {currentEvent?.description}
+                                            </p>
+
+                                            <div className="mt-2 border-t border-slate-700 pt-2 space-y-1">
+                                                <p className="text-blue-300 italic">
+                                                    Mandated by:{" "}
+                                                    {currentEvent?.mandated_by}
+                                                </p>
+
+                                                <p className="text-emerald-400 font-medium">
+                                                    Fixed Expiry:{" "}
+                                                    {currentEvent &&
+                                                        new Date(
+                                                            currentEvent.fixed_expiry_date,
+                                                        ).toLocaleDateString(
+                                                            "en-US",
+                                                            {
+                                                                year: "numeric",
+                                                                month: "long",
+                                                                day: "numeric",
+                                                            },
+                                                        )}
+                                                </p>
+                                            </div>
+
+                                            <div className="absolute left-1/2 top-full -translate-x-1/2 w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-slate-900"></div>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+
+                        {processingMode === "event" && (
+                            <div className="flex items-center gap-3">
+                                <span className="text-xs font-bold text-blue-600">
+                                    {data.is_free ? "Free" : "Still Paid"}
+                                </span>
+
+                                <button
+                                    type="button"
+                                    onClick={handleTogglePaymentMode}
+                                    className="relative inline-flex h-6 w-10 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    style={{
+                                        backgroundColor: data.is_free
+                                            ? "#2563eb"
+                                            : "#94a3b8",
+                                    }}
+                                >
+                                    <span
+                                        className={`${
                                             data.is_free
-                                                ? "solar:lock-password-bold"
-                                                : "solar:lock-unlocked-bold"
-                                        }
-                                        width="24"
-                                        className={
-                                            data.is_free
-                                                ? "text-yellow-400"
-                                                : "text-white"
-                                        }
+                                                ? "translate-x-5"
+                                                : "translate-x-1"
+                                        } inline-block h-4 w-4 transform rounded-full bg-white transition duration-300 shadow-sm`}
                                     />
                                 </button>
                             </div>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
             )}
 
-            {/* ORIGINAL INPUT GRID */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 <div>
                     <label className="block font-medium text-sm text-gray-700 mb-1">
                         Control No.
@@ -253,11 +265,12 @@ export default function TransactionHeader({
                         setData("transaction_date", e.target.value)
                     }
                     icon="solar:calendar-bold"
+                    className=""
                     onKeyDown={onKeyDown}
                 />
 
                 <div className="sm:col-span-2 lg:col-span-1">
-                    <label className="block font-medium text-sm text-gray-700 mb-1">
+                    <label className="block font-medium text-sm text-gray-700 mb-1 hover:cursor-not-allowed">
                         Validity{" "}
                         <span className="text-gray-400 font-normal text-xs">
                             (Auto-calculated)
@@ -270,7 +283,7 @@ export default function TransactionHeader({
                         <input
                             type="text"
                             disabled
-                            className="block w-full h-full pl-10 py-2 border-gray-300 bg-gray-50 text-gray-500 font-bold rounded-md shadow-sm text-sm"
+                            className="block w-full h-full pl-10 py-2 hover:cursor-not-allowed border-gray-300 bg-gray-50 text-gray-500 font-bold rounded-md shadow-sm text-sm"
                             value={
                                 data.is_free &&
                                 processingMode === "event" &&

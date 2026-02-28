@@ -1,3 +1,4 @@
+//GeronaMTOP\resources\js\Pages\Settings\Events.tsx
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, useForm, router } from "@inertiajs/react";
 import React, { useState, FormEventHandler } from "react";
@@ -114,7 +115,6 @@ export default function Events({ events }: { events: any[] }) {
 
             <div className="py-6 sm:py-12">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    {/* Header Section */}
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                         <div className="flex items-center gap-3">
                             <div className="bg-blue-100 p-2 rounded-lg text-blue-600 shadow-inner hidden sm:flex">
@@ -143,7 +143,6 @@ export default function Events({ events }: { events: any[] }) {
                         </button>
                     </div>
 
-                    {/* Mobile View (Cards) */}
                     <div className="grid grid-cols-1 gap-4 md:hidden mb-6">
                         {events.length === 0 ? (
                             <div className="bg-white p-6 rounded-lg shadow text-center text-gray-500">
@@ -369,7 +368,6 @@ export default function Events({ events }: { events: any[] }) {
                 </div>
             </div>
 
-            {/* Create/Edit Modal directly matching Users/Index.tsx */}
             <Modal show={isModalOpen} onClose={closeModal} maxWidth="xl">
                 <div className="flex justify-between items-center bg-gray-800 px-6 py-4 rounded-t-lg">
                     <h3 className="text-white font-bold text-lg flex items-center gap-2">
@@ -511,7 +509,6 @@ export default function Events({ events }: { events: any[] }) {
                 </div>
             </Modal>
 
-            {/* Confirm Delete Modal */}
             <ConfirmDeleteModal
                 show={deletingId !== null}
                 onClose={() => setDeletingId(null)}

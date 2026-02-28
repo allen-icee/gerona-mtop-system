@@ -73,7 +73,6 @@ export default function Authenticated({
                                         Print Settings
                                     </NavLink>
 
-                                    {/* --- DESKTOP ADMIN LINKS --- */}
                                     {user.role === "admin" && (
                                         <>
                                             <NavLink
@@ -105,7 +104,7 @@ export default function Authenticated({
                                                 )}
                                                 className="text-blue-100 hover:text-white focus:text-white border-transparent hover:border-white focus:border-white"
                                             >
-                                                Events & Promos
+                                                Events/Promos
                                             </NavLink>
                                         </>
                                     )}
@@ -250,7 +249,7 @@ export default function Authenticated({
                                         active={route().current("events.index")}
                                         className="text-white hover:bg-blue-700 focus:bg-blue-700 border-l-4 border-transparent hover:border-yellow-400"
                                     >
-                                        Events & Promos
+                                        Events/Promos
                                     </ResponsiveNavLink>
                                 </>
                             )}

@@ -387,7 +387,7 @@ export default function Transfer({
                                                 onClick={() =>
                                                     setStep(step - 1)
                                                 }
-                                                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md font-bold hover:bg-gray-200 text-sm"
+                                                className="px-4 py-2 bg-gray-100 hover:cursor-pointer  text-gray-700 rounded-md font-bold hover:bg-gray-200 text-sm"
                                             >
                                                 Back
                                             </button>
@@ -399,7 +399,7 @@ export default function Transfer({
                                                 className={
                                                     !isStepValid(step)
                                                         ? "opacity-50 cursor-not-allowed"
-                                                        : ""
+                                                        : "hover:cursor-pointer"
                                                 }
                                             >
                                                 Next Step{" "}

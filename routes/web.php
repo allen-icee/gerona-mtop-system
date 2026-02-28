@@ -49,8 +49,8 @@ Route::middleware('auth')->group(function () {
     Route::put('/mtop/{id}', [MtopApplicationController::class, 'update'])->name('mtop.update');
     Route::get('/mtop/{id}/print', [MtopApplicationController::class, 'print'])->name('mtop.print');
     Route::get('/mtop/export', [MtopApplicationController::class, 'export'])->name('mtop.export'); // Audit Logs Export
-    Route::get('/users/audit-logs/export', [App\Http\Controllers\UserController::class, 'exportAuditLogs'])->name('audit-logs.export');
-
+    Route::get('/system/audit-logs/export', [App\Http\Controllers\UserController::class, 'exportAuditLogs'])->name('audit-logs.export');
+    Route::delete('/system/audit-logs/flush', [\App\Http\Controllers\UserController::class, 'flushAuditLogs'])->name('audit-logs.flush');
     Route::post('/mtop/import', [App\Http\Controllers\MtopApplicationController::class, 'importData'])->name('mtop.import');
 
     Route::post('/settings/backup', function () {
@@ -122,7 +122,6 @@ Route::middleware('auth')->group(function () {
         Route::get('/signatories/export', [SignatoryController::class, 'export'])->name('signatories.export');
         Route::resource('signatories', SignatoryController::class)->only(['index', 'store', 'update', 'destroy']);
 
-        // --- EVENT MANAGEMENT ROUTES ---
         Route::get('/settings/events', [\App\Http\Controllers\EventController::class, 'index'])->name('events.index');
         Route::post('/settings/events', [\App\Http\Controllers\EventController::class, 'store'])->name('events.store');
         Route::put('/settings/events/{event}', [\App\Http\Controllers\EventController::class, 'update'])->name('events.update');

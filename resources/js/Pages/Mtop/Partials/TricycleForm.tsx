@@ -36,18 +36,18 @@ export default function TricycleForm({
     };
 
     return (
-        <div className="space-y-6">
-            <div className="flex items-center gap-2 text-green-700 border-b border-gray-200 pb-2">
-                <h3 className="font-bold text-base uppercase tracking-wide">
+        <div className="space-y-3">
+            <div className="flex items-center gap-2 text-green-700 border-b border-green-300 pb-1">
+                <h3 className="font-extrabold text-base uppercase tracking-wide">
                     Tricycle Unit Details
                 </h3>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 <div className="space-y-2">
                     <InputGroup
                         id="body_number"
-                        label="Sidecar Number (MTOP)"
+                        label="Sidecar Number"
                         name="body_number"
                         value={data.body_number || ""}
                         onChange={(e: any) => {

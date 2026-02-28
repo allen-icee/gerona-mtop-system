@@ -314,7 +314,7 @@ export default function DriverInfoModal({
 
     const baseMayorOptions = officials
         .filter((o) => o.position === "Punong Bayan")
-        .map((o) => `${o.name} | ${o.position}`); // <-- Add the formatting here too
+        .map((o) => `${o.name} | ${o.position}`);
 
     const customMayors = data.drivers.map((d) => d.mayor).filter(Boolean);
     const mayorOptions = Array.from(

@@ -5,13 +5,13 @@ import { Icon } from "@iconify/react";
 export default function CedulaForm({ data, setData, errors, onKeyDown }: any) {
     return (
         <div className="space-y-2">
-            <div className="flex items-center gap-2 text-orange-700 border-b border-gray-200 pb-2">
-                <h3 className="font-bold text-base uppercase tracking-wide">
+            <div className="flex items-center gap-2 text-orange-700 border-b border-orange-200 pb-1">
+                <h3 className="font-extrabold text-base uppercase tracking-wide">
                     Cedula Details
                 </h3>
             </div>
 
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 gap-2">
                 <InputGroup
                     id="cedula_number"
                     label="Cedula No."

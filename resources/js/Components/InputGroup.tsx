@@ -43,7 +43,9 @@ export default function InputGroup({
                 <TextInput
                     id={id}
                     type={currentType}
-                    className={`block w-full ${icon ? "pl-11" : "pl-4"} ${showPasswordToggle ? "pr-11" : "pr-4"} py-2.5 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg shadow-sm transition-all text-sm bg-gray-50 focus:bg-white`}
+                    className={`block w-full h-12 font-semibold ${icon ? "pl-11" : "pl-4"} ${
+                        showPasswordToggle ? "pr-11" : "pr-4"
+                    } border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg shadow-sm transition-all text-sm bg-gray-50 focus:bg-white`}
                     {...props}
                 />
 

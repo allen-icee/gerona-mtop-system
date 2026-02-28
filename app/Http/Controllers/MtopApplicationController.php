@@ -48,17 +48,17 @@ class MtopApplicationController extends Controller
     {
         $year = now()->year;
 
-        // OPTIMIZATION: Do not use ->get() here. Let the SQL database find the max sequence natively.
-        // This takes ~1 millisecond and uses 0 RAM, even with 100,000 records.
-        $latestFranchise = MtopFranchise::where('mt_number', 'like', "$year-%")
-            ->orderByRaw('CAST(SUBSTRING_INDEX(mt_number, "-", -1) AS UNSIGNED) DESC')
-            ->first();
+        $mtNumbers = MtopFranchise::where('mt_number', 'like', "$year-%")->pluck('mt_number');
 
-        $nextSequence = 1;
-        if ($latestFranchise) {
-            $parts = explode('-', $latestFranchise->mt_number);
-            $nextSequence = isset($parts[1]) ? intval($parts[1]) + 1 : 1;
+        $maxSeq = 0;
+        foreach ($mtNumbers as $num) {
+            $parts = explode('-', $num);
+            $seq = isset($parts[1]) ? (int)$parts[1] : 0;
+            if ($seq > $maxSeq) {
+                $maxSeq = $seq;
+            }
         }
+        $nextSequence = $maxSeq + 1;
 
         $suggested_mt_number = sprintf("%s-%04d", $year, $nextSequence);
 
@@ -94,15 +94,8 @@ class MtopApplicationController extends Controller
                 $final_mt_number = $validated['mt_number'];
                 $year = now()->year;
 
-                // RACE CONDITION FIX: Lock the latest record for this year.
-                // If Staff B tries to save simultaneously, MySQL forces them to wait
-                // exactly here until Staff A finishes saving their application.
-                MtopFranchise::where('mt_number', 'like', "$year-%")
-                    ->orderByRaw('CAST(SUBSTRING_INDEX(mt_number, "-", -1) AS UNSIGNED) DESC')
-                    ->lockForUpdate()
-                    ->first();
+                MtopFranchise::where('mt_number', 'like', "$year-%")->lockForUpdate()->pluck('id');
 
-                // Now your silent auto-increment logic is 100% safe to run without overlap
                 while (MtopFranchise::where('mt_number', $final_mt_number)->exists()) {
                     $parts = explode('-', $final_mt_number);
                     $seq = isset($parts[1]) ? intval($parts[1]) : 0;
@@ -139,7 +132,6 @@ class MtopApplicationController extends Controller
                 $applicationData['is_free'] = filter_var($validated['is_free'] ?? false, FILTER_VALIDATE_BOOLEAN);
                 $applicationData['event_id'] = $validated['event_id'] ?? null;
 
-                // Cleaned up: Called exactly once with the proper event logic
                 $applicationData['valid_until'] = $this->calculateValidUntil(
                     $request->transaction_date,
                     $validated['plate_no'] ?? null,
@@ -157,7 +149,6 @@ class MtopApplicationController extends Controller
 
             $message = 'Application created successfully!';
 
-            // If the system silently bumped their number to prevent a crash, we notify them gracefully.
             if ($request->mt_number !== $mtop->mt_number) {
                 $message = "Application saved! Note: Control No. {$request->mt_number} was just taken by another staff member, so this was automatically assigned to {$mtop->mt_number}.";
             }
@@ -548,39 +539,32 @@ class MtopApplicationController extends Controller
     private function calculateValidUntil($transactionDateStr, $plateNo, $eventId = null, $isFree = false)
     {
         $transactionDate = Carbon::parse($transactionDateStr);
-        $validUntil = $transactionDate->copy()->addYears(3); // Default Regular 3-year logic
+        $validUntil = $transactionDate->copy()->addYears(3);
 
-        // 1. Event Logic (Scenario A & B)
         if ($eventId) {
             $event = \App\Models\Event::find($eventId);
             if ($event) {
                 if ($isFree) {
-                    // Scenario A: Free Applicant (Strictly follows the event's fixed expiry)
                     return Carbon::parse($event->fixed_expiry_date);
                 } else {
-                    // Scenario B: Paying Applicant during Promo (Bonus Period)
                     $eventExpiry = Carbon::parse($event->fixed_expiry_date);
 
-                    // Find the first working day AFTER the event expires
                     $anchorDate = $eventExpiry->copy()->addDay();
                     while ($anchorDate->isWeekend()) {
                         $anchorDate->addDay();
                     }
 
-                    // The 3-year timer starts on that anchor date!
                     $validUntil = $anchorDate->copy()->addYears(3);
                 }
             }
         }
 
-        // 2. Apply Plate Number Month calculation
         if (!empty($plateNo) && $plateNo !== 'FOR REGISTRATION') {
             if (preg_match('/(\d)[^\d]*$/', $plateNo, $matches)) {
                 $digit = (int) $matches[1];
                 $targetMonth = $digit === 0 ? 10 : $digit;
                 $year = $validUntil->year;
 
-                // Keep the day consistent with the transaction, or max days in the target month
                 $day = $transactionDate->day;
                 $daysInMonth = Carbon::createFromDate($year, $targetMonth, 1)->daysInMonth;
                 $finalDay = min($day, $daysInMonth);
@@ -780,7 +764,6 @@ class MtopApplicationController extends Controller
             $newApp = DB::transaction(function () use ($oldApp, $validated, $request) {
                 $final_mt_number = $validated['mt_number'];
 
-                // Ensure the MT Number hasn't been taken by someone else
                 $exists = MtopFranchise::where('mt_number', $final_mt_number)
                     ->where('id', '!=', $oldApp->franchise_id)
                     ->exists();
@@ -789,11 +772,9 @@ class MtopApplicationController extends Controller
                     throw new \Exception("The Control Number {$final_mt_number} was just updated by another user. Please use a different number.");
                 }
 
-                // 1. Archive the Old Owner's Application
                 $oldApp->update(['status' => 'archived']);
                 $this->queueForSync('mtop_applications', $oldApp->fresh()->toArray());
 
-                // 2. Update the Franchise Ledger with the NEW Owner's Details
                 if ($oldApp->franchise_id) {
                     $franchise = MtopFranchise::where('id', $oldApp->franchise_id)->first();
                     $franchise->update([
@@ -818,13 +799,11 @@ class MtopApplicationController extends Controller
                     $this->queueForSync('mtop_franchises', $franchise->fresh()->toArray());
                 }
 
-                // 3. Create the Brand New Application Record for the New Owner
                 $applicationData = $validated;
                 $applicationData['mt_number'] = $final_mt_number;
                 $applicationData['status'] = 'active';
                 $applicationData['franchise_id'] = $oldApp->franchise_id;
 
-                // CRUCIAL: Mark this explicitly as a Transfer
                 $applicationData['transaction_type'] = 'Transfer';
 
                 $applicationData['processed_by'] = Auth::id();
