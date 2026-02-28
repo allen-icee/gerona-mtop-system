@@ -1,7 +1,6 @@
-//GeronaMTOP\resources\js\Pages\Mtop\Partials\TransactionHeader.tsx
 import InputGroup from "@/Components/InputGroup";
 import { Icon } from "@iconify/react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export default function TransactionHeader({
     data,
@@ -9,7 +8,7 @@ export default function TransactionHeader({
     errors,
     expiryDisplay,
     onKeyDown,
-    activeEvent, // --- NEW: Passed from Create/Edit/Renew ---
+    activeEvents, // Array of events passed from controller
 }: any) {
     let prefix = `${new Date().getFullYear()}-`;
     let sequence = "";
@@ -25,84 +24,186 @@ export default function TransactionHeader({
         }
     }
 
-    // --- NEW: Auto-fill OR fields when Promo is toggled ---
+    // Determine currently selected event details
+    const currentEvent =
+        activeEvents?.find((e: any) => e.id == data.event_id) ||
+        activeEvents?.[0];
+
+    // Local state to track "Regular" vs "Event" processing mode
+    const [processingMode, setProcessingMode] = useState<"regular" | "event">(
+        data.event_id ? "event" : "regular",
+    );
+
+    // Auto-select first event if shifting to 'event' mode and none is selected
     useEffect(() => {
-        if (data.is_free && !data.or_unlocked && activeEvent) {
+        if (
+            processingMode === "event" &&
+            activeEvents?.length > 0 &&
+            !data.event_id
+        ) {
+            setData("event_id", activeEvents[0].id);
+        }
+    }, [processingMode, activeEvents]);
+
+    // Effect: Handle auto-locking the OR fields when Promo is applied
+    useEffect(() => {
+        if (
+            processingMode === "event" &&
+            data.is_free &&
+            !data.or_unlocked &&
+            data.event_id
+        ) {
             setData((prev: any) => ({
                 ...prev,
-                event_id: activeEvent.id,
                 or_number: "WAIVED",
-                // Use transaction date for the OR date since it's waived on that day
                 or_date:
                     prev.transaction_date ||
                     new Date().toISOString().split("T")[0],
             }));
-        } else if (!data.is_free && !data.or_unlocked) {
+        } else if (processingMode === "regular") {
             setData((prev: any) => ({
                 ...prev,
                 event_id: null,
-                or_number: "",
-                or_date: "",
+                is_free: false,
+                or_unlocked: false,
+                or_number: prev.or_number === "WAIVED" ? "" : prev.or_number,
             }));
         }
-    }, [data.is_free, data.or_unlocked, activeEvent]);
+    }, [processingMode, data.is_free, data.or_unlocked, data.event_id]);
 
-    const handleTogglePromo = () => {
-        const isNowFree = !data.is_free;
+    const handleModeChange = (mode: "regular" | "event") => {
+        setProcessingMode(mode);
+        if (mode === "event") {
+            setData("is_free", true);
+            setData("or_unlocked", false);
+        }
+    };
+
+    const handleTogglePadlock = () => {
+        const isNowUnlocked = !data.or_unlocked;
         setData((prev: any) => ({
             ...prev,
-            is_free: isNowFree,
-            // Relock the OR fields if turning the promo ON
-            or_unlocked: isNowFree ? false : prev.or_unlocked,
+            or_unlocked: isNowUnlocked,
+            // If we are unlocking to pay, it is no longer free, but the event_id STAYS attached
+            is_free: !isNowUnlocked,
+            or_number:
+                isNowUnlocked && prev.or_number === "WAIVED"
+                    ? ""
+                    : prev.or_number,
         }));
     };
 
     return (
         <div className="space-y-6">
-            {/* --- NEW: EVENT BANNER --- */}
-            {activeEvent && (
-                <div className="bg-linear-to-r from-emerald-600 to-teal-600 text-white p-4 rounded-xl shadow-md border-2 border-emerald-400 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div>
-                        <h3 className="font-black text-lg uppercase tracking-wider text-yellow-300 flex items-center gap-2">
-                            <Icon
-                                icon="solar:star-fall-bold-duotone"
-                                width="24"
+            {/* --- EVENT BANNER & SELECTION --- */}
+            {activeEvents && activeEvents.length > 0 && (
+                <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-4 rounded-xl shadow-md border-2 border-emerald-400 gap-4">
+                    <div className="mb-4 flex gap-4 font-bold items-center border-b border-white/20 pb-4">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                                type="radio"
+                                name="processingMode"
+                                value="regular"
+                                checked={processingMode === "regular"}
+                                onChange={() => handleModeChange("regular")}
+                                className="w-4 h-4 text-yellow-400 focus:ring-yellow-400"
                             />
-                            {activeEvent.title}
-                        </h3>
-                        <p className="text-sm font-medium opacity-90">
-                            {activeEvent.description}. Expires:{" "}
-                            {new Date(
-                                activeEvent.fixed_expiry_date,
-                            ).toLocaleDateString("en-US", {
-                                year: "numeric",
-                                month: "long",
-                                day: "numeric",
-                            })}
-                        </p>
-                        <p className="text-xs italic opacity-75 mt-1">
-                            Mandated by: {activeEvent.mandated_by}
-                        </p>
+                            Regular Processing
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                                type="radio"
+                                name="processingMode"
+                                value="event"
+                                checked={processingMode === "event"}
+                                onChange={() => handleModeChange("event")}
+                                className="w-4 h-4 text-yellow-400 focus:ring-yellow-400"
+                            />
+                            Apply Event / Promo
+                        </label>
                     </div>
 
-                    <div className="flex items-center gap-3 bg-white/10 p-2 rounded-lg w-full sm:w-auto shrink-0 border border-white/20">
-                        <span className="font-bold text-sm">Apply Event?</span>
-                        <button
-                            type="button"
-                            onClick={handleTogglePromo}
-                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                                data.is_free ? "bg-yellow-400" : "bg-gray-400"
-                            }`}
-                        >
-                            <span
-                                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                                    data.is_free
-                                        ? "translate-x-5"
-                                        : "translate-x-0"
-                                }`}
-                            />
-                        </button>
-                    </div>
+                    {processingMode === "event" && (
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                            <div className="flex-1 w-full">
+                                {activeEvents.length > 1 ? (
+                                    <select
+                                        className="w-full bg-white/10 border border-white/30 text-white rounded-lg p-2 font-bold focus:ring-yellow-400 focus:border-yellow-400"
+                                        value={data.event_id || ""}
+                                        onChange={(e) =>
+                                            setData("event_id", e.target.value)
+                                        }
+                                    >
+                                        {activeEvents.map((ev: any) => (
+                                            <option
+                                                key={ev.id}
+                                                value={ev.id}
+                                                className="text-black"
+                                            >
+                                                {ev.title}
+                                            </option>
+                                        ))}
+                                    </select>
+                                ) : (
+                                    <h3 className="font-black text-lg uppercase tracking-wider text-yellow-300 flex items-center gap-2">
+                                        <Icon
+                                            icon="solar:star-fall-bold-duotone"
+                                            width="24"
+                                        />
+                                        {currentEvent?.title}
+                                    </h3>
+                                )}
+
+                                <p className="text-sm font-medium opacity-90 mt-1">
+                                    {currentEvent?.description}. Event Expiry:{" "}
+                                    {currentEvent &&
+                                        new Date(
+                                            currentEvent.fixed_expiry_date,
+                                        ).toLocaleDateString("en-US", {
+                                            year: "numeric",
+                                            month: "long",
+                                            day: "numeric",
+                                        })}
+                                </p>
+                                <p className="text-xs italic opacity-75 mt-1">
+                                    Mandated by: {currentEvent?.mandated_by}
+                                </p>
+                            </div>
+
+                            {/* THE PADLOCK OVERRIDE UI */}
+                            <div className="flex items-center gap-2 bg-white/10 px-3 py-2 rounded-lg border border-white/20">
+                                <span className="font-bold text-sm">
+                                    {data.is_free
+                                        ? "Status: Free"
+                                        : "Status: Paid (Bonus Mode)"}
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={handleTogglePadlock}
+                                    className="p-1 rounded-full hover:bg-white/20 transition"
+                                    title={
+                                        data.is_free
+                                            ? "Unlock to allow manual payment input"
+                                            : "Lock to set as WAIVED"
+                                    }
+                                >
+                                    <Icon
+                                        icon={
+                                            data.is_free
+                                                ? "solar:lock-password-bold"
+                                                : "solar:lock-unlocked-bold"
+                                        }
+                                        width="24"
+                                        className={
+                                            data.is_free
+                                                ? "text-yellow-400"
+                                                : "text-white"
+                                        }
+                                    />
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -125,19 +226,14 @@ export default function TransactionHeader({
                                 {prefix}
                             </div>
                         )}
-
                         <input
                             type="text"
                             name="mt_number"
-                            id="mt_number"
                             value={sequence}
                             onChange={(e) => {
                                 let val = e.target.value.replace(/[^0-9]/g, "");
-
-                                if (prefix && val.length > 4) {
+                                if (prefix && val.length > 4)
                                     val = val.substring(0, 4);
-                                }
-
                                 setData("mt_number", `${prefix}${val}`);
                             }}
                             placeholder="0001"
@@ -145,11 +241,6 @@ export default function TransactionHeader({
                             onKeyDown={onKeyDown}
                         />
                     </div>
-                    {errors?.mt_number && (
-                        <p className="text-sm text-red-600 mt-1">
-                            {errors.mt_number}
-                        </p>
-                    )}
                 </div>
 
                 <InputGroup
@@ -157,13 +248,11 @@ export default function TransactionHeader({
                     label="Transaction Date"
                     name="transaction_date"
                     type="date"
-                    max="9999-12-31"
                     value={data.transaction_date}
                     onChange={(e: any) =>
                         setData("transaction_date", e.target.value)
                     }
                     icon="solar:calendar-bold"
-                    error={errors?.transaction_date}
                     onKeyDown={onKeyDown}
                 />
 
@@ -171,7 +260,7 @@ export default function TransactionHeader({
                     <label className="block font-medium text-sm text-gray-700 mb-1">
                         Validity{" "}
                         <span className="text-gray-400 font-normal text-xs">
-                            (Auto-calculated LTO)
+                            (Auto-calculated)
                         </span>
                     </label>
                     <div className="relative h-11.75">
@@ -183,9 +272,10 @@ export default function TransactionHeader({
                             disabled
                             className="block w-full h-full pl-10 py-2 border-gray-300 bg-gray-50 text-gray-500 font-bold rounded-md shadow-sm text-sm"
                             value={
-                                /* NEW: Override logic if promo is active */
-                                data.is_free && activeEvent
-                                    ? new Date(activeEvent.fixed_expiry_date)
+                                data.is_free &&
+                                processingMode === "event" &&
+                                currentEvent
+                                    ? new Date(currentEvent.fixed_expiry_date)
                                           .toLocaleDateString("en-US", {
                                               year: "numeric",
                                               month: "long",

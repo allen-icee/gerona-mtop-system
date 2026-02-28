@@ -31,15 +31,16 @@ class MtopApplicationController extends Controller
             return ['name' => $s->name, 'position' => $s->position];
         });
 
-        $activeEvent = \App\Models\Event::where('is_active', true)
+        $activeEvents = \App\Models\Event::where('is_active', true)
             ->whereDate('start_date', '<=', now())
             ->whereDate('end_date', '>=', now())
-            ->first();
+            ->get();
 
         return Inertia::render('Mtop/Index', [
             'applications' => $applications,
             'filters' => $filters,
             'officials' => $officials,
+            'activeEvents' => $activeEvents
         ]);
     }
 
@@ -68,16 +69,16 @@ class MtopApplicationController extends Controller
             ->selectRaw("CONCAT(name, ' | ', position) as formatted_name")
             ->pluck('formatted_name');
 
-        $activeEvent = \App\Models\Event::where('is_active', true)
+        $activeEvents = \App\Models\Event::where('is_active', true)
             ->whereDate('start_date', '<=', now())
             ->whereDate('end_date', '>=', now())
-            ->first();
+            ->get();
 
         return Inertia::render('Mtop/Create', [
             'suggested_mt_number' => $suggested_mt_number,
             'punong_bayans' => $punong_bayans,
             'officials' => $officials,
-            'activeEvent' => $activeEvent
+            'activeEvents' => $activeEvents
         ]);
     }
 
@@ -119,7 +120,12 @@ class MtopApplicationController extends Controller
 
                 $applicationData = $validated;
                 $applicationData['mt_number'] = $final_mt_number;
-                $applicationData['valid_until'] = $this->calculateValidUntil($request->transaction_date, $validated['plate_no'] ?? null);
+                $applicationData['valid_until'] = $this->calculateValidUntil(
+                    $request->transaction_date,
+                    $validated['plate_no'] ?? null,
+                    $validated['event_id'] ?? null,
+                    filter_var($validated['is_free'] ?? false, FILTER_VALIDATE_BOOLEAN)
+                );
                 $applicationData['status'] = 'active';
                 $applicationData['franchise_id'] = $franchise->id;
                 $applicationData['transaction_type'] = 'New';
@@ -128,8 +134,12 @@ class MtopApplicationController extends Controller
                 $applicationData['event_id'] = $validated['event_id'] ?? null;
 
                 // Note the 3rd parameter added here!
-                $applicationData['valid_until'] = $this->calculateValidUntil($request->transaction_date, $validated['plate_no'] ?? null, $validated['event_id'] ?? null);
-
+                $applicationData['valid_until'] = $this->calculateValidUntil(
+                    $request->transaction_date,
+                    $validated['plate_no'] ?? null,
+                    $validated['event_id'] ?? null,
+                    filter_var($validated['is_free'] ?? false, FILTER_VALIDATE_BOOLEAN)
+                );
                 $application = MtopApplication::create($applicationData);
 
                 $this->queueForSync('mtop_franchises', $franchise->toArray());
@@ -166,16 +176,16 @@ class MtopApplicationController extends Controller
             ->selectRaw("CONCAT(name, ' | ', position) as formatted_name")
             ->pluck('formatted_name');
 
-        $activeEvent = \App\Models\Event::where('is_active', true)
+        $activeEvents = \App\Models\Event::where('is_active', true)
             ->whereDate('start_date', '<=', now())
             ->whereDate('end_date', '>=', now())
-            ->first();
+            ->get();
 
         return Inertia::render('Mtop/Edit', [
             'application' => $application,
             'punong_bayans' => $punong_bayans,
             'officials' => $officials,
-            'activeEvent' => $activeEvent
+            'activeEvents' => $activeEvents
         ]);
     }
 
@@ -418,16 +428,16 @@ class MtopApplicationController extends Controller
             ->selectRaw("CONCAT(name, ' | ', position) as formatted_name")
             ->pluck('formatted_name');
 
-        $activeEvent = \App\Models\Event::where('is_active', true)
+        $activeEvents = \App\Models\Event::where('is_active', true)
             ->whereDate('start_date', '<=', now())
             ->whereDate('end_date', '>=', now())
-            ->first();
+            ->get();
 
         return Inertia::render('Mtop/Renew', [
             'application' => $application,
             'punong_bayans' => $punong_bayans,
             'officials' => $officials,
-            'activeEvent' => $activeEvent
+            'activeEvents' => $activeEvents
         ]);
     }
 
@@ -484,7 +494,12 @@ class MtopApplicationController extends Controller
 
                 $applicationData = $validated;
                 $applicationData['mt_number'] = $final_mt_number;
-                $applicationData['valid_until'] = $this->calculateValidUntil($request->transaction_date, $validated['plate_no'] ?? null, $validated['event_id'] ?? null);
+                $applicationData['valid_until'] = $this->calculateValidUntil(
+                    $request->transaction_date,
+                    $validated['plate_no'] ?? null,
+                    $validated['event_id'] ?? null,
+                    filter_var($validated['is_free'] ?? false, FILTER_VALIDATE_BOOLEAN)
+                );
                 $applicationData['status'] = 'active';
                 $applicationData['franchise_id'] = $oldApp->franchise_id;
                 $applicationData['transaction_type'] = 'Renewal';
@@ -516,34 +531,42 @@ class MtopApplicationController extends Controller
         ]);
     }
 
-    private function calculateValidUntil($transactionDateStr, $plateNo, $eventId = null)
+    private function calculateValidUntil($transactionDateStr, $plateNo, $eventId = null, $isFree = false)
     {
-        // 1. If tied to a FREE event, strictly use the event's expiry date
+        $transactionDate = Carbon::parse($transactionDateStr);
+        $validUntil = $transactionDate->copy()->addYears(3); // Default Regular 3-year logic
+
+        // 1. Event Logic (Scenario A & B)
         if ($eventId) {
             $event = \App\Models\Event::find($eventId);
             if ($event) {
-                return Carbon::parse($event->fixed_expiry_date);
+                if ($isFree) {
+                    // Scenario A: Free Applicant (Strictly follows the event's fixed expiry)
+                    return Carbon::parse($event->fixed_expiry_date);
+                } else {
+                    // Scenario B: Paying Applicant during Promo (Bonus Period)
+                    $eventExpiry = Carbon::parse($event->fixed_expiry_date);
+
+                    // Find the first working day AFTER the event expires
+                    $anchorDate = $eventExpiry->copy()->addDay();
+                    while ($anchorDate->isWeekend()) {
+                        $anchorDate->addDay();
+                    }
+
+                    // The 3-year timer starts on that anchor date!
+                    $validUntil = $anchorDate->copy()->addYears(3);
+                }
             }
         }
 
-        $transactionDate = Carbon::parse($transactionDateStr);
-
-        // 2. THE JAN 4, 2027 PAID BUMP LOGIC
-        if ($transactionDate->year === 2026) {
-            $baseDate = Carbon::createFromDate(2027, 1, 4);
-            $validUntil = $baseDate->copy()->addYears(3); // Result: 2030
-        } else {
-            // Normal Logic for future years
-            $validUntil = $transactionDate->copy()->addYears(3);
-        }
-
-        // 3. Apply Plate Number Month calculation
+        // 2. Apply Plate Number Month calculation
         if (!empty($plateNo) && $plateNo !== 'FOR REGISTRATION') {
             if (preg_match('/(\d)[^\d]*$/', $plateNo, $matches)) {
                 $digit = (int) $matches[1];
                 $targetMonth = $digit === 0 ? 10 : $digit;
                 $year = $validUntil->year;
 
+                // Keep the day consistent with the transaction, or max days in the target month
                 $day = $transactionDate->day;
                 $daysInMonth = Carbon::createFromDate($year, $targetMonth, 1)->daysInMonth;
                 $finalDay = min($day, $daysInMonth);
