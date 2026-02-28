@@ -1,4 +1,3 @@
-//GeronaMTOP\resources\js\Pages\Mtop\Index.tsx
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, Link, router, usePage } from "@inertiajs/react";
 import { Icon } from "@iconify/react";
@@ -48,7 +47,7 @@ interface Props {
         renewal?: string;
     };
     officials: { name: string; position: string }[];
-    activeEvents: any[]; // <-- Add this line
+    activeEvents: any[];
 }
 
 export default function Index({
@@ -57,7 +56,6 @@ export default function Index({
     officials,
     activeEvents,
 }: Props) {
-    // <-- Add activeEvents here
     const user = usePage().props.auth.user;
 
     const [search, setSearch] = useState(filters.search || "");
@@ -313,10 +311,7 @@ export default function Index({
                                     <th className="px-6 py-4 text-center">
                                         Status
                                     </th>
-                                    <th className="px-6 py-4 text-center">
-                                        Details
-                                    </th>
-                                    <th className="px-6 py-4 text-center">
+                                    <th className="px-6 py-4 text-center min-w-55">
                                         Actions
                                     </th>
                                 </tr>
@@ -325,7 +320,7 @@ export default function Index({
                                 {applications.data.length === 0 ? (
                                     <tr>
                                         <td
-                                            colSpan={7}
+                                            colSpan={6}
                                             className="px-6 py-8 text-center text-gray-400"
                                         >
                                             No records found.
@@ -434,48 +429,66 @@ export default function Index({
                                                         {displayStatus}
                                                     </span>
                                                 </td>
+
+                                                {/* --- DESKTOP ICON-ONLY ACTIONS --- */}
                                                 <td className="px-6 py-4 text-center">
-                                                    <button
-                                                        onClick={() =>
-                                                            setViewingApp(app)
-                                                        }
-                                                        className="inline-flex hover:cursor-pointer items-center justify-center gap-2 font-bold text-sm tracking-wider text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-3 py-1.5 rounded-md hover:bg-indigo-100 transition-colors"
-                                                    >
-                                                        <Icon
-                                                            icon="solar:eye-bold"
-                                                            width="18"
-                                                        />{" "}
-                                                        View
-                                                    </button>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <div className="flex items-center justify-center gap-2">
+                                                    <div className="flex items-center justify-center gap-1.5">
+                                                        <button
+                                                            onClick={() =>
+                                                                setViewingApp(
+                                                                    app,
+                                                                )
+                                                            }
+                                                            title="View Details"
+                                                            className="p-2 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 hover:text-indigo-800 rounded-md transition-colors shadow-sm"
+                                                        >
+                                                            <Icon
+                                                                icon="solar:eye-bold"
+                                                                width="18"
+                                                            />
+                                                        </button>
+
                                                         <a
                                                             href={route(
                                                                 "mtop.print",
                                                                 app.id,
                                                             )}
                                                             target="_blank"
-                                                            className="inline-flex items-center gap-1.5 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 px-3 py-1.5 rounded-md font-bold text-sm transition-colors"
+                                                            title="Print Permit"
+                                                            className="p-2 text-green-600 bg-green-50 hover:bg-green-100 hover:text-green-800 rounded-md transition-colors shadow-sm"
                                                         >
                                                             <Icon
                                                                 icon="solar:printer-bold"
                                                                 width="18"
-                                                            />{" "}
-                                                            Print
+                                                            />
                                                         </a>
+
                                                         <Link
                                                             href={route(
                                                                 "mtop.edit",
                                                                 app.id,
                                                             )}
-                                                            className="inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800 hover:cursor-pointer px-3 py-1.5 rounded-md font-bold text-sm transition-colors"
+                                                            title="Edit Record"
+                                                            className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 hover:text-blue-800 rounded-md transition-colors shadow-sm"
                                                         >
                                                             <Icon
                                                                 icon="solar:pen-new-square-bold"
                                                                 width="18"
-                                                            />{" "}
-                                                            Edit
+                                                            />
+                                                        </Link>
+
+                                                        <Link
+                                                            href={route(
+                                                                "mtop.transfer",
+                                                                app.id,
+                                                            )}
+                                                            title="Transfer Ownership"
+                                                            className="p-2 text-purple-600 bg-purple-50 hover:bg-purple-100 hover:text-purple-800 rounded-md transition-colors shadow-sm"
+                                                        >
+                                                            <Icon
+                                                                icon="solar:users-group-two-rounded-bold"
+                                                                width="18"
+                                                            />
                                                         </Link>
 
                                                         {canRenew && (
@@ -484,13 +497,13 @@ export default function Index({
                                                                     "mtop.renew",
                                                                     app.id,
                                                                 )}
-                                                                className="inline-flex items-center gap-1.5 bg-yellow-50 text-yellow-700 hover:bg-yellow-100 hover:text-yellow-800 px-3 py-1.5 rounded-md font-bold text-sm transition-colors"
+                                                                title="Renew Franchise"
+                                                                className="p-2 text-yellow-600 bg-yellow-50 hover:bg-yellow-100 hover:text-yellow-800 rounded-md transition-colors shadow-sm"
                                                             >
                                                                 <Icon
                                                                     icon="solar:restart-square-bold"
                                                                     width="18"
-                                                                />{" "}
-                                                                Renew
+                                                                />
                                                             </Link>
                                                         )}
 
@@ -502,7 +515,8 @@ export default function Index({
                                                                         app.id,
                                                                     )
                                                                 }
-                                                                className="inline-flex items-center hover:cursor-pointer justify-center bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 p-1.5 rounded-md transition-colors"
+                                                                title="Delete Record"
+                                                                className="p-2 text-red-600 bg-red-50 hover:bg-red-100 hover:text-red-800 rounded-md transition-colors shadow-sm"
                                                             >
                                                                 <Icon
                                                                     icon="solar:trash-bin-trash-bold"
@@ -640,6 +654,7 @@ export default function Index({
                                             </p>
                                         </div>
 
+                                        {/* --- MOBILE ICON-ONLY ACTIONS --- */}
                                         <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-gray-100">
                                             <a
                                                 href={route(
@@ -647,26 +662,41 @@ export default function Index({
                                                     app.id,
                                                 )}
                                                 target="_blank"
-                                                className="flex-1 flex justify-center items-center gap-1.5 bg-green-50 text-green-700 py-2.5 rounded-lg font-bold text-sm hover:bg-green-100 transition-colors"
+                                                title="Print"
+                                                className="flex-1 flex justify-center items-center bg-green-50 text-green-700 py-2.5 rounded-lg hover:bg-green-100 transition-colors"
                                             >
                                                 <Icon
                                                     icon="solar:printer-bold"
-                                                    width="16"
-                                                />{" "}
-                                                Print
+                                                    width="20"
+                                                />
                                             </a>
+
                                             <Link
                                                 href={route(
                                                     "mtop.edit",
                                                     app.id,
                                                 )}
-                                                className="flex-1 flex justify-center items-center gap-1.5 bg-blue-50 text-blue-700 py-2.5 rounded-lg font-bold text-sm hover:bg-blue-100 transition-colors"
+                                                title="Edit"
+                                                className="flex-1 flex justify-center items-center bg-blue-50 text-blue-700 py-2.5 rounded-lg hover:bg-blue-100 transition-colors"
                                             >
                                                 <Icon
                                                     icon="solar:pen-new-square-bold"
-                                                    width="16"
-                                                />{" "}
-                                                Edit
+                                                    width="20"
+                                                />
+                                            </Link>
+
+                                            <Link
+                                                href={route(
+                                                    "mtop.transfer",
+                                                    app.id,
+                                                )}
+                                                title="Transfer"
+                                                className="flex-1 flex justify-center items-center bg-purple-50 text-purple-700 py-2.5 rounded-lg hover:bg-purple-100 transition-colors"
+                                            >
+                                                <Icon
+                                                    icon="solar:users-group-two-rounded-bold"
+                                                    width="20"
+                                                />
                                             </Link>
 
                                             {canRenew && (
@@ -675,13 +705,13 @@ export default function Index({
                                                         "mtop.renew",
                                                         app.id,
                                                     )}
-                                                    className="flex-1 flex justify-center items-center gap-1.5 bg-yellow-50 text-yellow-700 py-2.5 rounded-lg font-bold text-sm hover:bg-yellow-100 transition-colors"
+                                                    title="Renew"
+                                                    className="flex-1 flex justify-center items-center bg-yellow-50 text-yellow-700 py-2.5 rounded-lg hover:bg-yellow-100 transition-colors"
                                                 >
                                                     <Icon
-                                                        icon="solar:restart-bold"
-                                                        width="16"
-                                                    />{" "}
-                                                    Renew
+                                                        icon="solar:restart-square-bold"
+                                                        width="20"
+                                                    />
                                                 </Link>
                                             )}
 
@@ -690,11 +720,12 @@ export default function Index({
                                                     onClick={() =>
                                                         confirmDelete(app.id)
                                                     }
-                                                    className="px-3 py-2.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
+                                                    title="Delete"
+                                                    className="flex-1 flex justify-center items-center bg-red-50 text-red-600 py-2.5 rounded-lg hover:bg-red-100 transition-colors"
                                                 >
                                                     <Icon
                                                         icon="solar:trash-bin-trash-bold"
-                                                        width="18"
+                                                        width="20"
                                                     />
                                                 </button>
                                             )}
@@ -710,6 +741,8 @@ export default function Index({
                     </div>
                 </div>
             </div>
+
+            {/* FLOATING ACTION BAR FOR BULK ACTIONS */}
             <div
                 className={`fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50 transition-all duration-300 ease-out ${
                     selectedIds.length > 0
@@ -756,6 +789,7 @@ export default function Index({
                 officials={officials}
             />
 
+            {/* PREVIEW MODAL */}
             <Modal
                 show={!!viewingApp}
                 onClose={() => setViewingApp(null)}
@@ -782,7 +816,7 @@ export default function Index({
                             <PermitPreview
                                 data={viewingApp}
                                 showHeader={false}
-                                activeEvents={activeEvents} // <-- Pass it here
+                                activeEvents={activeEvents}
                             />
                         </div>
                         <div className="bg-white border-t px-6 py-4 flex justify-end gap-3 shrink-0 sm:rounded-b-lg pb-safe">

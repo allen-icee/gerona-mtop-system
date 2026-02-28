@@ -42,6 +42,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/mtop/{id}/renew', [MtopApplicationController::class, 'renew'])->name('mtop.renew');
     Route::post('/mtop/{id}/renew', [MtopApplicationController::class, 'storeRenewal'])->name('mtop.store_renewal');
 
+    Route::get('/mtop/{id}/transfer', [MtopApplicationController::class, 'transfer'])->name('mtop.transfer');
+    Route::post('/mtop/{id}/transfer', [MtopApplicationController::class, 'storeTransfer'])->name('mtop.store_transfer');
+
     Route::get('/mtop/{id}/edit', [MtopApplicationController::class, 'edit'])->name('mtop.edit');
     Route::put('/mtop/{id}', [MtopApplicationController::class, 'update'])->name('mtop.update');
     Route::get('/mtop/{id}/print', [MtopApplicationController::class, 'print'])->name('mtop.print');

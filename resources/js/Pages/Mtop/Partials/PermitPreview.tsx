@@ -102,6 +102,12 @@ const generatePayload = (data: any, activeEvents?: any[]) => {
         : "";
 
     let orNumberDisplay = val(data.or_number);
+    let controlNumberDisplay = val(data.mt_number);
+
+    // If it's a transfer, append the label so staff see it on the preview
+    if (data.transaction_type === "Transfer") {
+        controlNumberDisplay += ` <span style="color: #9333ea; font-size: 10pt; font-weight: bold;">(TRANSFER)</span>`;
+    }
 
     // Auto-inject the formal Mandate into the Receipt field
     if (data.is_free && orNumberDisplay === "WAIVED" && data.event_id) {
@@ -115,7 +121,7 @@ const generatePayload = (data: any, activeEvents?: any[]) => {
 
     return {
         name: val(formatName(data)),
-        mt_number: val(data.mt_number),
+        mt_number: controlNumberDisplay,
         date: formatDate(data.transaction_date),
         address: val(data.address).replace(
             /(,\s*GERONA,\s*TARLAC|\s*GERONA,\s*TARLAC)/i,

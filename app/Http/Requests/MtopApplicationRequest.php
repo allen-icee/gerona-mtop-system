@@ -1,20 +1,20 @@
 <?php
-//app/Http/Requests/MtopApplicationRequest.php
+
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use App\Models\MtopApplication;
+use Illuminate\Http\Request;
 
 class MtopApplicationRequest extends FormRequest
 {
-
     public function authorize(): bool
     {
         return true;
     }
 
-    public function rules(): array
+    public function rules(Request $request): array
     {
         $franchiseId = null;
 
@@ -31,15 +31,6 @@ class MtopApplicationRequest extends FormRequest
             'address' => 'required|string|max:100',
             'contact_number' => ['nullable', 'regex:/^(09|\+639)\d{9}$/'],
             'transaction_date' => 'required|date',
-            'plate_no' => [
-                'required',
-                'string',
-                function ($attribute, $value, $fail) {
-                    if (strtoupper($value) !== 'FOR REGISTRATION' && strlen($value) > 8) {
-                        $fail('The Plate Number must not exceed 8 characters unless it is "FOR REGISTRATION".');
-                    }
-                }
-            ],
             'make_type' => 'required|string|max:30',
             'engine_motor_no' => 'required|string|max:30',
             'chassis_no' => 'required|string|max:30',
@@ -56,14 +47,51 @@ class MtopApplicationRequest extends FormRequest
             'paid_by_suffix' => ['nullable', 'string', 'max:10', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
             'is_free' => 'boolean',
             'event_id' => 'nullable|exists:events,id',
+
+            // Basic plate_no rules. The uniqueness check is handled dynamically below.
+            'plate_no' => [
+                'required',
+                'string',
+                function ($attribute, $value, $fail) {
+                    if (strtoupper($value) !== 'FOR REGISTRATION' && strlen($value) > 8) {
+                        $fail('The Plate Number must not exceed 8 characters unless it is "FOR REGISTRATION".');
+                    }
+                }
+            ],
         ];
 
+        // Ensure mt_number is totally unique across franchises
         if ($this->route('id')) {
             $rules['mt_number'] = ['required', 'string', 'max:20', Rule::unique('mtop_franchises', 'mt_number')->ignore($franchiseId)];
-            $rules['body_number'] = ['nullable', 'regex:/^[0-9]+$/', Rule::unique('mtop_franchises', 'body_number')->ignore($franchiseId)];
         } else {
-            $rules['mt_number'] = ['required', 'string', 'max:20'];
-            $rules['body_number'] = ['nullable', 'regex:/^[0-9]+$/', 'unique:mtop_franchises,body_number'];
+            $rules['mt_number'] = ['required', 'string', 'max:20']; // We handle uniqueness via while() loop in Controller for Create
+        }
+
+        // --- THE REAL-WORLD CONCURRENCY CHECKS --- //
+
+        // 1. Body Number Check: Must be unique ONLY among 'active' franchises
+        $bodyNumberRule = Rule::unique('mtop_franchises', 'body_number')->where(function ($query) {
+            return $query->where('status', 'active');
+        });
+
+        if ($franchiseId) {
+            $bodyNumberRule->ignore($franchiseId);
+        }
+
+        $rules['body_number'] = ['nullable', 'regex:/^[0-9]+$/', $bodyNumberRule];
+
+
+        // 2. Plate Number Check: Must be unique ONLY among 'active' franchises, ignoring "FOR REGISTRATION"
+        if (strtoupper($request->input('plate_no')) !== 'FOR REGISTRATION') {
+            $plateRule = Rule::unique('mtop_franchises', 'plate_no')->where(function ($query) {
+                return $query->where('status', 'active');
+            });
+
+            if ($franchiseId) {
+                $plateRule->ignore($franchiseId);
+            }
+
+            $rules['plate_no'][] = $plateRule;
         }
 
         return $rules;
@@ -72,7 +100,8 @@ class MtopApplicationRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'body_number.unique' => 'This Body Number is already assigned to another operator!'
+            'body_number.unique' => 'This Body Number is currently active and assigned to another operator.',
+            'plate_no.unique' => 'This Plate Number is already registered to an active franchise.'
         ];
     }
 }
