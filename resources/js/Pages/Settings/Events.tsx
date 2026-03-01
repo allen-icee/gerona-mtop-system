@@ -128,8 +128,8 @@ export default function Events({ events }: { events: any[] }) {
                                     Events & Promos
                                 </h2>
                                 <p className="text-xs text-gray-500 font-medium mt-0.5 hidden sm:block">
-                                    Manage amnesties, free registration promos,
-                                    and forced expiration dates.
+                                    Manage free registration promos, and MTOP
+                                    events.
                                 </p>
                             </div>
                         </div>
@@ -401,7 +401,7 @@ export default function Events({ events }: { events: any[] }) {
                                     setData("title", e.target.value)
                                 }
                                 error={errors.title}
-                                placeholder="e.g. 2026 General Amnesty"
+                                placeholder="e.g. General Promo"
                                 required
                             />
 
