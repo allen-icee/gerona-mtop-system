@@ -30,9 +30,11 @@ export default function InputGroup({
         <div className={className}>
             <InputLabel
                 htmlFor={id}
-                value={label}
                 className="mb-1 font-semibold text-gray-700"
-            />
+            >
+                {label}
+                {props.required && <span className="text-red-500 ml-1">*</span>}
+            </InputLabel>
             <div className="relative">
                 {icon && (
                     <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-gray-400 z-10">

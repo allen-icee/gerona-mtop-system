@@ -157,6 +157,7 @@ export default function ApplicantForm({
                                     error={errors.paid_by_last_name}
                                     placeholder="DEQUIROS"
                                     onKeyDown={onKeyDown}
+                                    required
                                 />
                             </div>
 
@@ -175,6 +176,7 @@ export default function ApplicantForm({
                                     error={errors.paid_by_first_name}
                                     placeholder="ALLEN ICEE"
                                     onKeyDown={onKeyDown}
+                                    required
                                 />
                             </div>
 

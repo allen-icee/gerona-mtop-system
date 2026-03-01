@@ -223,7 +223,7 @@ export default function TransactionHeader({
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 <div>
                     <label className="block font-medium text-sm text-gray-700 mb-1">
-                        Control No.
+                        Control No. <span className="text-red-500">*</span>
                     </label>
                     <div
                         className={`relative flex items-center h-11.75 border-none rounded-md shadow-sm bg-white overflow-hidden focus-within:ring-1 focus-within:ring-blue-500 focus-within:border-blue-500 transition-colors ${errors?.mt_number ? "border-red-500" : "border-gray-300"}`}
@@ -267,6 +267,7 @@ export default function TransactionHeader({
                     icon="solar:calendar-bold"
                     className=""
                     onKeyDown={onKeyDown}
+                    required
                 />
 
                 <div className="sm:col-span-2 lg:col-span-1">
