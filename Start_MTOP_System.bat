@@ -1,10 +1,11 @@
 @echo off
-title MTOP Live Development Server
+title MTOP Live Server
 color 1F
 
 echo =====================================================
-echo    STARTING GERONA MTOP (LIVE DEV MODE)...
-echo    Do not close this window while coding/running.
+echo    STARTING GERONA MTOP SYSTEM...
+echo    Do not close this window while running.
+echo    Have patience with the white blank screen.
 echo =====================================================
 echo.
 
