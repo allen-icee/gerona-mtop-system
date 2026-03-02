@@ -549,16 +549,18 @@ class MtopApplicationController extends Controller
         $transactionDate = Carbon::parse($transactionDateStr);
         $validUntil = $transactionDate->copy()->addYears(3);
 
+        $holidays = \App\Models\Holiday::where('is_active', true)->get();
+
         if ($eventId) {
             $event = \App\Models\Event::find($eventId);
             if ($event) {
                 if ($isFree) {
-                    return Carbon::parse($event->fixed_expiry_date);
+
+                    $validUntil = Carbon::parse($event->fixed_expiry_date);
                 } else {
+
                     $eventExpiry = Carbon::parse($event->fixed_expiry_date);
                     $anchorDate = $eventExpiry->copy()->addDay();
-
-                    $holidays = \App\Models\Holiday::where('is_active', true)->get();
 
                     $isInvalidDay = true;
                     while ($isInvalidDay) {
@@ -579,7 +581,7 @@ class MtopApplicationController extends Controller
             }
         }
 
-        if (!empty($plateNo) && $plateNo !== 'FOR REGISTRATION') {
+        if (!$isFree && !empty($plateNo) && $plateNo !== 'FOR REGISTRATION') {
             if (preg_match('/(\d)[^\d]*$/', $plateNo, $matches)) {
                 $digit = (int) $matches[1];
                 $targetMonth = $digit === 0 ? 10 : $digit;
@@ -590,6 +592,20 @@ class MtopApplicationController extends Controller
                 $finalDay = min($day, $daysInMonth);
 
                 $validUntil = Carbon::createFromDate($year, $targetMonth, $finalDay);
+            }
+        }
+
+        $isInvalidDay = true;
+        while ($isInvalidDay) {
+            $isWeekend = $validUntil->isWeekend();
+            $isHoliday = $holidays->contains(function ($holiday) use ($validUntil) {
+                return $holiday->month == $validUntil->month && $holiday->day == $validUntil->day;
+            });
+
+            if ($isWeekend || $isHoliday) {
+                $validUntil->addDay();
+            } else {
+                $isInvalidDay = false;
             }
         }
 

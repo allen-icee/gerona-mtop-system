@@ -1,4 +1,3 @@
-//GeronaMTOP\resources\js\Pages\Mtop\Partials\TransactionHeader.tsx
 import InputGroup from "@/Components/InputGroup";
 import { Icon } from "@iconify/react";
 import { useEffect, useState } from "react";
@@ -281,24 +280,15 @@ export default function TransactionHeader({
                         <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
                             <Icon icon="solar:clock-circle-bold" width="20" />
                         </div>
+                        {/* FIX IS HERE: We now call expiryDisplay() for everything so the foolproof logic applies! */}
                         <input
                             type="text"
                             disabled
                             className="block w-full h-full pl-10 py-2 hover:cursor-not-allowed border-gray-300 bg-gray-50 text-gray-500 font-bold rounded-md shadow-sm text-sm"
                             value={
-                                data.is_free &&
-                                processingMode === "event" &&
-                                currentEvent
-                                    ? new Date(currentEvent.fixed_expiry_date)
-                                          .toLocaleDateString("en-US", {
-                                              year: "numeric",
-                                              month: "long",
-                                              day: "numeric",
-                                          })
-                                          .toUpperCase()
-                                    : typeof expiryDisplay === "function"
-                                      ? expiryDisplay()
-                                      : "N/A"
+                                typeof expiryDisplay === "function"
+                                    ? expiryDisplay()
+                                    : "N/A"
                             }
                         />
                     </div>

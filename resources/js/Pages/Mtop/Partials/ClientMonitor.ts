@@ -33,23 +33,36 @@ export const formatExpiry = (
         activeEvents?.find((e: any) => e.id == data.event_id) ||
         activeEvents?.[0];
 
+    const holidayList = (holidays || []).map((h) => {
+        const m = String(h.month).padStart(2, "0");
+        const d = String(h.day).padStart(2, "0");
+        return `${m}-${d}`;
+    });
+
     if (data.event_id && currentEvent) {
         if (data.is_free) {
-            return new Date(currentEvent.fixed_expiry_date + "T00:00:00")
-                .toLocaleDateString("en-US", {
-                    month: "long",
-                    day: "numeric",
-                    year: "numeric",
-                })
-                .toUpperCase();
+            validUntil = new Date(currentEvent.fixed_expiry_date + "T00:00:00");
         } else {
             let anchorDate = new Date(
                 currentEvent.fixed_expiry_date + "T00:00:00",
             );
             anchorDate.setDate(anchorDate.getDate() + 1);
 
-            while (anchorDate.getDay() === 0 || anchorDate.getDay() === 6) {
-                anchorDate.setDate(anchorDate.getDate() + 1);
+            while (true) {
+                const dayOfWeek = anchorDate.getDay();
+                const m = String(anchorDate.getMonth() + 1).padStart(2, "0");
+                const d = String(anchorDate.getDate()).padStart(2, "0");
+                const mmdd = `${m}-${d}`;
+
+                if (
+                    dayOfWeek === 0 ||
+                    dayOfWeek === 6 ||
+                    holidayList.includes(mmdd)
+                ) {
+                    anchorDate.setDate(anchorDate.getDate() + 1);
+                } else {
+                    break;
+                }
             }
 
             validUntil = new Date(anchorDate);
@@ -57,43 +70,41 @@ export const formatExpiry = (
         }
     }
 
-    let year = validUntil.getFullYear();
-    let targetMonth = validUntil.getMonth();
-    let targetDay = validUntil.getDate();
+    if (
+        !data.is_free &&
+        data.plate_no &&
+        data.plate_no !== "FOR REGISTRATION"
+    ) {
+        let year = validUntil.getFullYear();
+        let targetMonth = validUntil.getMonth();
+        let targetDay = validUntil.getDate();
 
-    if (data.plate_no && data.plate_no !== "FOR REGISTRATION") {
         const match = data.plate_no.match(/(\d)[^\d]*$/);
         if (match) {
             const digit = parseInt(match[1], 10);
             targetMonth = digit === 0 ? 9 : digit - 1;
             targetDay = baseDate.getDate();
         }
+
+        const daysInMonth = new Date(year, targetMonth + 1, 0).getDate();
+        const finalDay = Math.min(targetDay, daysInMonth);
+        validUntil = new Date(year, targetMonth, finalDay);
     }
 
-    const daysInMonth = new Date(year, targetMonth + 1, 0).getDate();
-    const finalDay = Math.min(targetDay, daysInMonth);
-    let expiry = new Date(year, targetMonth, finalDay);
-
-    const holidayList = (holidays || []).map((h) => {
-        const m = String(h.month).padStart(2, "0");
-        const d = String(h.day).padStart(2, "0");
-        return `${m}-${d}`;
-    });
-
     while (true) {
-        const dayOfWeek = expiry.getDay();
-        const m = String(expiry.getMonth() + 1).padStart(2, "0");
-        const d = String(expiry.getDate()).padStart(2, "0");
+        const dayOfWeek = validUntil.getDay();
+        const m = String(validUntil.getMonth() + 1).padStart(2, "0");
+        const d = String(validUntil.getDate()).padStart(2, "0");
         const mmdd = `${m}-${d}`;
 
         if (dayOfWeek === 0 || dayOfWeek === 6 || holidayList.includes(mmdd)) {
-            expiry.setDate(expiry.getDate() + 1);
+            validUntil.setDate(validUntil.getDate() + 1);
         } else {
             break;
         }
     }
 
-    return expiry
+    return validUntil
         .toLocaleDateString("en-US", {
             month: "long",
             day: "numeric",
