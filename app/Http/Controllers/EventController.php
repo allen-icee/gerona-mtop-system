@@ -11,8 +11,12 @@ class EventController extends Controller
     public function index()
     {
         $events = Event::orderBy('created_at', 'desc')->get();
+
+        $holidays = \App\Models\Holiday::orderBy('month')->orderBy('day')->get();
+
         return Inertia::render('Settings/Events', [
-            'events' => $events
+            'events' => $events,
+            'holidays' => $holidays
         ]);
     }
 
@@ -40,7 +44,7 @@ class EventController extends Controller
             'description' => 'nullable|string',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
-            'fixed_expiry_date' => 'required|date|after_or_equal:start_date', // <-- Added safety catch here
+            'fixed_expiry_date' => 'required|date|after_or_equal:start_date',
             'mandated_by' => 'required|string|max:255',
             'is_active' => 'boolean'
         ]);

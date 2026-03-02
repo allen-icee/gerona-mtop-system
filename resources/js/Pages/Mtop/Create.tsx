@@ -1,4 +1,3 @@
-//GeronaMTOP\resources\js\Pages\Mtop\Create.tsx
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import PrimaryButton from "@/Components/PrimaryButton";
 import { Head, Link, useForm, usePage } from "@inertiajs/react";
@@ -37,11 +36,13 @@ export default function Create({
     punong_bayans,
     officials,
     activeEvents,
+    holidays,
 }: {
     suggested_mt_number: string;
     punong_bayans: string[];
     officials: string[];
     activeEvents: any;
+    holidays: any[];
 }) {
     const { props } = usePage();
     const [step, setStep] = useState(1);
@@ -77,8 +78,8 @@ export default function Create({
     });
 
     useEffect(() => {
-        updateClientMonitor(data, activeEvents);
-    }, [data, activeEvents]);
+        updateClientMonitor(data, activeEvents, holidays);
+    }, [data, activeEvents, holidays]);
 
     const requiredFields = {
         1: [
@@ -251,7 +252,7 @@ export default function Create({
             return "INVALID DATE";
         }
 
-        return formatExpiry(data, activeEvents);
+        return formatExpiry(data, activeEvents, holidays);
     };
 
     return (
@@ -489,6 +490,7 @@ export default function Create({
                                 <PermitPreview
                                     data={data}
                                     activeEvents={activeEvents}
+                                    holidays={holidays}
                                 />
                             </div>
                         </div>
@@ -526,6 +528,7 @@ export default function Create({
                             data={data}
                             showHeader={false}
                             activeEvents={activeEvents}
+                            holidays={holidays}
                         />
                     </div>
                     <div className="p-4 bg-white border-t border-gray-200 shrink-0">

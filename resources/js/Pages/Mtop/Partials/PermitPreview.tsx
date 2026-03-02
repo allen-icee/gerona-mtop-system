@@ -2,17 +2,19 @@ import { Icon } from "@iconify/react";
 import React, { useState, useRef, useEffect } from "react";
 import { openClientMonitor, generatePayload } from "./ClientMonitor";
 
-// RE-EXPORT so other files (Create, Edit, Renew) don't break!
+// Re-export so Create, Edit, Transfer, and Renew don't break
 export { updateClientMonitor, formatExpiry } from "./ClientMonitor";
 
 export default function PermitPreview({
     data,
     showHeader = true,
     activeEvents,
+    holidays, // <--- ADDED THIS
 }: {
     data: any;
     showHeader?: boolean;
     activeEvents?: any[];
+    holidays?: any[]; // <--- ADDED THIS
 }) {
     const [scale, setScale] = useState(1);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -34,7 +36,8 @@ export default function PermitPreview({
         return () => el.removeEventListener("wheel", handleWheel);
     }, []);
 
-    const payload = generatePayload(data, activeEvents);
+    // Pass holidays to the payload generator
+    const payload = generatePayload(data, activeEvents, holidays);
 
     return (
         <div
@@ -52,7 +55,9 @@ export default function PermitPreview({
                     </div>
                     <button
                         type="button"
-                        onClick={() => openClientMonitor(data, activeEvents)}
+                        onClick={() =>
+                            openClientMonitor(data, activeEvents, holidays)
+                        } // <--- Passed holidays here
                         className="bg-blue-600 hover:bg-blue-500 hover:cursor-pointer text-white px-4 py-1.5 rounded-md text-[10pt] font-bold uppercase tracking-wider flex items-center gap-2 transition-colors active:scale-95 shadow-sm border border-blue-400"
                     >
                         <Icon icon="solar:monitor-smartphone-bold" width="18" />{" "}
@@ -165,7 +170,7 @@ export default function PermitPreview({
                                 <td className="px-3 py-2 bg-blue-200 font-bold text-blue-900 w-[40%] border-r border-black align-top leading-tight">
                                     NUMBER
                                 </td>
-                                <td className="px-3 py-2 font-bold text-gray-800 wrap-break-words whitespace-normal break-all align-top leading-tight">
+                                <td className="px-3 py-2 font-mono font-bold text-gray-800 wrap-break-words whitespace-normal break-all align-top leading-tight">
                                     {payload.cedula_number}
                                 </td>
                             </tr>
@@ -196,7 +201,7 @@ export default function PermitPreview({
                                     NUMBER
                                 </td>
                                 <td
-                                    className="px-3 py-2 font-bold text-gray-800 wrap-break-words whitespace-normal break-all align-top leading-tight"
+                                    className="px-3 py-2 font-mono font-bold text-gray-800 wrap-break-words whitespace-normal break-all align-top leading-tight"
                                     dangerouslySetInnerHTML={{
                                         __html: payload.or_number,
                                     }}
@@ -221,7 +226,7 @@ export default function PermitPreview({
                                 colSpan={2}
                                 className="px-3 py-2 font-bold text-center uppercase tracking-wider leading-tight"
                             >
-                                Signatories
+                                SIGNATORIES
                             </th>
                         </tr>
                     </thead>

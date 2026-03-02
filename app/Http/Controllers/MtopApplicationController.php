@@ -47,6 +47,7 @@ class MtopApplicationController extends Controller
     public function create(): \Inertia\Response
     {
         $year = now()->year;
+        $holidays = \App\Models\Holiday::all();
 
         $mtNumbers = MtopFranchise::where('mt_number', 'like', "$year-%")->pluck('mt_number');
 
@@ -81,7 +82,8 @@ class MtopApplicationController extends Controller
             'suggested_mt_number' => $suggested_mt_number,
             'punong_bayans' => $punong_bayans,
             'officials' => $officials,
-            'activeEvents' => $activeEvents
+            'activeEvents' => $activeEvents,
+            'holidays' => $holidays
         ]);
     }
 
@@ -538,16 +540,16 @@ class MtopApplicationController extends Controller
 
     private function calculateValidUntil($transactionDateStr, $plateNo, $eventId = null, $isFree = false)
     {
-        $transactionDate = Carbon::parse($transactionDateStr);
+        $transactionDate = \Carbon\Carbon::parse($transactionDateStr);
         $validUntil = $transactionDate->copy()->addYears(3);
 
         if ($eventId) {
             $event = \App\Models\Event::find($eventId);
             if ($event) {
                 if ($isFree) {
-                    return Carbon::parse($event->fixed_expiry_date);
+                    return \Carbon\Carbon::parse($event->fixed_expiry_date);
                 } else {
-                    $eventExpiry = Carbon::parse($event->fixed_expiry_date);
+                    $eventExpiry = \Carbon\Carbon::parse($event->fixed_expiry_date);
 
                     $anchorDate = $eventExpiry->copy()->addDay();
                     while ($anchorDate->isWeekend()) {
@@ -566,11 +568,22 @@ class MtopApplicationController extends Controller
                 $year = $validUntil->year;
 
                 $day = $transactionDate->day;
-                $daysInMonth = Carbon::createFromDate($year, $targetMonth, 1)->daysInMonth;
+                $daysInMonth = \Carbon\Carbon::createFromDate($year, $targetMonth, 1)->daysInMonth;
                 $finalDay = min($day, $daysInMonth);
 
-                $validUntil = Carbon::createFromDate($year, $targetMonth, $finalDay);
+                $validUntil = \Carbon\Carbon::createFromDate($year, $targetMonth, $finalDay);
             }
+        }
+
+        // --- NEW LOGIC: Skip Weekends and Holidays ---
+        // Get all holidays formatted as "MM-DD"
+        $holidays = \App\Models\Holiday::all()->map(function ($h) {
+            return sprintf('%02d-%02d', $h->month, $h->day);
+        })->toArray();
+
+        // Loop: If the date is a weekend OR falls on an MM-DD present in our holidays array, add 1 day.
+        while ($validUntil->isWeekend() || in_array($validUntil->format('m-d'), $holidays)) {
+            $validUntil->addDay();
         }
 
         return $validUntil;

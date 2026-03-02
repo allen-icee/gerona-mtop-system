@@ -18,7 +18,11 @@ export const formatDate = (dateString?: string) => {
         .toUpperCase();
 };
 
-export const formatExpiry = (data: any, activeEvents?: any[]) => {
+export const formatExpiry = (
+    data: any,
+    activeEvents?: any[],
+    holidays?: any[],
+) => {
     if (!data.transaction_date) return "-";
 
     let baseDate = new Date(data.transaction_date);
@@ -68,7 +72,26 @@ export const formatExpiry = (data: any, activeEvents?: any[]) => {
 
     const daysInMonth = new Date(year, targetMonth + 1, 0).getDate();
     const finalDay = Math.min(targetDay, daysInMonth);
-    const expiry = new Date(year, targetMonth, finalDay);
+    let expiry = new Date(year, targetMonth, finalDay);
+
+    const holidayList = (holidays || []).map((h) => {
+        const m = String(h.month).padStart(2, "0");
+        const d = String(h.day).padStart(2, "0");
+        return `${m}-${d}`;
+    });
+
+    while (true) {
+        const dayOfWeek = expiry.getDay();
+        const m = String(expiry.getMonth() + 1).padStart(2, "0");
+        const d = String(expiry.getDate()).padStart(2, "0");
+        const mmdd = `${m}-${d}`;
+
+        if (dayOfWeek === 0 || dayOfWeek === 6 || holidayList.includes(mmdd)) {
+            expiry.setDate(expiry.getDate() + 1);
+        } else {
+            break;
+        }
+    }
 
     return expiry
         .toLocaleDateString("en-US", {
@@ -79,7 +102,11 @@ export const formatExpiry = (data: any, activeEvents?: any[]) => {
         .toUpperCase();
 };
 
-export const generatePayload = (data: any, activeEvents?: any[]) => {
+export const generatePayload = (
+    data: any,
+    activeEvents?: any[],
+    holidays?: any[],
+) => {
     const plateDisplay =
         data.plate_no === "FOR REGISTRATION"
             ? '<span style="color: #ea580c;">FOR REGISTRATION</span>'
@@ -113,7 +140,7 @@ export const generatePayload = (data: any, activeEvents?: any[]) => {
             /(,\s*GERONA,\s*TARLAC|\s*GERONA,\s*TARLAC)/i,
             "",
         ),
-        expiry: formatExpiry(data, activeEvents),
+        expiry: formatExpiry(data, activeEvents, holidays),
         make_type: val(data.make_type),
         engine_motor_no: val(data.engine_motor_no),
         chassis_no: val(data.chassis_no),
@@ -129,22 +156,30 @@ export const generatePayload = (data: any, activeEvents?: any[]) => {
 
 let clientMonitorWindow: Window | null = null;
 
-export const updateClientMonitor = (data: any, activeEvents?: any[]) => {
+export const updateClientMonitor = (
+    data: any,
+    activeEvents?: any[],
+    holidays?: any[],
+) => {
     if (clientMonitorWindow && !clientMonitorWindow.closed) {
         clientMonitorWindow.postMessage(
             {
                 type: "UPDATE_DATA",
-                payload: generatePayload(data, activeEvents),
+                payload: generatePayload(data, activeEvents, holidays),
             },
             "*",
         );
     }
 };
 
-export const openClientMonitor = (data: any, activeEvents?: any[]) => {
+export const openClientMonitor = (
+    data: any,
+    activeEvents?: any[],
+    holidays?: any[],
+) => {
     if (clientMonitorWindow && !clientMonitorWindow.closed) {
         clientMonitorWindow.focus();
-        updateClientMonitor(data, activeEvents);
+        updateClientMonitor(data, activeEvents, holidays);
         return;
     }
 
@@ -161,7 +196,7 @@ export const openClientMonitor = (data: any, activeEvents?: any[]) => {
         return;
     }
 
-    const payload = generatePayload(data, activeEvents);
+    const payload = generatePayload(data, activeEvents, holidays);
 
     clientMonitorWindow.document.write(`
         <html>
@@ -235,7 +270,6 @@ export const openClientMonitor = (data: any, activeEvents?: any[]) => {
 
             <script>
                 // LIVE UPDATE LOGIC
-              // LIVE UPDATE LOGIC
                 window.addEventListener('message', (event) => {
                     if (event.data && event.data.type === 'UPDATE_DATA') {
                         const p = event.data.payload;

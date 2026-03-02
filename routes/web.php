@@ -3,6 +3,8 @@
 use App\Http\Controllers\MtopApplicationController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\SignatoryController;
+use App\Http\Controllers\HolidayController;
+use App\Http\Controllers\EventController;
 use App\Http\Middleware\IsAdmin;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -23,14 +25,19 @@ Route::get('/dashboard', function () {
     $serverIp = getHostByName(getHostName());
 
     return Inertia::render('Dashboard', [
-        'totalMtop'  => MtopApplication::count(),
+        'totalMtop' => MtopApplication::count(),
         'totalUsers' => User::count(),
-        'newToday'   => MtopApplication::whereDate('created_at', today())->count(),
-        'serverIp'   => $serverIp,
+        'newToday' => MtopApplication::whereDate('created_at', today())->count(),
+        'serverIp' => $serverIp,
     ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
+
+    // Simplified Holiday Controller
+    Route::post('/settings/holidays', [HolidayController::class, 'store'])->name('holidays.store');
+    Route::delete('/settings/holidays/{holiday}', [HolidayController::class, 'destroy'])->name('holidays.destroy');
+    Route::put('/settings/holidays/{holiday}', [HolidayController::class, 'update'])->name('holidays.update');
 
     Route::get('/mtop', [MtopApplicationController::class, 'index'])->name('mtop.index');
     Route::get('/mtop/create', [MtopApplicationController::class, 'create'])->name('mtop.create');
@@ -48,10 +55,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/mtop/{id}/edit', [MtopApplicationController::class, 'edit'])->name('mtop.edit');
     Route::put('/mtop/{id}', [MtopApplicationController::class, 'update'])->name('mtop.update');
     Route::get('/mtop/{id}/print', [MtopApplicationController::class, 'print'])->name('mtop.print');
-    Route::get('/mtop/export', [MtopApplicationController::class, 'export'])->name('mtop.export'); // Audit Logs Export
-    Route::get('/system/audit-logs/export', [App\Http\Controllers\UserController::class, 'exportAuditLogs'])->name('audit-logs.export');
-    Route::delete('/system/audit-logs/flush', [\App\Http\Controllers\UserController::class, 'flushAuditLogs'])->name('audit-logs.flush');
-    Route::post('/mtop/import', [App\Http\Controllers\MtopApplicationController::class, 'importData'])->name('mtop.import');
+    Route::get('/mtop/export', [MtopApplicationController::class, 'export'])->name('mtop.export');
+
+    Route::get('/system/audit-logs/export', [UserController::class, 'exportAuditLogs'])->name('audit-logs.export');
+    Route::delete('/system/audit-logs/flush', [UserController::class, 'flushAuditLogs'])->name('audit-logs.flush');
+    Route::post('/mtop/import', [MtopApplicationController::class, 'importData'])->name('mtop.import');
 
     Route::post('/settings/backup', function () {
 
@@ -122,10 +130,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/signatories/export', [SignatoryController::class, 'export'])->name('signatories.export');
         Route::resource('signatories', SignatoryController::class)->only(['index', 'store', 'update', 'destroy']);
 
-        Route::get('/settings/events', [\App\Http\Controllers\EventController::class, 'index'])->name('events.index');
-        Route::post('/settings/events', [\App\Http\Controllers\EventController::class, 'store'])->name('events.store');
-        Route::put('/settings/events/{event}', [\App\Http\Controllers\EventController::class, 'update'])->name('events.update');
-        Route::delete('/settings/events/{event}', [\App\Http\Controllers\EventController::class, 'destroy'])->name('events.destroy');
+        Route::get('/settings/events', [EventController::class, 'index'])->name('events.index');
+        Route::post('/settings/events', [EventController::class, 'store'])->name('events.store');
+        Route::put('/settings/events/{event}', [EventController::class, 'update'])->name('events.update');
+        Route::delete('/settings/events/{event}', [EventController::class, 'destroy'])->name('events.destroy');
     });
 });
 
