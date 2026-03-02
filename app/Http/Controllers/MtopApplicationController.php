@@ -1,5 +1,5 @@
 <?php
-//GeronaMTOP\app\Http\Controllers\MtopApplicationController.php
+
 namespace App\Http\Controllers;
 
 use App\Models\MtopApplication;
@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use App\Models\SyncQueue;
 use App\Http\Requests\MtopApplicationRequest;
+use App\Services\ValidityService; // <-- Injected Service
 
 class MtopApplicationController extends Controller
 {
@@ -79,7 +80,7 @@ class MtopApplicationController extends Controller
             ->get();
 
         return Inertia::render('Mtop/Create', [
-            'suggested_mt_number' => $suggested_mt_number ?? null,
+            'suggested_mt_number' => $suggested_mt_number,
             'punong_bayans' => $punong_bayans,
             'officials' => $officials,
             'activeEvents' => $activeEvents,
@@ -87,12 +88,23 @@ class MtopApplicationController extends Controller
         ]);
     }
 
-    public function store(MtopApplicationRequest $request): \Illuminate\Http\RedirectResponse
+    public function store(MtopApplicationRequest $request, ValidityService $validityService): \Illuminate\Http\RedirectResponse
     {
         $validated = $request->validated();
 
+        // 1. Compute Expiry via Service BEFORE the transaction
+        $event = !empty($validated['event_id']) ? \App\Models\Event::find($validated['event_id']) : null;
+        $isFree = filter_var($validated['is_free'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
+        $expiryResult = $validityService->computeExpiry(
+            Carbon::parse($request->transaction_date),
+            $validated['plate_no'] ?? null,
+            !$isFree, // wantsFullValidity = not free
+            $event
+        );
+
         try {
-            $mtop = DB::transaction(function () use ($validated, $request) {
+            $mtop = DB::transaction(function () use ($validated, $request, $expiryResult) {
                 $final_mt_number = $validated['mt_number'];
                 $year = now()->year;
 
@@ -131,15 +143,11 @@ class MtopApplicationController extends Controller
                 $applicationData['franchise_id'] = $franchise->id;
                 $applicationData['transaction_type'] = 'New';
                 $applicationData['processed_by'] = Auth::id();
-                $applicationData['is_free'] = filter_var($validated['is_free'] ?? false, FILTER_VALIDATE_BOOLEAN);
+                $applicationData['is_free'] = $isFree;
                 $applicationData['event_id'] = $validated['event_id'] ?? null;
 
-                $applicationData['valid_until'] = $this->calculateValidUntil(
-                    $request->transaction_date,
-                    $validated['plate_no'] ?? null,
-                    $validated['event_id'] ?? null,
-                    filter_var($validated['is_free'] ?? false, FILTER_VALIDATE_BOOLEAN)
-                );
+                // 2. Assign the computed legal expiry
+                $applicationData['valid_until'] = $expiryResult['expiry_date'];
 
                 $application = MtopApplication::create($applicationData);
 
@@ -186,7 +194,7 @@ class MtopApplicationController extends Controller
         $holidays = \App\Models\Holiday::where('is_active', true)->get();
 
         return Inertia::render('Mtop/Edit', [
-            'application' => $application ?? null,
+            'application' => $application,
             'punong_bayans' => $punong_bayans,
             'officials' => $officials,
             'activeEvents' => $activeEvents,
@@ -194,18 +202,22 @@ class MtopApplicationController extends Controller
         ]);
     }
 
-    public function update(MtopApplicationRequest $request, $id): RedirectResponse
+    public function update(MtopApplicationRequest $request, $id, ValidityService $validityService): RedirectResponse
     {
         $application = MtopApplication::findOrFail($id);
         $validated = $request->validated();
 
         if ($request->transaction_date) {
-            $validated['valid_until'] = $this->calculateValidUntil(
-                $request->transaction_date,
+            $event = !empty($validated['event_id']) ? \App\Models\Event::find($validated['event_id']) : null;
+            $isFree = filter_var($validated['is_free'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
+            $expiryResult = $validityService->computeExpiry(
+                Carbon::parse($request->transaction_date),
                 $validated['plate_no'] ?? null,
-                $validated['event_id'] ?? null,
-                filter_var($validated['is_free'] ?? false, FILTER_VALIDATE_BOOLEAN)
+                !$isFree,
+                $event
             );
+            $validated['valid_until'] = $expiryResult['expiry_date'];
         }
 
         try {
@@ -238,7 +250,6 @@ class MtopApplicationController extends Controller
                             'engine_motor_no' => $validated['engine_motor_no'],
                             'chassis_no' => $validated['chassis_no'],
                             'plate_no' => $validated['plate_no'],
-
                             'show_paid_by' => filter_var($validated['show_paid_by'] ?? false, FILTER_VALIDATE_BOOLEAN),
                             'paid_by_last_name' => $validated['paid_by_last_name'] ?? null,
                             'paid_by_first_name' => $validated['paid_by_first_name'] ?? null,
@@ -332,7 +343,6 @@ class MtopApplicationController extends Controller
             ]);
 
             foreach ($records as $row) {
-
                 fputcsv($file, [
                     $row->mt_number,
                     $row->transaction_date,
@@ -383,13 +393,11 @@ class MtopApplicationController extends Controller
                 $removePhoto = filter_var($data['remove_photo'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
                 if ($removePhoto) {
-
                     if ($app->driver_photo_path && Storage::exists('public/' . $app->driver_photo_path)) {
                         Storage::delete('public/' . $app->driver_photo_path);
                     }
                     $updateData['driver_photo_path'] = null;
                 } elseif ($request->hasFile("drivers.{$index}.photo")) {
-
                     if ($app->driver_photo_path && Storage::exists('public/' . $app->driver_photo_path)) {
                         Storage::delete('public/' . $app->driver_photo_path);
                     }
@@ -446,7 +454,7 @@ class MtopApplicationController extends Controller
         $holidays = \App\Models\Holiday::where('is_active', true)->get();
 
         return Inertia::render('Mtop/Renew', [
-            'application' => $application ?? null,
+            'application' => $application,
             'punong_bayans' => $punong_bayans,
             'officials' => $officials,
             'activeEvents' => $activeEvents,
@@ -454,14 +462,23 @@ class MtopApplicationController extends Controller
         ]);
     }
 
-    public function storeRenewal(MtopApplicationRequest $request, $id): RedirectResponse
+    public function storeRenewal(MtopApplicationRequest $request, $id, ValidityService $validityService): RedirectResponse
     {
-        /** @var \App\Models\MtopApplication $oldApp */
         $oldApp = MtopApplication::findOrFail($id);
         $validated = $request->validated();
 
+        $event = !empty($validated['event_id']) ? \App\Models\Event::find($validated['event_id']) : null;
+        $isFree = filter_var($validated['is_free'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
+        $expiryResult = $validityService->computeExpiry(
+            Carbon::parse($request->transaction_date),
+            $validated['plate_no'] ?? null,
+            !$isFree,
+            $event
+        );
+
         try {
-            $newApp = DB::transaction(function () use ($oldApp, $validated, $request) {
+            $newApp = DB::transaction(function () use ($oldApp, $validated, $expiryResult) {
                 $final_mt_number = $validated['mt_number'];
 
                 $exists = MtopFranchise::where('mt_number', $final_mt_number)
@@ -473,13 +490,9 @@ class MtopApplicationController extends Controller
                 }
 
                 $oldApp->update(['status' => 'archived']);
-
-                /** @var \App\Models\MtopApplication $freshOldApp */
-                $freshOldApp = $oldApp->fresh();
-                $this->queueForSync('mtop_applications', $freshOldApp->toArray());
+                $this->queueForSync('mtop_applications', $oldApp->fresh()->toArray());
 
                 if ($oldApp->franchise_id) {
-                    /** @var \App\Models\MtopFranchise $franchise */
                     $franchise = MtopFranchise::where('id', $oldApp->franchise_id)->first();
                     $franchise->update([
                         'mt_number' => $final_mt_number,
@@ -499,26 +512,17 @@ class MtopApplicationController extends Controller
                         'paid_by_middle_name' => $validated['paid_by_middle_name'] ?? null,
                         'paid_by_suffix' => $validated['paid_by_suffix'] ?? null,
                     ]);
-
-                    /** @var \App\Models\MtopFranchise $freshFranchise */
-                    $freshFranchise = $franchise->fresh();
-                    $this->queueForSync('mtop_franchises', $freshFranchise->toArray());
+                    $this->queueForSync('mtop_franchises', $franchise->fresh()->toArray());
                 }
 
                 $applicationData = $validated;
                 $applicationData['mt_number'] = $final_mt_number;
-                $applicationData['valid_until'] = $this->calculateValidUntil(
-                    $request->transaction_date,
-                    $validated['plate_no'] ?? null,
-                    $validated['event_id'] ?? null,
-                    filter_var($validated['is_free'] ?? false, FILTER_VALIDATE_BOOLEAN)
-                );
                 $applicationData['status'] = 'active';
                 $applicationData['franchise_id'] = $oldApp->franchise_id;
                 $applicationData['transaction_type'] = 'Renewal';
                 $applicationData['processed_by'] = Auth::id();
+                $applicationData['valid_until'] = $expiryResult['expiry_date'];
 
-                /** @var \App\Models\MtopApplication $newAppCreated */
                 $newAppCreated = MtopApplication::create($applicationData);
                 $this->queueForSync('mtop_applications', $newAppCreated->toArray());
 
@@ -535,235 +539,6 @@ class MtopApplicationController extends Controller
         }
     }
 
-    private function queueForSync(string $tableName, array $payload)
-    {
-        SyncQueue::create([
-            'table_name' => $tableName,
-            'payload_json' => $payload,
-            'status' => 'pending'
-        ]);
-    }
-
-    private function calculateValidUntil($transactionDateStr, $plateNo, $eventId = null, $isFree = false)
-    {
-        $transactionDate = Carbon::parse($transactionDateStr);
-        $validUntil = $transactionDate->copy()->addYears(3);
-
-        $holidays = \App\Models\Holiday::where('is_active', true)->get();
-
-        if ($eventId) {
-            $event = \App\Models\Event::find($eventId);
-            if ($event) {
-                if ($isFree) {
-
-                    $validUntil = Carbon::parse($event->fixed_expiry_date);
-                } else {
-
-                    $eventExpiry = Carbon::parse($event->fixed_expiry_date);
-                    $anchorDate = $eventExpiry->copy()->addDay();
-
-                    $isInvalidDay = true;
-                    while ($isInvalidDay) {
-                        $isWeekend = $anchorDate->isWeekend();
-                        $isHoliday = $holidays->contains(function ($holiday) use ($anchorDate) {
-                            return $holiday->month == $anchorDate->month && $holiday->day == $anchorDate->day;
-                        });
-
-                        if ($isWeekend || $isHoliday) {
-                            $anchorDate->addDay();
-                        } else {
-                            $isInvalidDay = false;
-                        }
-                    }
-
-                    $validUntil = $anchorDate->copy()->addYears(3);
-                }
-            }
-        }
-
-        if (!$isFree && !empty($plateNo) && $plateNo !== 'FOR REGISTRATION') {
-            if (preg_match('/(\d)[^\d]*$/', $plateNo, $matches)) {
-                $digit = (int) $matches[1];
-                $targetMonth = $digit === 0 ? 10 : $digit;
-                $year = $validUntil->year;
-
-                $day = $transactionDate->day;
-                $daysInMonth = Carbon::createFromDate($year, $targetMonth, 1)->daysInMonth;
-                $finalDay = min($day, $daysInMonth);
-
-                $validUntil = Carbon::createFromDate($year, $targetMonth, $finalDay);
-            }
-        }
-
-        $isInvalidDay = true;
-        while ($isInvalidDay) {
-            $isWeekend = $validUntil->isWeekend();
-            $isHoliday = $holidays->contains(function ($holiday) use ($validUntil) {
-                return $holiday->month == $validUntil->month && $holiday->day == $validUntil->day;
-            });
-
-            if ($isWeekend || $isHoliday) {
-                $validUntil->addDay();
-            } else {
-                $isInvalidDay = false;
-            }
-        }
-
-        return $validUntil;
-    }
-
-    public function importData(Request $request)
-    {
-        $request->validate([
-            'import_file' => 'required|file|max:51200',
-        ]);
-
-        $file = $request->file('import_file');
-        $extension = strtolower($file->getClientOriginalExtension());
-
-        if (!in_array($extension, ['csv', 'sqlite', 'db'])) {
-            return back()->withErrors(['import_file' => 'Only CSV and SQLite (.sqlite, .db) files are allowed.']);
-        }
-
-        $importedCount = 0;
-
-        try {
-            DB::beginTransaction();
-
-            if ($extension === 'csv') {
-                $path = $file->getRealPath();
-
-                $fileHandle = fopen($path, 'r');
-
-                $bom = fread($fileHandle, 3);
-                if ($bom !== "\xEF\xBB\xBF") {
-                    rewind($fileHandle);
-                }
-
-                $header = fgetcsv($fileHandle);
-                if (!$header) throw new \Exception("File is empty or invalid");
-                $header = array_map('trim', $header);
-
-                $headerMap = [
-                    'Control No' => 'mt_number',
-                    'Transaction Date' => 'transaction_date',
-                    'Transaction Type' => 'transaction_type',
-                    'Last Name' => 'last_name',
-                    'First Name' => 'first_name',
-                    'Middle Name' => 'middle_name',
-                    'Suffix' => 'suffix',
-                    'Address' => 'address',
-                    'Contact #' => 'contact_number',
-                    'Body Number' => 'body_number',
-                    'Plate No' => 'plate_no',
-                    'Make/Type' => 'make_type',
-                    'Engine No' => 'engine_motor_no',
-                    'Chassis No' => 'chassis_no',
-                    'OR No' => 'or_number',
-                    'OR Date' => 'or_date',
-                    'Cedula No' => 'cedula_number',
-                    'Cedula Date' => 'cedula_date',
-                    'Punong Bayan' => 'punong_bayan',
-                    'Authorized Official' => 'authorized_official',
-                    'Valid Until' => 'valid_until',
-                    'Status' => 'status'
-                ];
-
-                while (($row = fgetcsv($fileHandle)) !== false) {
-                    if (empty(array_filter($row)) || count($header) !== count($row)) continue;
-
-                    $rowAssoc = array_combine($header, $row);
-                    $mappedRow = [];
-
-                    foreach ($rowAssoc as $csvKey => $value) {
-                        $mappedKey = $headerMap[$csvKey] ?? $csvKey;
-                        $mappedRow[$mappedKey] = $value === '' ? null : trim($value);
-                    }
-
-                    if (empty($mappedRow['mt_number'])) continue;
-
-                    $franchise = MtopFranchise::updateOrCreate(
-                        ['mt_number' => $mappedRow['mt_number']],
-                        [
-                            'last_name' => $mappedRow['last_name'] ?? '',
-                            'first_name' => $mappedRow['first_name'] ?? '',
-                            'middle_name' => $mappedRow['middle_name'] ?? null,
-                            'suffix' => $mappedRow['suffix'] ?? null,
-                            'address' => $mappedRow['address'] ?? '',
-                            'make_type' => $mappedRow['make_type'] ?? '',
-                            'engine_motor_no' => $mappedRow['engine_motor_no'] ?? '',
-                            'chassis_no' => $mappedRow['chassis_no'] ?? '',
-                            'plate_no' => $mappedRow['plate_no'] ?? '',
-                            'body_number' => $mappedRow['body_number'] ?? null,
-                            'contact_number' => $mappedRow['contact_number'] ?? null,
-                            'status' => 'active',
-                        ]
-                    );
-
-                    $mappedRow['franchise_id'] = $franchise->id;
-                    if (!isset($mappedRow['transaction_type'])) $mappedRow['transaction_type'] = 'Imported';
-                    if (!isset($mappedRow['processed_by'])) $mappedRow['processed_by'] = Auth::id();
-
-                    MtopApplication::updateOrCreate(
-                        ['mt_number' => $mappedRow['mt_number']],
-                        $mappedRow
-                    );
-                    $importedCount++;
-                }
-                fclose($fileHandle);
-            } else {
-                $tempDbPath = $file->getRealPath();
-                config(['database.connections.import_db' => [
-                    'driver' => 'sqlite',
-                    'database' => $tempDbPath,
-                ]]);
-
-                $oldFranchises = DB::connection('import_db')->table('mtop_franchises')->get();
-                foreach ($oldFranchises as $old) {
-                    $rowAssoc = (array) $old;
-                    unset($rowAssoc['id']);
-                    MtopFranchise::updateOrCreate(['mt_number' => $rowAssoc['mt_number']], $rowAssoc);
-                }
-
-                $oldRecords = DB::connection('import_db')->table('mtop_applications')->get();
-                foreach ($oldRecords as $old) {
-                    $rowAssoc = (array) $old;
-                    unset($rowAssoc['id']);
-
-                    $localFranchise = MtopFranchise::where('mt_number', $rowAssoc['mt_number'])->first();
-                    if ($localFranchise) {
-                        $rowAssoc['franchise_id'] = $localFranchise->id;
-                    }
-
-                    MtopApplication::updateOrCreate(
-                        ['mt_number' => $rowAssoc['mt_number']],
-                        $rowAssoc
-                    );
-                    $importedCount++;
-                }
-                DB::purge('import_db');
-            }
-
-            DB::commit();
-
-            if ($importedCount === 0) {
-                return back()->withErrors(['import_file' => '0 records imported. Please ensure the CSV format perfectly matches the exported file.']);
-            }
-
-            \App\Models\AuditLog::create([
-                'user_id' => Auth::id(),
-                'action' => 'Imported Data',
-                'payload' => "Imported $importedCount records from $extension file.",
-                'ip_address' => $request->ip(),
-                'user_agent' => $request->userAgent(),
-            ]);
-
-            return back()->with('message', "Success! Synced $importedCount records safely.");
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return back()->withErrors(['import_file' => 'Import failed: ' . $e->getMessage()]);
-        }
-    }
     public function transfer($id): \Inertia\Response
     {
         $application = MtopApplication::findOrFail($id);
@@ -786,7 +561,7 @@ class MtopApplicationController extends Controller
         $holidays = \App\Models\Holiday::where('is_active', true)->get();
 
         return Inertia::render('Mtop/Transfer', [
-            'application' => $application ?? null,
+            'application' => $application,
             'punong_bayans' => $punong_bayans,
             'officials' => $officials,
             'activeEvents' => $activeEvents,
@@ -794,13 +569,23 @@ class MtopApplicationController extends Controller
         ]);
     }
 
-    public function storeTransfer(MtopApplicationRequest $request, $id): \Illuminate\Http\RedirectResponse
+    public function storeTransfer(MtopApplicationRequest $request, $id, ValidityService $validityService): \Illuminate\Http\RedirectResponse
     {
         $oldApp = MtopApplication::findOrFail($id);
         $validated = $request->validated();
 
+        $event = !empty($validated['event_id']) ? \App\Models\Event::find($validated['event_id']) : null;
+        $isFree = filter_var($validated['is_free'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
+        $expiryResult = $validityService->computeExpiry(
+            Carbon::parse($request->transaction_date),
+            $validated['plate_no'] ?? null,
+            !$isFree,
+            $event
+        );
+
         try {
-            $newApp = DB::transaction(function () use ($oldApp, $validated, $request) {
+            $newApp = DB::transaction(function () use ($oldApp, $validated, $expiryResult) {
                 $final_mt_number = $validated['mt_number'];
 
                 $exists = MtopFranchise::where('mt_number', $final_mt_number)
@@ -842,19 +627,11 @@ class MtopApplicationController extends Controller
                 $applicationData['mt_number'] = $final_mt_number;
                 $applicationData['status'] = 'active';
                 $applicationData['franchise_id'] = $oldApp->franchise_id;
-
                 $applicationData['transaction_type'] = 'Transfer';
-
                 $applicationData['processed_by'] = Auth::id();
-                $applicationData['is_free'] = filter_var($validated['is_free'] ?? false, FILTER_VALIDATE_BOOLEAN);
+                $applicationData['is_free'] = $isFree;
                 $applicationData['event_id'] = $validated['event_id'] ?? null;
-
-                $applicationData['valid_until'] = $this->calculateValidUntil(
-                    $request->transaction_date,
-                    $validated['plate_no'] ?? null,
-                    $validated['event_id'] ?? null,
-                    filter_var($validated['is_free'] ?? false, FILTER_VALIDATE_BOOLEAN)
-                );
+                $applicationData['valid_until'] = $expiryResult['expiry_date'];
 
                 $newAppCreated = MtopApplication::create($applicationData);
                 $this->queueForSync('mtop_applications', $newAppCreated->toArray());
@@ -870,5 +647,14 @@ class MtopApplicationController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()->withErrors(['mt_number' => $e->getMessage()])->withInput();
         }
+    }
+
+    private function queueForSync(string $tableName, array $payload)
+    {
+        SyncQueue::create([
+            'table_name' => $tableName,
+            'payload_json' => $payload,
+            'status' => 'pending'
+        ]);
     }
 }

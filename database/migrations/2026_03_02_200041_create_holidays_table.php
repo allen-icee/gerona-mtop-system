@@ -4,42 +4,81 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     public function up(): void
     {
-        // Check if the table is missing (because your colleague forgot the original migration!)
+        /*
+        |--------------------------------------------------------------------------
+        | CASE 1: Table Does Not Exist (Fresh Install)
+        |--------------------------------------------------------------------------
+        */
         if (!Schema::hasTable('holidays')) {
+
             Schema::create('holidays', function (Blueprint $table) {
                 $table->id();
                 $table->string('name');
-                $table->integer('month')->default(1);
-                $table->integer('day')->default(1);
+
+                // Recurring holiday support (Month-Day only)
+                $table->unsignedTinyInteger('month'); // 1–12
+                $table->unsignedTinyInteger('day');   // 1–31
+
+                // Required for your business-day gatekeeper
+                $table->boolean('is_active')->default(true);
+
                 $table->timestamps();
             });
-        } else {
-            // The table exists, so run your colleague's original alter logic
-            Schema::table('holidays', function (Blueprint $table) {
-                if (!Schema::hasColumn('holidays', 'month')) {
-                    $table->integer('month')->after('name')->default(1);
-                }
-                if (!Schema::hasColumn('holidays', 'day')) {
-                    $table->integer('day')->after('month')->default(1);
-                }
-            });
+
+            return;
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | CASE 2: Table Exists (Patch Missing Columns Safely)
+        |--------------------------------------------------------------------------
+        */
+
+        Schema::table('holidays', function (Blueprint $table) {
+
+            if (!Schema::hasColumn('holidays', 'month')) {
+                $table->unsignedTinyInteger('month')
+                    ->after('name')
+                    ->default(1);
+            }
+
+            if (!Schema::hasColumn('holidays', 'day')) {
+                $table->unsignedTinyInteger('day')
+                    ->after('month')
+                    ->default(1);
+            }
+
+            if (!Schema::hasColumn('holidays', 'is_active')) {
+                $table->boolean('is_active')
+                    ->after('day')
+                    ->default(true);
+            }
+        });
     }
 
     public function down(): void
     {
-        if (Schema::hasTable('holidays')) {
-            Schema::table('holidays', function (Blueprint $table) {
-                if (Schema::hasColumn('holidays', 'month')) {
-                    $table->dropColumn('month');
-                }
-                if (Schema::hasColumn('holidays', 'day')) {
-                    $table->dropColumn('day');
-                }
-            });
+        if (!Schema::hasTable('holidays')) {
+            return;
         }
+
+        Schema::table('holidays', function (Blueprint $table) {
+
+            if (Schema::hasColumn('holidays', 'is_active')) {
+                $table->dropColumn('is_active');
+            }
+
+            if (Schema::hasColumn('holidays', 'day')) {
+                $table->dropColumn('day');
+            }
+
+            if (Schema::hasColumn('holidays', 'month')) {
+                $table->dropColumn('month');
+            }
+        });
     }
 };
