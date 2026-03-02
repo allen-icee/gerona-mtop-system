@@ -1,5 +1,5 @@
 <?php
-
+//GeronaMTOP\app\Http\Controllers\MtopApplicationController.php
 namespace App\Http\Controllers;
 
 use App\Models\MtopApplication;
@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use App\Models\SyncQueue;
 use App\Http\Requests\MtopApplicationRequest;
-use App\Services\ValidityService; // <-- Injected Service
+use App\Services\ValidityService;
 
 class MtopApplicationController extends Controller
 {
@@ -92,19 +92,19 @@ class MtopApplicationController extends Controller
     {
         $validated = $request->validated();
 
-        // 1. Compute Expiry via Service BEFORE the transaction
         $event = !empty($validated['event_id']) ? \App\Models\Event::find($validated['event_id']) : null;
         $isFree = filter_var($validated['is_free'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
         $expiryResult = $validityService->computeExpiry(
             Carbon::parse($request->transaction_date),
             $validated['plate_no'] ?? null,
-            !$isFree, // wantsFullValidity = not free
+            !$isFree,
             $event
         );
 
         try {
-            $mtop = DB::transaction(function () use ($validated, $request, $expiryResult) {
+
+            $mtop = DB::transaction(function () use ($validated, $request, $expiryResult, $isFree) {
                 $final_mt_number = $validated['mt_number'];
                 $year = now()->year;
 
@@ -145,8 +145,6 @@ class MtopApplicationController extends Controller
                 $applicationData['processed_by'] = Auth::id();
                 $applicationData['is_free'] = $isFree;
                 $applicationData['event_id'] = $validated['event_id'] ?? null;
-
-                // 2. Assign the computed legal expiry
                 $applicationData['valid_until'] = $expiryResult['expiry_date'];
 
                 $application = MtopApplication::create($applicationData);
@@ -478,7 +476,8 @@ class MtopApplicationController extends Controller
         );
 
         try {
-            $newApp = DB::transaction(function () use ($oldApp, $validated, $expiryResult) {
+
+            $newApp = DB::transaction(function () use ($oldApp, $validated, $expiryResult, $isFree) {
                 $final_mt_number = $validated['mt_number'];
 
                 $exists = MtopFranchise::where('mt_number', $final_mt_number)
@@ -521,6 +520,8 @@ class MtopApplicationController extends Controller
                 $applicationData['franchise_id'] = $oldApp->franchise_id;
                 $applicationData['transaction_type'] = 'Renewal';
                 $applicationData['processed_by'] = Auth::id();
+                $applicationData['is_free'] = $isFree;
+                $applicationData['event_id'] = $validated['event_id'] ?? null;
                 $applicationData['valid_until'] = $expiryResult['expiry_date'];
 
                 $newAppCreated = MtopApplication::create($applicationData);
@@ -585,7 +586,8 @@ class MtopApplicationController extends Controller
         );
 
         try {
-            $newApp = DB::transaction(function () use ($oldApp, $validated, $expiryResult) {
+
+            $newApp = DB::transaction(function () use ($oldApp, $validated, $expiryResult, $isFree) {
                 $final_mt_number = $validated['mt_number'];
 
                 $exists = MtopFranchise::where('mt_number', $final_mt_number)

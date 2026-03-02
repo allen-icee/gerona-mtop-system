@@ -1,3 +1,4 @@
+//GeronaMTOP\resources\js\Pages\Mtop\Partials\ClientMonitor.ts
 export const val = (text?: string) => (text ? String(text).toUpperCase() : "-");
 
 export const formatName = (data: any) => {
@@ -77,13 +78,13 @@ export const formatExpiry = (
     ) {
         let year = validUntil.getFullYear();
         let targetMonth = validUntil.getMonth();
+
         let targetDay = validUntil.getDate();
 
         const match = data.plate_no.match(/(\d)[^\d]*$/);
         if (match) {
             const digit = parseInt(match[1], 10);
             targetMonth = digit === 0 ? 9 : digit - 1;
-            targetDay = baseDate.getDate();
         }
 
         const daysInMonth = new Date(year, targetMonth + 1, 0).getDate();
