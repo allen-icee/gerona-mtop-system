@@ -35,6 +35,7 @@ export default function Transfer({
     punong_bayans,
     officials,
     activeEvents,
+    holidays,
 }: any) {
     const [step, setStep] = useState(1);
     const [showMobilePreview, setShowMobilePreview] = useState(false);
@@ -183,7 +184,8 @@ export default function Transfer({
         if (!data.transaction_date || !isValidDate(data.transaction_date)) {
             return "INVALID DATE";
         }
-        return formatExpiry(data, activeEvents);
+        // ADD holidays HERE:
+        return formatExpiry(data, activeEvents, holidays);
     };
 
     return (
@@ -433,6 +435,7 @@ export default function Transfer({
                                 <PermitPreview
                                     data={data}
                                     activeEvents={activeEvents}
+                                    holidays={holidays} // <--- ADD THIS
                                 />
                             </div>
                         </div>
@@ -504,6 +507,7 @@ export default function Transfer({
                             data={data}
                             showHeader={false}
                             activeEvents={activeEvents}
+                            holidays={holidays}
                         />
                     </div>
                     <div className="p-4 bg-white border-t border-gray-200 shrink-0">

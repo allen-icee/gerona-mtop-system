@@ -47,7 +47,7 @@ class MtopApplicationController extends Controller
     public function create(): \Inertia\Response
     {
         $year = now()->year;
-        $holidays = \App\Models\Holiday::all();
+        $holidays = \App\Models\Holiday::where('is_active', true)->get();
 
         $mtNumbers = MtopFranchise::where('mt_number', 'like', "$year-%")->pluck('mt_number');
 
@@ -79,7 +79,8 @@ class MtopApplicationController extends Controller
             ->get();
 
         return Inertia::render('Mtop/Create', [
-            'suggested_mt_number' => $suggested_mt_number,
+            'suggested_mt_number' => $suggested_mt_number ?? null,
+            'application' => $application ?? null,
             'punong_bayans' => $punong_bayans,
             'officials' => $officials,
             'activeEvents' => $activeEvents,
@@ -183,11 +184,15 @@ class MtopApplicationController extends Controller
             ->whereDate('end_date', '>=', now())
             ->get();
 
+        $holidays = \App\Models\Holiday::where('is_active', true)->get();
+
         return Inertia::render('Mtop/Edit', [
-            'application' => $application,
+            'suggested_mt_number' => $suggested_mt_number ?? null,
+            'application' => $application ?? null, // For edit/renew/transfer
             'punong_bayans' => $punong_bayans,
             'officials' => $officials,
-            'activeEvents' => $activeEvents
+            'activeEvents' => $activeEvents,
+            'holidays' => $holidays
         ]);
     }
 
@@ -440,11 +445,15 @@ class MtopApplicationController extends Controller
             ->whereDate('end_date', '>=', now())
             ->get();
 
+        $holidays = \App\Models\Holiday::where('is_active', true)->get();
+
         return Inertia::render('Mtop/Renew', [
-            'application' => $application,
+            'suggested_mt_number' => $suggested_mt_number ?? null,
+            'application' => $application ?? null,
             'punong_bayans' => $punong_bayans,
             'officials' => $officials,
-            'activeEvents' => $activeEvents
+            'activeEvents' => $activeEvents,
+            'holidays' => $holidays
         ]);
     }
 
@@ -760,11 +769,15 @@ class MtopApplicationController extends Controller
             ->whereDate('end_date', '>=', now())
             ->get();
 
+        $holidays = \App\Models\Holiday::where('is_active', true)->get();
+
         return Inertia::render('Mtop/Transfer', [
-            'application' => $application,
+            'suggested_mt_number' => $suggested_mt_number ?? null,
+            'application' => $application ?? null,
             'punong_bayans' => $punong_bayans,
             'officials' => $officials,
-            'activeEvents' => $activeEvents
+            'activeEvents' => $activeEvents,
+            'holidays' => $holidays
         ]);
     }
 

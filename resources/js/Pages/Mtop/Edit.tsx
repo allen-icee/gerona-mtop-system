@@ -58,15 +58,19 @@ const isValidDate = (dateString: string): boolean => {
 };
 
 export default function Edit({
+    suggested_mt_number,
     application,
     punong_bayans,
     officials,
     activeEvents,
+    holidays,
 }: {
+    suggested_mt_number: string;
     application: MtopApplication;
     punong_bayans: string[];
     officials: string[];
     activeEvents: any;
+    holidays: any[];
 }) {
     const [step, setStep] = useState(1);
     const [showMobilePreview, setShowMobilePreview] = useState(false);
@@ -277,7 +281,7 @@ export default function Edit({
             return "INVALID DATE";
         }
 
-        return formatExpiry(data, activeEvents);
+        return formatExpiry(data, activeEvents, holidays);
     };
 
     return (
@@ -526,6 +530,7 @@ export default function Edit({
                                 <PermitPreview
                                     data={data}
                                     activeEvents={activeEvents}
+                                    holidays={holidays}
                                 />
                             </div>
                         </div>
@@ -610,6 +615,7 @@ export default function Edit({
                             data={data}
                             showHeader={false}
                             activeEvents={activeEvents}
+                            holidays={holidays}
                         />
                     </div>
                     <div className="p-4 bg-white border-t border-gray-200 shrink-0">
