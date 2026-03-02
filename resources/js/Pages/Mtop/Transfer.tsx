@@ -41,14 +41,12 @@ export default function Transfer({
     const [showMobilePreview, setShowMobilePreview] = useState(false);
 
     const { data, setData, post, processing, errors } = useForm({
-        // WIPE APPLICANT DETAILS FOR TRANSFER
         last_name: "",
         first_name: "",
         middle_name: "",
         suffix: "",
         address: "",
 
-        // KEEP UNIT DETAILS
         mt_number: application.mt_number || "",
         make_type: application.make_type || "",
         engine_motor_no: application.engine_motor_no || "",
@@ -56,7 +54,6 @@ export default function Transfer({
         plate_no: application.plate_no || "",
         body_number: application.body_number || "",
 
-        // FRESH TRANSACTION DETAILS
         transaction_date: new Date().toISOString().split("T")[0],
         cedula_number: "",
         cedula_date: "",
@@ -184,7 +181,7 @@ export default function Transfer({
         if (!data.transaction_date || !isValidDate(data.transaction_date)) {
             return "INVALID DATE";
         }
-        // ADD holidays HERE:
+
         return formatExpiry(data, activeEvents, holidays);
     };
 
@@ -435,7 +432,7 @@ export default function Transfer({
                                 <PermitPreview
                                     data={data}
                                     activeEvents={activeEvents}
-                                    holidays={holidays} // <--- ADD THIS
+                                    holidays={holidays}
                                 />
                             </div>
                         </div>

@@ -38,7 +38,7 @@ export default function Events({
     const [isDeleting, setIsDeleting] = useState(false);
 
     const [isHolidayModalOpen, setIsHolidayModalOpen] = useState(false);
-    const [editingHoliday, setEditingHoliday] = useState<any>(null); // NEW STATE
+    const [editingHoliday, setEditingHoliday] = useState<any>(null);
     const [deletingHolidayId, setDeletingHolidayId] = useState<number | null>(
         null,
     );
@@ -201,7 +201,6 @@ export default function Events({
 
             <div className="py-6 sm:py-12">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
-                    {/* SECTION: EVENTS & PROMOS */}
                     <section>
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                             <div className="flex items-center gap-3">
@@ -230,7 +229,6 @@ export default function Events({
                             </button>
                         </div>
 
-                        {/* Event Table Desktop */}
                         <div className="hidden md:block bg-white overflow-hidden shadow-sm sm:rounded-lg border border-gray-100">
                             <div className="overflow-x-auto">
                                 <table className="w-full text-sm text-left text-gray-500">
@@ -355,7 +353,6 @@ export default function Events({
                         </div>
                     </section>
 
-                    {/* SECTION: HOLIDAY SETUP */}
                     <section>
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 border-t border-gray-200 pt-8">
                             <div className="flex items-center gap-3">
@@ -393,7 +390,7 @@ export default function Events({
                                                 Holiday Name
                                             </th>
                                             <th className="px-6 py-4">Date</th>
-                                            {/* Changed text-right to text-center */}
+
                                             <th className="px-6 py-4 text-center">
                                                 Action
                                             </th>
@@ -426,7 +423,6 @@ export default function Events({
                                                             {hol.day}
                                                         </span>
                                                     </td>
-                                                    {/* Changed flex justify-end to text-center flex justify-center, and matched icon sizes */}
                                                     <td className="px-6 py-4 text-center flex justify-center gap-3">
                                                         <div className="flex justify-center gap-3">
                                                             <button
@@ -470,7 +466,6 @@ export default function Events({
                 </div>
             </div>
 
-            {/* EVENT MODAL */}
             <Modal
                 show={isModalOpen}
                 onClose={() => {
@@ -568,7 +563,6 @@ export default function Events({
                 </div>
             </Modal>
 
-            {/* HOLIDAY MODAL */}
             <Modal
                 show={isHolidayModalOpen}
                 onClose={() => {

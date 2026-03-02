@@ -58,14 +58,12 @@ const isValidDate = (dateString: string): boolean => {
 };
 
 export default function Edit({
-    suggested_mt_number,
     application,
     punong_bayans,
     officials,
     activeEvents,
     holidays,
 }: {
-    suggested_mt_number: string;
     application: MtopApplication;
     punong_bayans: string[];
     officials: string[];

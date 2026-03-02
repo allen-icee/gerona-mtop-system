@@ -32,14 +32,12 @@ const isValidDate = (dateString: string): boolean => {
 };
 
 export default function Renew({
-    suggested_mt_number,
     application,
     punong_bayans,
     officials,
     activeEvents,
     holidays,
 }: {
-    suggested_mt_number: string;
     application: any;
     punong_bayans: string[];
     officials: string[];
@@ -73,7 +71,6 @@ export default function Renew({
         or_unlocked: false,
     });
 
-    // --- NEW: Live sync to casted screen ---
     useEffect(() => {
         updateClientMonitor(data, activeEvents);
     }, [data, activeEvents]);
@@ -115,7 +112,6 @@ export default function Renew({
 
         if (stepNum === 3) {
             if (!isValidDate(data.cedula_date)) return false;
-            // Only require the OR date if it is NOT a free promo (or if they explicitly unlocked it)
             if (!data.is_free && !isValidDate(data.or_date)) return false;
             if (data.is_free && data.or_unlocked && !isValidDate(data.or_date))
                 return false;
@@ -480,7 +476,7 @@ export default function Renew({
                                 <PermitPreview
                                     data={data}
                                     activeEvents={activeEvents}
-                                    holidays={holidays} // <--- ADD THIS
+                                    holidays={holidays}
                                 />
                             </div>
                         </div>

@@ -80,7 +80,6 @@ class MtopApplicationController extends Controller
 
         return Inertia::render('Mtop/Create', [
             'suggested_mt_number' => $suggested_mt_number ?? null,
-            'application' => $application ?? null,
             'punong_bayans' => $punong_bayans,
             'officials' => $officials,
             'activeEvents' => $activeEvents,
@@ -187,8 +186,7 @@ class MtopApplicationController extends Controller
         $holidays = \App\Models\Holiday::where('is_active', true)->get();
 
         return Inertia::render('Mtop/Edit', [
-            'suggested_mt_number' => $suggested_mt_number ?? null,
-            'application' => $application ?? null, // For edit/renew/transfer
+            'application' => $application ?? null,
             'punong_bayans' => $punong_bayans,
             'officials' => $officials,
             'activeEvents' => $activeEvents,
@@ -448,7 +446,6 @@ class MtopApplicationController extends Controller
         $holidays = \App\Models\Holiday::where('is_active', true)->get();
 
         return Inertia::render('Mtop/Renew', [
-            'suggested_mt_number' => $suggested_mt_number ?? null,
             'application' => $application ?? null,
             'punong_bayans' => $punong_bayans,
             'officials' => $officials,
@@ -549,20 +546,32 @@ class MtopApplicationController extends Controller
 
     private function calculateValidUntil($transactionDateStr, $plateNo, $eventId = null, $isFree = false)
     {
-        $transactionDate = \Carbon\Carbon::parse($transactionDateStr);
+        $transactionDate = Carbon::parse($transactionDateStr);
         $validUntil = $transactionDate->copy()->addYears(3);
 
         if ($eventId) {
             $event = \App\Models\Event::find($eventId);
             if ($event) {
                 if ($isFree) {
-                    return \Carbon\Carbon::parse($event->fixed_expiry_date);
+                    return Carbon::parse($event->fixed_expiry_date);
                 } else {
-                    $eventExpiry = \Carbon\Carbon::parse($event->fixed_expiry_date);
-
+                    $eventExpiry = Carbon::parse($event->fixed_expiry_date);
                     $anchorDate = $eventExpiry->copy()->addDay();
-                    while ($anchorDate->isWeekend()) {
-                        $anchorDate->addDay();
+
+                    $holidays = \App\Models\Holiday::where('is_active', true)->get();
+
+                    $isInvalidDay = true;
+                    while ($isInvalidDay) {
+                        $isWeekend = $anchorDate->isWeekend();
+                        $isHoliday = $holidays->contains(function ($holiday) use ($anchorDate) {
+                            return $holiday->month == $anchorDate->month && $holiday->day == $anchorDate->day;
+                        });
+
+                        if ($isWeekend || $isHoliday) {
+                            $anchorDate->addDay();
+                        } else {
+                            $isInvalidDay = false;
+                        }
                     }
 
                     $validUntil = $anchorDate->copy()->addYears(3);
@@ -577,22 +586,11 @@ class MtopApplicationController extends Controller
                 $year = $validUntil->year;
 
                 $day = $transactionDate->day;
-                $daysInMonth = \Carbon\Carbon::createFromDate($year, $targetMonth, 1)->daysInMonth;
+                $daysInMonth = Carbon::createFromDate($year, $targetMonth, 1)->daysInMonth;
                 $finalDay = min($day, $daysInMonth);
 
-                $validUntil = \Carbon\Carbon::createFromDate($year, $targetMonth, $finalDay);
+                $validUntil = Carbon::createFromDate($year, $targetMonth, $finalDay);
             }
-        }
-
-        // --- NEW LOGIC: Skip Weekends and Holidays ---
-        // Get all holidays formatted as "MM-DD"
-        $holidays = \App\Models\Holiday::all()->map(function ($h) {
-            return sprintf('%02d-%02d', $h->month, $h->day);
-        })->toArray();
-
-        // Loop: If the date is a weekend OR falls on an MM-DD present in our holidays array, add 1 day.
-        while ($validUntil->isWeekend() || in_array($validUntil->format('m-d'), $holidays)) {
-            $validUntil->addDay();
         }
 
         return $validUntil;
@@ -772,7 +770,6 @@ class MtopApplicationController extends Controller
         $holidays = \App\Models\Holiday::where('is_active', true)->get();
 
         return Inertia::render('Mtop/Transfer', [
-            'suggested_mt_number' => $suggested_mt_number ?? null,
             'application' => $application ?? null,
             'punong_bayans' => $punong_bayans,
             'officials' => $officials,
