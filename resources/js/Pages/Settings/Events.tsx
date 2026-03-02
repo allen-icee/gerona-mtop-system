@@ -600,7 +600,7 @@ export default function Events({
                                     Month
                                 </label>
                                 <select
-                                    className="w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500"
+                                    className="w-full rounded-md border-gray-300 h-12 pl-2 shadow-sm focus:border-red-500 focus:ring-red-500"
                                     value={holidayData.month}
                                     onChange={(e) =>
                                         setHolidayData(
@@ -621,7 +621,7 @@ export default function Events({
                                     Day
                                 </label>
                                 <select
-                                    className="w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500"
+                                    className="w-full rounded-md border-gray-300 h-12 pl-2 shadow-sm focus:border-red-500 focus:ring-red-500"
                                     value={holidayData.day}
                                     onChange={(e) =>
                                         setHolidayData(

@@ -1,5 +1,5 @@
 <?php
-
+//GeronaMTOP\app\Http\Controllers\HolidayController.php
 namespace App\Http\Controllers;
 
 use App\Models\Holiday;
@@ -15,8 +15,6 @@ class HolidayController extends Controller
             'day' => 'required|integer|min:1|max:31',
         ]);
 
-        $validated['month_day'] = sprintf('%02d-%02d', $validated['month'], $validated['day']);
-
         Holiday::create($validated);
 
         return redirect()->back()->with('message', 'Holiday added successfully!');
@@ -29,8 +27,6 @@ class HolidayController extends Controller
             'month' => 'required|integer|min:1|max:12',
             'day' => 'required|integer|min:1|max:31',
         ]);
-
-        $validated['month_day'] = sprintf('%02d-%02d', $validated['month'], $validated['day']);
 
         $holiday->update($validated);
 

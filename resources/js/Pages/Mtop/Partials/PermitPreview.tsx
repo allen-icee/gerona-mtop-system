@@ -1,20 +1,20 @@
+//GeronaMTOP\resources\js\Pages\Mtop\Partials\PermitPreview.tsx
 import { Icon } from "@iconify/react";
 import React, { useState, useRef, useEffect } from "react";
 import { openClientMonitor, generatePayload } from "./ClientMonitor";
 
-// Re-export so Create, Edit, Transfer, and Renew don't break
 export { updateClientMonitor, formatExpiry } from "./ClientMonitor";
 
 export default function PermitPreview({
     data,
     showHeader = true,
     activeEvents,
-    holidays, // <--- ADDED THIS
+    holidays,
 }: {
     data: any;
     showHeader?: boolean;
     activeEvents?: any[];
-    holidays?: any[]; // <--- ADDED THIS
+    holidays?: any[];
 }) {
     const [scale, setScale] = useState(1);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -36,7 +36,6 @@ export default function PermitPreview({
         return () => el.removeEventListener("wheel", handleWheel);
     }, []);
 
-    // Pass holidays to the payload generator
     const payload = generatePayload(data, activeEvents, holidays);
 
     return (
@@ -57,7 +56,7 @@ export default function PermitPreview({
                         type="button"
                         onClick={() =>
                             openClientMonitor(data, activeEvents, holidays)
-                        } // <--- Passed holidays here
+                        }
                         className="bg-blue-600 hover:bg-blue-500 hover:cursor-pointer text-white px-4 py-1.5 rounded-md text-[10pt] font-bold uppercase tracking-wider flex items-center gap-2 transition-colors active:scale-95 shadow-sm border border-blue-400"
                     >
                         <Icon icon="solar:monitor-smartphone-bold" width="18" />{" "}
