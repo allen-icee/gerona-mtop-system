@@ -1,5 +1,5 @@
 <?php
-
+//GeronaMTOP\database\migrations\2026_03_03_100536_add_print_toggles_to_mtop_applications_table.php
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;

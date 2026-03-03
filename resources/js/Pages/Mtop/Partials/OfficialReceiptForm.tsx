@@ -1,3 +1,4 @@
+//GeronaMTOP\resources\js\Pages\Mtop\Partials\OfficialReceiptForm.tsx
 import InputGroup from "@/Components/InputGroup";
 import { Icon } from "@iconify/react";
 import { useEffect } from "react";
@@ -8,8 +9,10 @@ export default function OfficialReceiptForm({
     errors,
     onKeyDown,
 }: any) {
-    // FIX: Locked if Free OR if the Toggle is Off
-    const locked = (data.is_free && !data.or_unlocked) || !data.show_or;
+    const isHidden = !data.show_or;
+    const isWaived = data.is_free && !data.or_unlocked;
+
+    const locked = isHidden || isWaived;
     const isRequired = (!data.is_free || data.or_unlocked) && data.show_or;
 
     useEffect(() => {
@@ -29,16 +32,38 @@ export default function OfficialReceiptForm({
                     <h3 className="font-extrabold text-sm uppercase tracking-wide text-violet-700">
                         Official Receipt Details
                     </h3>
+                </div>
+
+                <div className="flex items-center gap-4">
+                    {data.is_free && !isHidden && (
+                        <button
+                            type="button"
+                            onClick={() =>
+                                setData("or_unlocked", !data.or_unlocked)
+                            }
+                            className={`flex items-center gap-1 text-xs font-bold transition-colors ${
+                                data.or_unlocked
+                                    ? "text-red-500 hover:text-red-700"
+                                    : "text-gray-400 hover:text-gray-600"
+                            }`}
+                        >
+                            <Icon
+                                icon={
+                                    data.or_unlocked
+                                        ? "solar:lock-unlocked-bold"
+                                        : "solar:lock-password-bold"
+                                }
+                                width="16"
+                            />
+                            {data.or_unlocked ? "Lock" : "Unlock"}
+                        </button>
+                    )}
+
                     <button
                         type="button"
                         onClick={toggleShowOr}
                         className="flex items-center gap-2 focus:outline-none group"
                     >
-                        <span
-                            className={`text-[10px] font-bold uppercase tracking-wider transition-colors ${data.show_or ? "text-indigo-600" : "text-gray-400 group-hover:text-gray-600"}`}
-                        >
-                            Print on Form
-                        </span>
                         <div
                             className={`w-8 h-4 flex items-center rounded-full p-1 transition-colors duration-300 ${data.show_or ? "bg-indigo-600" : "bg-gray-300"}`}
                         >
@@ -48,35 +73,15 @@ export default function OfficialReceiptForm({
                         </div>
                     </button>
                 </div>
-
-                {data.is_free && (
-                    <button
-                        type="button"
-                        onClick={() =>
-                            setData("or_unlocked", !data.or_unlocked)
-                        }
-                        className={`flex items-center gap-1 text-xs font-bold transition-colors ${
-                            data.or_unlocked
-                                ? "text-red-500 hover:text-red-700"
-                                : "text-gray-400 hover:text-gray-600"
-                        }`}
-                    >
-                        <Icon
-                            icon={
-                                data.or_unlocked
-                                    ? "solar:lock-unlocked-bold"
-                                    : "solar:lock-password-bold"
-                            }
-                            width="16"
-                        />
-                        {data.or_unlocked ? "Lock" : "Unlock"}
-                    </button>
-                )}
             </div>
 
             <div className="relative mt-2">
                 <div
-                    className={`grid grid-cols-1 gap-2 p-2 rounded-xl bg-white transition-all ${locked ? "opacity-50 blur-[0.4px] pointer-events-none" : ""}`}
+                    className={`grid grid-cols-1 gap-2 p-2 rounded-xl bg-white transition-all ${
+                        locked
+                            ? "opacity-50 blur-[0.4px] pointer-events-none"
+                            : ""
+                    }`}
                 >
                     <InputGroup
                         id="or_number"
@@ -115,14 +120,24 @@ export default function OfficialReceiptForm({
 
                 {locked && (
                     <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none bg-black/5 rounded">
-                        <div className="flex flex-col items-center ">
+                        <div className="flex flex-col items-center">
                             <Icon
-                                icon="solar:lock-password-bold"
+                                icon={
+                                    isHidden
+                                        ? "solar:eye-closed-bold"
+                                        : "solar:ticket-sale-bold"
+                                }
                                 width="40"
-                                className="text-slate-500"
+                                className={
+                                    isHidden
+                                        ? "text-slate-400"
+                                        : "text-emerald-500"
+                                }
                             />
-                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                                Locked
+                            <span
+                                className={`text-xs font-bold uppercase tracking-wider mt-1 ${isHidden ? "text-slate-500" : "text-emerald-600"}`}
+                            >
+                                {isHidden ? "Hidden From Print" : "Fee Waived"}
                             </span>
                         </div>
                     </div>

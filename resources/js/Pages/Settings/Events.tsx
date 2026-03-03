@@ -539,7 +539,7 @@ export default function Events({
                                 Description (Optional)
                             </label>
                             <textarea
-                                className="w-full rounded-md border-gray-300"
+                                className="w-full rounded-md border-gray-300 shadow-sm"
                                 rows={3}
                                 value={data.description}
                                 onChange={(e) =>

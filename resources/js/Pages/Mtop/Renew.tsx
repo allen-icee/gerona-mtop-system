@@ -88,7 +88,6 @@ export default function Renew({
             "transaction_date",
         ],
         2: ["plate_no", "make_type", "engine_motor_no", "chassis_no"],
-        3: ["punong_bayan"],
     };
 
     const isStepValid = (stepNum: number) => {
@@ -145,16 +144,13 @@ export default function Renew({
         if (!isValidDate(data.transaction_date))
             return toast.error("Invalid Transaction Date.");
 
-        // ADDED: Only check Cedula if toggled ON
         if (data.show_cedula && !isValidDate(data.cedula_date))
             return toast.error("Invalid Cedula Date.");
 
-        // ADDED: Only check OR if toggled ON and not locked
         const requiresOr = (!data.is_free || data.or_unlocked) && data.show_or;
         if (requiresOr && !isValidDate(data.or_date))
             return toast.error("Invalid Official Receipt Date.");
 
-        // NOTE: In Transfer.tsx, change 'mtop.store_renewal' to 'mtop.store_transfer'
         post(
             route(
                 window.location.pathname.includes("renew")
@@ -191,7 +187,6 @@ export default function Renew({
                 );
         }
         if (step === 3) {
-            // ADDED: Only alert for invalid dates if they are toggled ON
             if (data.show_cedula && !isValidDate(data.cedula_date))
                 return toast.error("Invalid Cedula Date! Check calendar.");
 
@@ -267,7 +262,6 @@ export default function Renew({
         if (!data.transaction_date || !isValidDate(data.transaction_date)) {
             return "INVALID DATE";
         }
-        // ADD holidays HERE:
         return formatExpiry(data, activeEvents, holidays);
     };
 

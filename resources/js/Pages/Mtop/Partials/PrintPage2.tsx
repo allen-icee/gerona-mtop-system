@@ -30,7 +30,6 @@ export default function PrintPage2({ application, operatorName }: Props) {
             .toUpperCase();
     };
 
-    // Updated to use the backend calculated valid_until if available
     const getExpiryDateUpper = (
         dateString: string,
         validUntilString?: string,
@@ -236,12 +235,11 @@ export default function PrintPage2({ application, operatorName }: Props) {
 
                 <div className="uppercase mb-4 text-[12pt]">PINAGTITIBAY:</div>
 
-                {/* FIX: 'invisible' is now on the outer wrapper, hiding the underline too, but holding the exact layout space! */}
                 <div
                     className={`flex justify-end mb-4 ${application.show_auth_official ? "" : "invisible"}`}
                 >
                     <div className="text-center min-w-55">
-                        <div className="font-bold uppercase border-b border-black text-[12pt]">
+                        <div className="font-bold border-b border-black text-[12pt]">
                             {application.authorized_official ||
                                 "________________________"}
                         </div>
@@ -258,7 +256,7 @@ export default function PrintPage2({ application, operatorName }: Props) {
 
                 <div className="flex justify-start mb-4">
                     <div className="text-center min-w-55">
-                        <div className="font-bold uppercase border-b border-black text-[12pt]">
+                        <div className="font-bold border-b border-black text-[12pt]">
                             {application.punong_bayan ||
                                 "________________________"}
                         </div>
@@ -267,10 +265,9 @@ export default function PrintPage2({ application, operatorName }: Props) {
                 </div>
 
                 <div className="text-[11pt] leading-none space-y-1 mb-4">
-                    {/* FIX: Using ? (...) : null prevents React from printing "0" */}
                     {application.show_or ? (
                         <div>
-                            <span className="w-48 inline-block">
+                            <span className="w-40.5 inline-block">
                                 Bayad na sa O.R. Bilang:
                             </span>{" "}
                             <span className="font-bold underline">
@@ -284,7 +281,6 @@ export default function PrintPage2({ application, operatorName }: Props) {
                     <div>
                         <span className="w-23 inline-block">Inisyu Noong:</span>{" "}
                         <span className="font-bold underline uppercase">
-                            {/* FIX: Date always shows now, prioritizing OR Date, falling back to Transaction Date */}
                             {application.or_date
                                 ? formatDate(application.or_date)
                                 : formatDate(application.transaction_date)}

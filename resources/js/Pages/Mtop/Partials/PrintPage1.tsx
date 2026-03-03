@@ -214,7 +214,7 @@ export default function PrintPage1({ application, operatorName }: Props) {
                     <div className="text-left italic text-[10pt] leading-[1.15] min-w-65">
                         {application.show_cedula ? (
                             <div>
-                                <span className="w-28 inline-block">
+                                <span className="w-25.5 inline-block">
                                     SEDULA BILANG:
                                 </span>{" "}
                                 <span className="underline">
@@ -224,7 +224,7 @@ export default function PrintPage1({ application, operatorName }: Props) {
                         ) : null}
 
                         <div>
-                            <span className="w-28 inline-block">Petsa:</span>{" "}
+                            <span className="w-9 inline-block">Petsa:</span>{" "}
                             <span
                                 className={
                                     application.show_cedula &&

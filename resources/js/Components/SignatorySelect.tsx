@@ -1,4 +1,4 @@
-// GeronaMTOP\resources\js\Components\SignatorySelect.tsx
+//GeronaMTOP\resources\js\Components\SignatorySelect.tsx
 import { useState, useMemo, useEffect, useRef } from "react";
 import { Icon } from "@iconify/react";
 
@@ -9,6 +9,7 @@ interface Props {
     options: string[];
     error?: string;
     required?: boolean;
+    disabled?: boolean;
     onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
 }
 
@@ -19,6 +20,7 @@ export default function SignatorySelect({
     options,
     error,
     required,
+    disabled = false,
     onKeyDown,
 }: Props) {
     const [isOpen, setIsOpen] = useState(false);
@@ -101,12 +103,14 @@ export default function SignatorySelect({
                     type="text"
                     className={`block w-full py-3 pl-3 pr-10 border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 ${
                         error ? "border-red-500" : ""
-                    }`}
+                    } ${disabled ? "bg-gray-100 cursor-not-allowed" : ""}`}
                     value={value}
+                    disabled={disabled}
                     onChange={(e) => {
-                        const sanitized = e.target.value
-                            .toUpperCase()
-                            .replace(/[^A-Z\s.,-]/g, "");
+                        const sanitized = e.target.value.replace(
+                            /[^a-zA-ZñÑ\s.,-]/g,
+                            "",
+                        );
 
                         onChange(sanitized);
                         setIsOpen(true);
@@ -136,7 +140,7 @@ export default function SignatorySelect({
                         return (
                             <li
                                 key={index}
-                                className={`px-4 py-2 cursor-pointer uppercase ${
+                                className={`px-4 py-2 cursor-pointer ${
                                     index === selectedIndex
                                         ? "bg-blue-100 text-blue-900"
                                         : "hover:bg-blue-50 text-gray-700"

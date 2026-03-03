@@ -1,5 +1,5 @@
 <?php
-
+//GeronaMTOP\app\Http\Requests\MtopApplicationRequest.php
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
@@ -35,7 +35,6 @@ class MtopApplicationRequest extends FormRequest
             'engine_motor_no' => 'required|string|max:30',
             'chassis_no' => 'required|string|max:30',
 
-            // CHANGED: Made nullable to support toggling off
             'cedula_number' => 'nullable|string|max:20',
             'cedula_date' => 'nullable|date',
             'or_number' => 'nullable|string|max:50',
@@ -43,7 +42,6 @@ class MtopApplicationRequest extends FormRequest
 
             'punong_bayan' => ['required', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
 
-            // CHANGED: Made nullable to support toggling off
             'authorized_official' => ['nullable', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
 
             'show_paid_by' => 'boolean',

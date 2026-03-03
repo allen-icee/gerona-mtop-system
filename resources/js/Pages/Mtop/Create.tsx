@@ -1,3 +1,4 @@
+//GeronaMTOP\resources\js\Pages\Mtop\Create.tsx
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import PrimaryButton from "@/Components/PrimaryButton";
 import { Head, Link, useForm, usePage } from "@inertiajs/react";
@@ -69,14 +70,22 @@ export default function Create({
         or_number: "",
         or_date: "",
         punong_bayan:
-            punong_bayans && punong_bayans.length > 0 ? punong_bayans[0] : "",
+            punong_bayans && punong_bayans.length > 0
+                ? punong_bayans[0].split(" | ")[0]
+                : "",
         authorized_official:
-            officials && officials.length > 0 ? officials[0] : "",
+            officials && officials.length > 0
+                ? officials[0].split(" | ")[0]
+                : "",
 
         event_id:
             activeEvents && activeEvents.length > 0 ? activeEvents[0].id : null,
         is_free: activeEvents && activeEvents.length > 0 ? true : false,
         or_unlocked: false,
+
+        show_auth_official: false,
+        show_cedula: false,
+        show_or: false,
     });
 
     useEffect(() => {
@@ -92,39 +101,50 @@ export default function Create({
             "transaction_date",
         ],
         2: ["plate_no", "make_type", "engine_motor_no", "chassis_no"],
-        3: [
-            "cedula_number",
-            "cedula_date",
-            "or_number",
-            "or_date",
-            "punong_bayan",
-            "authorized_official",
-        ],
     };
 
     const isStepValid = (stepNum: number) => {
-        // @ts-ignore
-        const fields = requiredFields[stepNum];
-        const basicCheck = fields.every(
-            (field: string) =>
-                data[field as keyof typeof data] &&
-                String(data[field as keyof typeof data]).trim() !== "",
-        );
+        if (stepNum === 1 || stepNum === 2) {
+            // @ts-ignore
+            const fields = requiredFields[stepNum];
+            const basicCheck = fields.every(
+                (field: string) =>
+                    data[field as keyof typeof data] &&
+                    String(data[field as keyof typeof data]).trim() !== "",
+            );
+            if (!basicCheck) return false;
 
-        if (!basicCheck) return false;
-
-        if (stepNum === 1) {
-            if (!data.address.toUpperCase().includes("GERONA, TARLAC"))
-                return false;
-            if (!isValidDate(data.transaction_date)) return false;
+            if (stepNum === 1) {
+                if (!data.address.toUpperCase().includes("GERONA, TARLAC"))
+                    return false;
+                if (!isValidDate(data.transaction_date)) return false;
+            }
         }
 
         if (stepNum === 3) {
-            if (!isValidDate(data.cedula_date)) return false;
-
-            if (!data.is_free && !isValidDate(data.or_date)) return false;
-            if (data.is_free && data.or_unlocked && !isValidDate(data.or_date))
+            if (!data.punong_bayan || data.punong_bayan.trim() === "")
                 return false;
+
+            if (
+                data.show_auth_official &&
+                (!data.authorized_official ||
+                    data.authorized_official.trim() === "")
+            )
+                return false;
+
+            if (data.show_cedula) {
+                if (!data.cedula_number || data.cedula_number.trim() === "")
+                    return false;
+                if (!isValidDate(data.cedula_date)) return false;
+            }
+
+            const requiresOr =
+                (!data.is_free || data.or_unlocked) && data.show_or;
+            if (requiresOr) {
+                if (!data.or_number || data.or_number.trim() === "")
+                    return false;
+                if (!isValidDate(data.or_date)) return false;
+            }
         }
 
         return true;
@@ -137,9 +157,12 @@ export default function Create({
 
         if (!isValidDate(data.transaction_date))
             return toast.error("Invalid Transaction Date.");
-        if (!isValidDate(data.cedula_date))
+
+        if (data.show_cedula && !isValidDate(data.cedula_date))
             return toast.error("Invalid Cedula Date.");
-        if (!isValidDate(data.or_date))
+
+        const requiresOr = (!data.is_free || data.or_unlocked) && data.show_or;
+        if (requiresOr && !isValidDate(data.or_date))
             return toast.error("Invalid Official Receipt Date.");
 
         post(route("mtop.store"), {
@@ -178,9 +201,12 @@ export default function Create({
                 );
         }
         if (step === 3) {
-            if (!isValidDate(data.cedula_date))
+            if (data.show_cedula && !isValidDate(data.cedula_date))
                 return toast.error("Invalid Cedula Date! Check calendar.");
-            if (!isValidDate(data.or_date))
+
+            const requiresOr =
+                (!data.is_free || data.or_unlocked) && data.show_or;
+            if (requiresOr && !isValidDate(data.or_date))
                 return toast.error("Invalid OR Date! Check calendar.");
         }
 

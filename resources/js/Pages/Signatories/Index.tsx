@@ -311,7 +311,7 @@ export default function Index({ signatories = [], filters = {} }: Props) {
                                             key={sig.id}
                                             className="hover:bg-gray-50 transition-colors"
                                         >
-                                            <td className="px-6 py-4 font-bold text-gray-900 uppercase text-base">
+                                            <td className="px-6 py-4 font-bold text-gray-900 text-base">
                                                 {sig.name}
                                             </td>
                                             <td className="px-6 py-4 text-gray-600">
@@ -421,13 +421,15 @@ export default function Index({ signatories = [], filters = {} }: Props) {
                                 onChange={(e) =>
                                     setData(
                                         "name",
-                                        e.target.value
-                                            .toUpperCase()
-                                            .replace(/[^A-Z\s.,-]/g, ""),
+
+                                        e.target.value.replace(
+                                            /[^a-zA-ZñÑ\s.,-]/g,
+                                            "",
+                                        ),
                                     )
                                 }
                                 error={errors.name}
-                                placeholder="HON. JUANA DELA CRUZ"
+                                placeholder="Hon. Allen Icee Dequiros, Ph.D"
                                 icon="solar:user-bold"
                                 required
                             />

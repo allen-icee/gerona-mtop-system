@@ -122,7 +122,6 @@ export default function Edit({
             "transaction_date",
         ],
         2: ["plate_no", "make_type", "engine_motor_no", "chassis_no"],
-        3: ["punong_bayan"],
     };
 
     const isStepValid = (stepNum: number) => {
@@ -143,7 +142,6 @@ export default function Edit({
             }
         }
 
-        // ADDED: Dynamic Validation for Step 3 based on Toggles
         if (stepNum === 3) {
             if (!data.punong_bayan || data.punong_bayan.trim() === "")
                 return false;

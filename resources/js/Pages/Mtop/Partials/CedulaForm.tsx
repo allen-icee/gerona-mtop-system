@@ -1,3 +1,4 @@
+//GeronaMTOP\resources\js\Pages\Mtop\Partials\CedulaForm.tsx
 import InputGroup from "@/Components/InputGroup";
 import { Icon } from "@iconify/react";
 
@@ -17,11 +18,6 @@ export default function CedulaForm({ data, setData, errors, onKeyDown }: any) {
                     onClick={toggleShowCedula}
                     className="flex items-center gap-2 focus:outline-none group"
                 >
-                    <span
-                        className={`text-[10px] font-bold uppercase tracking-wider transition-colors ${data.show_cedula ? "text-indigo-600" : "text-gray-400 group-hover:text-gray-600"}`}
-                    >
-                        Print on Form
-                    </span>
                     <div
                         className={`w-8 h-4 flex items-center rounded-full p-1 transition-colors duration-300 ${data.show_cedula ? "bg-indigo-600" : "bg-gray-300"}`}
                     >
@@ -32,7 +28,6 @@ export default function CedulaForm({ data, setData, errors, onKeyDown }: any) {
                 </button>
             </div>
 
-            {/* LOCK OVERLAY WRAPPER */}
             <div className="relative mt-2">
                 <div
                     className={`grid grid-cols-1 gap-2 p-2 rounded-xl bg-white transition-all ${!data.show_cedula ? "opacity-50 blur-[0.4px] pointer-events-none" : ""}`}
@@ -75,12 +70,12 @@ export default function CedulaForm({ data, setData, errors, onKeyDown }: any) {
                     <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none bg-black/5 rounded">
                         <div className="flex flex-col items-center">
                             <Icon
-                                icon="solar:lock-password-bold"
+                                icon="solar:eye-closed-bold"
                                 width="40"
-                                className="text-slate-500"
+                                className="text-slate-400"
                             />
-                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                                Locked
+                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mt-1">
+                                Hidden From Print
                             </span>
                         </div>
                     </div>
