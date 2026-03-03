@@ -236,18 +236,23 @@ export default function PrintPage2({ application, operatorName }: Props) {
 
                 <div className="uppercase mb-4 text-[12pt]">PINAGTITIBAY:</div>
 
-                <div className="flex justify-end mb-4">
+                {/* FIX: 'invisible' is now on the outer wrapper, hiding the underline too, but holding the exact layout space! */}
+                <div
+                    className={`flex justify-end mb-4 ${application.show_auth_official ? "" : "invisible"}`}
+                >
                     <div className="text-center min-w-55">
                         <div className="font-bold uppercase border-b border-black text-[12pt]">
                             {application.authorized_official ||
                                 "________________________"}
                         </div>
-                        <p className="text-[11pt]">
-                            Pinunong Nagsagawa ng Panunumpa at
-                        </p>
-                        <p className="text-[11pt]">
-                            Nagbigay ng Kapahintulutan
-                        </p>
+                        <div>
+                            <p className="text-[11pt]">
+                                Pinunong Nagsagawa ng Panunumpa at
+                            </p>
+                            <p className="text-[11pt]">
+                                Nagbigay ng Kapahintulutan
+                            </p>
+                        </div>
                     </div>
                 </div>
 
@@ -262,22 +267,27 @@ export default function PrintPage2({ application, operatorName }: Props) {
                 </div>
 
                 <div className="text-[11pt] leading-none space-y-1 mb-4">
+                    {/* FIX: Using ? (...) : null prevents React from printing "0" */}
+                    {application.show_or ? (
+                        <div>
+                            <span className="w-48 inline-block">
+                                Bayad na sa O.R. Bilang:
+                            </span>{" "}
+                            <span className="font-bold underline">
+                                {application.is_free
+                                    ? `WAIVED ${application.event?.mandated_by ? "(" + application.event.mandated_by + ")" : ""}`
+                                    : application.or_number || "_________"}
+                            </span>
+                        </div>
+                    ) : null}
+
                     <div>
-                        <span className="w-48">Bayad na sa O.R. Bilang:</span>{" "}
-                        <span className="font-bold underline">
-                            {application.is_free
-                                ? `WAIVED ${application.event?.mandated_by ? "(" + application.event.mandated_by + ")" : ""}`
-                                : application.or_number || "_________"}
-                        </span>
-                    </div>
-                    <div>
-                        <span className="w-48">Inisyu Noong:</span>{" "}
-                        <span className="font-bold underline">
-                            {application.is_free && !application.or_date
-                                ? transactionDate
-                                : application.or_date
-                                  ? formatDate(application.or_date)
-                                  : "_________"}
+                        <span className="w-23 inline-block">Inisyu Noong:</span>{" "}
+                        <span className="font-bold underline uppercase">
+                            {/* FIX: Date always shows now, prioritizing OR Date, falling back to Transaction Date */}
+                            {application.or_date
+                                ? formatDate(application.or_date)
+                                : formatDate(application.transaction_date)}
                         </span>
                     </div>
                     <div className="flex">

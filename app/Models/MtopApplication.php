@@ -42,7 +42,10 @@ class MtopApplication extends Model
         'paid_by_middle_name',
         'paid_by_suffix',
         'event_id',
-        'is_free'
+        'is_free',
+        'show_auth_official',
+        'show_cedula',
+        'show_or',
     ];
 
     public function getFullNameAttribute()

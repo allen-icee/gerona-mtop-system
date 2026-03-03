@@ -1,5 +1,5 @@
 <?php
-//GeronaMTOP\app\Http\Requests\MtopApplicationRequest.php
+
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
@@ -34,12 +34,18 @@ class MtopApplicationRequest extends FormRequest
             'make_type' => 'required|string|max:30',
             'engine_motor_no' => 'required|string|max:30',
             'chassis_no' => 'required|string|max:30',
-            'cedula_number' => 'required|string|max:20',
-            'cedula_date' => 'required|date',
-            'or_number' => 'required_unless:is_free,true|nullable|string|max:50',
-            'or_date' => 'required_unless:is_free,true|nullable|date',
+
+            // CHANGED: Made nullable to support toggling off
+            'cedula_number' => 'nullable|string|max:20',
+            'cedula_date' => 'nullable|date',
+            'or_number' => 'nullable|string|max:50',
+            'or_date' => 'nullable|date',
+
             'punong_bayan' => ['required', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
-            'authorized_official' => ['required', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
+
+            // CHANGED: Made nullable to support toggling off
+            'authorized_official' => ['nullable', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
+
             'show_paid_by' => 'boolean',
             'paid_by_last_name' => ['nullable', 'string', 'max:50', 'regex:/^[a-zA-ZñÑ\s\.\,\-]+$/'],
             'paid_by_first_name' => ['nullable', 'string', 'max:50', 'regex:/^[a-zA-ZñÑ\s\.\,\-]+$/'],
@@ -47,6 +53,9 @@ class MtopApplicationRequest extends FormRequest
             'paid_by_suffix' => ['nullable', 'string', 'max:10', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
             'is_free' => 'boolean',
             'event_id' => 'nullable|exists:events,id',
+            'show_auth_official' => 'boolean',
+            'show_cedula' => 'boolean',
+            'show_or' => 'boolean',
 
             'plate_no' => [
                 'required',

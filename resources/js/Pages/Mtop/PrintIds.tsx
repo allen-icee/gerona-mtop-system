@@ -166,7 +166,9 @@ export default function PrintIds({ applications, settings }: Props) {
                             />
                         </div>
                         <div className="mt-4 relative z-10 flex justify-between items-end pb-1">
-                            <div className="text-center w-36 flex flex-col items-center">
+                            <div
+                                className={`text-center w-36 flex flex-col items-center ${app.show_committee ? "" : "invisible"}`}
+                            >
                                 <div
                                     className="text-[8pt] font-['ArialNarrow7'] font-bold uppercase truncate px-1 tracking-tighter w-full
                                     scale-y-[1.2] origin-bottom pb-1

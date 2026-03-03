@@ -69,6 +69,10 @@ export default function Renew({
         event_id: null,
         is_free: false,
         or_unlocked: false,
+
+        show_auth_official: !!application.show_auth_official,
+        show_cedula: !!application.show_cedula,
+        show_or: !!application.show_or,
     });
 
     useEffect(() => {
@@ -84,71 +88,97 @@ export default function Renew({
             "transaction_date",
         ],
         2: ["plate_no", "make_type", "engine_motor_no", "chassis_no"],
-        3: [
-            "cedula_number",
-            "cedula_date",
-            "or_number",
-            "or_date",
-            "punong_bayan",
-            "authorized_official",
-        ],
+        3: ["punong_bayan"],
     };
 
     const isStepValid = (stepNum: number) => {
-        // @ts-ignore
-        const fields = requiredFields[stepNum];
-        const basicCheck = fields.every(
-            (field: string) =>
-                data[field as keyof typeof data] &&
-                String(data[field as keyof typeof data]).trim() !== "",
-        );
-        if (!basicCheck) return false;
+        if (stepNum === 1 || stepNum === 2) {
+            // @ts-ignore
+            const fields = requiredFields[stepNum];
+            const basicCheck = fields.every(
+                (field: string) =>
+                    data[field as keyof typeof data] &&
+                    String(data[field as keyof typeof data]).trim() !== "",
+            );
+            if (!basicCheck) return false;
 
-        if (stepNum === 1) {
-            if (!data.address.toUpperCase().includes("GERONA, TARLAC"))
-                return false;
-            if (!isValidDate(data.transaction_date)) return false;
+            if (stepNum === 1) {
+                if (!data.address.toUpperCase().includes("GERONA, TARLAC"))
+                    return false;
+                if (!isValidDate(data.transaction_date)) return false;
+            }
         }
 
         if (stepNum === 3) {
-            if (!isValidDate(data.cedula_date)) return false;
-            if (!data.is_free && !isValidDate(data.or_date)) return false;
-            if (data.is_free && data.or_unlocked && !isValidDate(data.or_date))
+            if (!data.punong_bayan || data.punong_bayan.trim() === "")
                 return false;
+
+            if (
+                data.show_auth_official &&
+                (!data.authorized_official ||
+                    data.authorized_official.trim() === "")
+            )
+                return false;
+
+            if (data.show_cedula) {
+                if (!data.cedula_number || data.cedula_number.trim() === "")
+                    return false;
+                if (!isValidDate(data.cedula_date)) return false;
+            }
+
+            const requiresOr =
+                (!data.is_free || data.or_unlocked) && data.show_or;
+            if (requiresOr) {
+                if (!data.or_number || data.or_number.trim() === "")
+                    return false;
+                if (!isValidDate(data.or_date)) return false;
+            }
         }
 
         return true;
     };
 
     const isFormValid = isStepValid(1) && isStepValid(2) && isStepValid(3);
-
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
 
         if (!isValidDate(data.transaction_date))
             return toast.error("Invalid Transaction Date.");
-        if (!isValidDate(data.cedula_date))
+
+        // ADDED: Only check Cedula if toggled ON
+        if (data.show_cedula && !isValidDate(data.cedula_date))
             return toast.error("Invalid Cedula Date.");
-        if (!isValidDate(data.or_date))
+
+        // ADDED: Only check OR if toggled ON and not locked
+        const requiresOr = (!data.is_free || data.or_unlocked) && data.show_or;
+        if (requiresOr && !isValidDate(data.or_date))
             return toast.error("Invalid Official Receipt Date.");
 
-        post(route("mtop.store_renewal", application.id), {
-            onError: (errs) => {
-                if (errs.mt_number) {
-                    setStep(1);
-                    toast.error(errs.mt_number);
-                } else if (errs.body_number) {
-                    setStep(2);
-                    toast.error(errs.body_number);
-                } else {
-                    const firstError = Object.values(errs)[0];
-                    toast.error(
-                        firstError ||
-                            "Failed to process renewal. Check inputs.",
-                    );
-                }
+        // NOTE: In Transfer.tsx, change 'mtop.store_renewal' to 'mtop.store_transfer'
+        post(
+            route(
+                window.location.pathname.includes("renew")
+                    ? "mtop.store_renewal"
+                    : "mtop.store_transfer",
+                application.id,
+            ),
+            {
+                onError: (errs) => {
+                    if (errs.mt_number) {
+                        setStep(1);
+                        toast.error(errs.mt_number);
+                    } else if (errs.body_number) {
+                        setStep(2);
+                        toast.error(errs.body_number);
+                    } else {
+                        const firstError = Object.values(errs)[0];
+                        toast.error(
+                            firstError || "Failed to process. Check inputs.",
+                        );
+                    }
+                },
             },
-        });
+        );
     };
 
     const handleNext = () => {
@@ -161,9 +191,13 @@ export default function Renew({
                 );
         }
         if (step === 3) {
-            if (!isValidDate(data.cedula_date))
+            // ADDED: Only alert for invalid dates if they are toggled ON
+            if (data.show_cedula && !isValidDate(data.cedula_date))
                 return toast.error("Invalid Cedula Date! Check calendar.");
-            if (!isValidDate(data.or_date))
+
+            const requiresOr =
+                (!data.is_free || data.or_unlocked) && data.show_or;
+            if (requiresOr && !isValidDate(data.or_date))
                 return toast.error("Invalid OR Date! Check calendar.");
         }
 

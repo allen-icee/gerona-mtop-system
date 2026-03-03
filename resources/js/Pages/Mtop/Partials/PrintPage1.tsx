@@ -211,19 +211,33 @@ export default function PrintPage1({ application, operatorName }: Props) {
                 </div>
 
                 <div className="flex justify-end">
-                    <div className="text-left italic text-[10pt] leading-[1.15]  min-w-65">
+                    <div className="text-left italic text-[10pt] leading-[1.15] min-w-65">
+                        {application.show_cedula ? (
+                            <div>
+                                <span className="w-28 inline-block">
+                                    SEDULA BILANG:
+                                </span>{" "}
+                                <span className="underline">
+                                    {application.cedula_number || "_________"}
+                                </span>
+                            </div>
+                        ) : null}
+
                         <div>
-                            <span className="w-28">SEDULA BILANG:</span>{" "}
-                            <span className="underline">
-                                {application.cedula_number || "_________"}
-                            </span>
-                        </div>
-                        <div>
-                            <span className="w-28">Petsa ng Pagkuha:</span>{" "}
-                            <span className="underline">
-                                {application.cedula_date
-                                    ? formatDate(application.cedula_date)
-                                    : "_________"}
+                            <span className="w-28 inline-block">Petsa:</span>{" "}
+                            <span
+                                className={
+                                    application.show_cedula &&
+                                    application.cedula_date
+                                        ? "underline"
+                                        : ""
+                                }
+                            >
+                                {application.show_cedula
+                                    ? application.cedula_date
+                                        ? formatDate(application.cedula_date)
+                                        : "_________"
+                                    : ""}
                             </span>
                         </div>
                     </div>

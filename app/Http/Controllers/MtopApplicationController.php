@@ -417,11 +417,13 @@ class MtopApplicationController extends Controller
         $ids = explode(',', $request->query('ids', ''));
         $mayors = $request->query('mayors', []);
         $committees = $request->query('committees', []);
+        $showCommittees = $request->query('show_committees', []);
 
-        $applications = MtopApplication::whereIn('id', $ids)->get()->map(function (MtopApplication $app) use ($mayors, $committees) {
+        $applications = MtopApplication::whereIn('id', $ids)->get()->map(function (MtopApplication $app) use ($mayors, $committees, $showCommittees) {
             $data = $app->toArray();
             $data['print_mayor'] = $mayors[$app->id] ?? 'Municipal Mayor';
             $data['print_committee'] = $committees[$app->id] ?? 'Committee Chair';
+            $data['show_committee'] = filter_var($showCommittees[$app->id] ?? false, FILTER_VALIDATE_BOOLEAN);
             return $data;
         });
 

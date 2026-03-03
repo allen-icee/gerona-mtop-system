@@ -68,8 +68,10 @@ export default function Create({
         cedula_date: "",
         or_number: "",
         or_date: "",
-        punong_bayan: "",
-        authorized_official: "",
+        punong_bayan:
+            punong_bayans && punong_bayans.length > 0 ? punong_bayans[0] : "",
+        authorized_official:
+            officials && officials.length > 0 ? officials[0] : "",
 
         event_id:
             activeEvents && activeEvents.length > 0 ? activeEvents[0].id : null,

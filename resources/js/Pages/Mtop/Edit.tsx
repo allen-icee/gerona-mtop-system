@@ -42,6 +42,10 @@ interface MtopApplication {
 
     event_id?: number | null;
     is_free?: boolean | number;
+
+    show_auth_official?: boolean | number;
+    show_cedula?: boolean | number;
+    show_or?: boolean | number;
 }
 
 const isValidDate = (dateString: string): boolean => {
@@ -99,6 +103,10 @@ export default function Edit({
 
         or_unlocked:
             application.event_id && !application.is_free ? true : false,
+
+        show_auth_official: !!application.show_auth_official,
+        show_cedula: !!application.show_cedula,
+        show_or: !!application.show_or,
     });
 
     useEffect(() => {
@@ -114,39 +122,52 @@ export default function Edit({
             "transaction_date",
         ],
         2: ["plate_no", "make_type", "engine_motor_no", "chassis_no"],
-        3: [
-            "cedula_number",
-            "cedula_date",
-            "or_number",
-            "or_date",
-            "punong_bayan",
-            "authorized_official",
-        ],
+        3: ["punong_bayan"],
     };
 
     const isStepValid = (stepNum: number) => {
-        // @ts-ignore
-        const fields = requiredFields[stepNum];
-        const basicCheck = fields.every(
-            (field: string) =>
-                data[field as keyof typeof data] &&
-                String(data[field as keyof typeof data]).trim() !== "",
-        );
+        if (stepNum === 1 || stepNum === 2) {
+            // @ts-ignore
+            const fields = requiredFields[stepNum];
+            const basicCheck = fields.every(
+                (field: string) =>
+                    data[field as keyof typeof data] &&
+                    String(data[field as keyof typeof data]).trim() !== "",
+            );
+            if (!basicCheck) return false;
 
-        if (!basicCheck) return false;
-
-        if (stepNum === 1) {
-            if (!data.address.toUpperCase().includes("GERONA, TARLAC"))
-                return false;
-            if (!isValidDate(data.transaction_date)) return false;
+            if (stepNum === 1) {
+                if (!data.address.toUpperCase().includes("GERONA, TARLAC"))
+                    return false;
+                if (!isValidDate(data.transaction_date)) return false;
+            }
         }
 
+        // ADDED: Dynamic Validation for Step 3 based on Toggles
         if (stepNum === 3) {
-            if (!isValidDate(data.cedula_date)) return false;
-
-            if (!data.is_free && !isValidDate(data.or_date)) return false;
-            if (data.is_free && data.or_unlocked && !isValidDate(data.or_date))
+            if (!data.punong_bayan || data.punong_bayan.trim() === "")
                 return false;
+
+            if (
+                data.show_auth_official &&
+                (!data.authorized_official ||
+                    data.authorized_official.trim() === "")
+            )
+                return false;
+
+            if (data.show_cedula) {
+                if (!data.cedula_number || data.cedula_number.trim() === "")
+                    return false;
+                if (!isValidDate(data.cedula_date)) return false;
+            }
+
+            const requiresOr =
+                (!data.is_free || data.or_unlocked) && data.show_or;
+            if (requiresOr) {
+                if (!data.or_number || data.or_number.trim() === "")
+                    return false;
+                if (!isValidDate(data.or_date)) return false;
+            }
         }
 
         return true;
