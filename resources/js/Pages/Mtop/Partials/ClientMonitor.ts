@@ -24,6 +24,16 @@ export const formatExpiry = (
     activeEvents?: any[],
     holidays?: any[],
 ) => {
+    if (data.is_manual_validity && data.valid_until) {
+        return new Date(data.valid_until)
+            .toLocaleDateString("en-US", {
+                month: "long",
+                day: "numeric",
+                year: "numeric",
+            })
+            .toUpperCase();
+    }
+
     if (!data.transaction_date) return "-";
 
     let baseDate = new Date(data.transaction_date);

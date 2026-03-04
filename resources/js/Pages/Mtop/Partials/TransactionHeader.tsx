@@ -270,28 +270,75 @@ export default function TransactionHeader({
                 />
 
                 <div className="sm:col-span-2 lg:col-span-1">
-                    <label className="block font-medium text-sm text-gray-700 mb-1 hover:cursor-not-allowed">
-                        Validity{" "}
-                        <span className="text-gray-400 font-normal text-xs">
-                            (Auto-calculated)
-                        </span>
-                    </label>
+                    <div className="flex justify-between items-center mb-1">
+                        <label className="block font-medium text-sm text-gray-700">
+                            Validity{" "}
+                            <span className="text-gray-400 font-normal text-xs">
+                                (
+                                {data.is_manual_validity
+                                    ? "Manual"
+                                    : "Auto-calculated"}
+                                )
+                            </span>
+                        </label>
+                        <div className="flex items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    setData(
+                                        "is_manual_validity",
+                                        !data.is_manual_validity,
+                                    )
+                                }
+                                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${
+                                    data.is_manual_validity
+                                        ? "bg-blue-600"
+                                        : "bg-gray-300"
+                                }`}
+                            >
+                                <span
+                                    className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
+                                        data.is_manual_validity
+                                            ? "translate-x-4"
+                                            : "translate-x-1"
+                                    }`}
+                                />
+                            </button>
+                        </div>
+                    </div>
                     <div className="relative h-11.75">
                         <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
                             <Icon icon="solar:clock-circle-bold" width="20" />
                         </div>
-                        {/* FIX IS HERE: We now call expiryDisplay() for everything so the foolproof logic applies! */}
-                        <input
-                            type="text"
-                            disabled
-                            className="block w-full h-full pl-10 py-2 hover:cursor-not-allowed border-gray-300 bg-gray-50 text-gray-500 font-bold rounded-md shadow-sm text-sm"
-                            value={
-                                typeof expiryDisplay === "function"
-                                    ? expiryDisplay()
-                                    : "N/A"
-                            }
-                        />
+                        {data.is_manual_validity ? (
+                            <input
+                                type="date"
+                                className={`block w-full h-full pl-10 py-2 border-gray-300 focus:ring-blue-500 focus:border-blue-500 font-bold text-gray-800 rounded-md shadow-sm text-sm ${
+                                    errors?.valid_until ? "border-red-500" : ""
+                                }`}
+                                value={data.valid_until || ""}
+                                onChange={(e) =>
+                                    setData("valid_until", e.target.value)
+                                }
+                            />
+                        ) : (
+                            <input
+                                type="text"
+                                disabled
+                                className="block w-full h-full pl-10 py-2 hover:cursor-not-allowed border-gray-300 bg-gray-50 text-gray-500 font-bold rounded-md shadow-sm text-sm"
+                                value={
+                                    typeof expiryDisplay === "function"
+                                        ? expiryDisplay()
+                                        : "N/A"
+                                }
+                            />
+                        )}
                     </div>
+                    {errors?.valid_until && (
+                        <p className="mt-1 text-xs text-red-500">
+                            {errors.valid_until}
+                        </p>
+                    )}
                 </div>
             </div>
         </div>

@@ -203,10 +203,16 @@ export default function PrintPage2({ application, operatorName }: Props) {
                         </span>
                     </div>
                     <div className="mb-4">
-                        <span className="w-75 shrink-0">
-                            May tibay para sa loob ng{" "}
-                            {formatValidity(years, months)}, mula:
-                        </span>{" "}
+                        {application.is_manual_validity ? (
+                            <span className="w-75 shrink-0">
+                                May tibay mula:
+                            </span>
+                        ) : (
+                            <span className="w-75 shrink-0">
+                                May tibay para sa loob ng{" "}
+                                {formatValidity(years, months)}, mula:
+                            </span>
+                        )}{" "}
                         <span className="font-bold uppercase underline">
                             {formatDateUpper(application.transaction_date)} -{" "}
                             {getExpiryDateUpper(

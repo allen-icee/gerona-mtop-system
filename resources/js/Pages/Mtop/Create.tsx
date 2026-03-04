@@ -86,6 +86,8 @@ export default function Create({
         show_auth_official: false,
         show_cedula: false,
         show_or: false,
+        is_manual_validity: false,
+        valid_until: "",
     });
 
     useEffect(() => {

@@ -213,7 +213,11 @@ export default function PrintPage1({ application, operatorName }: Props) {
                         {/* DITO NA-APPLY ANG BAGONG LOGIC */}
                         <li className="pl-2">
                             Ang Motorized Tricycle Operator's Permit (MTOP) ay
-                            may bisa na {formatValidity(years, months)};
+                            may bisa{" "}
+                            {application.is_manual_validity
+                                ? `hanggang ${formatDate(application.valid_until)}`
+                                : `na ${formatValidity(years, months)}`}
+                            ;
                         </li>
                         <li className="pl-2">
                             Ang may-ari/drayber ay kinakailangang maningil

@@ -68,6 +68,10 @@ export default function Transfer({
         show_auth_official: !!application.show_auth_official,
         show_cedula: !!application.show_cedula,
         show_or: !!application.show_or,
+        is_manual_validity: !!application.is_manual_validity,
+        valid_until: application.valid_until
+            ? application.valid_until.split(" ")[0]
+            : "",
     });
 
     useEffect(() => {

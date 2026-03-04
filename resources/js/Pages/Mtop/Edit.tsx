@@ -46,6 +46,8 @@ interface MtopApplication {
     show_auth_official?: boolean | number;
     show_cedula?: boolean | number;
     show_or?: boolean | number;
+    is_manual_validity?: boolean | number;
+    valid_until?: string | null;
 }
 
 const isValidDate = (dateString: string): boolean => {
@@ -107,6 +109,10 @@ export default function Edit({
         show_auth_official: !!application.show_auth_official,
         show_cedula: !!application.show_cedula,
         show_or: !!application.show_or,
+        is_manual_validity: !!application.is_manual_validity,
+        valid_until: application.valid_until
+            ? application.valid_until.split(" ")[0]
+            : "",
     });
 
     useEffect(() => {

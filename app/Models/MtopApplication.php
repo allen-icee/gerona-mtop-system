@@ -46,6 +46,7 @@ class MtopApplication extends Model
         'show_auth_official',
         'show_cedula',
         'show_or',
+        'is_manual_validity',
     ];
 
     public function getFullNameAttribute()

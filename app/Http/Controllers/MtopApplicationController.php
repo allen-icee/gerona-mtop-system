@@ -55,7 +55,7 @@ class MtopApplicationController extends Controller
         $maxSeq = 0;
         foreach ($mtNumbers as $num) {
             $parts = explode('-', $num);
-            $seq = isset($parts[1]) ? (int)$parts[1] : 0;
+            $seq = isset($parts[1]) ? (int) $parts[1] : 0;
             if ($seq > $maxSeq) {
                 $maxSeq = $seq;
             }
@@ -145,7 +145,10 @@ class MtopApplicationController extends Controller
                 $applicationData['processed_by'] = Auth::id();
                 $applicationData['is_free'] = $isFree;
                 $applicationData['event_id'] = $validated['event_id'] ?? null;
-                $applicationData['valid_until'] = $expiryResult['expiry_date'];
+                $applicationData['is_manual_validity'] = filter_var($validated['is_manual_validity'] ?? false, FILTER_VALIDATE_BOOLEAN);
+                $applicationData['valid_until'] = $applicationData['is_manual_validity'] && !empty($validated['valid_until'])
+                    ? $validated['valid_until']
+                    : $expiryResult['expiry_date'];
 
                 $application = MtopApplication::create($applicationData);
 
@@ -215,7 +218,10 @@ class MtopApplicationController extends Controller
                 !$isFree,
                 $event
             );
-            $validated['valid_until'] = $expiryResult['expiry_date'];
+            $validated['is_manual_validity'] = filter_var($validated['is_manual_validity'] ?? false, FILTER_VALIDATE_BOOLEAN);
+            $validated['valid_until'] = $validated['is_manual_validity'] && !empty($validated['valid_until'])
+                ? $validated['valid_until']
+                : $expiryResult['expiry_date'];
         }
 
         try {
@@ -524,7 +530,10 @@ class MtopApplicationController extends Controller
                 $applicationData['processed_by'] = Auth::id();
                 $applicationData['is_free'] = $isFree;
                 $applicationData['event_id'] = $validated['event_id'] ?? null;
-                $applicationData['valid_until'] = $expiryResult['expiry_date'];
+                $applicationData['is_manual_validity'] = filter_var($validated['is_manual_validity'] ?? false, FILTER_VALIDATE_BOOLEAN);
+                $applicationData['valid_until'] = $applicationData['is_manual_validity'] && !empty($validated['valid_until'])
+                    ? $validated['valid_until']
+                    : $expiryResult['expiry_date'];
 
                 $newAppCreated = MtopApplication::create($applicationData);
                 $this->queueForSync('mtop_applications', $newAppCreated->toArray());
@@ -635,7 +644,10 @@ class MtopApplicationController extends Controller
                 $applicationData['processed_by'] = Auth::id();
                 $applicationData['is_free'] = $isFree;
                 $applicationData['event_id'] = $validated['event_id'] ?? null;
-                $applicationData['valid_until'] = $expiryResult['expiry_date'];
+                $applicationData['is_manual_validity'] = filter_var($validated['is_manual_validity'] ?? false, FILTER_VALIDATE_BOOLEAN);
+                $applicationData['valid_until'] = $applicationData['is_manual_validity'] && !empty($validated['valid_until'])
+                    ? $validated['valid_until']
+                    : $expiryResult['expiry_date'];
 
                 $newAppCreated = MtopApplication::create($applicationData);
                 $this->queueForSync('mtop_applications', $newAppCreated->toArray());
