@@ -29,8 +29,13 @@ class EventController extends Controller
             'end_date' => 'required|date|after_or_equal:start_date',
             'fixed_expiry_date' => 'required|date',
             'mandated_by' => 'required|string|max:255',
-            'is_active' => 'boolean'
+            'is_active' => 'boolean',
+            'validity_years' => 'nullable|integer|min:0',
+            'validity_months' => 'nullable|integer|min:0|max:11',
         ]);
+
+        $validated['validity_years'] = $validated['validity_years'] ?? 0;
+        $validated['validity_months'] = $validated['validity_months'] ?? 0;
 
         Event::create($validated);
 
@@ -44,10 +49,16 @@ class EventController extends Controller
             'description' => 'nullable|string',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
-            'fixed_expiry_date' => 'required|date|after_or_equal:start_date',
+            'fixed_expiry_date' => 'required|date',
             'mandated_by' => 'required|string|max:255',
-            'is_active' => 'boolean'
+            'is_active' => 'boolean',
+            'validity_years' => 'nullable|integer|min:0',
+            'validity_months' => 'nullable|integer|min:0|max:11',
         ]);
+
+        // Kapag naiwang blangko (null) sa form, isave bilang 0
+        $validated['validity_years'] = $validated['validity_years'] ?? 0;
+        $validated['validity_months'] = $validated['validity_months'] ?? 0;
 
         $event->update($validated);
 

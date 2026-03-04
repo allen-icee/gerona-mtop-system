@@ -77,6 +77,41 @@ export default function PrintPage2({ application, operatorName }: Props) {
         return [barangay, ...rest].join(", ");
     };
 
+    const formatValidity = (years: number, months: number) => {
+        const map: Record<number, string> = {
+            1: "isang",
+            2: "dalawang",
+            3: "tatlong",
+            4: "apat na",
+            5: "limang",
+            6: "anim na",
+            7: "pitong",
+            8: "walong",
+            9: "siyam na",
+            10: "sampung",
+            11: "labing-isang",
+            12: "labing dalawang",
+        };
+
+        let parts = [];
+
+        if (years > 0) {
+            let yrWord = map[years] || years.toString();
+            parts.push(`${yrWord} taon`);
+        }
+
+        if (months > 0) {
+            let moWord = map[months] || months.toString();
+            parts.push(`${moWord} buwan`);
+        }
+
+        return parts.join(" at ");
+    };
+
+    // Default to 3 years and 0 months if not set by an event
+    const years = application.event?.validity_years ?? 3;
+    const months = application.event?.validity_months ?? 0;
+
     const transactionDate = application.transaction_date
         ? formatDate(application.transaction_date)
         : "_________________";
@@ -169,7 +204,8 @@ export default function PrintPage2({ application, operatorName }: Props) {
                     </div>
                     <div className="mb-4">
                         <span className="w-75 shrink-0">
-                            May tibay para sa loob ng tatlong taon, mula:
+                            May tibay para sa loob ng{" "}
+                            {formatValidity(years, months)}, mula:
                         </span>{" "}
                         <span className="font-bold uppercase underline">
                             {formatDateUpper(application.transaction_date)} -{" "}

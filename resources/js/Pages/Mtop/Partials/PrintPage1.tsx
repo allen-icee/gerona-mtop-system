@@ -1,4 +1,3 @@
-//GeronaMTOP\resources\js\Pages\Mtop\Partials\PrintPage1.tsx
 import React from "react";
 import { usePage } from "@inertiajs/react";
 
@@ -24,6 +23,42 @@ export default function PrintPage1({ application, operatorName }: Props) {
         return str.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
     };
 
+    // BAGONG FUNCTION: Matalinong inaalam kung taon lang, buwan lang, o pareho
+    const formatValidity = (years: number, months: number) => {
+        const map: Record<number, string> = {
+            1: "isang",
+            2: "dalawang",
+            3: "tatlong",
+            4: "apat na",
+            5: "limang",
+            6: "anim na",
+            7: "pitong",
+            8: "walong",
+            9: "siyam na",
+            10: "sampung",
+            11: "labing-isang",
+            12: "labing dalawang",
+        };
+
+        let parts = [];
+
+        if (years > 0) {
+            let yrWord = map[years] || years.toString();
+            parts.push(`${yrWord} (${years}) taon`);
+        }
+
+        if (months > 0) {
+            let moWord = map[months] || months.toString();
+            parts.push(`${moWord} (${months}) buwan`);
+        }
+
+        return parts.join(" at ");
+    };
+
+    // Default to 3 years and 0 months if not set by an event
+    const years = application.event?.validity_years ?? 3;
+    const months = application.event?.validity_months ?? 0;
+
     const transactionDate = application.transaction_date
         ? formatDate(application.transaction_date)
         : "_________________";
@@ -38,6 +73,7 @@ export default function PrintPage1({ application, operatorName }: Props) {
             application.paid_by_suffix ? " " + application.paid_by_suffix : ""
         }`.trim();
     }
+
     return (
         <div
             className="w-full h-[11.69in] relative flex flex-col bg-white overflow-hidden text-black leading-tight"
@@ -174,9 +210,10 @@ export default function PrintPage1({ application, operatorName }: Props) {
 
                 <div className="mb-8 text-[12pt] leading-[1.15] text-justify">
                     <ol className="list-decimal ml-10 space-y-1">
+                        {/* DITO NA-APPLY ANG BAGONG LOGIC */}
                         <li className="pl-2">
                             Ang Motorized Tricycle Operator's Permit (MTOP) ay
-                            may bisa na tatlong (3) taon;
+                            may bisa na {formatValidity(years, months)};
                         </li>
                         <li className="pl-2">
                             Ang may-ari/drayber ay kinakailangang maningil

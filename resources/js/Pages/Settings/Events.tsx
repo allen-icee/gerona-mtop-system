@@ -52,6 +52,8 @@ export default function Events({
             fixed_expiry_date: "",
             mandated_by: "",
             is_active: true,
+            validity_years: 3,
+            validity_months: 0,
         });
 
     const {
@@ -87,6 +89,8 @@ export default function Events({
                 fixed_expiry_date: event.fixed_expiry_date,
                 mandated_by: event.mandated_by || "",
                 is_active: !!event.is_active,
+                validity_years: event.validity_years ?? 3,
+                validity_months: event.validity_months ?? 0,
             });
         } else {
             setEditingEvent(null);
@@ -534,6 +538,27 @@ export default function Events({
                             }
                             required
                         />
+                        <div className="grid grid-cols-2 gap-4">
+                            <InputGroup
+                                id="validity_years"
+                                label="Validity (Years)"
+                                type="number"
+                                value={data.validity_years}
+                                onChange={(e: any) =>
+                                    setData("validity_years", e.target.value)
+                                }
+                            />
+                            <InputGroup
+                                id="validity_months"
+                                label="Validity (Months)"
+                                type="number"
+                                value={data.validity_months}
+                                onChange={(e: any) =>
+                                    setData("validity_months", e.target.value)
+                                }
+                            />
+                        </div>
+
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Description (Optional)
