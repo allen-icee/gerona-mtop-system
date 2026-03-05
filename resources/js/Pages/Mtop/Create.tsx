@@ -167,6 +167,40 @@ export default function Create({
         if (requiresOr && !isValidDate(data.or_date))
             return toast.error("Invalid Official Receipt Date.");
 
+        // =================================================================
+        // NEW: PRE-SAVE PROMO WARNING MODAL
+        // =================================================================
+        if (data.is_free && data.event_id) {
+            const currentEvent =
+                activeEvents?.find((ev: any) => ev.id == data.event_id) ||
+                activeEvents?.[0];
+            if (
+                currentEvent &&
+                currentEvent.start_date &&
+                currentEvent.end_date
+            ) {
+                const tDate = new Date(data.transaction_date);
+                tDate.setHours(0, 0, 0, 0);
+                const eStart = new Date(currentEvent.start_date);
+                eStart.setHours(0, 0, 0, 0);
+                const eEnd = new Date(currentEvent.end_date);
+                eEnd.setHours(23, 59, 59, 999);
+
+                if (tDate < eStart || tDate > eEnd) {
+                    const confirmProceed = window.confirm(
+                        "⚠️ WARNING: DATE OUTSIDE PROMO PERIOD\n\n" +
+                            "The transaction date you selected is outside the active dates of the Promo/Event.\n\n" +
+                            "If you click OK, the system will save this record, but the FREE PROMO will be removed and it will be processed as a standard 3-Year validity permit.\n\n" +
+                            "Do you want to proceed?",
+                    );
+
+                    // If they click "Cancel", we stop the function so it doesn't save!
+                    if (!confirmProceed) return;
+                }
+            }
+        }
+        // =================================================================
+
         post(route("mtop.store"), {
             onSuccess: (page: any) => {
                 const successData = page.props.flash?.success_data;

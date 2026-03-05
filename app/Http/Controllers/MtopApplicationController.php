@@ -45,7 +45,7 @@ class MtopApplicationController extends Controller
         ]);
     }
 
-    public function create(): \Inertia\Response
+    public function create(): Response
     {
         $year = now()->year;
         $holidays = \App\Models\Holiday::where('is_active', true)->get();
@@ -88,11 +88,28 @@ class MtopApplicationController extends Controller
         ]);
     }
 
-    public function store(MtopApplicationRequest $request, ValidityService $validityService): \Illuminate\Http\RedirectResponse
+    public function store(MtopApplicationRequest $request, ValidityService $validityService): RedirectResponse
     {
         $validated = $request->validated();
 
-        $event = !empty($validated['event_id']) ? \App\Models\Event::find($validated['event_id']) : null;
+        $event = null;
+        if (!empty($validated['event_id'])) {
+            $e = \App\Models\Event::find($validated['event_id']);
+            if ($e) {
+                $tDate = Carbon::parse($request->transaction_date)->startOfDay();
+                $eventStart = Carbon::parse($e->start_date)->startOfDay();
+                $eventEnd = Carbon::parse($e->end_date)->endOfDay();
+
+                // Only apply the promo if the transaction date falls within the event dates
+                if ($tDate->between($eventStart, $eventEnd)) {
+                    $event = $e;
+                } else {
+                    // SECURE FIX: Completely strip the promo data if they backdate!
+                    $validated['event_id'] = null;
+                    $validated['is_free'] = false;
+                }
+            }
+        }
         $isFree = filter_var($validated['is_free'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
         $expiryResult = $validityService->computeExpiry(
@@ -209,7 +226,24 @@ class MtopApplicationController extends Controller
         $validated = $request->validated();
 
         if ($request->transaction_date) {
-            $event = !empty($validated['event_id']) ? \App\Models\Event::find($validated['event_id']) : null;
+            $event = null;
+            if (!empty($validated['event_id'])) {
+                $e = \App\Models\Event::find($validated['event_id']);
+                if ($e) {
+                    $tDate = Carbon::parse($request->transaction_date)->startOfDay();
+                    $eventStart = Carbon::parse($e->start_date)->startOfDay();
+                    $eventEnd = Carbon::parse($e->end_date)->endOfDay();
+
+                    // Only apply the promo if the transaction date falls within the event dates
+                    if ($tDate->between($eventStart, $eventEnd)) {
+                        $event = $e;
+                    } else {
+                        // SECURE FIX: Completely strip the promo data if they backdate!
+                        $validated['event_id'] = null;
+                        $validated['is_free'] = false;
+                    }
+                }
+            }
             $isFree = filter_var($validated['is_free'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
             $expiryResult = $validityService->computeExpiry(
@@ -342,11 +376,19 @@ class MtopApplicationController extends Controller
                 'Cedula Date',
                 'Punong Bayan',
                 'Authorized Official',
+                'Driver Name',          // Added New Field
+                'Is Free/Promo',        // Added New Field
+                'Paid By Details',      // Added New Field
                 'Valid Until',
                 'Status'
             ]);
 
             foreach ($records as $row) {
+                // Safely format the Paid By details
+                $paidBy = $row->show_paid_by
+                    ? trim("{$row->paid_by_first_name} {$row->paid_by_last_name} {$row->paid_by_suffix}")
+                    : 'N/A';
+
                 fputcsv($file, [
                     $row->mt_number,
                     $row->transaction_date,
@@ -368,6 +410,9 @@ class MtopApplicationController extends Controller
                     $row->cedula_date,
                     $row->punong_bayan,
                     $row->authorized_official,
+                    $row->driver_name ?? 'N/A',            // Injects Driver
+                    $row->is_free ? 'YES' : 'NO',          // Injects Promo Info
+                    $paidBy,                               // Injects Paid By
                     $row->valid_until,
                     $row->status
                 ]);
@@ -473,7 +518,24 @@ class MtopApplicationController extends Controller
         $oldApp = MtopApplication::findOrFail($id);
         $validated = $request->validated();
 
-        $event = !empty($validated['event_id']) ? \App\Models\Event::find($validated['event_id']) : null;
+        $event = null;
+        if (!empty($validated['event_id'])) {
+            $e = \App\Models\Event::find($validated['event_id']);
+            if ($e) {
+                $tDate = Carbon::parse($request->transaction_date)->startOfDay();
+                $eventStart = Carbon::parse($e->start_date)->startOfDay();
+                $eventEnd = Carbon::parse($e->end_date)->endOfDay();
+
+                // Only apply the promo if the transaction date falls within the event dates
+                if ($tDate->between($eventStart, $eventEnd)) {
+                    $event = $e;
+                } else {
+                    // SECURE FIX: Completely strip the promo data if they backdate!
+                    $validated['event_id'] = null;
+                    $validated['is_free'] = false;
+                }
+            }
+        }
         $isFree = filter_var($validated['is_free'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
         $expiryResult = $validityService->computeExpiry(
@@ -551,7 +613,7 @@ class MtopApplicationController extends Controller
         }
     }
 
-    public function transfer($id): \Inertia\Response
+    public function transfer($id): Response
     {
         $application = MtopApplication::findOrFail($id);
 
@@ -581,12 +643,29 @@ class MtopApplicationController extends Controller
         ]);
     }
 
-    public function storeTransfer(MtopApplicationRequest $request, $id, ValidityService $validityService): \Illuminate\Http\RedirectResponse
+    public function storeTransfer(MtopApplicationRequest $request, $id, ValidityService $validityService): RedirectResponse
     {
         $oldApp = MtopApplication::findOrFail($id);
         $validated = $request->validated();
 
-        $event = !empty($validated['event_id']) ? \App\Models\Event::find($validated['event_id']) : null;
+        $event = null;
+        if (!empty($validated['event_id'])) {
+            $e = \App\Models\Event::find($validated['event_id']);
+            if ($e) {
+                $tDate = Carbon::parse($request->transaction_date)->startOfDay();
+                $eventStart = Carbon::parse($e->start_date)->startOfDay();
+                $eventEnd = Carbon::parse($e->end_date)->endOfDay();
+
+                // Only apply the promo if the transaction date falls within the event dates
+                if ($tDate->between($eventStart, $eventEnd)) {
+                    $event = $e;
+                } else {
+                    // SECURE FIX: Completely strip the promo data if they backdate!
+                    $validated['event_id'] = null;
+                    $validated['is_free'] = false;
+                }
+            }
+        }
         $isFree = filter_var($validated['is_free'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
         $expiryResult = $validityService->computeExpiry(

@@ -64,6 +64,9 @@ class MtopApplicationRequest extends FormRequest
                     }
                 }
             ],
+
+            'is_manual_validity' => 'boolean',
+            'valid_until' => 'nullable|date',
         ];
 
         if ($this->route('id')) {
