@@ -59,11 +59,32 @@ export default function DriverInfoModal({
                         .trim()
                         .toUpperCase();
 
-                    // 3. Smart Upgrade: Use the full name if driver is blank OR if it matches the old incomplete format
+                    // 3. Format the Paid By name (if it exists)
+                    let paidByName = "";
+                    if (app.show_paid_by) {
+                        const pbInitial = app.paid_by_middle_name
+                            ? `${app.paid_by_middle_name[0]}. `
+                            : "";
+                        const pbSfx = app.paid_by_suffix
+                            ? ` ${app.paid_by_suffix}`
+                            : "";
+                        paidByName =
+                            `${app.paid_by_first_name || ""} ${pbInitial}${app.paid_by_last_name || ""}${pbSfx}`
+                                .trim()
+                                .toUpperCase();
+                    }
+
+                    // 4. Smart Upgrade: Paid By overrides Driver. Otherwise fallback to Operator.
                     let finalDriverName = app.driver_name
                         ? app.driver_name.trim().toUpperCase()
                         : "";
-                    if (!finalDriverName || finalDriverName === oldBasicName) {
+
+                    if (app.show_paid_by && paidByName) {
+                        finalDriverName = paidByName;
+                    } else if (
+                        !finalDriverName ||
+                        finalDriverName === oldBasicName
+                    ) {
                         finalDriverName = fullOperatorName;
                     }
 

@@ -80,6 +80,13 @@ export default function Transfer({
         valid_until: application.valid_until
             ? application.valid_until.split(" ")[0]
             : "",
+
+        // ADDED MISSING PAID BY STATE INITIALIZATION
+        show_paid_by: !!application.show_paid_by,
+        paid_by_last_name: application.paid_by_last_name || "",
+        paid_by_first_name: application.paid_by_first_name || "",
+        paid_by_middle_name: application.paid_by_middle_name || "",
+        paid_by_suffix: application.paid_by_suffix || "",
     });
 
     useEffect(() => {

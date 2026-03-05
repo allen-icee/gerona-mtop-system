@@ -48,6 +48,13 @@ interface MtopApplication {
     show_or?: boolean | number;
     is_manual_validity?: boolean | number;
     valid_until?: string | null;
+
+    // ADDED MISSING PAID BY FIELDS HERE
+    show_paid_by?: boolean | number;
+    paid_by_last_name?: string | null;
+    paid_by_first_name?: string | null;
+    paid_by_middle_name?: string | null;
+    paid_by_suffix?: string | null;
 }
 
 const isValidDate = (dateString: string): boolean => {
@@ -117,6 +124,13 @@ export default function Edit({
         valid_until: application.valid_until
             ? application.valid_until.split(" ")[0]
             : "",
+
+        // ADDED MISSING STATE INITIALIZATION HERE
+        show_paid_by: !!application.show_paid_by,
+        paid_by_last_name: application.paid_by_last_name || "",
+        paid_by_first_name: application.paid_by_first_name || "",
+        paid_by_middle_name: application.paid_by_middle_name || "",
+        paid_by_suffix: application.paid_by_suffix || "",
     });
 
     useEffect(() => {

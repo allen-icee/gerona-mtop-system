@@ -234,7 +234,7 @@ export default function PrintIds({ applications, settings }: Props) {
                                         />
                                     </div>
 
-                                    <div className="text-center leading-tight mt-1 mb-0 ml-0">
+                                    <div className="text-center leading-tight mt-0.75 mb-0 ml-0">
                                         <h1 className="text-[11pt] font-['LEMONMILK'] font-light uppercase tracking-wider [-webkit-text-stroke:1.5px_white] [paint-order:stroke_fill]">
                                             Republic of the Philippines
                                         </h1>
@@ -279,7 +279,7 @@ export default function PrintIds({ applications, settings }: Props) {
                                     </div>
                                 </div>
 
-                                <div className="relative z-10 flex-1 flex flex-col justify-center space-y-1 px-0">
+                                <div className="relative z-10 flex-1 flex flex-col justify-center space-y-0.5 px-0">
                                     <Field
                                         label="DRIVER'S SIGNATURE"
                                         value=""
@@ -351,14 +351,13 @@ export default function PrintIds({ applications, settings }: Props) {
                                         <div className="text-[8pt] font-['ArialNarrow7'] font-bold uppercase truncate px-1 tracking-tighter w-full scale-y-[1.2] origin-bottom pb-0.5 [-webkit-text-stroke:2px_white] [paint-order:stroke_fill] drop-shadow-sm relative z-10">
                                             {app.print_mayor || "---"}
                                         </div>
-                                        {/* Thicker black line to prevent disappearing on print */}
+
                                         <div className="w-full h-[2.5px] bg-black -mt-1.5 relative z-0"></div>
                                         <div className="text-[7pt] font-['DiezmaRd'] font-extrabold leading-none mt-0.75 tracking-tight [-webkit-text-stroke:1px_white] [paint-order:stroke_fill] drop-shadow-sm">
                                             MUNICIPAL MAYOR
                                         </div>
                                     </div>
                                 </div>
-                                {/* END SIGNATORIES SECTION */}
                             </div>
                         </div>
                     );

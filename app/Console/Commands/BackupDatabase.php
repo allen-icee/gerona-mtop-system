@@ -19,7 +19,9 @@ class BackupDatabase extends Command
         $csvFilename = "backup_{$date}.csv";
 
         $sourcePath = database_path('database.sqlite');
-        $backupFolder = storage_path('app/private/backups');
+
+        // DYNAMIC PATH: Uses Google Drive folder if set in .env, otherwise defaults to local storage
+        $backupFolder = env('BACKUP_DRIVE_PATH', storage_path('app/private/backups'));
 
         if (!File::exists($backupFolder)) {
             File::makeDirectory($backupFolder, 0755, true);
@@ -43,6 +45,7 @@ class BackupDatabase extends Command
             if ($records->isNotEmpty()) {
                 $csvContent = fopen('php://temp', 'r+');
 
+                // UPDATED HEADERS to match the newly added fields
                 fputcsv($csvContent, [
                     'Control No',
                     'Transaction Date',
@@ -54,10 +57,18 @@ class BackupDatabase extends Command
                     'Address',
                     'Plate No',
                     'Make/Type',
+                    'Driver Name',      // Added
+                    'Is Free/Promo',    // Added
+                    'Paid By Details',  // Added
                     'Status'
                 ]);
 
                 foreach ($records as $row) {
+                    // Safely format Paid By details
+                    $paidBy = $row->show_paid_by
+                        ? trim("{$row->paid_by_first_name} {$row->paid_by_last_name} {$row->paid_by_suffix}")
+                        : 'N/A';
+
                     fputcsv($csvContent, [
                         $row->mt_number,
                         $row->transaction_date,
@@ -69,6 +80,9 @@ class BackupDatabase extends Command
                         $row->address,
                         $row->plate_no,
                         $row->make_type,
+                        $row->driver_name ?? 'N/A',     // Injects Driver Name
+                        $row->is_free ? 'YES' : 'NO',   // Injects Promo Info
+                        $paidBy,                        // Injects Paid By details
                         $row->status
                     ]);
                 }

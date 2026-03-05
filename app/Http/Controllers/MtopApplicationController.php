@@ -225,6 +225,15 @@ class MtopApplicationController extends Controller
         $application = MtopApplication::findOrFail($id);
         $validated = $request->validated();
 
+        // 1. SANITIZE PAID BY FIELDS IF TOGGLED OFF
+        $validated['show_paid_by'] = filter_var($validated['show_paid_by'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        if (!$validated['show_paid_by']) {
+            $validated['paid_by_last_name'] = null;
+            $validated['paid_by_first_name'] = null;
+            $validated['paid_by_middle_name'] = null;
+            $validated['paid_by_suffix'] = null;
+        }
+
         if ($request->transaction_date) {
             $event = null;
             if (!empty($validated['event_id'])) {
@@ -270,6 +279,25 @@ class MtopApplicationController extends Controller
                     throw new \Exception("The Control Number {$final_mt_number} was just updated by another user. Please use a different number.");
                 }
 
+                // ====================================================================
+                // SMART RESET: If Paid By was turned off, wipe it from Driver Name too
+                // ====================================================================
+                if (!$validated['show_paid_by'] && $application->show_paid_by) {
+                    $pbInitial = $application->paid_by_middle_name ? substr($application->paid_by_middle_name, 0, 1) . '. ' : '';
+                    $pbSfx = $application->paid_by_suffix ? ' ' . $application->paid_by_suffix : '';
+
+                    $fullPaidByName = trim(strtoupper("{$application->paid_by_first_name} {$pbInitial}{$application->paid_by_last_name}{$pbSfx}"));
+                    $basicPaidByName = trim(strtoupper("{$application->paid_by_first_name} {$application->paid_by_last_name}"));
+
+                    $currentDriver = trim(strtoupper($application->driver_name ?? ''));
+
+                    // If the current driver name matches the old Paid By name, wipe it!
+                    if ($currentDriver === $fullPaidByName || $currentDriver === $basicPaidByName) {
+                        $application->driver_name = null;
+                    }
+                }
+                // ====================================================================
+
                 $application->update($validated);
                 $this->queueForSync('mtop_applications', $application->fresh()->toArray());
 
@@ -288,11 +316,11 @@ class MtopApplicationController extends Controller
                             'engine_motor_no' => $validated['engine_motor_no'],
                             'chassis_no' => $validated['chassis_no'],
                             'plate_no' => $validated['plate_no'],
-                            'show_paid_by' => filter_var($validated['show_paid_by'] ?? false, FILTER_VALIDATE_BOOLEAN),
-                            'paid_by_last_name' => $validated['paid_by_last_name'] ?? null,
-                            'paid_by_first_name' => $validated['paid_by_first_name'] ?? null,
-                            'paid_by_middle_name' => $validated['paid_by_middle_name'] ?? null,
-                            'paid_by_suffix' => $validated['paid_by_suffix'] ?? null,
+                            'show_paid_by' => $validated['show_paid_by'],
+                            'paid_by_last_name' => $validated['paid_by_last_name'],
+                            'paid_by_first_name' => $validated['paid_by_first_name'],
+                            'paid_by_middle_name' => $validated['paid_by_middle_name'],
+                            'paid_by_suffix' => $validated['paid_by_suffix'],
                         ]);
                         $this->queueForSync('mtop_franchises', $franchise->fresh()->toArray());
                     }
