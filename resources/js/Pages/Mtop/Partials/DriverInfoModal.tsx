@@ -43,20 +43,44 @@ export default function DriverInfoModal({
                 "";
 
             setData({
-                drivers: selectedApps.map((app) => ({
-                    id: app.id,
-                    mt_number: app.mt_number,
-                    driver_name:
-                        app.driver_name || `${app.first_name} ${app.last_name}`,
-                    photo: null as File | null,
-                    preview: app.driver_photo_path
-                        ? `/storage/${app.driver_photo_path}`
-                        : null,
-                    remove_photo: false,
-                    mayor: app.punong_bayan || defaultMayor,
-                    committee: app.authorized_official || defaultCommittee,
-                    show_committee: false,
-                })),
+                drivers: selectedApps.map((app) => {
+                    // 1. Format the full Operator Name with Middle Initial and Suffix
+                    const mInitial = app.middle_name
+                        ? `${app.middle_name[0]}. `
+                        : "";
+                    const sfx = app.suffix ? ` ${app.suffix}` : "";
+                    const fullOperatorName =
+                        `${app.first_name} ${mInitial}${app.last_name}${sfx}`
+                            .trim()
+                            .toUpperCase();
+
+                    // 2. Format the old basic name for comparison
+                    const oldBasicName = `${app.first_name} ${app.last_name}`
+                        .trim()
+                        .toUpperCase();
+
+                    // 3. Smart Upgrade: Use the full name if driver is blank OR if it matches the old incomplete format
+                    let finalDriverName = app.driver_name
+                        ? app.driver_name.trim().toUpperCase()
+                        : "";
+                    if (!finalDriverName || finalDriverName === oldBasicName) {
+                        finalDriverName = fullOperatorName;
+                    }
+
+                    return {
+                        id: app.id,
+                        mt_number: app.mt_number,
+                        driver_name: finalDriverName,
+                        photo: null as File | null,
+                        preview: app.driver_photo_path
+                            ? `/storage/${app.driver_photo_path}`
+                            : null,
+                        remove_photo: false,
+                        mayor: app.punong_bayan || defaultMayor,
+                        committee: app.authorized_official || defaultCommittee,
+                        show_committee: false,
+                    };
+                }),
             });
             initialized.current = true;
         }
