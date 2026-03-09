@@ -26,8 +26,8 @@ class MtopApplicationRequest extends FormRequest
         $rules = [
             'last_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-ZñÑ\s\.\,\-]+$/'],
             'first_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-ZñÑ\s\.\,\-]+$/'],
-            'middle_name' => ['nullable', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
-            'suffix' => ['nullable', 'string', 'max:10', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
+            'middle_name' => ['nullable', 'string', 'max:50', 'regex:/^[a-zA-ZñÑ\s\.\,\-]+$/'],
+            'suffix' => ['nullable', 'string', 'max:10', 'regex:/^[a-zA-ZñÑ\s\.\,\-]+$/'],
             'address' => 'required|string|max:100',
             'contact_number' => ['nullable', 'regex:/^(09|\+639)\d{9}$/'],
             'transaction_date' => 'required|date',
@@ -40,15 +40,14 @@ class MtopApplicationRequest extends FormRequest
             'or_number' => 'nullable|string|max:50',
             'or_date' => 'nullable|date',
 
-            'punong_bayan' => ['required', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
-
-            'authorized_official' => ['nullable', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
+            'punong_bayan' => ['required', 'string', 'max:100', 'regex:/^[a-zA-ZñÑ\s\.\,\-]+$/'],
+            'authorized_official' => ['nullable', 'string', 'max:100', 'regex:/^[a-zA-ZñÑ\s\.\,\-]+$/'],
 
             'show_paid_by' => 'boolean',
             'paid_by_last_name' => ['nullable', 'string', 'max:50', 'regex:/^[a-zA-ZñÑ\s\.\,\-]+$/'],
             'paid_by_first_name' => ['nullable', 'string', 'max:50', 'regex:/^[a-zA-ZñÑ\s\.\,\-]+$/'],
-            'paid_by_middle_name' => ['nullable', 'string', 'max:50', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
-            'paid_by_suffix' => ['nullable', 'string', 'max:10', 'regex:/^[a-zA-Z\s\.\,\-]+$/'],
+            'paid_by_middle_name' => ['nullable', 'string', 'max:50', 'regex:/^[a-zA-ZñÑ\s\.\,\-]+$/'],
+            'paid_by_suffix' => ['nullable', 'string', 'max:10', 'regex:/^[a-zA-ZñÑ\s\.\,\-]+$/'],
             'is_free' => 'boolean',
             'event_id' => 'nullable|exists:events,id',
             'show_auth_official' => 'boolean',

@@ -41,11 +41,10 @@ export default function OfficialReceiptForm({
                             onClick={() =>
                                 setData("or_unlocked", !data.or_unlocked)
                             }
-                            className={`flex items-center gap-1 text-xs font-bold transition-colors ${
-                                data.or_unlocked
+                            className={`flex items-center gap-1 text-xs font-bold transition-colors ${data.or_unlocked
                                     ? "text-red-500 hover:text-red-700"
                                     : "text-gray-400 hover:text-gray-600"
-                            }`}
+                                }`}
                         >
                             <Icon
                                 icon={
@@ -62,13 +61,15 @@ export default function OfficialReceiptForm({
                     <button
                         type="button"
                         onClick={toggleShowOr}
-                        className="flex items-center gap-2 focus:outline-none group"
+                        className="flex items-center gap-2 focus:outline-none group cursor-pointer"
                     >
                         <div
-                            className={`w-8 h-4 flex items-center rounded-full p-1 transition-colors duration-300 ${data.show_or ? "bg-indigo-600" : "bg-gray-300"}`}
+                            className={`w-10 h-5 flex items-center rounded-full p-1 transition-colors duration-300 shadow-inner ${data.show_or ? "bg-indigo-800" : "bg-gray-500 group-hover:bg-gray-600"
+                                }`}
                         >
                             <div
-                                className={`bg-white w-2.5 h-2.5 rounded-full shadow-sm transform transition-transform duration-300 ${data.show_or ? "translate-x-3.5" : "translate-x-0"}`}
+                                className={`bg-white w-3.5 h-3.5 rounded-full shadow-md transform transition-transform duration-300 ${data.show_or ? "translate-x-4" : "translate-x-0"
+                                    }`}
                             ></div>
                         </div>
                     </button>
@@ -77,11 +78,10 @@ export default function OfficialReceiptForm({
 
             <div className="relative mt-2">
                 <div
-                    className={`grid grid-cols-1 gap-2 p-2 rounded-xl bg-white transition-all ${
-                        locked
+                    className={`grid grid-cols-1 gap-2 p-2 rounded-xl bg-white transition-all ${locked
                             ? "opacity-50 blur-[0.4px] pointer-events-none"
                             : ""
-                    }`}
+                        }`}
                 >
                     <InputGroup
                         id="or_number"
