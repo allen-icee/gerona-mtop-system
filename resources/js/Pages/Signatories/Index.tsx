@@ -12,6 +12,7 @@ import { Switch } from "@headlessui/react";
 import ConfirmDeleteModal from "@/Components/ConfirmDeleteModal";
 import ToastListener from "@/Components/ToastListener";
 import UnsavedChangesModal from "@/Components/UnsavedChangesModal";
+import toast from "react-hot-toast";
 
 interface Signatory {
     id: number;
@@ -46,7 +47,7 @@ const FEE_LABELS = {
     supervisor_fee: "Supervisor Fee",
     account_clearance: "Account Clearance",
     sticker_fee: "Sticker Fee",
-    id_driver_operator_owner: "I.D. (Driver/Operator)",
+    id_driver_operator_owner: "I.D. (Driver/Operator/Owner)",
     body_number_plate: "Body Number / Plate",
     penalty: "Penalty",
 };
@@ -81,10 +82,11 @@ export default function Index({ signatories = [], feeSettings, filters = {} }: P
     const getInitialFees = () => {
         const fees: any = {};
         Object.keys(FEE_LABELS).forEach((key) => {
-            // Use DB value if it exists, otherwise use your requested default
-            fees[key] = (feeSettings && feeSettings[key] !== undefined && feeSettings[key] !== null)
+            // Use DB value if it exists, otherwise use your requested default and cast to String
+            const val = (feeSettings && feeSettings[key] !== undefined && feeSettings[key] !== null)
                 ? feeSettings[key]
                 : DEFAULT_FEES[key as keyof typeof DEFAULT_FEES];
+            fees[key] = String(val); // <-- CAST TO STRING TO AVOID TYPE MISMATCH
         });
         return fees;
     };
@@ -101,7 +103,11 @@ export default function Index({ signatories = [], feeSettings, filters = {} }: P
     // Prevent navigation if fees are unsaved
     useEffect(() => {
         const unbind = router.on('before', (event) => {
-            if (hasUnsavedChanges && !showUnsavedModal) {
+            // Allow the save request itself to go through without triggering the Unsaved Modal
+            const isSavingRequest = event.detail.visit.method === 'post'
+                && event.detail.visit.url.pathname === new URL(route('settings.fees.update')).pathname;
+
+            if (hasUnsavedChanges && !showUnsavedModal && !isSavingRequest) {
                 event.preventDefault();
                 setPendingVisit(event.detail.visit);
                 setShowUnsavedModal(true);
@@ -116,17 +122,42 @@ export default function Index({ signatories = [], feeSettings, filters = {} }: P
             preserveScroll: true,
             onSuccess: () => {
                 setSavedFees(currentFees);
-                // Optional: Show a success alert or toast
-                alert("Fees saved successfully!");
+                // Trigger the toast directly from the frontend
+                toast.success("Official Receipt Fees saved successfully!", {
+                    duration: 3000,
+                    icon: (
+                        <Icon
+                            icon="solar:check-circle-bold"
+                            className="text-green-600 text-xl"
+                        />
+                    ),
+                });
             },
             onError: (errors) => {
                 console.error("Errors:", errors);
-                alert("Failed to save. Check your inputs.");
+                toast.error("Failed to save fees. Please check your inputs.", {
+                    duration: 4000,
+                    icon: (
+                        <Icon
+                            icon="solar:danger-circle-bold"
+                            className="text-red-600 text-xl"
+                        />
+                    ),
+                });
             },
             onFinish: () => {
-                setIsSavingFees(false); // <-- THIS STOPS THE SPINNER
+                setIsSavingFees(false);
             }
         });
+    };
+
+    const handleResetToDefault = () => {
+        const resetFees: any = {};
+        Object.keys(DEFAULT_FEES).forEach((key) => {
+            // Cast to string so it matches the input type and unsaved logic properly
+            resetFees[key] = String(DEFAULT_FEES[key as keyof typeof DEFAULT_FEES]);
+        });
+        setCurrentFees(resetFees);
     };
 
     // ENTER KEY NAVIGATION FOR FEES
@@ -305,20 +336,31 @@ export default function Index({ signatories = [], feeSettings, filters = {} }: P
                                 <p className="text-sm text-gray-500 mt-1 font-medium">Updates made here immediately reflect in new OR Records.</p>
                             </div>
 
-                            <div className="flex items-center gap-4">
+                            <div className="flex flex-wrap items-center justify-end gap-4 w-full sm:w-auto mt-4 sm:mt-0">
                                 {hasUnsavedChanges && (
                                     <span className="text-sm font-bold text-amber-600 flex items-center gap-1 animate-pulse">
                                         <Icon icon="solar:danger-triangle-bold" width="18" /> Unsaved changes
                                     </span>
                                 )}
+
+                                <button
+                                    type="button"
+                                    onClick={handleResetToDefault}
+                                    disabled={isSavingFees}
+                                    className="w-full sm:w-auto text-red-600 bg-red-50 hover:bg-red-100 px-6 py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 border border-red-100 disabled:opacity-50"
+                                >
+                                    <Icon icon="solar:restart-circle-bold" width="18" />
+                                    Reset to Default
+                                </button>
+
                                 <PrimaryButton
                                     id="btn-save-fees"
                                     onClick={handleSaveFees}
                                     disabled={!hasUnsavedChanges || isSavingFees}
-                                    className={`py-3 px-6 ${hasUnsavedChanges ? 'bg-indigo-600 hover:bg-indigo-700 shadow-md' : 'bg-gray-400'}`}
+                                    className={`w-full sm:w-auto justify-center px-8 py-3 text-base transition-all duration-200 ${!hasUnsavedChanges ? "opacity-50 cursor-not-allowed bg-gray-600" : "bg-blue-600 hover:bg-blue-700 shadow-lg hover:-translate-y-0.5"}`}
                                 >
                                     <Icon icon="solar:diskette-bold" className="mr-2" width="20" />
-                                    {isSavingFees ? "Saving Details..." : "Save Fee Changes"}
+                                    {isSavingFees ? "Saving..." : "Save Changes"}
                                 </PrimaryButton>
                             </div>
                         </div>
@@ -333,7 +375,7 @@ export default function Index({ signatories = [], feeSettings, filters = {} }: P
                                         <input
                                             type="number"
                                             step="any"
-                                            className={`fee-input pl-11 pr-4 py-3 w-full border-gray-300 rounded-xl shadow-sm focus:border-blue-500 focus:ring-blue-500 text-base font-bold text-gray-900 transition-all ${currentFees[key as keyof typeof currentFees] !== savedFees[key as keyof typeof savedFees] ? 'bg-amber-50 border-amber-400 ring-1 ring-amber-400' : 'bg-white'}`}
+                                            className="fee-input pl-11 pr-4 py-3 w-full border border-gray-300 rounded-xl shadow-sm focus:border-blue-500 focus:ring-blue-500 text-base font-bold text-gray-900 transition-all bg-white"
                                             value={currentFees[key as keyof typeof currentFees] ?? ''}
                                             onChange={(e) => setCurrentFees({...currentFees, [key]: e.target.value})}
                                             onKeyDown={onFeeKeyDown}
@@ -385,7 +427,7 @@ export default function Index({ signatories = [], feeSettings, filters = {} }: P
                     </div>
                     <div className="bg-white border-t px-6 py-4 flex justify-end gap-3 shrink-0 sm:rounded-b-lg">
                         <SecondaryButton onClick={() => setIsModalOpen(false)}>Cancel</SecondaryButton>
-                        <PrimaryButton className="bg-blue-600 hover:bg-blue-700 shadow-md" disabled={processing} onClick={() => {(document.getElementById("signatory-form") as HTMLFormElement)?.requestSubmit();}}>
+                        <PrimaryButton className="bg-blue-600 hover:bg-blue-700 shadow-md" disabled={processing} onClick={() => { (document.getElementById("signatory-form") as HTMLFormElement)?.requestSubmit(); }}>
                             <Icon icon="solar:diskette-bold" className="mr-2" width="20" /> Save Official
                         </PrimaryButton>
                     </div>
@@ -411,7 +453,7 @@ export default function Index({ signatories = [], feeSettings, filters = {} }: P
             </Modal>
 
             <ConfirmDeleteModal show={deletingId !== null} onClose={() => setDeletingId(null)} onConfirm={handleDelete} title="Delete Official?" message="Delete this official? They will no longer appear in new forms." processing={isDeleting} />
-            <UnsavedChangesModal show={showUnsavedModal} onClose={() => {setShowUnsavedModal(false); setPendingVisit(null);}} onLeave={confirmLeave} />
+            <UnsavedChangesModal show={showUnsavedModal} onClose={() => { setShowUnsavedModal(false); setPendingVisit(null); }} onLeave={confirmLeave} />
         </AuthenticatedLayout>
     );
 }

@@ -49,6 +49,7 @@ Route::middleware('auth')->group(function () {
 
 
     Route::get('/mtop/create', [MtopApplicationController::class, 'create'])->name('mtop.create');
+    Route::post('/mtop', [MtopApplicationController::class, 'store'])->name('mtop.store');
 
     Route::post('/mtop/update-driver-info', [MtopApplicationController::class, 'updateDriverInfo'])->name('mtop.update_driver');
     Route::get('/mtop/print-ids', [MtopApplicationController::class, 'printIds'])->name('mtop.print_ids');

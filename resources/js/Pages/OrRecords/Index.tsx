@@ -9,6 +9,7 @@ import InputGroup from "@/Components/InputGroup";
 import SuffixSelect from "@/Components/SuffixSelect";
 import ToastListener from "@/Components/ToastListener";
 import { Icon } from "@iconify/react";
+import SignatorySelect from "@/Components/SignatorySelect";
 
 // Labels mapped to exactly match DB columns
 const FEE_LABELS = {
@@ -18,7 +19,7 @@ const FEE_LABELS = {
     supervisor_fee: "Supervisor Fee",
     account_clearance: "Account Clearance",
     sticker_fee: "Sticker Fee",
-    id_driver_operator_owner: "I.D. (Driver/Operator)",
+    id_driver_operator_owner: "I.D.", // <--- Changed to just I.D.
     body_number_plate: "Body Number / Plate",
     penalty: "Penalty",
 };
@@ -44,6 +45,7 @@ interface Props {
 export default function Index({ signatories = [], feeSettings, orRecords = [] }: Props) {
     const [search, setSearch] = useState("");
     const [isReqModalOpen, setIsReqModalOpen] = useState(false);
+    const signatoryOptions = signatories.map(sig => sig.position ? `${sig.name} | ${sig.position}` : sig.name);
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
 
@@ -92,10 +94,6 @@ export default function Index({ signatories = [], feeSettings, orRecords = [] }:
     const handleNameChange = (field: string, value: string) => {
         const cleanValue = value.toUpperCase().replace(/[^A-ZÑñ\s.-]/g, "");
         setPayorDetails({ ...payorDetails, [field]: cleanValue });
-    };
-
-    const handleOfficerBlur = () => {
-        if (collectingOfficer.trim() === "") setCollectingOfficer("MARY ANN S. MANALO");
     };
 
     const isFormValid = payorDetails.lastName.trim() !== "" && payorDetails.firstName.trim() !== "" && collectingOfficer.trim() !== "";
@@ -230,8 +228,8 @@ export default function Index({ signatories = [], feeSettings, orRecords = [] }:
                 </div>
             </Modal>
 
-            {/* PAYMENT FORM MODAL */}
-            <Modal show={isPaymentModalOpen} onClose={() => setIsPaymentModalOpen(false)} maxWidth="5xl">
+            {/* PAYMENT FORM MODAL - CHANGED WIDTH FROM maxWidth="5xl" to maxWidth="6xl" */}
+            <Modal show={isPaymentModalOpen} onClose={() => setIsPaymentModalOpen(false)} maxWidth="6xl">
                 <div className="bg-gray-800 px-6 py-4 flex justify-between items-center sm:rounded-t-lg">
                     <h3 className="text-white font-bold uppercase tracking-wider flex items-center gap-2">
                         <Icon icon="solar:wallet-bold" width="24" /> Application Payment Form
@@ -242,8 +240,8 @@ export default function Index({ signatories = [], feeSettings, orRecords = [] }:
                 </div>
 
                 <div className="flex flex-col lg:flex-row h-full max-h-[80vh]">
-                    <div className="p-8 bg-white flex-1 overflow-y-auto space-y-8">
-                        <div className="space-y-4 bg-gray-50 p-5 rounded-xl border border-gray-200">
+                    <div className="p-6 bg-white flex-1 overflow-y-auto space-y-5">
+                        <div className="space-y-3 bg-gray-50 p-4 rounded-xl border border-gray-200">
                             <div className="flex items-center justify-between border-b border-gray-200 pb-3">
                                 <h3 className="font-bold text-sm uppercase tracking-wide text-gray-700 flex items-center gap-2">
                                     <Icon icon="solar:pen-new-square-bold" width="20" className="text-blue-800" />
@@ -253,25 +251,34 @@ export default function Index({ signatories = [], feeSettings, orRecords = [] }:
                                     <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${enableEditConfigs ? "translate-x-5" : "translate-x-0"}`} />
                                 </button>
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-12 gap-6 pt-2">
-                                <div className="sm:col-span-12 md:col-span-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 pt-1">
+                                <div className="sm:col-span-12 md:col-span-3">
                                     <InputGroup id="transactionDate" label="Transaction Date" type="date" value={transactionDate} disabled={!enableEditConfigs} onChange={(e) => setTransactionDate(e.target.value)} onKeyDown={onKeyDown} required className={`transition-all ${!enableEditConfigs ? "opacity-50 saturate-0 pointer-events-none" : ""}`} />
                                 </div>
-                                <div className="sm:col-span-12 md:col-span-4">
+                                <div className="sm:col-span-12 md:col-span-3">
                                     <InputGroup id="agency" label="Agency" value={agency} disabled onChange={(e) => setAgency(e.target.value)} className="opacity-50 saturate-0 pointer-events-none" />
                                 </div>
-                                <div className="sm:col-span-12 md:col-span-4">
-                                    <InputGroup id="collectingOfficer" label="Collecting Officer" value={collectingOfficer} disabled={!enableEditConfigs} onChange={(e) => setCollectingOfficer(e.target.value)} onKeyDown={onKeyDown} onBlur={handleOfficerBlur} icon="solar:user-id-bold" placeholder="MARY ANN S. MANALO" required list="officers-list" className={`transition-all ${!enableEditConfigs ? "opacity-50 saturate-0 pointer-events-none" : ""}`} />
-                                    <datalist id="officers-list">{signatories.map((sig: any) => <option key={sig.id} value={sig.name} />)}</datalist>
+                                <div className="sm:col-span-12 md:col-span-6">
+                                    <div className={`transition-all ${!enableEditConfigs ? "opacity-50 saturate-0 pointer-events-none" : ""}`}>
+                                        <SignatorySelect
+                                            label="Collecting Officer"
+                                            value={collectingOfficer}
+                                            onChange={(val) => setCollectingOfficer(val)}
+                                            options={signatoryOptions}
+                                            required={true}
+                                            disabled={!enableEditConfigs}
+                                            onKeyDown={onKeyDown}
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="space-y-4">
+                        <div className="space-y-3">
                             <div className="flex items-center gap-2 text-blue-800 border-b border-blue-300 pb-2">
                                 <h3 className="font-extrabold text-base uppercase tracking-wide">Payor Information</h3>
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-12 gap-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
                                 <div className="sm:col-span-12 md:col-span-4"><InputGroup id="lastName" label="Last Name" value={payorDetails.lastName} onChange={(e) => handleNameChange("lastName", e.target.value)} onKeyDown={onKeyDown} icon="solar:user-bold" placeholder="DEQUIROS" required={true} /></div>
                                 <div className="sm:col-span-12 md:col-span-4"><InputGroup id="firstName" label="First Name" value={payorDetails.firstName} onChange={(e) => handleNameChange("firstName", e.target.value)} onKeyDown={onKeyDown} placeholder="ALLEN ICEE" required={true} /></div>
                                 <div className="sm:col-span-6 md:col-span-2"><InputGroup id="middleName" label="M.I." value={payorDetails.middleName} onChange={(e) => handleNameChange("middleName", e.target.value.slice(0, 1))} onKeyDown={onKeyDown} placeholder="A" /></div>
@@ -283,24 +290,39 @@ export default function Index({ signatories = [], feeSettings, orRecords = [] }:
                             <div className="flex items-center gap-2 text-blue-800 border-b border-blue-300 pb-2">
                                 <h3 className="font-extrabold text-base uppercase tracking-wide">Required Fees</h3>
                             </div>
-                            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+                            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2">
                                 {Object.keys(toggles).map((feeKey) => (
-                                    <div key={feeKey} className="flex items-center justify-between bg-white p-2.5 border border-gray-200 rounded-lg shadow-sm hover:border-blue-300 transition-colors">
-                                        <div className="flex flex-col">
-                                            <span className="text-[10px] font-extrabold text-gray-600 uppercase tracking-tight leading-tight">{FEE_LABELS[feeKey as keyof typeof FEE_LABELS]}</span>
-                                            <span className="text-xs text-blue-700 font-bold mt-0.5">₱{Number(FEE_PRICES[feeKey] || 0).toFixed(2)}</span>
+                                    <div key={feeKey} className="flex flex-col bg-white p-2.5 border border-gray-200 rounded-md shadow-sm hover:border-blue-300 transition-colors">
+
+                                        {/* New flex container pushes text to left and icon to the far right */}
+                                        <div className="flex justify-between items-center w-full mb-2 gap-1">
+                                            <span
+                                                className="text-xs font-extrabold text-gray-800 uppercase tracking-tight leading-tight truncate"
+                                            >
+                                                {FEE_LABELS[feeKey as keyof typeof FEE_LABELS]}
+                                            </span>
+                                            {feeKey === 'id_driver_operator_owner' && (
+                                                <div title="Driver/Operator/Owner I.D." className="shrink-0 flex items-center">
+                                                    <Icon icon="solar:info-circle-bold" className="text-blue-500 cursor-help" width="18" />
+                                                </div>
+                                            )}
                                         </div>
-                                        <button type="button" onClick={() => handleToggle(feeKey as keyof typeof toggles)} className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${toggles[feeKey as keyof typeof toggles] ? "bg-blue-800" : "bg-gray-300"}`}>
-                                            <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200 ease-in-out ${toggles[feeKey as keyof typeof toggles] ? "translate-x-4" : "translate-x-0"}`} />
-                                        </button>
+
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-[11px] text-gray-500 font-bold">₱{Number(FEE_PRICES[feeKey] || 0).toFixed(2)}</span>
+                                            <button type="button" onClick={() => handleToggle(feeKey as keyof typeof toggles)} className={`relative inline-flex h-4 w-7 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${toggles[feeKey as keyof typeof toggles] ? "bg-blue-800" : "bg-gray-300"}`}>
+                                                <span className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow transition duration-200 ease-in-out ${toggles[feeKey as keyof typeof toggles] ? "translate-x-3" : "translate-x-0"}`} />
+                                            </button>
+                                        </div>
+
                                     </div>
                                 ))}
                             </div>
                         </div>
                     </div>
 
-                    <div className="p-8 bg-gray-50 border-l border-gray-200 w-full lg:w-[35%] flex flex-col shadow-inner shrink-0">
-                        <div className="flex items-center justify-center gap-2 text-gray-800 border-b border-gray-300 pb-3 mb-6">
+                    <div className="p-6 bg-gray-50 border-l border-gray-200 w-full lg:w-[35%] flex flex-col shadow-inner shrink-0">
+                        <div className="flex items-center justify-center gap-2 text-gray-800 border-b border-gray-300 pb-3 mb-4">
                             <Icon icon="solar:document-text-bold" width="24" className="text-blue-800" />
                             <h4 className="text-lg font-extrabold uppercase tracking-wide">Live Preview</h4>
                         </div>
@@ -308,8 +330,8 @@ export default function Index({ signatories = [], feeSettings, orRecords = [] }:
                             <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm space-y-2 text-sm text-gray-700">
                                 <p className="flex justify-between"><strong className="text-gray-900">Date:</strong> <span>{transactionDate}</span></p>
                                 <p className="flex justify-between"><strong className="text-gray-900">Agency:</strong> <span>{agency}</span></p>
-                                <p className="flex justify-between"><strong className="text-gray-900">Payor:</strong> <span className="font-bold text-blue-800">{`${payorDetails.lastName}, ${payorDetails.firstName} ${payorDetails.middleName} ${payorDetails.suffix}`.trim() || "-"}</span></p>
-                                <p className="flex justify-between"><strong className="text-gray-900">Officer:</strong> <span className="uppercase">{collectingOfficer || "-"}</span></p>
+                                <p className="flex justify-between"><strong className="text-gray-900">Payor:</strong> <span className="font-bold text-blue-800 truncate pl-2">{`${payorDetails.lastName}, ${payorDetails.firstName} ${payorDetails.middleName} ${payorDetails.suffix}`.trim() || "-"}</span></p>
+                                <p className="flex justify-between"><strong className="text-gray-900">Officer:</strong> <span className="uppercase truncate pl-2">{collectingOfficer || "-"}</span></p>
                             </div>
                             <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
                                 <h5 className="font-bold text-gray-900 mb-3 uppercase tracking-wide text-xs border-b pb-2">Fee Breakdown:</h5>
@@ -317,8 +339,16 @@ export default function Index({ signatories = [], feeSettings, orRecords = [] }:
                                     {Object.keys(toggles).map((feeKey) => (
                                         toggles[feeKey as keyof typeof toggles] && (
                                             <li key={feeKey} className="flex justify-between text-gray-600">
-                                                <span className="uppercase text-xs font-medium">{FEE_LABELS[feeKey as keyof typeof FEE_LABELS]}</span>
-                                                <span className="font-bold">₱{Number(FEE_PRICES[feeKey] || 0).toFixed(2)}</span>
+                                                <span
+                                                    className="uppercase text-[11px] font-medium truncate pr-2 flex items-center gap-1"
+                                                    title={feeKey === 'id_driver_operator_owner' ? 'Driver/Operator/Owner I.D.' : FEE_LABELS[feeKey as keyof typeof FEE_LABELS]}
+                                                >
+                                                    {FEE_LABELS[feeKey as keyof typeof FEE_LABELS]}
+                                                    {feeKey === 'id_driver_operator_owner' && (
+                                                        <Icon icon="solar:info-circle-bold" className="text-gray-400 cursor-help shrink-0" width="13" />
+                                                    )}
+                                                </span>
+                                                <span className="font-bold shrink-0">₱{Number(FEE_PRICES[feeKey] || 0).toFixed(2)}</span>
                                             </li>
                                         )
                                     ))}
@@ -326,7 +356,7 @@ export default function Index({ signatories = [], feeSettings, orRecords = [] }:
                                 </ul>
                             </div>
                         </div>
-                        <div className="mt-6 bg-blue-800 text-white p-4 rounded-xl shadow-md">
+                        <div className="mt-4 bg-blue-800 text-white p-4 rounded-xl shadow-md">
                             <div className="flex justify-between items-center text-lg font-extrabold tracking-wide">
                                 <span>TOTAL:</span>
                                 <span>₱{calculateTotal().toFixed(2)}</span>
@@ -335,13 +365,13 @@ export default function Index({ signatories = [], feeSettings, orRecords = [] }:
                     </div>
                 </div>
 
-                <div className="bg-white border-t border-gray-200 px-6 py-5 flex flex-col sm:flex-row justify-between gap-4 sm:rounded-b-lg">
-                    <PrimaryButton className="bg-indigo-600 hover:bg-indigo-700 shadow-md flex-1 sm:flex-none justify-center py-3">
+                <div className="bg-white border-t border-gray-200 px-6 py-4 flex flex-col sm:flex-row justify-between gap-4 sm:rounded-b-lg">
+                    <PrimaryButton className="bg-indigo-600 hover:bg-indigo-700 shadow-md flex-1 sm:flex-none justify-center py-2.5">
                         <Icon icon="solar:printer-bold" className="mr-2" width="22" /> Print OR
                     </PrimaryButton>
                     <div className="flex flex-col sm:flex-row gap-3">
-                        <SecondaryButton onClick={() => setIsPaymentModalOpen(false)} className="justify-center py-3">Cancel</SecondaryButton>
-                        <PrimaryButton id="btn-proceed" onClick={handleProceedToApplication} className={`shadow-md justify-center py-3 px-8 transition-colors ${isFormValid ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400 cursor-not-allowed'}`} disabled={!isFormValid || isProcessing} title={!isFormValid ? "Please fill out the First Name, Last Name, and Collecting Officer to proceed" : ""}>
+                        <SecondaryButton onClick={() => setIsPaymentModalOpen(false)} className="justify-center py-2.5">Cancel</SecondaryButton>
+                        <PrimaryButton id="btn-proceed" onClick={handleProceedToApplication} className={`shadow-md justify-center py-2.5 px-8 transition-colors ${isFormValid ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400 cursor-not-allowed'}`} disabled={!isFormValid || isProcessing} title={!isFormValid ? "Please fill out the First Name, Last Name, and Collecting Officer to proceed" : ""}>
                             {isProcessing ? "Saving..." : "Proceed to Application"}
                         </PrimaryButton>
                     </div>

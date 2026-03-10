@@ -40,4 +40,29 @@ class OrRecordController extends Controller
 
         return back()->with('success', 'OR Record saved successfully!');
     }
+
+    public function update(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'transaction_date' => 'required|date',
+            'payor_last_name' => 'required|string|max:255',
+            'payor_first_name' => 'required|string|max:255',
+            'collecting_officer' => 'required|string|max:255',
+            'total_amount' => 'required|numeric',
+            'fee_breakdown' => 'required|array', // Store toggles state
+        ]);
+
+        $record = OrRecord::findOrFail($id);
+        $record->update($validated);
+
+        return back()->with('message', 'Record updated successfully!');
+    }
+
+    public function destroy($id)
+    {
+        $record = OrRecord::findOrFail($id);
+        $record->delete();
+
+        return back()->with('message', 'Record deleted successfully!');
+    }
 }

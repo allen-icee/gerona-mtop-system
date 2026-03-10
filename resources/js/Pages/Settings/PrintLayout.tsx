@@ -209,7 +209,7 @@ export default function PrintLayout({ settings }: { settings: any }) {
             <UnsavedChangesModal
                 show={showExitModal}
                 onClose={cancelExit}
-                onDiscard={discardAndExit}
+                onLeave={discardAndExit}
                 onSave={saveAndExit}
                 processing={processing}
             />

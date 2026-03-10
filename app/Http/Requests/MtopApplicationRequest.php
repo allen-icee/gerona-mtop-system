@@ -40,8 +40,9 @@ class MtopApplicationRequest extends FormRequest
             'or_number' => 'nullable|string|max:50',
             'or_date' => 'nullable|date',
 
-            'punong_bayan' => ['required', 'string', 'max:100', 'regex:/^[a-zA-ZñÑ\s\.\,\-]+$/'],
-            'authorized_official' => ['nullable', 'string', 'max:100', 'regex:/^[a-zA-ZñÑ\s\.\,\-]+$/'],
+            // FIXED: Added \| to allow the "Name | Position" format sent by the controller
+            'punong_bayan' => ['required', 'string', 'max:100', 'regex:/^[a-zA-ZñÑ\s\.\,\-\|]+$/'],
+            'authorized_official' => ['nullable', 'string', 'max:100', 'regex:/^[a-zA-ZñÑ\s\.\,\-\|]+$/'],
 
             'show_paid_by' => 'boolean',
             'paid_by_last_name' => ['nullable', 'string', 'max:50', 'regex:/^[a-zA-ZñÑ\s\.\,\-]+$/'],
