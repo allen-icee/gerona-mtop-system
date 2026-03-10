@@ -40,8 +40,15 @@ Route::middleware('auth')->group(function () {
     Route::put('/settings/holidays/{holiday}', [HolidayController::class, 'update'])->name('holidays.update');
 
     Route::get('/mtop', [MtopApplicationController::class, 'index'])->name('mtop.index');
+
+
+    // --- CORRECTED SECTION ---
+    Route::get('/or-records', [\App\Http\Controllers\OrRecordController::class, 'index'])->name('or_records.index');
+    Route::post('/or-records', [\App\Http\Controllers\OrRecordController::class, 'store'])->name('or_records.store');
+    Route::post('/settings/fees', [\App\Http\Controllers\FeeSettingController::class, 'update'])->name('settings.fees.update');
+
+
     Route::get('/mtop/create', [MtopApplicationController::class, 'create'])->name('mtop.create');
-    Route::post('/mtop', [MtopApplicationController::class, 'store'])->name('mtop.store');
 
     Route::post('/mtop/update-driver-info', [MtopApplicationController::class, 'updateDriverInfo'])->name('mtop.update_driver');
     Route::get('/mtop/print-ids', [MtopApplicationController::class, 'printIds'])->name('mtop.print_ids');

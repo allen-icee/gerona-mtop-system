@@ -1,60 +1,37 @@
-//GeronaMTOP\resources\js\Components\UnsavedChangesModal.tsx
-import Modal from "@/Components/Modal";
-import DangerButton from "@/Components/DangerButton";
-import PrimaryButton from "@/Components/PrimaryButton";
-import { Icon } from "@iconify/react";
+import Modal from '@/Components/Modal';
+import SecondaryButton from '@/Components/SecondaryButton';
+import DangerButton from '@/Components/DangerButton';
+import { Icon } from '@iconify/react';
 
 interface Props {
     show: boolean;
     onClose: () => void;
-    onDiscard: () => void;
-    onSave: () => void;
-    processing?: boolean;
+    onLeave: () => void; // <--- Add this line
 }
 
-export default function UnsavedChangesModal({
-    show,
-    onClose,
-    onDiscard,
-    onSave,
-    processing = false,
-}: Props) {
+export default function UnsavedChangesModal({ show, onClose, onLeave }: Props) {
     return (
         <Modal show={show} onClose={onClose} maxWidth="md">
             <div className="p-6">
-                <div className="flex items-center gap-4 mb-4">
-                    <div className="p-3 bg-yellow-100 rounded-full shrink-0">
-                        <Icon
-                            icon="solar:danger-triangle-bold"
-                            className="text-yellow-600 w-6 h-6"
-                        />
-                    </div>
-                    <h2 className="text-lg font-bold text-gray-900">
+                <div className="flex items-center gap-4 mb-4 text-amber-600">
+                    <Icon icon="solar:danger-triangle-bold" width="40" />
+                    <h2 className="text-xl font-bold text-gray-900">
                         Unsaved Changes
                     </h2>
                 </div>
 
-                <p className="text-gray-600 text-sm mb-6 leading-relaxed">
-                    You have unsaved changes. Do you want to save them before
-                    leaving?
+                <p className="text-gray-600 mb-6">
+                    You have modified the fee settings. If you leave now, your changes will be lost.
+                    Are you sure you want to proceed without saving?
                 </p>
 
-                <div className="flex flex-col sm:flex-row sm:justify-end gap-3">
-                    <DangerButton
-                        onClick={onDiscard}
-                        disabled={processing}
-                        className="w-full sm:w-auto justify-center"
-                    >
-                        Discard Changes
+                <div className="flex justify-end gap-3">
+                    <SecondaryButton onClick={onClose}>
+                        Stay and Save
+                    </SecondaryButton>
+                    <DangerButton onClick={onLeave}>
+                        Leave Anyway
                     </DangerButton>
-
-                    <PrimaryButton
-                        onClick={onSave}
-                        disabled={processing}
-                        className="w-full sm:w-auto justify-center"
-                    >
-                        {processing ? "Saving..." : "Save"}
-                    </PrimaryButton>
                 </div>
             </div>
         </Modal>

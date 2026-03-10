@@ -6,18 +6,21 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-
     public function up(): void
     {
-        Schema::table('mtop_applications', function (Blueprint $table) {
-            $table->boolean('is_manual_validity')->default(false)->after('valid_until');
-        });
+        if (!Schema::hasColumn('mtop_applications', 'is_manual_validity')) {
+            Schema::table('mtop_applications', function (Blueprint $table) {
+                $table->boolean('is_manual_validity')->default(false)->after('valid_until');
+            });
+        }
     }
 
     public function down(): void
     {
         Schema::table('mtop_applications', function (Blueprint $table) {
-            $table->dropColumn('is_manual_validity');
+            if (Schema::hasColumn('mtop_applications', 'is_manual_validity')) {
+                $table->dropColumn('is_manual_validity');
+            }
         });
     }
 };

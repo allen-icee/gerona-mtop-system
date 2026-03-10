@@ -27,6 +27,7 @@ class SignatoryController extends Controller
         return Inertia::render('Signatories/Index', [
             'signatories' => $signatories,
             'filters' => $request->only(['search', 'position']),
+            'feeSettings' => \App\Models\FeeSetting::first() ?? new \App\Models\FeeSetting()
         ]);
     }
 

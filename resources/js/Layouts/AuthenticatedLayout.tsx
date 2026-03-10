@@ -64,6 +64,14 @@ export default function Authenticated({
                                     </NavLink>
 
                                     <NavLink
+                                        href={route("or_records.index")}
+                                        active={route().current("or_records.*")}
+                                        className="text-blue-100 hover:text-white focus:text-white border-transparent hover:border-white focus:border-white"
+                                    >
+                                        OR Records
+                                    </NavLink>
+
+                                    <NavLink
                                         href={route("settings.print.edit")}
                                         active={route().current(
                                             "settings.print.edit",
@@ -214,6 +222,14 @@ export default function Authenticated({
                                 className="text-white hover:bg-blue-700 focus:bg-blue-700 border-l-4 border-transparent hover:border-yellow-400"
                             >
                                 MTOP Records
+                            </ResponsiveNavLink>
+
+                            <ResponsiveNavLink
+                                href={route("or_records.index")}
+                                active={route().current("or_records.*")}
+                                className="text-white hover:bg-blue-700 focus:bg-blue-700 border-l-4 border-transparent hover:border-yellow-400"
+                            >
+                                OR Records
                             </ResponsiveNavLink>
 
                             <ResponsiveNavLink
