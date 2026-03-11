@@ -83,4 +83,18 @@ class OrRecordController extends Controller
 
         return back()->with('success', 'Record deleted successfully!');
     }
+
+
+    // --- ADDED PRINT FUNCTION ---
+    public function print($id)
+    {
+        $record = OrRecord::findOrFail($id);
+
+        return Inertia::render('OrRecords/Print', [
+            'record' => $record,
+            'feeSettings' => FeeSetting::first() ?? new FeeSetting()
+        ]);
+    }
+
+
 }

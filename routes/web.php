@@ -134,6 +134,7 @@ Route::middleware('auth')->group(function () {
 
         // ADDED THIS: Only Admins can delete OR Records
         Route::delete('/or-records/{id}', [\App\Http\Controllers\OrRecordController::class, 'destroy'])->name('or_records.destroy');
+        Route::get('/or-records/{id}/print', [\App\Http\Controllers\OrRecordController::class, 'print'])->name('or_records.print');
 
         Route::resource('users', UserController::class);
 

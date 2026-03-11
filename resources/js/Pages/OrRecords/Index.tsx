@@ -346,9 +346,13 @@ export default function Index({ signatories = [], feeSettings, orRecords = [], n
                                                 <button onClick={() => setViewingRecord(record)} title="View Details" className="p-2 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 hover:text-indigo-800 rounded-md transition-colors shadow-sm">
                                                     <Icon icon="solar:eye-bold" width="18" />
                                                 </button>
-                                                <button title="Print OR" className="p-2 text-green-600 bg-green-50 hover:bg-green-100 hover:text-green-800 rounded-md transition-colors shadow-sm">
-                                                    <Icon icon="solar:printer-bold" width="18" />
-                                                </button>
+                                                <button
+    onClick={() => window.open(route('or_records.print', record.id), '_blank')}
+    title="Print OR"
+    className="p-2 text-green-600 bg-green-50 hover:bg-green-100 hover:text-green-800 rounded-md transition-colors shadow-sm"
+>
+    <Icon icon="solar:printer-bold" width="18" />
+</button>
                                                 <button onClick={() => setEditingRecord(record)} title="Edit Record" className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 hover:text-blue-800 rounded-md transition-colors shadow-sm">
                                                     <Icon icon="solar:pen-new-square-bold" width="18" />
                                                 </button>
@@ -722,9 +726,12 @@ export default function Index({ signatories = [], feeSettings, orRecords = [], n
                 )}
                 <div className="bg-white border-t border-gray-200 px-6 py-4 flex justify-end gap-3 sm:rounded-b-lg">
                     <SecondaryButton onClick={() => setViewingRecord(null)}>Close</SecondaryButton>
-                    <PrimaryButton className="bg-indigo-600 hover:bg-indigo-700 shadow-md">
-                        <Icon icon="solar:printer-bold" className="mr-2" width="20" /> Print OR
-                    </PrimaryButton>
+                    <PrimaryButton
+    onClick={() => viewingRecord && window.open(route('or_records.print', viewingRecord.id), '_blank')}
+    className="bg-indigo-600 hover:bg-indigo-700 shadow-md"
+>
+    <Icon icon="solar:printer-bold" className="mr-2" width="20" /> Print OR
+</PrimaryButton>
                 </div>
             </Modal>
 
