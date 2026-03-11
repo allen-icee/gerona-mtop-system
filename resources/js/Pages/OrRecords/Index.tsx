@@ -12,6 +12,7 @@ import { Icon } from "@iconify/react";
 import SignatorySelect from "@/Components/SignatorySelect";
 import ConfirmDeleteModal from "@/Components/ConfirmDeleteModal";
 import OrSuccessModal from "./Partials/OrSuccessModal";
+import toast from "react-hot-toast";
 
 const FEE_LABELS = {
     reg_filing_fee: "REG./Filing Fee",
@@ -182,6 +183,7 @@ export default function Index({ signatories = [], feeSettings, orRecords = [], n
             onSuccess: () => {
                 setIsPaymentModalOpen(false);
                 setIsProcessing(false);
+                toast.success("Application saved successfully"); // Added Toast
                 setSuccessModal({
                     show: true,
                     action: 'create',
@@ -210,6 +212,7 @@ export default function Index({ signatories = [], feeSettings, orRecords = [], n
             onSuccess: () => {
                 setEditingRecord(null);
                 setIsProcessing(false);
+                toast.success("Record updated successfully"); // Added Toast
                 setSuccessModal({
                     show: true,
                     action: 'update',
@@ -234,14 +237,7 @@ export default function Index({ signatories = [], feeSettings, orRecords = [], n
                     setDeletingId(null);
                     setIsDeleting(false);
                     if (recordToDelete) {
-                        setSuccessModal({
-                            show: true,
-                            action: 'delete',
-                            data: {
-                                or_number: recordToDelete.or_number,
-                                payor_name: `${recordToDelete.payor_last_name}, ${recordToDelete.payor_first_name} ${recordToDelete.payor_middle_name || ''} ${recordToDelete.payor_suffix || ''}`.replace(/\s+/g, ' ').trim()
-                            }
-                        });
+                        toast.success("Record deleted successfully"); // Replaced successModal with Toast
                     }
                 },
             });
@@ -534,7 +530,7 @@ export default function Index({ signatories = [], feeSettings, orRecords = [], n
                     <div className="flex flex-col sm:flex-row gap-3">
                         <SecondaryButton onClick={() => setIsPaymentModalOpen(false)} className="justify-center py-2.5">Cancel</SecondaryButton>
                         <PrimaryButton id="btn-proceed" onClick={handleProceedToApplication} className={`shadow-md justify-center py-2.5 px-8 transition-colors ${isFormValid ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400 cursor-not-allowed'}`} disabled={!isFormValid || isProcessing}>
-                            {isProcessing ? "Saving..." : "Proceed to Application"}
+                            {isProcessing ? "Saving..." : "SAVE RECORD"}
                         </PrimaryButton>
                     </div>
                 </div>

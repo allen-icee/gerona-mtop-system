@@ -52,11 +52,89 @@ export default function Create({
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [createdRecord, setCreatedRecord] = useState<any>(null);
 
+    // --- SMART PAYOR NAME PARSER ---
+    const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+    const rawPayorName = searchParams?.get('payor_name') || '';
+
+    let defaultLast = "";
+    let defaultFirst = "";
+    let defaultMiddle = "";
+    let defaultSuffix = "";
+
+    if (rawPayorName) {
+        const cleanName = rawPayorName.trim().toUpperCase();
+        // Common suffixes to look out for
+        const suffixList = ["JR", "JR.", "SR", "SR.", "I", "II", "III", "IV", "V", "VI"];
+
+        if (cleanName.includes(',')) {
+            // Format: LASTNAME, FIRSTNAME [MI] [SUFFIX] (e.g., DELA CRUZ, JUAN JR. P.)
+            const parts = cleanName.split(',');
+            defaultLast = parts[0].trim();
+
+            let remainingTokens = parts.slice(1).join(',').trim().split(/\s+/);
+
+            // 1. Extract and remove Suffix
+            remainingTokens = remainingTokens.filter(token => {
+                if (suffixList.includes(token)) {
+                    defaultSuffix = token.replace('.', ''); // normalize to "JR", "SR", etc.
+                    return false;
+                }
+                return true;
+            });
+
+            // 2. Extract and remove Middle Initial (Single letter with or without a dot)
+            remainingTokens = remainingTokens.filter(token => {
+                if (/^[A-Z]\.?$/.test(token)) {
+                    defaultMiddle = token.replace('.', ''); // normalize to just the letter
+                    return false;
+                }
+                return true;
+            });
+
+            // 3. Whatever is left is the First Name
+            defaultFirst = remainingTokens.join(' ');
+        } else {
+            // Format: FIRSTNAME [MI] LASTNAME [SUFFIX] (e.g., JUAN P. DELA CRUZ JR.)
+            let tokens = cleanName.split(/\s+/);
+
+            // 1. Extract and remove Suffix
+            tokens = tokens.filter(token => {
+                if (suffixList.includes(token)) {
+                    defaultSuffix = token.replace('.', '');
+                    return false;
+                }
+                return true;
+            });
+
+            // 2. The very last word remaining is likely the Last Name
+            if (tokens.length > 1) {
+                defaultLast = tokens.pop() || "";
+            } else {
+                defaultLast = tokens[0] || "";
+                tokens = [];
+            }
+
+            // 3. Extract and remove Middle Initial
+            tokens = tokens.filter(token => {
+                if (/^[A-Z]\.?$/.test(token)) {
+                    defaultMiddle = token.replace('.', '');
+                    return false;
+                }
+                return true;
+            });
+
+            // 4. Whatever is left is the First Name
+            defaultFirst = tokens.join(' ');
+        }
+    }
+    // -----------------------------------------------------
+
     const { data, setData, post, processing, errors, reset } = useForm({
-        last_name: "",
-        first_name: "",
-        middle_name: "",
-        suffix: "",
+        // Inject the smartly parsed defaults
+        last_name: defaultLast,
+        first_name: defaultFirst,
+        middle_name: defaultMiddle, // Now populated correctly
+        suffix: defaultSuffix,      // Now populated correctly
         address: "",
         mt_number: suggested_mt_number || "",
         transaction_date: new Date().toISOString().split("T")[0],

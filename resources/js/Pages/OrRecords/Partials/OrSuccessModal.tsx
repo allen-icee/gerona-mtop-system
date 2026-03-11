@@ -1,5 +1,6 @@
 import Modal from "@/Components/Modal";
 import { Icon } from "@iconify/react";
+import { Link } from "@inertiajs/react";
 
 interface Props {
     show: boolean;
@@ -53,21 +54,42 @@ export default function OrSuccessModal({ show, onClose, action, data }: Props) {
 
                 <div className="w-full space-y-3">
                     {!isDelete && (
-                        <button
-                            className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-sm flex items-center justify-center gap-2 transition-colors"
-                        >
-                            <Icon icon="solar:printer-bold" width="20" />
-                            Print OR
-                        </button>
+                        <>
+                            <Link
+                                href={`/mtop/create?payor_name=${encodeURIComponent(data.payor_name)}`}
+                                className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-sm flex items-center justify-center gap-2 transition-colors"
+                            >
+                                <Icon icon="solar:document-add-bold" width="20" />
+                                Create MTOP App
+                            </Link>
+
+                            <button
+                                className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-sm flex items-center justify-center gap-2 transition-colors"
+                            >
+                                <Icon icon="solar:printer-bold" width="20" />
+                                Print OR
+                            </button>
+
+                            {/* Added Return to Records button */}
+                            <button
+                                onClick={onClose}
+                                className="w-full py-3 bg-white border-2 border-gray-200 text-gray-700 font-bold rounded-lg hover:bg-gray-50 flex items-center justify-center gap-2 transition-colors"
+                            >
+                                <Icon icon="solar:round-alt-arrow-left-bold" width="20" />
+                                Return to Records
+                            </button>
+                        </>
                     )}
 
-                    <button
-                        onClick={onClose}
-                        className="w-full py-3 bg-white border-2 border-gray-200 text-gray-700 font-bold rounded-lg hover:bg-gray-50 flex items-center justify-center gap-2 transition-colors"
-                    >
-                        <Icon icon={isDelete ? "solar:close-circle-bold" : "solar:check-circle-bold"} width="20" />
-                        {isDelete ? "Close" : "Done"}
-                    </button>
+                    {isDelete && (
+                        <button
+                            onClick={onClose}
+                            className="w-full py-3 bg-white border-2 border-gray-200 text-gray-700 font-bold rounded-lg hover:bg-gray-50 flex items-center justify-center gap-2 transition-colors"
+                        >
+                            <Icon icon="solar:close-circle-bold" width="20" />
+                            Close
+                        </button>
+                    )}
                 </div>
             </div>
         </Modal>
