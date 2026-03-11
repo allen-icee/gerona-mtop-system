@@ -15,6 +15,6 @@ class OrRecord extends Model
     // This automatically converts the JSON from the database into a PHP array
     protected $casts = [
         'fee_breakdown' => 'array',
-        'transaction_date' => 'date'
+        'transaction_date' => 'date:Y-m-d'
     ];
 }

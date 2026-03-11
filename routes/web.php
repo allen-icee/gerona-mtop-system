@@ -41,10 +41,10 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/mtop', [MtopApplicationController::class, 'index'])->name('mtop.index');
 
-
-    // --- CORRECTED SECTION ---
+    // --- OR RECORDS SECTION ---
     Route::get('/or-records', [\App\Http\Controllers\OrRecordController::class, 'index'])->name('or_records.index');
     Route::post('/or-records', [\App\Http\Controllers\OrRecordController::class, 'store'])->name('or_records.store');
+    Route::put('/or-records/{id}', [\App\Http\Controllers\OrRecordController::class, 'update'])->name('or_records.update'); // ADDED THIS
     Route::post('/settings/fees', [\App\Http\Controllers\FeeSettingController::class, 'update'])->name('settings.fees.update');
 
 
@@ -131,6 +131,9 @@ Route::middleware('auth')->group(function () {
     Route::middleware(IsAdmin::class)->group(function () {
 
         Route::delete('/mtop/{id}', [MtopApplicationController::class, 'destroy'])->name('mtop.destroy');
+
+        // ADDED THIS: Only Admins can delete OR Records
+        Route::delete('/or-records/{id}', [\App\Http\Controllers\OrRecordController::class, 'destroy'])->name('or_records.destroy');
 
         Route::resource('users', UserController::class);
 

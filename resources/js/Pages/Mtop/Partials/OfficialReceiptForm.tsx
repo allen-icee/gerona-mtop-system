@@ -91,11 +91,11 @@ export default function OfficialReceiptForm({
                         onChange={(e: any) => {
                             const val = e.target.value
                                 .toUpperCase()
-                                .replace(/[^A-Z0-9-]/g, "");
+                                .replace(/[^A-Z0-9 -]/g, "");
                             setData("or_number", val);
                         }}
                         icon="solar:hashtag-square-bold"
-                        placeholder="e.g. OR-12345"
+                        placeholder="e.g. OR 2026-0001"
                         required={isRequired}
                         disabled={locked}
                         onKeyDown={onKeyDown}

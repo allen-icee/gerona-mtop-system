@@ -11,6 +11,7 @@ interface Props {
     required?: boolean;
     disabled?: boolean;
     onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+    className?: string; // Added className to Props
 }
 
 export default function SignatorySelect({
@@ -22,6 +23,7 @@ export default function SignatorySelect({
     required,
     disabled = false,
     onKeyDown,
+    className = "", // Destructured className with a default empty string
 }: Props) {
     const [isOpen, setIsOpen] = useState(false);
     const [selectedIndex, setSelectedIndex] = useState(-1);
@@ -94,7 +96,8 @@ export default function SignatorySelect({
     };
 
     return (
-        <div className="mb-4 relative">
+        // Applied the className to the outer div
+        <div className={`mb-4 relative ${className}`}>
             <label className="block font-medium text-sm text-gray-700 mb-1">
                 {label} {required && <span className="text-red-500">*</span>}
             </label>

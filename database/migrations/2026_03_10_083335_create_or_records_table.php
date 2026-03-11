@@ -10,6 +10,7 @@ return new class extends Migration
     {
         Schema::create('or_records', function (Blueprint $table) {
             $table->id();
+            $table->string('or_number')->unique();
             $table->date('transaction_date');
             $table->string('agency')->default('LGU GERONA');
             $table->string('payor_last_name');
