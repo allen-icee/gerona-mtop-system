@@ -63,19 +63,19 @@ export default function OrSuccessModal({ show, onClose, action, data }: Props) {
                                 Create MTOP App
                             </Link>
 
+                            {/* Changed to look like "Edit Again" */}
                             <button
-                                className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-sm flex items-center justify-center gap-2 transition-colors"
+                                className="w-full py-3 bg-white border-2 border-gray-200 text-gray-700 font-bold rounded-lg hover:bg-gray-50 flex items-center justify-center gap-2 transition-colors"
                             >
                                 <Icon icon="solar:printer-bold" width="20" />
                                 Print OR
                             </button>
 
-                            {/* Added Return to Records button */}
+                            {/* Changed to look like the underlined text link */}
                             <button
                                 onClick={onClose}
-                                className="w-full py-3 bg-white border-2 border-gray-200 text-gray-700 font-bold rounded-lg hover:bg-gray-50 flex items-center justify-center gap-2 transition-colors"
+                                className="block w-full text-sm text-gray-400 hover:text-gray-600 font-semibold underline mt-3 text-center transition-colors"
                             >
-                                <Icon icon="solar:round-alt-arrow-left-bold" width="20" />
                                 Return to Records
                             </button>
                         </>
