@@ -149,6 +149,21 @@ export default function Index({ signatories = [], feeSettings, orRecords = [], n
 
     const isFormValid = orNumber?.trim() !== "" && payorDetails.lastName.trim() !== "" && payorDetails.firstName.trim() !== "" && collectingOfficer.trim() !== "";
     const isEditFormValid = editOrNumber?.trim() !== "" && editPayorDetails.lastName.trim() !== "" && editPayorDetails.firstName.trim() !== "" && editCollectingOfficer.trim() !== "";
+    const hasChanges = editingRecord !== null && (
+        editOrNumber !== (editingRecord.or_number || "") ||
+        editTransactionDate !== (editingRecord.transaction_date || "") ||
+        editAgency !== (editingRecord.agency || "LGU GERONA") ||
+        editCollectingOfficer !== (editingRecord.collecting_officer || "") ||
+        editPayorDetails.lastName !== (editingRecord.payor_last_name || "") ||
+        editPayorDetails.firstName !== (editingRecord.payor_first_name || "") ||
+        editPayorDetails.middleName !== (editingRecord.payor_middle_name || "") ||
+        editPayorDetails.suffix !== (editingRecord.payor_suffix || "") ||
+        JSON.stringify(editToggles) !== JSON.stringify(editingRecord.fee_breakdown || {
+            reg_filing_fee: true, franchise_fee: true, mayors_permit: true, supervisor_fee: true,
+            account_clearance: true, sticker_fee: true, id_driver_operator_owner: true,
+            body_number_plate: true, penalty: true,
+        })
+    );
 
     const onKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === "Enter") {
@@ -180,14 +195,16 @@ export default function Index({ signatories = [], feeSettings, orRecords = [], n
             collecting_officer: collectingOfficer, total_amount: calculateTotal(), fee_breakdown: toggles
         };
         router.post(route('or_records.store'), data, {
-            onSuccess: () => {
+            onSuccess: (page: any) => {
                 setIsPaymentModalOpen(false);
                 setIsProcessing(false);
                 toast.success("Application saved successfully"); // Added Toast
+                const newId = page.props.orRecords[0]?.id;
                 setSuccessModal({
                     show: true,
                     action: 'create',
                     data: {
+                        id: newId,
                         or_number: orNumber,
                         payor_name: `${payorDetails.lastName}, ${payorDetails.firstName} ${payorDetails.middleName} ${payorDetails.suffix}`.replace(/\s+/g, ' ').trim()
                     }
@@ -217,6 +234,7 @@ export default function Index({ signatories = [], feeSettings, orRecords = [], n
                     show: true,
                     action: 'update',
                     data: {
+                        id: editingRecord.id,
                         or_number: editOrNumber,
                         payor_name: `${editPayorDetails.lastName}, ${editPayorDetails.firstName} ${editPayorDetails.middleName} ${editPayorDetails.suffix}`.replace(/\s+/g, ' ').trim()
                     }
@@ -527,16 +545,22 @@ export default function Index({ signatories = [], feeSettings, orRecords = [], n
                         </div>
                     </div>
                 </div>
-                <div className="bg-white border-t border-gray-200 px-6 py-4 flex flex-col sm:flex-row justify-between gap-4 sm:rounded-b-lg">
-                    <PrimaryButton className="bg-indigo-600 hover:bg-indigo-700 shadow-md flex-1 sm:flex-none justify-center py-2.5">
-                        <Icon icon="solar:printer-bold" className="mr-2" width="22" /> Print OR
+                <div className="bg-white border-t border-gray-200 px-6 py-4 flex flex-col-reverse sm:flex-row justify-end gap-3 sm:rounded-b-lg">
+                    <SecondaryButton
+                        onClick={() => setIsPaymentModalOpen(false)}
+                        className="w-full sm:w-auto justify-center py-2.5"
+                    >
+                        Cancel
+                    </SecondaryButton>
+                    <PrimaryButton
+                        id="btn-proceed"
+                        onClick={handleProceedToApplication}
+                        className={`w-full sm:w-auto shadow-md flex items-center justify-center gap-2 py-2.5 px-8 transition-colors ${isFormValid ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400 cursor-not-allowed'}`}
+                        disabled={!isFormValid || isProcessing}
+                    >
+                        <Icon icon="solar:diskette-bold" width="20" />
+                        {isProcessing ? "Saving..." : "SAVE RECORD"}
                     </PrimaryButton>
-                    <div className="flex flex-col sm:flex-row gap-3">
-                        <SecondaryButton onClick={() => setIsPaymentModalOpen(false)} className="justify-center py-2.5">Cancel</SecondaryButton>
-                        <PrimaryButton id="btn-proceed" onClick={handleProceedToApplication} className={`shadow-md justify-center py-2.5 px-8 transition-colors ${isFormValid ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400 cursor-not-allowed'}`} disabled={!isFormValid || isProcessing}>
-                            {isProcessing ? "Saving..." : "SAVE RECORD"}
-                        </PrimaryButton>
-                    </div>
                 </div>
             </Modal>
 
@@ -671,9 +695,22 @@ export default function Index({ signatories = [], feeSettings, orRecords = [], n
                         </div>
                     </div>
                 </div>
-                <div className="bg-white border-t border-gray-200 px-6 py-4 flex flex-col sm:flex-row justify-end gap-3 sm:rounded-b-lg">
-                    <SecondaryButton onClick={() => setEditingRecord(null)} className="justify-center py-2.5">Cancel</SecondaryButton>
-                    <PrimaryButton id="btn-update" onClick={handleUpdateRecord} className={`shadow-md justify-center py-2.5 px-8 transition-colors ${isEditFormValid ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400 cursor-not-allowed'}`} disabled={!isEditFormValid || isProcessing}>
+                <div className="bg-white border-t border-gray-200 px-6 py-4 flex flex-col-reverse sm:flex-row justify-end gap-3 sm:rounded-b-lg">
+                    <SecondaryButton
+                        onClick={() => setEditingRecord(null)}
+                        className="w-full sm:w-auto justify-center py-2.5"
+                    >
+                        Cancel
+                    </SecondaryButton>
+                    <PrimaryButton
+                        id="btn-update"
+                        onClick={handleUpdateRecord}
+                        // 👇 Added hasChanges to the color condition
+                        className={`w-full sm:w-auto shadow-md flex items-center justify-center gap-2 py-2.5 px-8 transition-colors ${isEditFormValid && hasChanges ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400 cursor-not-allowed'}`}
+                        // 👇 Added !hasChanges to the disabled condition
+                        disabled={!isEditFormValid || !hasChanges || isProcessing}
+                    >
+                        <Icon icon="solar:diskette-bold" width="20" />
                         {isProcessing ? "Saving..." : "Save Changes"}
                     </PrimaryButton>
                 </div>
@@ -744,6 +781,19 @@ export default function Index({ signatories = [], feeSettings, orRecords = [], n
                 action={successModal.action}
                 data={successModal.data}
                 onClose={() => setSuccessModal({ ...successModal, show: false })}
+
+                onEdit={() => {
+                    setSuccessModal({ ...successModal, show: false });
+
+                    if (successModal.data?.id) {
+                        const recordToEdit = orRecords.find(r => r.id === successModal.data.id);
+                        if (recordToEdit) {
+                            setTimeout(() => setEditingRecord(recordToEdit), 150);
+                        } else {
+                            toast.error("Could not load the record for editing.");
+                        }
+                    }
+                }}
             />
 
         </AuthenticatedLayout>

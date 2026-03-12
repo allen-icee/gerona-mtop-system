@@ -5,8 +5,10 @@ import { Link } from "@inertiajs/react";
 interface Props {
     show: boolean;
     onClose: () => void;
+    onEdit: () => void;
     action: "create" | "update" | "delete";
     data: {
+        id: number; // Added id to match PrintSuccessModal for routing
         or_number: string;
         payor_name: string;
     } | null;
@@ -55,29 +57,31 @@ export default function OrSuccessModal({ show, onClose, action, data }: Props) {
                 <div className="w-full space-y-3">
                     {!isDelete && (
                         <>
-                            <Link
-                                href={`/mtop/create?payor_name=${encodeURIComponent(data.payor_name)}`}
-                                className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-sm flex items-center justify-center gap-2 transition-colors"
-                            >
-                                <Icon icon="solar:document-add-bold" width="20" />
-                                Create MTOP App
-                            </Link>
-
-                            {/* Changed to look like "Edit Again" */}
-                            <button
-                                className="w-full py-3 bg-white border-2 border-gray-200 text-gray-700 font-bold rounded-lg hover:bg-gray-50 flex items-center justify-center gap-2 transition-colors"
+                            {/* Primary Action: Print OR (Replacing Create MTOP App) */}
+                            <a
+                                href={route("or_records.print", data.id)}
+                                target="_blank"
+                                className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-sm flex items-center justify-center gap-2 transition-colors"
                             >
                                 <Icon icon="solar:printer-bold" width="20" />
                                 Print OR
-                            </button>
+                            </a>
 
-                            {/* Changed to look like the underlined text link */}
+                            {/* Secondary Action: Edit Logic */}
                             <button
                                 onClick={onClose}
+                                className="w-full py-3 bg-white border-2 border-gray-200 text-gray-700 font-bold rounded-lg hover:bg-gray-50 flex items-center justify-center gap-2 transition-colors"
+                            >
+                                <Icon icon="solar:pen-new-square-bold" width="20" />
+                                {action === "create" ? "Edit Record" : "Edit Again"}
+                            </button>
+
+                            <Link
+                                href={route("or_records.index")}
                                 className="block w-full text-sm text-gray-400 hover:text-gray-600 font-semibold underline mt-3 text-center transition-colors"
                             >
                                 Return to Records
-                            </button>
+                            </Link>
                         </>
                     )}
 
