@@ -101,9 +101,9 @@ export default function Print({ record, feeSettings }: Props) {
     const payorName =
         `${record.payor_first_name} ${record.payor_middle_name ? record.payor_middle_name + " " : ""}${record.payor_last_name} ${record.payor_suffix || ""}`.trim();
     const amountInWords = numberToWords(Number(record.total_amount));
-    const activeFees = Object.keys(record.fee_breakdown || {}).filter(
-        (key) => record.fee_breakdown[key],
-    );
+
+    // Get all fee keys from the FEE_LABELS object
+    const allFeeKeys = Object.keys(FEE_LABELS) as Array<keyof typeof FEE_LABELS>;
 
     return (
         /* Changed 'justify-center' to 'justify-start' and added 'p-0' to keep it left-aligned */
@@ -147,16 +147,22 @@ export default function Print({ record, feeSettings }: Props) {
 
                 {/* Fees Breakdown List */}
                 <div className="absolute top-[77.5mm] left-[7.5mm] w-[80mm] leading-[0.97]">
-                    {activeFees.map((feeKey) => (
-                        <div key={feeKey} className="flex justify-between mb-1">
-                            <span>
-                                {FEE_LABELS[feeKey as keyof typeof FEE_LABELS]}
-                            </span>
-                            <span>
-                                {Number(feeSettings[feeKey] || 0).toFixed(2)}
-                            </span>
-                        </div>
-                    ))}
+                    {allFeeKeys.map((feeKey) => {
+                        // Check if the fee is toggled on in the record's breakdown
+                        const isToggledOn = record.fee_breakdown && record.fee_breakdown[feeKey];
+
+                        return (
+                            <div key={feeKey} className="flex justify-between mb-1">
+                                <span>
+                                    {FEE_LABELS[feeKey]}
+                                </span>
+                                <span>
+                                    {/* Only show the amount if the fee is toggled on */}
+                                    {isToggledOn ? Number(feeSettings[feeKey] || 0).toFixed(2) : ""}
+                                </span>
+                            </div>
+                        );
+                    })}
                 </div>
 
                 {/* Total Amount (Numeric) */}

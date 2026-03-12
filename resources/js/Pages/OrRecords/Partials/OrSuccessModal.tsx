@@ -8,13 +8,13 @@ interface Props {
     onEdit: () => void;
     action: "create" | "update" | "delete";
     data: {
-        id: number; // Added id to match PrintSuccessModal for routing
+        id: number;
         or_number: string;
         payor_name: string;
     } | null;
 }
 
-export default function OrSuccessModal({ show, onClose, action, data }: Props) {
+export default function OrSuccessModal({ show, onClose, onEdit, action, data }: Props) {
     if (!data) return null;
 
     const isDelete = action === "delete";
@@ -57,30 +57,40 @@ export default function OrSuccessModal({ show, onClose, action, data }: Props) {
                 <div className="w-full space-y-3">
                     {!isDelete && (
                         <>
-                            {/* Primary Action: Print OR (Replacing Create MTOP App) */}
-                            <Link
-                                href={route("mtop.create", { payor_name: data.payor_name })}
-                                className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-sm flex items-center justify-center gap-2 transition-colors"
-                            >
-                                <Icon icon="solar:document-add-bold" width="20" />
-                                Proceed to Application
-                            </Link>
+                            {/* Primary Action: Conditional Based on Action */}
+                            {action === "create" ? (
+                                <Link
+                                    href={route("mtop.create", { payor_name: data.payor_name })}
+                                    className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-sm flex items-center justify-center gap-2 transition-colors"
+                                >
+                                    <Icon icon="solar:document-add-bold" width="20" />
+                                    Proceed to Application
+                                </Link>
+                            ) : (
+                                <button
+                                    onClick={() => window.open(route('or_records.print', data.id), '_blank')}
+                                    className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-sm flex items-center justify-center gap-2 transition-colors"
+                                >
+                                    <Icon icon="solar:printer-bold" width="20" />
+                                    Print OR
+                                </button>
+                            )}
 
                             {/* Secondary Action: Edit Logic */}
                             <button
-                                onClick={onClose}
+                                onClick={onEdit} // Changed this from onClose to onEdit so it triggers the form load properly!
                                 className="w-full py-3 bg-white border-2 border-gray-200 text-gray-700 font-bold rounded-lg hover:bg-gray-50 flex items-center justify-center gap-2 transition-colors"
                             >
                                 <Icon icon="solar:pen-new-square-bold" width="20" />
                                 {action === "create" ? "Edit Record" : "Edit Again"}
                             </button>
 
-                            <Link
-                                href={route("or_records.index")}
+                            <button
+                                onClick={onClose}
                                 className="block w-full text-sm text-gray-400 hover:text-gray-600 font-semibold underline mt-3 text-center transition-colors"
                             >
                                 Return to Records
-                            </Link>
+                            </button>
                         </>
                     )}
 

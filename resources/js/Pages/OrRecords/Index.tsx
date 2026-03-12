@@ -66,7 +66,7 @@ export default function Index({ signatories = [], feeSettings, orRecords = [], n
     const [editingRecord, setEditingRecord] = useState<OrRecord | null>(null);
 
     // --- SUCCESS MODAL STATE ---
-    const [successModal, setSuccessModal] = useState<{show: boolean, action: 'create'|'update'|'delete', data: any}>({
+    const [successModal, setSuccessModal] = useState<{ show: boolean, action: 'create' | 'update' | 'delete', data: any }>({
         show: false, action: 'create', data: null
     });
 
@@ -92,7 +92,7 @@ export default function Index({ signatories = [], feeSettings, orRecords = [], n
     const [editCollectingOfficer, setEditCollectingOfficer] = useState("");
     const [editEnableConfigs, setEditEnableConfigs] = useState(false);
     const [editPayorDetails, setEditPayorDetails] = useState({ lastName: "", firstName: "", middleName: "", suffix: "" });
-    const [editToggles, setEditToggles] = useState({...toggles});
+    const [editToggles, setEditToggles] = useState({ ...toggles });
 
     useEffect(() => {
         setOrNumber(nextOrNumber);
@@ -265,8 +265,8 @@ export default function Index({ signatories = [], feeSettings, orRecords = [], n
     const filteredRecords = orRecords.filter(record => {
         const searchLower = search.toLowerCase();
         const matchesSearch = (record.or_number || "").toLowerCase().includes(searchLower) ||
-                              (record.payor_last_name || "").toLowerCase().includes(searchLower) ||
-                              (record.payor_first_name || "").toLowerCase().includes(searchLower);
+            (record.payor_last_name || "").toLowerCase().includes(searchLower) ||
+            (record.payor_first_name || "").toLowerCase().includes(searchLower);
         let matchesMonth = true, matchesYear = true;
         if (month || year) {
             const recordDate = new Date(record.transaction_date);
@@ -365,12 +365,12 @@ export default function Index({ signatories = [], feeSettings, orRecords = [], n
                                                     <Icon icon="solar:eye-bold" width="18" />
                                                 </button>
                                                 <button
-    onClick={() => window.open(route('or_records.print', record.id), '_blank')}
-    title="Print OR"
-    className="p-2 text-green-600 bg-green-50 hover:bg-green-100 hover:text-green-800 rounded-md transition-colors shadow-sm"
->
-    <Icon icon="solar:printer-bold" width="18" />
-</button>
+                                                    onClick={() => window.open(route('or_records.print', record.id), '_blank')}
+                                                    title="Print OR"
+                                                    className="p-2 text-green-600 bg-green-50 hover:bg-green-100 hover:text-green-800 rounded-md transition-colors shadow-sm"
+                                                >
+                                                    <Icon icon="solar:printer-bold" width="18" />
+                                                </button>
                                                 <button onClick={() => setEditingRecord(record)} title="Edit Record" className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 hover:text-blue-800 rounded-md transition-colors shadow-sm">
                                                     <Icon icon="solar:pen-new-square-bold" width="18" />
                                                 </button>
@@ -432,61 +432,61 @@ export default function Index({ signatories = [], feeSettings, orRecords = [], n
                                 </button>
                             </div>
                             {/* TWO-ROW COMPACT GRID */}
-{/* TWO-ROW COMPACT GRID */}
-<div className="grid grid-cols-1 sm:grid-cols-12 gap-x-3 gap-y-1">
+                            {/* TWO-ROW COMPACT GRID */}
+                            <div className="grid grid-cols-1 sm:grid-cols-12 gap-x-3 gap-y-1">
 
-    {/* ROW 1 */}
-    {/* OR NUMBER - 6 Columns */}
-    <div className={`sm:col-span-6 lg:col-span-6 transition-all ${!enableEditConfigs ? "opacity-50 saturate-0 pointer-events-none" : ""}`}>
-        {/* Changed text-xs to text-sm to match other labels */}
-        <label className="block font-semibold text-gray-800 text-sm mb-1 whitespace-nowrap">
-            OR Number <span className="text-red-500">*</span>
-        </label>
+                                {/* ROW 1 */}
+                                {/* OR NUMBER - 6 Columns */}
+                                <div className={`sm:col-span-6 lg:col-span-6 transition-all ${!enableEditConfigs ? "opacity-50 saturate-0 pointer-events-none" : ""}`}>
+                                    {/* Changed text-xs to text-sm to match other labels */}
+                                    <label className="block font-semibold text-gray-800 text-sm mb-1 whitespace-nowrap">
+                                        OR Number <span className="text-red-500">*</span>
+                                    </label>
 
-        {/* Removed fixed h-[38px], added items-stretch to align prefix and input naturally */}
-        <div className="relative flex items-stretch border border-gray-300 rounded-md shadow-sm bg-white overflow-hidden focus-within:ring-1 focus-within:ring-indigo-500 focus-within:border-indigo-500 w-full">
-            {createPrefix && (
-                // Added py-2 to match standard input padding
-                <div className="px-3 py-3 bg-gray-100 text-gray-600 font-medium border-r border-gray-300 flex items-center justify-center cursor-not-allowed select-none text-sm shrink-0">
-                    <Icon icon="solar:folder-with-files-bold" className="mr-1.5 text-gray-500" width="16" />
-                    {createPrefix}
-                </div>
-            )}
-            <input
-                type="text"
-                value={createSequence}
-                disabled={!enableEditConfigs}
-                onChange={(e) => {
-                    let val = e.target.value.replace(/[^0-9]/g, "");
-                    if (createPrefix && val.length > 4) val = val.substring(0, 4);
-                    setOrNumber(`${createPrefix}${val}`);
-                }}
-                onKeyDown={onKeyDown}
-                placeholder="0001"
-                // Added py-2 here as well
-                className="flex-1 block w-full border-none focus:ring-0 text-sm px-3 py-2 font-bold text-indigo-700 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
-                required
-            />
-        </div>
-    </div>
+                                    {/* Removed fixed h-[38px], added items-stretch to align prefix and input naturally */}
+                                    <div className="relative flex items-stretch border border-gray-300 rounded-md shadow-sm bg-white overflow-hidden focus-within:ring-1 focus-within:ring-indigo-500 focus-within:border-indigo-500 w-full">
+                                        {createPrefix && (
+                                            // Added py-2 to match standard input padding
+                                            <div className="px-3 py-3 bg-gray-100 text-gray-600 font-medium border-r border-gray-300 flex items-center justify-center cursor-not-allowed select-none text-sm shrink-0">
+                                                <Icon icon="solar:folder-with-files-bold" className="mr-1.5 text-gray-500" width="16" />
+                                                {createPrefix}
+                                            </div>
+                                        )}
+                                        <input
+                                            type="text"
+                                            value={createSequence}
+                                            disabled={!enableEditConfigs}
+                                            onChange={(e) => {
+                                                let val = e.target.value.replace(/[^0-9]/g, "");
+                                                if (createPrefix && val.length > 4) val = val.substring(0, 4);
+                                                setOrNumber(`${createPrefix}${val}`);
+                                            }}
+                                            onKeyDown={onKeyDown}
+                                            placeholder="0001"
+                                            // Added py-2 here as well
+                                            className="flex-1 block w-full border-none focus:ring-0 text-sm px-3 py-2 font-bold text-indigo-700 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
+                                            required
+                                        />
+                                    </div>
+                                </div>
 
-    {/* TRANSACTION DATE - 6 Columns */}
-    <div className="sm:col-span-6 lg:col-span-6">
-        <InputGroup id="transactionDate" label="Date" type="date" value={transactionDate} disabled={!enableEditConfigs} onChange={(e) => setTransactionDate(e.target.value)} onKeyDown={onKeyDown} required className={`transition-all ${!enableEditConfigs ? "opacity-50 saturate-0 pointer-events-none" : ""}`} />
-    </div>
+                                {/* TRANSACTION DATE - 6 Columns */}
+                                <div className="sm:col-span-6 lg:col-span-6">
+                                    <InputGroup id="transactionDate" label="Date" type="date" value={transactionDate} disabled={!enableEditConfigs} onChange={(e) => setTransactionDate(e.target.value)} onKeyDown={onKeyDown} required className={`transition-all ${!enableEditConfigs ? "opacity-50 saturate-0 pointer-events-none" : ""}`} />
+                                </div>
 
-    {/* ROW 2 */}
-    {/* AGENCY - 6 Columns */}
-    <div className="sm:col-span-6 lg:col-span-6">
-        <InputGroup id="agency" label="Agency" value={agency} disabled onChange={(e) => setAgency(e.target.value)} onKeyDown={onKeyDown} className="opacity-50 saturate-0 pointer-events-none" />
-    </div>
+                                {/* ROW 2 */}
+                                {/* AGENCY - 6 Columns */}
+                                <div className="sm:col-span-6 lg:col-span-6">
+                                    <InputGroup id="agency" label="Agency" value={agency} disabled onChange={(e) => setAgency(e.target.value)} onKeyDown={onKeyDown} className="opacity-50 saturate-0 pointer-events-none" />
+                                </div>
 
-    {/* COLLECTING OFFICER - 6 Columns */}
-    <div className="sm:col-span-6 lg:col-span-6">
-        <SignatorySelect label="Collecting Officer" value={collectingOfficer} onChange={(val) => setCollectingOfficer(val)} options={signatoryOptions} required={true} disabled={!enableEditConfigs} onKeyDown={onKeyDown} className={`transition-all ${!enableEditConfigs ? "opacity-50 saturate-0 pointer-events-none" : ""}`} />
-    </div>
+                                {/* COLLECTING OFFICER - 6 Columns */}
+                                <div className="sm:col-span-6 lg:col-span-6">
+                                    <SignatorySelect label="Collecting Officer" value={collectingOfficer} onChange={(val) => setCollectingOfficer(val)} options={signatoryOptions} required={true} disabled={!enableEditConfigs} onKeyDown={onKeyDown} className={`transition-all ${!enableEditConfigs ? "opacity-50 saturate-0 pointer-events-none" : ""}`} />
+                                </div>
 
-</div>
+                            </div>
                         </div>
 
                         <div className="space-y-2 pt-1">
@@ -782,11 +782,11 @@ export default function Index({ signatories = [], feeSettings, orRecords = [], n
                 <div className="bg-white border-t border-gray-200 px-6 py-4 flex justify-end gap-3 sm:rounded-b-lg">
                     <SecondaryButton onClick={() => setViewingRecord(null)}>Close</SecondaryButton>
                     <PrimaryButton
-    onClick={() => viewingRecord && window.open(route('or_records.print', viewingRecord.id), '_blank')}
-    className="bg-indigo-600 hover:bg-indigo-700 shadow-md"
->
-    <Icon icon="solar:printer-bold" className="mr-2" width="20" /> Print OR
-</PrimaryButton>
+                        onClick={() => viewingRecord && window.open(route('or_records.print', viewingRecord.id), '_blank')}
+                        className="bg-indigo-600 hover:bg-indigo-700 shadow-md"
+                    >
+                        <Icon icon="solar:printer-bold" className="mr-2" width="20" /> Print OR
+                    </PrimaryButton>
                 </div>
             </Modal>
 
