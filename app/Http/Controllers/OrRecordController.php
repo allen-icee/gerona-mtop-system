@@ -19,8 +19,8 @@ class OrRecordController extends Controller
         $prefix = 'OR ' . $year . '-'; // Added "OR " prefix here
 
         $lastRecord = OrRecord::where('or_number', 'like', $prefix . '%')
-                              ->orderBy('or_number', 'desc')
-                              ->first();
+            ->orderBy('or_number', 'desc')
+            ->first();
 
         $sequence = $lastRecord ? intval(explode('-', $lastRecord->or_number)[1]) + 1 : 1;
         $nextOrNumber = $prefix . str_pad($sequence, 4, '0', STR_PAD_LEFT);
@@ -53,7 +53,7 @@ class OrRecordController extends Controller
         return back()->with('success', 'OR Record saved successfully!');
     }
 
-   // --- ADDED UPDATE FUNCTION ---
+    // --- ADDED UPDATE FUNCTION ---
     public function update(Request $request, $id)
     {
         $validated = $request->validate([
@@ -96,5 +96,101 @@ class OrRecordController extends Controller
         ]);
     }
 
+    public function export(Request $request)
+    {
+        $query = clone OrRecord::query();
 
+        // Apply Search Filter
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('or_number', 'like', "%{$search}%")
+                    ->orWhere('payor_last_name', 'like', "%{$search}%")
+                    ->orWhere('payor_first_name', 'like', "%{$search}%");
+            });
+        }
+
+        // Apply Month Filter
+        if ($request->filled('month')) {
+            $query->whereMonth('transaction_date', $request->input('month'));
+        }
+
+        // Apply Year Filter
+        if ($request->filled('year')) {
+            $query->whereYear('transaction_date', $request->input('year'));
+        }
+
+        $records = $query->latest()->cursor();
+
+        // 1. FETCH THE ACTUAL FEE PRICES HERE
+        $feeSettings = \App\Models\FeeSetting::first();
+
+        $csvFileName = 'or_records_' . date('Y-m-d_H-i') . '.csv';
+
+        $headers = [
+            "Content-type" => "text/csv",
+            "Content-Disposition" => "attachment; filename=$csvFileName",
+            "Pragma" => "no-cache",
+            "Cache-Control" => "must-revalidate, post-check=0, pre-check=0",
+            "Expires" => "0"
+        ];
+
+        // 2. PASS $feeSettings INTO THE CALLBACK
+        $callback = function () use ($records, $feeSettings) {
+            $file = fopen('php://output', 'w');
+
+            // Set CSV Headers
+            fputcsv($file, [
+                'OR Number',
+                'Transaction Date',
+                'Agency',
+                'Payor Name',
+                'Collecting Officer',
+                'Total Amount',
+                'REG/Filing Fee',
+                'Franchise Fee',
+                'Mayors Permit',
+                'Supervisor Fee',
+                'Account Clearance',
+                'Sticker Fee',
+                'ID Fee',
+                'Body Number/Plate',
+                'Penalty'
+            ]);
+
+            foreach ($records as $row) {
+                $payorName = trim("{$row->payor_last_name}, {$row->payor_first_name} {$row->payor_middle_name} {$row->payor_suffix}");
+                $fees = $row->fee_breakdown ?? [];
+
+                // 3. HELPER FUNCTION: Get actual amount if toggled ON, else return 0
+                $getAmount = function ($key) use ($fees, $feeSettings) {
+                    if (!empty($fees[$key]) && $feeSettings) {
+                        return $feeSettings->$key ?? 0;
+                    }
+                    return 0;
+                };
+
+                fputcsv($file, [
+                    $row->or_number,
+                    \Carbon\Carbon::parse($row->transaction_date)->format('Y-m-d'), // <-- Formats to date only
+                    $row->agency,
+                    $payorName,
+                    $row->collecting_officer,
+                    $row->total_amount,
+                    $getAmount('reg_filing_fee'),
+                    $getAmount('franchise_fee'),
+                    $getAmount('mayors_permit'),
+                    $getAmount('supervisor_fee'),
+                    $getAmount('account_clearance'),
+                    $getAmount('sticker_fee'),
+                    $getAmount('id_driver_operator_owner'),
+                    $getAmount('body_number_plate'),
+                    $getAmount('penalty'),
+                ]);
+            }
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
 }

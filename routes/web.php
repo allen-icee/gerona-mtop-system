@@ -46,7 +46,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/or-records', [\App\Http\Controllers\OrRecordController::class, 'store'])->name('or_records.store');
     Route::put('/or-records/{id}', [\App\Http\Controllers\OrRecordController::class, 'update'])->name('or_records.update'); // ADDED THIS
     Route::post('/settings/fees', [\App\Http\Controllers\FeeSettingController::class, 'update'])->name('settings.fees.update');
-
+    Route::get('/or-records', [\App\Http\Controllers\OrRecordController::class, 'index'])->name('or_records.index');
+    Route::get('/or-records/export', [\App\Http\Controllers\OrRecordController::class, 'export'])->name('or_records.export'); // <-- ADD THIS LINE
+    Route::post('/or-records', [\App\Http\Controllers\OrRecordController::class, 'store'])->name('or_records.store');
 
     Route::get('/mtop/create', [MtopApplicationController::class, 'create'])->name('mtop.create');
     Route::post('/mtop', [MtopApplicationController::class, 'store'])->name('mtop.store');

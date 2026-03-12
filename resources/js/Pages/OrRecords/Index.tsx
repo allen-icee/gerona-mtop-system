@@ -329,9 +329,14 @@ export default function Index({ signatories = [], feeSettings, orRecords = [], n
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
-                        <button className="bg-green-600 hover:bg-green-700 text-white border font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 shadow-sm transition-all flex-1 sm:flex-none">
+                        <a
+                            href={route('or_records.export', {
+                                _query: { search, month, year }
+                            })}
+                            className="bg-green-600 hover:bg-green-700 text-white border font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 shadow-sm transition-all flex-1 sm:flex-none"
+                        >
                             <Icon icon="solar:file-download-bold" width="22" /> <span className="hidden sm:inline">Export</span>
-                        </button>
+                        </a>
                         <button onClick={openRequirements} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg flex items-center gap-2 shadow-md transition-transform hover:scale-105 flex-1 sm:flex-none justify-center">
                             <Icon icon="solar:add-circle-bold" width="24" /> <span className="whitespace-nowrap">Add</span>
                         </button>
