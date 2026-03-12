@@ -337,6 +337,26 @@ class MtopApplicationController extends Controller
         }
     }
 
+    public function cancel($id): RedirectResponse
+    {
+        $application = MtopApplication::findOrFail($id);
+
+        DB::transaction(function () use ($application) {
+            $application->update(['status' => 'cancelled']);
+            $this->queueForSync('mtop_applications', $application->fresh()->toArray());
+
+            if ($application->franchise_id) {
+                $franchise = MtopFranchise::find($application->franchise_id);
+                if ($franchise) {
+                    $franchise->update(['status' => 'cancelled']);
+                    $this->queueForSync('mtop_franchises', $franchise->fresh()->toArray());
+                }
+            }
+        });
+
+        return redirect()->back()->with('message', 'Record cancelled successfully.');
+    }
+
     public function destroy($id): RedirectResponse
     {
         $application = MtopApplication::findOrFail($id);
@@ -769,6 +789,103 @@ class MtopApplicationController extends Controller
             ])->with('message', 'Ownership transferred successfully!');
         } catch (\Exception $e) {
             return redirect()->back()->withErrors(['mt_number' => $e->getMessage()])->withInput();
+        }
+    }
+
+   public function importData(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'import_file' => 'required|file|mimes:csv,txt|max:20480', // Max 20MB
+        ]);
+
+        try {
+            $file = $request->file('import_file');
+
+            if (($handle = fopen($file->getRealPath(), 'r')) !== false) {
+                $header = fgetcsv($handle, 1000, ',');
+
+                DB::transaction(function () use ($handle) {
+                    while (($row = fgetcsv($handle, 1000, ',')) !== false) {
+                        if (count($row) < 14) continue;
+
+                        $mt_number = trim($row[0] ?? '');
+                        if (empty($mt_number)) continue;
+
+                        // Generate short unique fallbacks (e.g. "T26-0004" from "2026-0004")
+                        // to fit inside the strict 10-character limit of the DB schema
+                        $short_year = substr($mt_number, 2, 2);
+                        $seq = substr($mt_number, 5);
+
+                        $body_number = trim($row[9] ?? '');
+                        if (empty($body_number)) {
+                            $body_number = "T{$short_year}-{$seq}";
+                        }
+
+                        $plate_no = trim($row[10] ?? '');
+                        if (empty($plate_no)) {
+                            $plate_no = "P{$short_year}-{$seq}";
+                        }
+
+                        // 1. Create or Update Franchise
+                        $franchise = MtopFranchise::updateOrCreate(
+                            ['mt_number' => $mt_number],
+                            [
+                                'last_name' => trim($row[3] ?? ''),
+                                'first_name' => trim($row[4] ?? ''),
+                                'middle_name' => trim($row[5] ?? '') ?: null,
+                                'suffix' => trim($row[6] ?? '') ?: null,
+                                'address' => trim($row[7] ?? ''),
+                                'contact_number' => trim($row[8] ?? '') ?: null,
+                                'body_number' => $body_number,
+                                'plate_no' => $plate_no,
+                                'make_type' => trim($row[11] ?? ''),
+                                'engine_motor_no' => trim($row[12] ?? ''),
+                                'chassis_no' => trim($row[13] ?? ''),
+                                'status' => 'active',
+                            ]
+                        );
+
+                        // 2. Create or Update Application
+                        $application = MtopApplication::updateOrCreate(
+                            ['mt_number' => $mt_number],
+                            [
+                                'franchise_id' => $franchise->id,
+                                'transaction_date' => !empty(trim($row[1] ?? '')) ? date('Y-m-d', strtotime(trim($row[1]))) : now()->format('Y-m-d'),
+                                'transaction_type' => trim($row[2] ?? '') ?: 'New',
+                                'last_name' => trim($row[3] ?? ''),
+                                'first_name' => trim($row[4] ?? ''),
+                                'middle_name' => trim($row[5] ?? '') ?: null,
+                                'suffix' => trim($row[6] ?? '') ?: null,
+                                'address' => trim($row[7] ?? ''),
+                                'contact_number' => trim($row[8] ?? '') ?: null,
+                                'body_number' => $body_number,
+                                'plate_no' => $plate_no,
+                                'make_type' => trim($row[11] ?? ''),
+                                'engine_motor_no' => trim($row[12] ?? ''),
+                                'chassis_no' => trim($row[13] ?? ''),
+                                'or_number' => trim($row[14] ?? '') ?: null,
+                                'or_date' => !empty(trim($row[15] ?? '')) ? date('Y-m-d', strtotime(trim($row[15]))) : null,
+                                'cedula_number' => trim($row[16] ?? '') ?: null,
+                                'cedula_date' => !empty(trim($row[17] ?? '')) ? date('Y-m-d', strtotime(trim($row[17]))) : null,
+                                'punong_bayan' => trim($row[18] ?? '') ?: null,
+                                'authorized_official' => trim($row[19] ?? '') ?: null,
+                                'status' => 'active',
+                                'processed_by' => Auth::id(),
+                            ]
+                        );
+
+                        // 3. Queue both records to sync to offline laptops
+                        $this->queueForSync('mtop_franchises', $franchise->toArray());
+                        $this->queueForSync('mtop_applications', $application->toArray());
+                    }
+                });
+
+                fclose($handle);
+            }
+
+            return redirect()->back()->with('message', 'Data imported successfully!');
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors(['import_file' => 'Error importing file: ' . $e->getMessage()]);
         }
     }
 

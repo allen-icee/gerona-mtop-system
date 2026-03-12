@@ -82,6 +82,8 @@ class MtopApplication extends Model
                     $q->where('status', 'active')->whereDate('valid_until', '>=', now());
                 } elseif ($renewal === 'archived') {
                     $q->where('status', 'archived');
+                } elseif ($renewal === 'cancelled') {
+                    $q->where('status', 'cancelled');
                 }
             });
     }

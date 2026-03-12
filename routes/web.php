@@ -62,6 +62,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/mtop/{id}/edit', [MtopApplicationController::class, 'edit'])->name('mtop.edit');
     Route::put('/mtop/{id}', [MtopApplicationController::class, 'update'])->name('mtop.update');
+    Route::put('/mtop/{id}/cancel', [MtopApplicationController::class, 'cancel'])->name('mtop.cancel');
     Route::get('/mtop/{id}/print', [MtopApplicationController::class, 'print'])->name('mtop.print');
     Route::get('/mtop/export', [MtopApplicationController::class, 'export'])->name('mtop.export');
 

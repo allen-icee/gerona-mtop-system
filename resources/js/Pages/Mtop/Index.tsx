@@ -68,6 +68,9 @@ export default function Index({
     const [deletingId, setDeletingId] = useState<number | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
+    const [cancellingId, setCancellingId] = useState<number | null>(null);
+    const [isCancelling, setIsCancelling] = useState(false);
+
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
     const [showDriverModal, setShowDriverModal] = useState(false);
 
@@ -123,6 +126,22 @@ export default function Index({
                 onFinish: () => {
                     setDeletingId(null);
                     setIsDeleting(false);
+                },
+            });
+        }
+    };
+
+    const confirmCancel = (id: number) => {
+        setCancellingId(id);
+    };
+
+    const handleCancel = () => {
+        if (cancellingId) {
+            setIsCancelling(true);
+            router.put(route("mtop.cancel", cancellingId), {}, {
+                onFinish: () => {
+                    setCancellingId(null);
+                    setIsCancelling(false);
                 },
             });
         }
@@ -244,6 +263,9 @@ export default function Index({
                                     <option value="archived">
                                         Archived (History)
                                     </option>
+                                    <option value="cancelled">
+                                        Cancelled
+                                    </option>
                                 </select>
                             </div>
                         </div>
@@ -288,13 +310,12 @@ export default function Index({
                                             type="button"
                                             onClick={toggleSelectAll}
                                             aria-label="Select all records"
-                                            className={`w-5 h-5 mx-auto rounded flex items-center justify-center transition-all duration-200 border ${
-                                                applications.data.length > 0 &&
-                                                selectedIds.length ===
+                                            className={`w-5 h-5 mx-auto rounded flex items-center justify-center transition-all duration-200 border ${applications.data.length > 0 &&
+                                                    selectedIds.length ===
                                                     applications.data.length
                                                     ? "bg-indigo-600 border-indigo-600 text-white shadow-inner scale-110"
                                                     : "bg-white border-gray-300 text-transparent hover:border-indigo-400 hover:bg-indigo-50"
-                                            }`}
+                                                }`}
                                         >
                                             <Icon
                                                 icon="solar:check-read-bold"
@@ -348,6 +369,10 @@ export default function Index({
                                             displayStatus = "Archived";
                                             statusClasses =
                                                 "bg-gray-100 text-gray-500 border border-gray-200";
+                                        } else if (app.status === "cancelled") {
+                                            displayStatus = "Cancelled";
+                                            statusClasses =
+                                                "bg-gray-100 text-gray-800 border border-gray-300";
                                         } else if (
                                             app.status === "expired" ||
                                             (app.status === "active" &&
@@ -389,11 +414,10 @@ export default function Index({
                                                         onClick={() =>
                                                             toggleSelect(app.id)
                                                         }
-                                                        className={`w-5 h-5 mx-auto rounded flex items-center justify-center transition-all duration-200 border ${
-                                                            isSelected
+                                                        className={`w-5 h-5 mx-auto rounded flex items-center justify-center transition-all duration-200 border ${isSelected
                                                                 ? "bg-indigo-600 border-indigo-600 text-white shadow-sm scale-110"
                                                                 : "bg-white border-gray-300 text-transparent hover:border-indigo-400 hover:bg-indigo-50"
-                                                        }`}
+                                                            }`}
                                                     >
                                                         <Icon
                                                             icon="solar:check-read-bold"
@@ -411,7 +435,7 @@ export default function Index({
                                                     {app.first_name}{" "}
                                                     {app.middle_name
                                                         ? app.middle_name[0] +
-                                                          "."
+                                                        "."
                                                         : ""}{" "}
                                                     {app.suffix
                                                         ? app.suffix + ""
@@ -507,23 +531,38 @@ export default function Index({
                                                             </Link>
                                                         )}
 
-                                                        {user.role ===
-                                                            "admin" && (
+                                                        {app.status !== "cancelled" && (
                                                             <button
                                                                 onClick={() =>
-                                                                    confirmDelete(
-                                                                        app.id,
-                                                                    )
+                                                                    confirmCancel(app.id)
                                                                 }
-                                                                title="Delete Record"
-                                                                className="p-2 text-red-600 bg-red-50 hover:bg-red-100 hover:text-red-800 rounded-md transition-colors shadow-sm"
+                                                                title="Cancel Record"
+                                                                className="p-2 text-orange-600 bg-orange-50 hover:bg-orange-100 hover:text-orange-800 rounded-md transition-colors shadow-sm"
                                                             >
                                                                 <Icon
-                                                                    icon="solar:trash-bin-trash-bold"
+                                                                    icon="solar:close-square-bold"
                                                                     width="18"
                                                                 />
                                                             </button>
                                                         )}
+
+                                                        {user.role ===
+                                                            "admin" && (
+                                                                <button
+                                                                    onClick={() =>
+                                                                        confirmDelete(
+                                                                            app.id,
+                                                                        )
+                                                                    }
+                                                                    title="Delete Record"
+                                                                    className="p-2 text-red-600 bg-red-50 hover:bg-red-100 hover:text-red-800 rounded-md transition-colors shadow-sm"
+                                                                >
+                                                                    <Icon
+                                                                        icon="solar:trash-bin-trash-bold"
+                                                                        width="18"
+                                                                    />
+                                                                </button>
+                                                            )}
                                                     </div>
                                                 </td>
                                             </tr>
@@ -560,6 +599,10 @@ export default function Index({
                                     displayStatus = "Archived";
                                     statusClasses =
                                         "bg-gray-100 text-gray-500 border border-gray-200";
+                                } else if (app.status === "cancelled") {
+                                    displayStatus = "Cancelled";
+                                    statusClasses =
+                                        "bg-gray-100 text-gray-800 border border-gray-300";
                                 } else if (
                                     app.status === "expired" ||
                                     (app.status === "active" && isExpired)
@@ -714,6 +757,21 @@ export default function Index({
                                                 </Link>
                                             )}
 
+                                            {app.status !== "cancelled" && (
+                                                <button
+                                                    onClick={() =>
+                                                        confirmCancel(app.id)
+                                                    }
+                                                    title="Cancel"
+                                                    className="flex-1 flex justify-center items-center bg-orange-50 text-orange-600 py-2.5 rounded-lg hover:bg-orange-100 transition-colors"
+                                                >
+                                                    <Icon
+                                                        icon="solar:close-square-bold"
+                                                        width="20"
+                                                    />
+                                                </button>
+                                            )}
+
                                             {user.role === "admin" && (
                                                 <button
                                                     onClick={() =>
@@ -742,11 +800,10 @@ export default function Index({
             </div>
 
             <div
-                className={`fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50 transition-all duration-300 ease-out ${
-                    selectedIds.length > 0
+                className={`fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50 transition-all duration-300 ease-out ${selectedIds.length > 0
                         ? "translate-y-0 opacity-100 scale-100"
                         : "translate-y-12 opacity-0 scale-95 pointer-events-none"
-                }`}
+                    }`}
             >
                 <div className="bg-slate-900/95 backdrop-blur-md border border-slate-700 p-1.5 rounded-full shadow-2xl flex items-center gap-2">
                     <div className="flex items-center gap-3 pl-3 pr-2">
@@ -845,6 +902,33 @@ export default function Index({
                 onConfirm={handleDelete}
                 processing={isDeleting}
             />
+
+            <Modal show={cancellingId !== null} onClose={() => setCancellingId(null)} maxWidth="sm">
+                <div className="p-6">
+                    <h2 className="text-lg font-medium text-gray-900">
+                        Confirm Cancellation
+                    </h2>
+                    <p className="mt-1 text-sm text-gray-600">
+                        Are you sure you want to cancel this record? This action will mark the application and its associated franchise as cancelled.
+                    </p>
+                    <div className="mt-6 flex justify-end gap-3">
+                        <button
+                            disabled={isCancelling}
+                            onClick={() => setCancellingId(null)}
+                            className="px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50 disabled:opacity-25 transition ease-in-out duration-150"
+                        >
+                            Back
+                        </button>
+                        <button
+                            disabled={isCancelling}
+                            onClick={handleCancel}
+                            className="px-4 py-2 bg-orange-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-orange-500 active:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:opacity-25 transition ease-in-out duration-150"
+                        >
+                            {isCancelling ? 'Cancelling...' : 'Confirm Cancel'}
+                        </button>
+                    </div>
+                </div>
+            </Modal>
         </AuthenticatedLayout>
     );
 }
