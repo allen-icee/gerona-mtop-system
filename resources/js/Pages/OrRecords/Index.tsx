@@ -376,9 +376,12 @@ export default function Index({ signatories = [], feeSettings, orRecords = [], n
                                                 >
                                                     <Icon icon="solar:printer-bold" width="18" />
                                                 </button>
+
                                                 <button onClick={() => setEditingRecord(record)} title="Edit Record" className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 hover:text-blue-800 rounded-md transition-colors shadow-sm">
                                                     <Icon icon="solar:pen-new-square-bold" width="18" />
                                                 </button>
+
+                                                {/* Keep the admin check ONLY for the delete button */}
                                                 {user?.role === "admin" && (
                                                     <button onClick={() => confirmDelete(record.id)} title="Delete Record" className="p-2 text-red-600 bg-red-50 hover:bg-red-100 hover:text-red-800 rounded-md transition-colors shadow-sm">
                                                         <Icon icon="solar:trash-bin-trash-bold" width="18" />

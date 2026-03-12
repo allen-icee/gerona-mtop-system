@@ -12,7 +12,7 @@ export default function Authenticated({
     header,
     children,
 }: PropsWithChildren<{ header?: ReactNode }>) {
-    const user = usePage().props.auth.user;
+    const user = usePage().props.auth.user as any; // Adding 'as any' just in case TypeScript complains about role
 
     const [showingNavigationDropdown, setShowingNavigationDropdown] =
         useState(false);
@@ -71,18 +71,20 @@ export default function Authenticated({
                                         OR Records
                                     </NavLink>
 
-                                    <NavLink
-                                        href={route("settings.print.edit")}
-                                        active={route().current(
-                                            "settings.print.edit",
-                                        )}
-                                        className="text-blue-100 hover:text-white focus:text-white border-transparent hover:border-white focus:border-white"
-                                    >
-                                        Print Settings
-                                    </NavLink>
-
+                                    {/* --- DESKTOP ADMIN LINKS --- */}
                                     {user.role === "admin" && (
                                         <>
+                                            {/* MOVED PRINT SETTINGS HERE */}
+                                            <NavLink
+                                                href={route("settings.print.edit")}
+                                                active={route().current(
+                                                    "settings.print.edit",
+                                                )}
+                                                className="text-blue-100 hover:text-white focus:text-white border-transparent hover:border-white focus:border-white"
+                                            >
+                                                Print Settings
+                                            </NavLink>
+
                                             <NavLink
                                                 href={route(
                                                     "signatories.index",
@@ -232,17 +234,18 @@ export default function Authenticated({
                                 OR Records
                             </ResponsiveNavLink>
 
-                            <ResponsiveNavLink
-                                href={route("settings.print.edit")}
-                                active={route().current("settings.print.edit")}
-                                className="text-white hover:bg-blue-700 focus:bg-blue-700 border-l-4 border-transparent hover:border-yellow-400"
-                            >
-                                Print Settings
-                            </ResponsiveNavLink>
-
-                            {/* --- MOBILE ADMIN LINKS --- */}
+                             {/* --- MOBILE ADMIN LINKS --- */}
                             {user.role === "admin" && (
                                 <>
+                                    {/* MOVED PRINT SETTINGS HERE */}
+                                    <ResponsiveNavLink
+                                        href={route("settings.print.edit")}
+                                        active={route().current("settings.print.edit")}
+                                        className="text-white hover:bg-blue-700 focus:bg-blue-700 border-l-4 border-transparent hover:border-yellow-400"
+                                    >
+                                        Print Settings
+                                    </ResponsiveNavLink>
+
                                     <ResponsiveNavLink
                                         href={route("signatories.index")}
                                         active={route().current(
@@ -260,9 +263,10 @@ export default function Authenticated({
                                     >
                                         System Users
                                     </ResponsiveNavLink>
+
                                     <ResponsiveNavLink
                                         href={route("events.index")}
-                                        active={route().current("events.index")}
+                                        active={route().current("events.*")}
                                         className="text-white hover:bg-blue-700 focus:bg-blue-700 border-l-4 border-transparent hover:border-yellow-400"
                                     >
                                         Events/Promos

@@ -20,7 +20,7 @@ export default function OrSuccessModal({ show, onClose, onEdit, action, data }: 
     const isDelete = action === "delete";
 
     return (
-        <Modal show={show} onClose={() => {}} closeable={false} maxWidth="md">
+        <Modal show={show} onClose={() => { }} closeable={false} maxWidth="md">
             <div className="p-6 flex flex-col items-center text-center">
                 <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${isDelete ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
                     <Icon icon={isDelete ? "solar:trash-bin-trash-bold" : "solar:check-circle-bold"} width="40" />
@@ -67,6 +67,7 @@ export default function OrSuccessModal({ show, onClose, onEdit, action, data }: 
                                     Proceed to Application
                                 </Link>
                             ) : (
+                                /* 👇 Removed the user?.role === "admin" && wrapper here! */
                                 <button
                                     onClick={() => window.open(route('or_records.print', data.id), '_blank')}
                                     className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-sm flex items-center justify-center gap-2 transition-colors"
@@ -78,7 +79,7 @@ export default function OrSuccessModal({ show, onClose, onEdit, action, data }: 
 
                             {/* Secondary Action: Edit Logic */}
                             <button
-                                onClick={onEdit} // Changed this from onClose to onEdit so it triggers the form load properly!
+                                onClick={onEdit}
                                 className="w-full py-3 bg-white border-2 border-gray-200 text-gray-700 font-bold rounded-lg hover:bg-gray-50 flex items-center justify-center gap-2 transition-colors"
                             >
                                 <Icon icon="solar:pen-new-square-bold" width="20" />

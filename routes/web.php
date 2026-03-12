@@ -44,11 +44,9 @@ Route::middleware('auth')->group(function () {
     // --- OR RECORDS SECTION ---
     Route::get('/or-records', [\App\Http\Controllers\OrRecordController::class, 'index'])->name('or_records.index');
     Route::post('/or-records', [\App\Http\Controllers\OrRecordController::class, 'store'])->name('or_records.store');
-    Route::put('/or-records/{id}', [\App\Http\Controllers\OrRecordController::class, 'update'])->name('or_records.update'); // ADDED THIS
+    Route::put('/or-records/{id}', [\App\Http\Controllers\OrRecordController::class, 'update'])->name('or_records.update');
     Route::post('/settings/fees', [\App\Http\Controllers\FeeSettingController::class, 'update'])->name('settings.fees.update');
-    Route::get('/or-records', [\App\Http\Controllers\OrRecordController::class, 'index'])->name('or_records.index');
-    Route::get('/or-records/export', [\App\Http\Controllers\OrRecordController::class, 'export'])->name('or_records.export'); // <-- ADD THIS LINE
-    Route::post('/or-records', [\App\Http\Controllers\OrRecordController::class, 'store'])->name('or_records.store');
+    Route::get('/or-records/export', [\App\Http\Controllers\OrRecordController::class, 'export'])->name('or_records.export');
 
     Route::get('/mtop/create', [MtopApplicationController::class, 'create'])->name('mtop.create');
     Route::post('/mtop', [MtopApplicationController::class, 'store'])->name('mtop.store');
@@ -70,6 +68,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/system/audit-logs/export', [UserController::class, 'exportAuditLogs'])->name('audit-logs.export');
     Route::delete('/system/audit-logs/flush', [UserController::class, 'flushAuditLogs'])->name('audit-logs.flush');
     Route::post('/mtop/import', [MtopApplicationController::class, 'importData'])->name('mtop.import');
+
+    // 👇 THIS HAS BEEN MOVED OUTSIDE THE ADMIN SECTION
+    Route::get('/or-records/{id}/print', [\App\Http\Controllers\OrRecordController::class, 'print'])->name('or_records.print');
 
     Route::post('/settings/backup', function () {
 
@@ -130,13 +131,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/settings/print', [PrintSettingController::class, 'edit'])->name('settings.print.edit');
     Route::post('/settings/print', [PrintSettingController::class, 'update'])->name('settings.print.update');
 
+    // --- ADMIN ONLY ROUTES ---
     Route::middleware(IsAdmin::class)->group(function () {
 
         Route::delete('/mtop/{id}', [MtopApplicationController::class, 'destroy'])->name('mtop.destroy');
 
-        // ADDED THIS: Only Admins can delete OR Records
+        // Only Admins can delete OR Records
         Route::delete('/or-records/{id}', [\App\Http\Controllers\OrRecordController::class, 'destroy'])->name('or_records.destroy');
-        Route::get('/or-records/{id}/print', [\App\Http\Controllers\OrRecordController::class, 'print'])->name('or_records.print');
+
+        // (The Print OR Route is no longer here)
 
         Route::resource('users', UserController::class);
 
