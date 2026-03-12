@@ -410,70 +410,88 @@ export default function Index({ signatories = [], feeSettings, orRecords = [], n
             </Modal>
 
             {/* CREATE: PAYMENT FORM MODAL */}
-            <Modal show={isPaymentModalOpen} onClose={() => setIsPaymentModalOpen(false)} maxWidth="6xl">
-                <div className="bg-gray-800 px-6 py-4 flex justify-between items-center sm:rounded-t-lg">
-                    <h3 className="text-white font-bold uppercase tracking-wider flex items-center gap-2">
-                        <Icon icon="solar:wallet-bold" width="24" /> Application Payment Form
+            <Modal show={isPaymentModalOpen} onClose={() => setIsPaymentModalOpen(false)} maxWidth="5xl">
+                <div className="bg-gray-800 px-5 py-3 flex justify-between items-center sm:rounded-t-lg">
+                    <h3 className="text-white font-bold uppercase tracking-wider text-sm flex items-center gap-2">
+                        <Icon icon="solar:wallet-bold" width="20" /> Application Payment Form
                     </h3>
-                    <button onClick={() => setIsPaymentModalOpen(false)} className="text-gray-400 hover:text-white transition-colors p-2">
-                        <Icon icon="solar:close-circle-bold" width="28" />
+                    <button onClick={() => setIsPaymentModalOpen(false)} className="text-gray-400 hover:text-white transition-colors p-1">
+                        <Icon icon="solar:close-circle-bold" width="24" />
                     </button>
                 </div>
-                <div className="flex flex-col lg:flex-row h-full max-h-[80vh]">
-                    <div className="p-6 bg-white flex-1 overflow-y-auto space-y-5">
-                        <div className="space-y-3 bg-gray-50 p-4 rounded-xl border border-gray-200">
-                            <div className="flex items-center justify-between border-b border-gray-200 pb-3">
-                                <h3 className="font-bold text-sm uppercase tracking-wide text-gray-700 flex items-center gap-2">
-                                    <Icon icon="solar:pen-new-square-bold" width="20" className="text-blue-800" />
+                <div className="flex flex-col lg:flex-row max-h-[85vh] overflow-hidden">
+                    <div className="p-4 sm:p-5 bg-white flex-1 overflow-y-auto space-y-4">
+                        <div className="space-y-2 bg-gray-50 p-3 sm:p-4 rounded-xl border border-gray-200 shadow-sm">
+                            <div className="flex items-center justify-between border-b border-gray-200 pb-2">
+                                <h3 className="font-bold text-xs uppercase tracking-wide text-gray-700 flex items-center gap-2">
+                                    <Icon icon="solar:pen-new-square-bold" width="16" className="text-blue-800" />
                                     Enable <span className="font-extrabold text-blue-800">Custom Edits</span> on Details?
                                 </h3>
-                                <button type="button" onClick={() => setEnableEditConfigs(!enableEditConfigs)} className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 ${enableEditConfigs ? "bg-blue-800" : "bg-gray-500 hover:bg-gray-600"}`}>
-                                    <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${enableEditConfigs ? "translate-x-5" : "translate-x-0"}`} />
+                                <button type="button" onClick={() => setEnableEditConfigs(!enableEditConfigs)} className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 ${enableEditConfigs ? "bg-blue-800" : "bg-gray-500 hover:bg-gray-600"}`}>
+                                    <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${enableEditConfigs ? "translate-x-4" : "translate-x-0"}`} />
                                 </button>
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 pt-2">
-                                <div className={`sm:col-span-12 md:col-span-6 transition-all ${!enableEditConfigs ? "opacity-50 saturate-0 pointer-events-none" : ""}`}>
-                                    <label className="block font-semibold text-gray-800 text-sm mb-1">
-                                        OR Number <span className="text-red-500 ml-1">*</span>
-                                    </label>
-                                    <div className="relative flex items-center h-12 border border-gray-400 rounded-lg shadow-sm bg-white overflow-hidden focus-within:ring-1 focus-within:ring-blue-600 focus-within:border-blue-600 transition-all">
-                                        {createPrefix && (
-                                            <div className="px-3 h-full bg-gray-200 text-gray-700 font-bold border-r border-gray-300 flex items-center justify-center cursor-not-allowed select-none text-sm">
-                                                <Icon icon="solar:folder-with-files-bold" className="mr-1.5 text-gray-500" width="18" />
-                                                {createPrefix}
-                                            </div>
-                                        )}
-                                        <input
-                                            type="text"
-                                            value={createSequence}
-                                            disabled={!enableEditConfigs}
-                                            onChange={(e) => {
-                                                let val = e.target.value.replace(/[^0-9]/g, "");
-                                                if (createPrefix && val.length > 4) val = val.substring(0, 4);
-                                                setOrNumber(`${createPrefix}${val}`);
-                                            }}
-                                            onKeyDown={onKeyDown}
-                                            placeholder="0001"
-                                            className="flex-1 block w-full h-full border-none focus:ring-0 sm:text-sm px-3 font-bold text-indigo-700 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
-                                            required
-                                        />
-                                    </div>
-                                </div>
-                                <div className="sm:col-span-12 md:col-span-6">
-                                    <InputGroup id="transactionDate" label="Transaction Date" type="date" value={transactionDate} disabled={!enableEditConfigs} onChange={(e) => setTransactionDate(e.target.value)} onKeyDown={onKeyDown} required className={`transition-all ${!enableEditConfigs ? "opacity-50 saturate-0 pointer-events-none" : ""}`} />
-                                </div>
-                                <div className="sm:col-span-12 md:col-span-4">
-                                    <InputGroup id="agency" label="Agency" value={agency} disabled onChange={(e) => setAgency(e.target.value)} onKeyDown={onKeyDown} className="opacity-50 saturate-0 pointer-events-none" />
-                                </div>
-                                <div className="sm:col-span-12 md:col-span-8">
-                                    <SignatorySelect label="Collecting Officer" value={collectingOfficer} onChange={(val) => setCollectingOfficer(val)} options={signatoryOptions} required={true} disabled={!enableEditConfigs} onKeyDown={onKeyDown} className={`transition-all ${!enableEditConfigs ? "opacity-50 saturate-0 pointer-events-none" : ""}`} />
-                                </div>
-                            </div>
+                            {/* TWO-ROW COMPACT GRID */}
+{/* TWO-ROW COMPACT GRID */}
+<div className="grid grid-cols-1 sm:grid-cols-12 gap-x-3 gap-y-1">
+
+    {/* ROW 1 */}
+    {/* OR NUMBER - 6 Columns */}
+    <div className={`sm:col-span-6 lg:col-span-6 transition-all ${!enableEditConfigs ? "opacity-50 saturate-0 pointer-events-none" : ""}`}>
+        {/* Changed text-xs to text-sm to match other labels */}
+        <label className="block font-semibold text-gray-800 text-sm mb-1 whitespace-nowrap">
+            OR Number <span className="text-red-500">*</span>
+        </label>
+
+        {/* Removed fixed h-[38px], added items-stretch to align prefix and input naturally */}
+        <div className="relative flex items-stretch border border-gray-300 rounded-md shadow-sm bg-white overflow-hidden focus-within:ring-1 focus-within:ring-indigo-500 focus-within:border-indigo-500 w-full">
+            {createPrefix && (
+                // Added py-2 to match standard input padding
+                <div className="px-3 py-3 bg-gray-100 text-gray-600 font-medium border-r border-gray-300 flex items-center justify-center cursor-not-allowed select-none text-sm shrink-0">
+                    <Icon icon="solar:folder-with-files-bold" className="mr-1.5 text-gray-500" width="16" />
+                    {createPrefix}
+                </div>
+            )}
+            <input
+                type="text"
+                value={createSequence}
+                disabled={!enableEditConfigs}
+                onChange={(e) => {
+                    let val = e.target.value.replace(/[^0-9]/g, "");
+                    if (createPrefix && val.length > 4) val = val.substring(0, 4);
+                    setOrNumber(`${createPrefix}${val}`);
+                }}
+                onKeyDown={onKeyDown}
+                placeholder="0001"
+                // Added py-2 here as well
+                className="flex-1 block w-full border-none focus:ring-0 text-sm px-3 py-2 font-bold text-indigo-700 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
+                required
+            />
+        </div>
+    </div>
+
+    {/* TRANSACTION DATE - 6 Columns */}
+    <div className="sm:col-span-6 lg:col-span-6">
+        <InputGroup id="transactionDate" label="Date" type="date" value={transactionDate} disabled={!enableEditConfigs} onChange={(e) => setTransactionDate(e.target.value)} onKeyDown={onKeyDown} required className={`transition-all ${!enableEditConfigs ? "opacity-50 saturate-0 pointer-events-none" : ""}`} />
+    </div>
+
+    {/* ROW 2 */}
+    {/* AGENCY - 6 Columns */}
+    <div className="sm:col-span-6 lg:col-span-6">
+        <InputGroup id="agency" label="Agency" value={agency} disabled onChange={(e) => setAgency(e.target.value)} onKeyDown={onKeyDown} className="opacity-50 saturate-0 pointer-events-none" />
+    </div>
+
+    {/* COLLECTING OFFICER - 6 Columns */}
+    <div className="sm:col-span-6 lg:col-span-6">
+        <SignatorySelect label="Collecting Officer" value={collectingOfficer} onChange={(val) => setCollectingOfficer(val)} options={signatoryOptions} required={true} disabled={!enableEditConfigs} onKeyDown={onKeyDown} className={`transition-all ${!enableEditConfigs ? "opacity-50 saturate-0 pointer-events-none" : ""}`} />
+    </div>
+
+</div>
                         </div>
 
-                        <div className="space-y-3">
-                            <div className="flex items-center gap-2 text-blue-800 border-b border-blue-300 pb-2">
-                                <h3 className="font-extrabold text-base uppercase tracking-wide">Payor Information</h3>
+                        <div className="space-y-2 pt-1">
+                            <div className="flex items-center gap-2 text-blue-800 border-b border-blue-200 pb-1.5">
+                                <h3 className="font-extrabold text-sm uppercase tracking-wide">Payor Information</h3>
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
                                 <div className="sm:col-span-12 md:col-span-4"><InputGroup id="lastName" label="Last Name" value={payorDetails.lastName} onChange={(e) => handleNameChange("lastName", e.target.value)} onKeyDown={onKeyDown} icon="solar:user-bold" placeholder="DEQUIROS" required={true} /></div>
@@ -483,18 +501,18 @@ export default function Index({ signatories = [], feeSettings, orRecords = [], n
                             </div>
                         </div>
 
-                        <div className="space-y-3">
-                            <div className="flex items-center gap-2 text-blue-800 border-b border-blue-300 pb-2">
-                                <h3 className="font-extrabold text-base uppercase tracking-wide">Required Fees</h3>
+                        <div className="space-y-2 pt-1">
+                            <div className="flex items-center gap-2 text-blue-800 border-b border-blue-200 pb-1.5">
+                                <h3 className="font-extrabold text-sm uppercase tracking-wide">Required Fees</h3>
                             </div>
                             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2">
                                 {Object.keys(toggles).map((feeKey) => (
-                                    <div key={feeKey} className="flex flex-col bg-white p-2.5 border border-gray-200 rounded-md shadow-sm hover:border-blue-300 transition-colors">
-                                        <div className="flex justify-between items-center w-full mb-2 gap-1">
-                                            <span className="text-xs font-extrabold text-gray-800 uppercase tracking-tight leading-tight truncate">{FEE_LABELS[feeKey as keyof typeof FEE_LABELS]}</span>
+                                    <div key={feeKey} className="flex flex-col bg-white p-2 border border-gray-200 rounded-md shadow-sm hover:border-blue-300 transition-colors">
+                                        <div className="flex justify-between items-center w-full mb-1.5 gap-1">
+                                            <span className="text-[10px] font-extrabold text-gray-800 uppercase tracking-tight leading-tight truncate">{FEE_LABELS[feeKey as keyof typeof FEE_LABELS]}</span>
                                             {feeKey === 'id_driver_operator_owner' && (
                                                 <div title="Driver/Operator/Owner I.D." className="shrink-0 flex items-center">
-                                                    <Icon icon="solar:info-circle-bold" className="text-blue-500 cursor-help" width="18" />
+                                                    <Icon icon="solar:info-circle-bold" className="text-blue-500 cursor-help" width="14" />
                                                 </div>
                                             )}
                                         </div>
@@ -509,56 +527,56 @@ export default function Index({ signatories = [], feeSettings, orRecords = [], n
                             </div>
                         </div>
                     </div>
-                    <div className="p-6 bg-gray-50 border-l border-gray-200 w-full lg:w-[35%] flex flex-col shadow-inner shrink-0">
-                        <div className="flex items-center justify-center gap-2 text-gray-800 border-b border-gray-300 pb-3 mb-4">
-                            <Icon icon="solar:document-text-bold" width="24" className="text-blue-800" />
-                            <h4 className="text-lg font-extrabold uppercase tracking-wide">Live Preview</h4>
+                    <div className="p-4 sm:p-5 bg-gray-50 border-l border-gray-200 w-full lg:w-72 flex flex-col shadow-inner shrink-0 overflow-y-auto">
+                        <div className="flex items-center justify-center gap-1.5 text-gray-800 border-b border-gray-300 pb-2 mb-3">
+                            <Icon icon="solar:document-text-bold" width="18" className="text-blue-800" />
+                            <h4 className="text-sm font-extrabold uppercase tracking-wide">Live Preview</h4>
                         </div>
-                        <div className="space-y-4 flex-1">
-                            <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm space-y-2 text-sm text-gray-700">
+                        <div className="space-y-3 flex-1">
+                            <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm space-y-1.5 text-xs text-gray-700">
                                 <p className="flex justify-between"><strong className="text-gray-900">OR No:</strong> <span className="font-bold text-indigo-700">{orNumber}</span></p>
                                 <p className="flex justify-between"><strong className="text-gray-900">Date:</strong> <span>{transactionDate}</span></p>
                                 <p className="flex justify-between"><strong className="text-gray-900">Agency:</strong> <span>{agency}</span></p>
                                 <p className="flex justify-between"><strong className="text-gray-900">Payor:</strong> <span className="font-bold text-blue-800 truncate pl-2">{`${payorDetails.lastName}, ${payorDetails.firstName} ${payorDetails.middleName} ${payorDetails.suffix}`.replace(/\s+/g, ' ').trim() || "-"}</span></p>
                                 <p className="flex justify-between"><strong className="text-gray-900">Officer:</strong> <span className="uppercase truncate pl-2">{collectingOfficer || "-"}</span></p>
                             </div>
-                            <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                                <h5 className="font-bold text-gray-900 mb-3 uppercase tracking-wide text-xs border-b pb-2">Fee Breakdown:</h5>
-                                <ul className="space-y-2 text-sm">
+                            <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
+                                <h5 className="font-bold text-gray-900 mb-2 uppercase tracking-wide text-[10px] border-b pb-1.5">Fee Breakdown:</h5>
+                                <ul className="space-y-1.5 text-xs">
                                     {Object.keys(toggles).map((feeKey) => toggles[feeKey as keyof typeof toggles] && (
                                         <li key={feeKey} className="flex justify-between text-gray-600">
-                                            <span className="uppercase text-[11px] font-medium truncate pr-2 flex items-center gap-1">
+                                            <span className="uppercase text-[10px] font-medium truncate pr-2 flex items-center gap-1">
                                                 {FEE_LABELS[feeKey as keyof typeof FEE_LABELS]}
                                             </span>
                                             <span className="font-bold shrink-0">₱{Number(FEE_PRICES[feeKey] || 0).toFixed(2)}</span>
                                         </li>
                                     ))}
-                                    {calculateTotal() === 0 && <li className="text-center text-gray-400 italic py-2 text-xs">No fees selected</li>}
+                                    {calculateTotal() === 0 && <li className="text-center text-gray-400 italic py-1 text-[10px]">No fees selected</li>}
                                 </ul>
                             </div>
                         </div>
-                        <div className="mt-4 bg-blue-800 text-white p-4 rounded-xl shadow-md">
-                            <div className="flex justify-between items-center text-lg font-extrabold tracking-wide">
+                        <div className="mt-4 bg-blue-800 text-white p-3 rounded-xl shadow-md">
+                            <div className="flex justify-between items-center text-base font-extrabold tracking-wide">
                                 <span>TOTAL:</span>
                                 <span>₱{calculateTotal().toFixed(2)}</span>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div className="bg-white border-t border-gray-200 px-6 py-4 flex flex-col-reverse sm:flex-row justify-end gap-3 sm:rounded-b-lg">
+                <div className="bg-white border-t border-gray-200 px-5 py-3 flex flex-col-reverse sm:flex-row justify-end gap-2 sm:rounded-b-lg">
                     <SecondaryButton
                         onClick={() => setIsPaymentModalOpen(false)}
-                        className="w-full sm:w-auto justify-center py-2.5"
+                        className="w-full sm:w-auto justify-center py-2 text-xs"
                     >
                         Cancel
                     </SecondaryButton>
                     <PrimaryButton
                         id="btn-proceed"
                         onClick={handleProceedToApplication}
-                        className={`w-full sm:w-auto shadow-md flex items-center justify-center gap-2 py-2.5 px-8 transition-colors ${isFormValid ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400 cursor-not-allowed'}`}
+                        className={`w-full sm:w-auto shadow-md flex items-center justify-center gap-2 py-2 px-6 transition-colors text-xs ${isFormValid ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400 cursor-not-allowed'}`}
                         disabled={!isFormValid || isProcessing}
                     >
-                        <Icon icon="solar:diskette-bold" width="20" />
+                        <Icon icon="solar:diskette-bold" width="18" />
                         {isProcessing ? "Saving..." : "SAVE RECORD"}
                     </PrimaryButton>
                 </div>

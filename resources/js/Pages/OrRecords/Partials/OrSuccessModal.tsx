@@ -58,14 +58,13 @@ export default function OrSuccessModal({ show, onClose, action, data }: Props) {
                     {!isDelete && (
                         <>
                             {/* Primary Action: Print OR (Replacing Create MTOP App) */}
-                            <a
-                                href={route("or_records.print", data.id)}
-                                target="_blank"
-                                className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-sm flex items-center justify-center gap-2 transition-colors"
+                            <Link
+                                href={route("mtop.create", { payor_name: data.payor_name })}
+                                className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-sm flex items-center justify-center gap-2 transition-colors"
                             >
-                                <Icon icon="solar:printer-bold" width="20" />
-                                Print OR
-                            </a>
+                                <Icon icon="solar:document-add-bold" width="20" />
+                                Proceed to Application
+                            </Link>
 
                             {/* Secondary Action: Edit Logic */}
                             <button
