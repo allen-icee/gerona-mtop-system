@@ -1,3 +1,4 @@
+//GeronaMTOP/resources/js/Pages/Signatories/Index.tsx
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, router, useForm } from "@inertiajs/react";
 import { useState, useEffect, FormEventHandler, useRef } from "react";
@@ -23,7 +24,7 @@ interface Signatory {
 
 interface Props {
     signatories: Signatory[];
-    feeSettings: any; // Passed from backend
+    feeSettings: any;
     filters?: {
         search?: string;
         position?: string;
@@ -35,11 +36,11 @@ const POSITIONS = [
     "Authorized Official",
     "Committee on Transportation",
     "Collecting Officer",
+    "Dropping Official" // <--- Added here
 ];
 
 const FILTER_TABS = ["All", ...POSITIONS];
 
-// Mapping DB column names to UI Labels
 const FEE_LABELS = {
     reg_filing_fee: "REG./Filing Fee",
     franchise_fee: "Franchise Fee",
@@ -50,9 +51,9 @@ const FEE_LABELS = {
     id_driver_operator_owner: "I.D. (Driver/Operator/Owner)",
     body_number_plate: "Body Number / Plate",
     penalty: "Penalty",
+    dropping_fee: "Dropping Fee", // <--- Added here
 };
 
-// Your Custom Default Values
 const DEFAULT_FEES = {
     reg_filing_fee: 30,
     franchise_fee: 300,
@@ -63,6 +64,7 @@ const DEFAULT_FEES = {
     id_driver_operator_owner: 100,
     body_number_plate: 100,
     penalty: 211.25,
+    dropping_fee: 100, // <--- Added here
 };
 
 export default function Index({ signatories = [], feeSettings, filters = {} }: Props) {
@@ -77,16 +79,16 @@ export default function Index({ signatories = [], feeSettings, filters = {} }: P
 
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
-    // --- FEE CONFIGURATION LOGIC ---
-    // Initialize fees carefully to allow fallbacks if DB is empty
+    // For handling the custom position typing
+    const [isCustomPosition, setIsCustomPosition] = useState(false);
+
     const getInitialFees = () => {
         const fees: any = {};
         Object.keys(FEE_LABELS).forEach((key) => {
-            // Use DB value if it exists, otherwise use your requested default and cast to String
             const val = (feeSettings && feeSettings[key] !== undefined && feeSettings[key] !== null)
                 ? feeSettings[key]
                 : DEFAULT_FEES[key as keyof typeof DEFAULT_FEES];
-            fees[key] = String(val); // <-- CAST TO STRING TO AVOID TYPE MISMATCH
+            fees[key] = String(val);
         });
         return fees;
     };
@@ -95,15 +97,12 @@ export default function Index({ signatories = [], feeSettings, filters = {} }: P
     const [currentFees, setCurrentFees] = useState(getInitialFees());
     const [isSavingFees, setIsSavingFees] = useState(false);
 
-    // Check for unsaved changes to show warning
     const hasUnsavedChanges = JSON.stringify(savedFees) !== JSON.stringify(currentFees);
     const [showUnsavedModal, setShowUnsavedModal] = useState(false);
     const [pendingVisit, setPendingVisit] = useState<any>(null);
 
-    // Prevent navigation if fees are unsaved
     useEffect(() => {
         const unbind = router.on('before', (event) => {
-            // Allow the save request itself to go through without triggering the Unsaved Modal
             const isSavingRequest = event.detail.visit.method === 'post'
                 && event.detail.visit.url.pathname === new URL(route('settings.fees.update')).pathname;
 
@@ -122,62 +121,41 @@ export default function Index({ signatories = [], feeSettings, filters = {} }: P
             preserveScroll: true,
             onSuccess: () => {
                 setSavedFees(currentFees);
-                // Trigger the toast directly from the frontend
                 toast.success("Official Receipt Fees saved successfully!", {
                     duration: 3000,
-                    icon: (
-                        <Icon
-                            icon="solar:check-circle-bold"
-                            className="text-green-600 text-xl"
-                        />
-                    ),
+                    icon: <Icon icon="solar:check-circle-bold" className="text-green-600 text-xl" />,
                 });
             },
             onError: (errors) => {
-                console.error("Errors:", errors);
                 toast.error("Failed to save fees. Please check your inputs.", {
                     duration: 4000,
-                    icon: (
-                        <Icon
-                            icon="solar:danger-circle-bold"
-                            className="text-red-600 text-xl"
-                        />
-                    ),
+                    icon: <Icon icon="solar:danger-circle-bold" className="text-red-600 text-xl" />,
                 });
             },
-            onFinish: () => {
-                setIsSavingFees(false);
-            }
+            onFinish: () => setIsSavingFees(false)
         });
     };
 
     const handleResetToDefault = () => {
         const resetFees: any = {};
         Object.keys(DEFAULT_FEES).forEach((key) => {
-            // Cast to string so it matches the input type and unsaved logic properly
             resetFees[key] = String(DEFAULT_FEES[key as keyof typeof DEFAULT_FEES]);
         });
         setCurrentFees(resetFees);
     };
 
-    // ENTER KEY NAVIGATION FOR FEES
     const onFeeKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === "Enter") {
             e.preventDefault();
-            // Grab all inputs and the save button
             const focusableElements = Array.from(document.querySelectorAll("input.fee-input, button#btn-save-fees")) as HTMLElement[];
             const currentIndex = focusableElements.indexOf(e.currentTarget as HTMLElement);
-
             if (currentIndex > -1 && currentIndex < focusableElements.length - 1) {
-                // Focus next input
                 focusableElements[currentIndex + 1].focus();
             } else if (hasUnsavedChanges) {
-                // If we are on the last input, trigger the save button
                 document.getElementById("btn-save-fees")?.click();
             }
         }
     };
-    // --------------------------------
 
     const { data: importData, setData: setImportData, post: postImport, processing: importing, errors: importErrors, reset: resetImport } = useForm({
         import_file: null as File | null,
@@ -196,6 +174,9 @@ export default function Index({ signatories = [], feeSettings, filters = {} }: P
         return () => clearTimeout(timer);
     }, [search, positionFilter]);
 
+    // Added a separate state for the dropdown vs the actual value sent
+    const [dropdownPosition, setDropdownPosition] = useState("Punong Bayan");
+
     const { data, setData, post, put, reset, errors, processing } = useForm({
         name: "",
         position: "Punong Bayan",
@@ -205,17 +186,45 @@ export default function Index({ signatories = [], feeSettings, filters = {} }: P
     const openModal = (signatory?: Signatory) => {
         if (signatory) {
             setEditingId(signatory.id);
-            setData({ name: signatory.name, position: signatory.position, is_active: Boolean(signatory.is_active) });
+            // Check if the position from DB is one of the standard ones
+            if (POSITIONS.includes(signatory.position)) {
+                setDropdownPosition(signatory.position);
+                setIsCustomPosition(signatory.position === "Dropping Official");
+                setData({ name: signatory.name, position: signatory.position, is_active: Boolean(signatory.is_active) });
+            } else {
+                // If it's a custom title (like Admin Aide IV), set dropdown to Dropping Official
+                setDropdownPosition("Dropping Official");
+                setIsCustomPosition(true);
+                setData({ name: signatory.name, position: signatory.position, is_active: Boolean(signatory.is_active) });
+            }
         } else {
             setEditingId(null);
             reset();
-            setData("position", "Punong Bayan");
+            setDropdownPosition("Punong Bayan");
+            setIsCustomPosition(false);
+            setData({ name: "", position: "Punong Bayan", is_active: true });
         }
         setIsModalOpen(true);
     };
 
+    const handleDropdownChange = (val: string) => {
+        setDropdownPosition(val);
+        if (val === "Dropping Official") {
+            setIsCustomPosition(true);
+            setData("position", ""); // Clear it so they can type
+        } else {
+            setIsCustomPosition(false);
+            setData("position", val);
+        }
+    };
+
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
+        // Fallback in case they selected Dropping Official but didn't type anything
+        if (dropdownPosition === "Dropping Official" && data.position.trim() === "") {
+            setData("position", "Dropping Official");
+        }
+
         const options = { onSuccess: () => { setIsModalOpen(false); reset(); } };
         if (editingId) put(route("signatories.update", editingId), options);
         else post(route("signatories.store"), options);
@@ -325,7 +334,6 @@ export default function Index({ signatories = [], feeSettings, filters = {} }: P
                         </table>
                     </div>
 
-                    {/* DYNAMIC FEE CONFIGURATION BLOCK */}
                     <div className="mt-12 bg-white overflow-hidden shadow-sm sm:rounded-lg border border-gray-100 p-8 relative">
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 border-b pb-5 gap-4">
                             <div>
@@ -365,7 +373,6 @@ export default function Index({ signatories = [], feeSettings, filters = {} }: P
                             </div>
                         </div>
 
-                        {/* BIGGER, SPACIOUS FIELDS */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-6">
                             {Object.entries(FEE_LABELS).map(([key, label]) => (
                                 <div key={key} className="flex flex-col">
@@ -377,7 +384,7 @@ export default function Index({ signatories = [], feeSettings, filters = {} }: P
                                             step="any"
                                             className="fee-input pl-11 pr-4 py-3 w-full border border-gray-300 rounded-xl shadow-sm focus:border-blue-500 focus:ring-blue-500 text-base font-bold text-gray-900 transition-all bg-white"
                                             value={currentFees[key as keyof typeof currentFees] ?? ''}
-                                            onChange={(e) => setCurrentFees({...currentFees, [key]: e.target.value})}
+                                            onChange={(e) => setCurrentFees({ ...currentFees, [key]: e.target.value })}
                                             onKeyDown={onFeeKeyDown}
                                         />
                                     </div>
@@ -388,7 +395,6 @@ export default function Index({ signatories = [], feeSettings, filters = {} }: P
                 </div>
             </div>
 
-            {/* MODALS */}
             <Modal show={isModalOpen} onClose={() => setIsModalOpen(false)} maxWidth="lg">
                 <div className="flex flex-col h-full sm:h-auto">
                     <div className="bg-gray-800 px-6 py-4 flex justify-between items-center shrink-0 sm:rounded-t-lg">
@@ -401,17 +407,48 @@ export default function Index({ signatories = [], feeSettings, filters = {} }: P
                     </div>
                     <div className="p-6 bg-gray-50 overflow-y-auto flex-1">
                         <form id="signatory-form" onSubmit={submit}>
-                            <div className="mb-4">
-                                <label className="block text-sm font-bold text-gray-700 mb-1">Position <span className="text-red-500">*</span></label>
+                            <InputGroup
+                                id="name"
+                                label="Name"
+                                value={data.name}
+                                onChange={(e) => setData("name", e.target.value.replace(/[^a-zA-ZñÑ\s.,-]/g, ""))}
+                                error={errors.name}
+                                placeholder="Hon. Allen Icee Dequiros, Ph.D"
+                                icon="solar:user-bold"
+                                required
+                            />
+
+                            <div className="mt-4 mb-4">
+                                <label className="block text-sm font-bold text-gray-700 mb-1">Position Category <span className="text-red-500">*</span></label>
                                 <div className="relative">
                                     <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400 z-10"><Icon icon="solar:diploma-verified-bold" width="20" /></div>
-                                    <select value={data.position} onChange={(e) => setData("position", e.target.value)} className="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 pl-10 pr-10 py-3 appearance-none bg-white cursor-pointer">
+                                    <select
+                                        value={dropdownPosition}
+                                        onChange={(e) => handleDropdownChange(e.target.value)}
+                                        className="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 pl-10 pr-10 py-3 appearance-none bg-white cursor-pointer"
+                                    >
                                         {POSITIONS.map((pos) => <option key={pos} value={pos}>{pos}</option>)}
                                     </select>
                                     <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400"><Icon icon="solar:alt-arrow-down-bold" width="20" /></div>
                                 </div>
                             </div>
-                            <InputGroup id="name" label="Name" value={data.name} onChange={(e) => setData("name", e.target.value.replace(/[^a-zA-ZñÑ\s.,-]/g, ""))} error={errors.name} placeholder="Hon. Allen Icee Dequiros, Ph.D" icon="solar:user-bold" required />
+
+                            {isCustomPosition && (
+                                <div className="mb-4 animate-fade-in">
+                                    <InputGroup
+                                        id="custom_position"
+                                        label="Specific Title / Position"
+                                        value={data.position}
+                                        onChange={(e) => setData("position", e.target.value)}
+                                        error={errors.position}
+                                        placeholder="e.g. Administrative Aide IV"
+                                        icon="solar:pen-bold"
+                                        required
+                                    />
+                                    <p className="text-xs text-gray-500 mt-1">This specific title will be printed on the Dropping Record.</p>
+                                </div>
+                            )}
+
                             {editingId && (
                                 <div className="mt-6 p-4 bg-white border border-gray-200 rounded-lg flex items-center justify-between shadow-sm">
                                     <div className="flex flex-col">

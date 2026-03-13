@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Auth;
 
 class SignatoryController extends Controller
 {
+    // In app/Http/Controllers/SignatoryController.php, update the index method:
+
     public function index(Request $request)
     {
         $search = $request->input('search');
@@ -20,7 +22,11 @@ class SignatoryController extends Controller
                 $query->where('name', 'like', "%{$search}%");
             })
             ->when($position !== 'All', function ($query) use ($position) {
-                $query->where('position', $position);
+                if ($position === 'Dropping Official') {
+                    $query->where('position', 'like', '%Dropping%')->orWhere('position', $position);
+                } else {
+                    $query->where('position', $position);
+                }
             })
             ->get();
 

@@ -62,7 +62,11 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/mtop/{id}/edit', [MtopApplicationController::class, 'edit'])->name('mtop.edit');
     Route::put('/mtop/{id}', [MtopApplicationController::class, 'update'])->name('mtop.update');
+    // Find your existing cancel route and update it:
     Route::put('/mtop/{id}/cancel', [MtopApplicationController::class, 'cancel'])->name('mtop.cancel');
+
+    // Add the new Print Drop route right below the other print routes:
+    Route::get('/mtop/{id}/print-drop', [MtopApplicationController::class, 'printDrop'])->name('mtop.print_drop');
     Route::get('/mtop/{id}/print', [MtopApplicationController::class, 'print'])->name('mtop.print');
     Route::get('/mtop/export', [MtopApplicationController::class, 'export'])->name('mtop.export');
 

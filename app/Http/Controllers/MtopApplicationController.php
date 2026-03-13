@@ -41,7 +41,8 @@ class MtopApplicationController extends Controller
             'applications' => $applications,
             'filters' => $filters,
             'officials' => $officials,
-            'activeEvents' => $activeEvents
+            'activeEvents' => $activeEvents,
+            'feeSettings' => \App\Models\FeeSetting::first() // <--- Add this
         ]);
     }
 
@@ -337,12 +338,32 @@ class MtopApplicationController extends Controller
         }
     }
 
-    public function cancel($id): RedirectResponse
+    public function cancel(Request $request, $id): RedirectResponse
     {
         $application = MtopApplication::findOrFail($id);
 
-        DB::transaction(function () use ($application) {
-            $application->update(['status' => 'cancelled']);
+        $validated = $request->validate([
+            'last_name' => 'required|string',
+            'first_name' => 'required|string',
+            'middle_name' => 'nullable|string',
+            'address' => 'required|string',
+            'make_type' => 'required|string',
+            'engine_motor_no' => 'required|string',
+            'chassis_no' => 'required|string',
+            'plate_no' => 'required|string',
+            'body_number' => 'nullable|string',
+            'drop_date' => 'required|date',
+            'drop_or_number' => 'required|string',
+            'drop_or_date' => 'required|date',
+            'drop_amount' => 'required|numeric',
+            'drop_official' => 'required|string',
+            'drop_position' => 'required|string',
+        ]);
+
+        $validated['status'] = 'cancelled';
+
+        DB::transaction(function () use ($application, $validated) {
+            $application->update($validated);
             $this->queueForSync('mtop_applications', $application->fresh()->toArray());
 
             if ($application->franchise_id) {
@@ -354,7 +375,22 @@ class MtopApplicationController extends Controller
             }
         });
 
-        return redirect()->back()->with('message', 'Record cancelled successfully.');
+        // Return with the ID so the frontend can trigger the print tab
+        return redirect()->back()->with('success_data', [
+            'id' => $application->id,
+            'action' => 'dropped'
+        ])->with('message', 'Record dropped and cancelled successfully.');
+    }
+
+    // Add this new method
+    public function printDrop($id): Response
+    {
+        $application = MtopApplication::findOrFail($id);
+
+        return Inertia::render('Mtop/PrintDrop', [
+            'application' => $application,
+            'settings' => \App\Models\PrintSetting::first()
+        ]);
     }
 
     public function destroy($id): RedirectResponse
@@ -792,7 +828,7 @@ class MtopApplicationController extends Controller
         }
     }
 
-   public function importData(Request $request): RedirectResponse
+    public function importData(Request $request): RedirectResponse
     {
         $request->validate([
             'import_file' => 'required|file|mimes:csv,txt|max:20480', // Max 20MB
