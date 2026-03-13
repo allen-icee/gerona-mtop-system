@@ -29,7 +29,7 @@ export default function PrintDrop({ application, settings }: Props) {
     const formattedAddress = formatAddress(application.address);
 
     useEffect(() => {
-        setTimeout(() => window.print(), 500);
+        // REMOVE THIS: setTimeout(() => window.print(), 500);
 
         const handleKeyDown = (e: KeyboardEvent) => {
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "p") {
@@ -70,6 +70,7 @@ export default function PrintDrop({ application, settings }: Props) {
                             src={settings?.header_path ? `/storage/${settings.header_path}` : `/images/Gerona_Header.jpg`}
                             alt="Header"
                             className="w-full object-contain max-h-32"
+                            onLoad={() => setTimeout(() => window.print(), 200)} // <--- Add this!
                         />
                     </div>
                 )}

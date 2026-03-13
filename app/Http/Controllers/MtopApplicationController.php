@@ -355,7 +355,7 @@ class MtopApplicationController extends Controller
             'drop_date' => 'required|date',
             'drop_or_number' => 'required|string',
             'drop_or_date' => 'required|date',
-            'drop_amount' => 'required|numeric',
+            'drop_amount' => 'required|numeric|min:0',
             'drop_official' => 'required|string',
             'drop_position' => 'required|string',
         ]);
@@ -363,13 +363,28 @@ class MtopApplicationController extends Controller
         $validated['status'] = 'cancelled';
 
         DB::transaction(function () use ($application, $validated) {
+            // Always update the specific application being dropped
             $application->update($validated);
             $this->queueForSync('mtop_applications', $application->fresh()->toArray());
 
             if ($application->franchise_id) {
                 $franchise = MtopFranchise::find($application->franchise_id);
-                if ($franchise) {
-                    $franchise->update(['status' => 'cancelled']);
+
+                // BUG FIX: ONLY alter the Franchise if the application being dropped was the Active/Current owner.
+                // If they are dropping an old/archived record, do NOT overwrite the new owner's franchise details!
+                if ($franchise && in_array($application->getOriginal('status'), ['active', 'upcoming'])) {
+                    $franchise->update([
+                        'status' => 'cancelled',
+                        'last_name' => $validated['last_name'],
+                        'first_name' => $validated['first_name'],
+                        'middle_name' => $validated['middle_name'],
+                        'address' => $validated['address'],
+                        'make_type' => $validated['make_type'],
+                        'engine_motor_no' => $validated['engine_motor_no'],
+                        'chassis_no' => $validated['chassis_no'],
+                        'plate_no' => $validated['plate_no'],
+                        'body_number' => $validated['body_number'],
+                    ]);
                     $this->queueForSync('mtop_franchises', $franchise->fresh()->toArray());
                 }
             }
@@ -839,16 +854,15 @@ class MtopApplicationController extends Controller
 
             if (($handle = fopen($file->getRealPath(), 'r')) !== false) {
                 $header = fgetcsv($handle, 1000, ',');
+                $validityService = app(\App\Services\ValidityService::class); // Instantiating your service
 
-                DB::transaction(function () use ($handle) {
+                DB::transaction(function () use ($handle, $validityService) {
                     while (($row = fgetcsv($handle, 1000, ',')) !== false) {
                         if (count($row) < 14) continue;
 
                         $mt_number = trim($row[0] ?? '');
                         if (empty($mt_number)) continue;
 
-                        // Generate short unique fallbacks (e.g. "T26-0004" from "2026-0004")
-                        // to fit inside the strict 10-character limit of the DB schema
                         $short_year = substr($mt_number, 2, 2);
                         $seq = substr($mt_number, 5);
 
@@ -861,6 +875,25 @@ class MtopApplicationController extends Controller
                         if (empty($plate_no)) {
                             $plate_no = "P{$short_year}-{$seq}";
                         }
+
+                        $tDate = !empty(trim($row[1] ?? '')) ? Carbon::parse(trim($row[1])) : now();
+
+                        // 1. SMART FIX: Check if there is an active event for this transaction date
+                        $event = \App\Models\Event::where('is_active', true)
+                            ->whereDate('start_date', '<=', $tDate)
+                            ->whereDate('end_date', '>=', $tDate)
+                            ->first();
+
+                        // THE FIX: If there is an event, we treat it as an event validity (false for full 3-year).
+                        $wantsFullValidity = $event ? false : true;
+
+                        // Calculate the correct valid_until date using the Event!
+                        $expiryResult = $validityService->computeExpiry(
+                            $tDate,
+                            $plate_no,
+                            $wantsFullValidity, // <--- THIS PREVENTS THE JUMP TO 2030
+                            $event
+                        );
 
                         // 1. Create or Update Franchise
                         $franchise = MtopFranchise::updateOrCreate(
@@ -886,7 +919,7 @@ class MtopApplicationController extends Controller
                             ['mt_number' => $mt_number],
                             [
                                 'franchise_id' => $franchise->id,
-                                'transaction_date' => !empty(trim($row[1] ?? '')) ? date('Y-m-d', strtotime(trim($row[1]))) : now()->format('Y-m-d'),
+                                'transaction_date' => $tDate->format('Y-m-d'),
                                 'transaction_type' => trim($row[2] ?? '') ?: 'New',
                                 'last_name' => trim($row[3] ?? ''),
                                 'first_name' => trim($row[4] ?? ''),
@@ -907,9 +940,11 @@ class MtopApplicationController extends Controller
                                 'authorized_official' => trim($row[19] ?? '') ?: null,
                                 'status' => 'active',
                                 'processed_by' => Auth::id(),
+                                'is_free' => !$wantsFullValidity, // Sets it to "Promo" so the system understands why it is short
+                                'event_id' => $event ? $event->id : null,
+                                'valid_until' => $expiryResult['expiry_date'],
                             ]
                         );
-
                         // 3. Queue both records to sync to offline laptops
                         $this->queueForSync('mtop_franchises', $franchise->toArray());
                         $this->queueForSync('mtop_applications', $application->toArray());
@@ -919,7 +954,7 @@ class MtopApplicationController extends Controller
                 fclose($handle);
             }
 
-            return redirect()->back()->with('message', 'Data imported successfully!');
+            return redirect()->back()->with('message', 'Data imported and validities recalculated successfully!');
         } catch (\Exception $e) {
             return redirect()->back()->withErrors(['import_file' => 'Error importing file: ' . $e->getMessage()]);
         }

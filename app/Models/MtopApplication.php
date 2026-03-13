@@ -87,7 +87,10 @@ class MtopApplication extends Model
                             });
                     });
                 } elseif ($renewal === 'active') {
-                    $q->where('status', 'active')->whereDate('valid_until', '>=', now());
+                    $q->where('status', 'active')->where(function ($subQ) {
+                        $subQ->whereDate('valid_until', '>=', now())
+                            ->orWhereNull('valid_until');
+                    });
                 } elseif ($renewal === 'archived') {
                     $q->where('status', 'archived');
                 } elseif ($renewal === 'cancelled') {

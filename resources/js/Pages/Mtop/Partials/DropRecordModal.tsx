@@ -16,6 +16,11 @@ interface Props {
 }
 
 export default function DropRecordModal({ show, onClose, application, officials, feeSettings }: Props) {
+    const getLocalDateString = () => {
+        const date = new Date();
+        date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+        return date.toISOString().split('T')[0];
+    };
     const { data, setData, put, processing, reset, errors } = useForm({
         id: null as number | null,
         last_name: '',
@@ -27,9 +32,9 @@ export default function DropRecordModal({ show, onClose, application, officials,
         chassis_no: '',
         plate_no: '',
         body_number: '',
-        drop_date: new Date().toISOString().split('T')[0],
+        drop_date: getLocalDateString(), // <--- Uses local timezone now
         drop_or_number: '',
-        drop_or_date: new Date().toISOString().split('T')[0],
+        drop_or_date: getLocalDateString(), // <--- Uses local timezone now
         drop_amount: '',
         drop_official: '',
         drop_position: ''
@@ -55,9 +60,9 @@ export default function DropRecordModal({ show, onClose, application, officials,
                 chassis_no: application.chassis_no || '',
                 plate_no: application.plate_no || '',
                 body_number: application.body_number || '',
-                drop_date: application.drop_date || new Date().toISOString().split('T')[0],
+                drop_date: application.drop_date || getLocalDateString(), // <--- Uses local timezone now
                 drop_or_number: application.drop_or_number || '',
-                drop_or_date: application.drop_or_date || new Date().toISOString().split('T')[0],
+                drop_or_date: application.drop_or_date || getLocalDateString(), // <--- Uses local timezone now
                 drop_amount: amountToUse,
                 drop_official: application.drop_official || (defaultOff ? defaultOff.name : ''),
                 drop_position: application.drop_position || (defaultOff ? defaultOff.position : '')

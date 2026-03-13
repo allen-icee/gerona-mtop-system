@@ -119,8 +119,10 @@ export default function Index({
 
     useEffect(() => {
         const pollInterval = setInterval(() => {
-            router.reload({ only: ["applications"] });
-        }, 10000);
+            router.reload({
+                only: ["applications"]
+            });
+        }, 60000); // 60 seconds is perfect to prevent SQLite locking!
 
         return () => clearInterval(pollInterval);
     }, []);
