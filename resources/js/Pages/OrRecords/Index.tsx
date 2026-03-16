@@ -1,6 +1,6 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, router, usePage } from "@inertiajs/react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Modal from "@/Components/Modal";
 import PrimaryButton from "@/Components/PrimaryButton";
 import SecondaryButton from "@/Components/SecondaryButton";
@@ -13,6 +13,7 @@ import SignatorySelect from "@/Components/SignatorySelect";
 import ConfirmDeleteModal from "@/Components/ConfirmDeleteModal";
 import OrSuccessModal from "./Partials/OrSuccessModal";
 import toast from "react-hot-toast";
+
 
 const FEE_LABELS = {
     reg_filing_fee: "REG./Filing Fee",
@@ -49,6 +50,35 @@ interface Props {
 }
 
 export default function Index({ signatories = [], feeSettings, orRecords = [], nextOrNumber }: Props) {
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [isImporting, setIsImporting] = useState(false);
+
+    const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        setIsImporting(true);
+        router.post(route('or_records.import'), formData, {
+            preserveScroll: true,
+            onSuccess: (page: any) => {
+                const flash = page.props.flash;
+                if (flash && flash.success) {
+                    toast.success(flash.success);
+                } else {
+                    toast.success("Records imported successfully!");
+                }
+                if (fileInputRef.current) fileInputRef.current.value = '';
+            },
+            onError: (errors) => {
+                toast.error(errors.file || "Failed to import records.");
+                if (fileInputRef.current) fileInputRef.current.value = '';
+            },
+            onFinish: () => setIsImporting(false)
+        });
+    };
     const user = usePage().props.auth.user as any;
 
     const [search, setSearch] = useState("");
@@ -328,7 +358,26 @@ export default function Index({ signatories = [], feeSettings, orRecords = [], n
                         </div>
                     </div>
 
+
+
                     <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
+                        <input
+                            type="file"
+                            ref={fileInputRef}
+                            className="hidden"
+                            accept=".csv"
+                            onChange={handleImport}
+                        />
+                        <button
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={isImporting}
+                            title="Import from CSV"
+                            className={`bg-orange-600 hover:bg-orange-700 text-white border font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 shadow-sm transition-all flex-1 sm:flex-none hover:cursor-pointer ${isImporting ? 'opacity-70 cursor-not-allowed' : ''}`}
+                        >
+                            <Icon icon="solar:import-bold" width="22" />
+                            <span className="hidden sm:inline">{isImporting ? 'Importing...' : 'Import'}</span>
+                        </button>
+
                         <a
                             href={route('or_records.export', {
                                 _query: { search, month, year }

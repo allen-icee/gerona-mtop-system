@@ -45,6 +45,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/or-records', [\App\Http\Controllers\OrRecordController::class, 'index'])->name('or_records.index');
     Route::post('/or-records', [\App\Http\Controllers\OrRecordController::class, 'store'])->name('or_records.store');
     Route::put('/or-records/{id}', [\App\Http\Controllers\OrRecordController::class, 'update'])->name('or_records.update');
+    Route::post('/or-records/import', [\App\Http\Controllers\OrRecordController::class, 'import'])->name('or_records.import');
     Route::post('/settings/fees', [\App\Http\Controllers\FeeSettingController::class, 'update'])->name('settings.fees.update');
     Route::get('/or-records/export', [\App\Http\Controllers\OrRecordController::class, 'export'])->name('or_records.export');
 

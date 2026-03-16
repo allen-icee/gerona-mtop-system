@@ -193,4 +193,101 @@ class OrRecordController extends Controller
 
         return response()->stream($callback, 200, $headers);
     }
+
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:csv,txt|max:10240', // 10MB limit
+        ]);
+
+        $file = $request->file('file');
+        $handle = fopen($file->path(), 'r');
+        $header = fgetcsv($handle);
+
+        $imported = 0;
+        $skipped = 0;
+
+        // Ensure headers match our export format
+        $expectedHeaders = ['OR Number', 'Transaction Date', 'Agency', 'Payor Name', 'Collecting Officer', 'Total Amount'];
+        foreach ($expectedHeaders as $eh) {
+            if (!in_array($eh, $header)) {
+                return back()->withErrors(['file' => 'Invalid CSV format. Missing required column: ' . $eh]);
+            }
+        }
+
+        while (($row = fgetcsv($handle)) !== false) {
+            if (count($header) !== count($row)) continue;
+            $data = array_combine($header, $row);
+
+            $orNumber = $data['OR Number'] ?? null;
+            if (!$orNumber) continue;
+
+            // Prevent duplicate records
+            if (OrRecord::where('or_number', $orNumber)->exists()) {
+                $skipped++;
+                continue;
+            }
+
+            // Parse Payor Name (Format: "LASTNAME, FIRSTNAME MI SUFFIX")
+            $fullName = $data['Payor Name'] ?? '';
+            $lastName = '';
+            $firstName = '';
+            $middleName = '';
+            $suffix = '';
+
+            $commaSplit = explode(',', $fullName, 2);
+            $lastName = trim($commaSplit[0]);
+            if (isset($commaSplit[1])) {
+                $rest = trim($commaSplit[1]);
+                $words = explode(' ', $rest);
+
+                // Check for common suffixes
+                $suffixes = ['JR', 'JR.', 'SR', 'SR.', 'I', 'II', 'III', 'IV', 'V'];
+                $lastWord = strtoupper(end($words));
+                if (in_array($lastWord, $suffixes)) {
+                    $suffix = array_pop($words);
+                }
+
+                // Check for middle initial
+                $lastWord = end($words);
+                if (strlen(trim($lastWord, '.')) === 1) {
+                    $middleName = array_pop($words);
+                }
+
+                $firstName = implode(' ', $words);
+            }
+
+            // Parse fee breakdown based on amounts present
+            $fee_breakdown = [
+                'reg_filing_fee' => floatval($data['REG/Filing Fee'] ?? 0) > 0,
+                'franchise_fee' => floatval($data['Franchise Fee'] ?? 0) > 0,
+                'mayors_permit' => floatval($data['Mayors Permit'] ?? 0) > 0,
+                'supervisor_fee' => floatval($data['Supervisor Fee'] ?? 0) > 0,
+                'account_clearance' => floatval($data['Account Clearance'] ?? 0) > 0,
+                'sticker_fee' => floatval($data['Sticker Fee'] ?? 0) > 0,
+                'id_driver_operator_owner' => floatval($data['ID Fee'] ?? 0) > 0,
+                'body_number_plate' => floatval($data['Body Number/Plate'] ?? 0) > 0,
+                'penalty' => floatval($data['Penalty'] ?? 0) > 0,
+            ];
+
+            OrRecord::create([
+                'or_number' => $orNumber,
+                'transaction_date' => $data['Transaction Date'] ?? date('Y-m-d'),
+                'agency' => $data['Agency'] ?? 'LGU GERONA',
+                'payor_last_name' => $lastName,
+                'payor_first_name' => $firstName ?: 'UNKNOWN',
+                'payor_middle_name' => $middleName,
+                'payor_suffix' => $suffix,
+                'collecting_officer' => $data['Collecting Officer'] ?? 'UNKNOWN',
+                'total_amount' => $data['Total Amount'] ?? 0,
+                'fee_breakdown' => $fee_breakdown
+            ]);
+
+            $imported++;
+        }
+
+        fclose($handle);
+
+        return back()->with('success', "Import completed: {$imported} added, {$skipped} skipped (duplicates).");
+    }
 }
