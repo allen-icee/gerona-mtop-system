@@ -1,4 +1,4 @@
-//C\GeronaMTOP\resources\js\Pages\OrRecords\Index.tsx
+//GeronaMTOP\resources\js\Pages\OrRecords\Index.tsx
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, router, usePage } from "@inertiajs/react";
 import { useState, useEffect, useRef } from "react";

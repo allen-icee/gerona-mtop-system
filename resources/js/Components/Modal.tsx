@@ -11,10 +11,9 @@ export default function Modal({
     show = false,
     maxWidth = "2xl",
     closeable = true,
-    onClose = () => {},
+    onClose = () => { },
 }: PropsWithChildren<{
     show: boolean;
-    // 1. Added larger sizes here to support wider modals
     maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl" | "5xl" | "6xl" | "7xl";
     closeable?: boolean;
     onClose: CallableFunction;
@@ -25,7 +24,6 @@ export default function Modal({
         }
     };
 
-    // 2. Added the Tailwind classes for the wider sizes here
     const maxWidthClass = {
         sm: "sm:max-w-sm",
         md: "sm:max-w-md",

@@ -108,7 +108,6 @@ export default function PrintPage2({ application, operatorName }: Props) {
         return parts.join(" at ");
     };
 
-    // Default to 3 years and 0 months if not set by an event
     const years = application.event?.validity_years ?? 3;
     const months = application.event?.validity_months ?? 0;
 
@@ -117,13 +116,11 @@ export default function PrintPage2({ application, operatorName }: Props) {
         : "_________________";
     let paidByName = "";
     if (application.show_paid_by) {
-        paidByName = `${application.paid_by_first_name || ""} ${
-            application.paid_by_middle_name
+        paidByName = `${application.paid_by_first_name || ""} ${application.paid_by_middle_name
                 ? application.paid_by_middle_name + ". "
                 : ""
-        }${application.paid_by_last_name || ""}${
-            application.paid_by_suffix ? " " + application.paid_by_suffix : ""
-        }`.trim();
+            }${application.paid_by_last_name || ""}${application.paid_by_suffix ? " " + application.paid_by_suffix : ""
+            }`.trim();
     }
     return (
         <div

@@ -44,7 +44,6 @@ export default function DriverInfoModal({
 
             setData({
                 drivers: selectedApps.map((app) => {
-                    // 1. Format the full Operator Name with Middle Initial and Suffix
                     const mInitial = app.middle_name
                         ? `${app.middle_name[0]}. `
                         : "";
@@ -54,12 +53,10 @@ export default function DriverInfoModal({
                             .trim()
                             .toUpperCase();
 
-                    // 2. Format the old basic name for comparison
                     const oldBasicName = `${app.first_name} ${app.last_name}`
                         .trim()
                         .toUpperCase();
 
-                    // 3. Format the Paid By name (if it exists)
                     let paidByName = "";
                     if (app.show_paid_by) {
                         const pbInitial = app.paid_by_middle_name
@@ -74,7 +71,6 @@ export default function DriverInfoModal({
                                 .toUpperCase();
                     }
 
-                    // 4. Smart Upgrade: Paid By overrides Driver. Otherwise fallback to Operator.
                     let finalDriverName = app.driver_name
                         ? app.driver_name.trim().toUpperCase()
                         : "";

@@ -1,3 +1,4 @@
+//GeronaMTOP\resources\js\Pages\OrRecords\Partials\OrSuccessModal.tsx
 import Modal from "@/Components/Modal";
 import { Icon } from "@iconify/react";
 import { Link } from "@inertiajs/react";
@@ -57,7 +58,6 @@ export default function OrSuccessModal({ show, onClose, onEdit, action, data }: 
                 <div className="w-full space-y-3">
                     {!isDelete && (
                         <>
-                            {/* Primary Action: Conditional Based on Action */}
                             {action === "create" ? (
                                 <Link
                                     href={route("mtop.create", { payor_name: data.payor_name })}
@@ -67,7 +67,7 @@ export default function OrSuccessModal({ show, onClose, onEdit, action, data }: 
                                     Proceed to Application
                                 </Link>
                             ) : (
-                                /* 👇 Removed the user?.role === "admin" && wrapper here! */
+
                                 <button
                                     onClick={() => window.open(route('or_records.print', data.id), '_blank')}
                                     className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-sm flex items-center justify-center gap-2 transition-colors"
@@ -77,7 +77,6 @@ export default function OrSuccessModal({ show, onClose, onEdit, action, data }: 
                                 </button>
                             )}
 
-                            {/* Secondary Action: Edit Logic */}
                             <button
                                 onClick={onEdit}
                                 className="w-full py-3 bg-white border-2 border-gray-200 text-gray-700 font-bold rounded-lg hover:bg-gray-50 flex items-center justify-center gap-2 transition-colors"

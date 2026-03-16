@@ -1,3 +1,4 @@
+//GeronaMTOP\resources\js\Pages\OrRecords\Print.tsx
 import { Head } from "@inertiajs/react";
 import { useEffect } from "react";
 
@@ -13,7 +14,6 @@ const FEE_LABELS = {
     penalty: "Penalty",
 };
 
-// Utility to convert number to words (Simplified for Philippine Currency)
 function numberToWords(amount: number): string {
     const ones = [
         "",
@@ -102,11 +102,9 @@ export default function Print({ record, feeSettings }: Props) {
         `${record.payor_first_name} ${record.payor_middle_name ? record.payor_middle_name + " " : ""}${record.payor_last_name} ${record.payor_suffix || ""}`.trim();
     const amountInWords = numberToWords(Number(record.total_amount));
 
-    // Get all fee keys from the FEE_LABELS object
     const allFeeKeys = Object.keys(FEE_LABELS) as Array<keyof typeof FEE_LABELS>;
 
     return (
-        /* Changed 'justify-center' to 'justify-start' and added 'p-0' to keep it left-aligned */
         <div className="min-h-screen bg-[#525659] flex justify-start p-0 print:bg-white print:block">
             <Head title={`Print OR - ${record.or_number}`} />
 
@@ -125,39 +123,26 @@ export default function Print({ record, feeSettings }: Props) {
                 `}
             </style>
 
-            {/* MASTER CONTAINER
-               Left-aligned by default. Absolute positions inside
-               remain relative to this 100mm x 200mm box.
-            */}
             <div className="relative w-[100mm] h-[200mm] min-w-[100mm] min-h-[200mm] overflow-hidden box-border bg-white bg-[url('/images/or_guide.jpg')] bg-[length:100mm_200mm] bg-no-repeat bg-left-top print:bg-none print:bg-transparent font-mono text-[11pt] font-bold text-black flex-shrink-0">
-                {/* Date */}
                 <div className="absolute whitespace-nowrap top-[42.5mm] left-[47mm]">
                     {record.transaction_date}
                 </div>
 
-                {/* Agency */}
                 <div className="absolute whitespace-nowrap top-[51mm] left-[20mm]">
                     {record.agency || "LGU GERONA"}
                 </div>
-
-                {/* Payor Name */}
                 <div className="absolute whitespace-nowrap top-[59mm] left-[17mm]">
                     {payorName}
                 </div>
-
-                {/* Fees Breakdown List */}
                 <div className="absolute top-[77.5mm] left-[7.5mm] w-[80mm] leading-[0.97]">
                     {allFeeKeys.map((feeKey) => {
-                        // Check if the fee is toggled on in the record's breakdown
                         const isToggledOn = record.fee_breakdown && record.fee_breakdown[feeKey];
-
                         return (
                             <div key={feeKey} className="flex justify-between mb-1">
                                 <span>
                                     {FEE_LABELS[feeKey]}
                                 </span>
                                 <span>
-                                    {/* Only show the amount if the fee is toggled on */}
                                     {isToggledOn ? Number(feeSettings[feeKey] || 0).toFixed(2) : ""}
                                 </span>
                             </div>
@@ -165,22 +150,18 @@ export default function Print({ record, feeSettings }: Props) {
                     })}
                 </div>
 
-                {/* Total Amount (Numeric) */}
                 <div className="absolute whitespace-nowrap top-[121mm] left-[77mm]">
                     {Number(record.total_amount).toFixed(2)}
                 </div>
 
-                {/* Total Amount (In Words) with Text Indent */}
                 <div className="absolute top-[129mm] left-[10mm] w-[85mm] indent-[25mm] leading-302snug break-words tracking-tight">
                     {amountInWords.toUpperCase()}
                 </div>
 
-                {/* Cash Checkbox Mark */}
                 <div className="absolute whitespace-nowrap top-[140mm] left-[8.5mm] text-[14pt]">
                     ✓
                 </div>
 
-                {/* Dashes/Separators */}
                 <div className="absolute whitespace-nowrap top-[147mm] left-[39mm] text-[14pt]">
                     --
                 </div>
@@ -191,7 +172,6 @@ export default function Print({ record, feeSettings }: Props) {
                     --
                 </div>
 
-                {/* Collecting Officer */}
                 <div className="absolute whitespace-nowrap top-[170mm] left-[42mm]">
                     {record.collecting_officer}
                 </div>

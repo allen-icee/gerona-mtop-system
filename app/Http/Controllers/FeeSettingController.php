@@ -19,7 +19,7 @@ class FeeSettingController extends Controller
             'id_driver_operator_owner' => 'required|numeric|min:0',
             'body_number_plate' => 'required|numeric|min:0',
             'penalty' => 'required|numeric|min:0',
-            'dropping_fee' => 'required|numeric|min:0', // <--- Added this line
+            'dropping_fee' => 'required|numeric|min:0',
         ]);
 
         $feeSetting = FeeSetting::first() ?? new FeeSetting();

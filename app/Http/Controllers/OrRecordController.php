@@ -1,5 +1,5 @@
 <?php
-
+//C:\GeronaMTOP\app\Http\Controllers\OrRecordController.php
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
@@ -13,11 +13,8 @@ class OrRecordController extends Controller
     public function index()
     {
         $orRecords = OrRecord::latest()->get();
-
-        // Generate the Next OR Number (e.g., OR 2026-0001)
         $year = date('Y');
-        $prefix = 'OR ' . $year . '-'; // Added "OR " prefix here
-
+        $prefix = 'OR ' . $year . '-';
         $lastRecord = OrRecord::where('or_number', 'like', $prefix . '%')
             ->orderBy('or_number', 'desc')
             ->first();
@@ -53,7 +50,6 @@ class OrRecordController extends Controller
         return back()->with('success', 'OR Record saved successfully!');
     }
 
-    // --- ADDED UPDATE FUNCTION ---
     public function update(Request $request, $id)
     {
         $validated = $request->validate([
@@ -75,7 +71,6 @@ class OrRecordController extends Controller
         return back()->with('success', 'Record updated successfully!');
     }
 
-    // --- ADDED DELETE FUNCTION ---
     public function destroy($id)
     {
         $record = OrRecord::findOrFail($id);
@@ -84,8 +79,6 @@ class OrRecordController extends Controller
         return back()->with('success', 'Record deleted successfully!');
     }
 
-
-    // --- ADDED PRINT FUNCTION ---
     public function print($id)
     {
         $record = OrRecord::findOrFail($id);
@@ -99,8 +92,6 @@ class OrRecordController extends Controller
     public function export(Request $request)
     {
         $query = clone OrRecord::query();
-
-        // Apply Search Filter
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
@@ -110,19 +101,16 @@ class OrRecordController extends Controller
             });
         }
 
-        // Apply Month Filter
         if ($request->filled('month')) {
             $query->whereMonth('transaction_date', $request->input('month'));
         }
 
-        // Apply Year Filter
         if ($request->filled('year')) {
             $query->whereYear('transaction_date', $request->input('year'));
         }
 
         $records = $query->latest()->cursor();
 
-        // 1. FETCH THE ACTUAL FEE PRICES HERE
         $feeSettings = \App\Models\FeeSetting::first();
 
         $csvFileName = 'or_records_' . date('Y-m-d_H-i') . '.csv';
@@ -135,11 +123,9 @@ class OrRecordController extends Controller
             "Expires" => "0"
         ];
 
-        // 2. PASS $feeSettings INTO THE CALLBACK
         $callback = function () use ($records, $feeSettings) {
             $file = fopen('php://output', 'w');
 
-            // Set CSV Headers
             fputcsv($file, [
                 'OR Number',
                 'Transaction Date',
@@ -162,7 +148,6 @@ class OrRecordController extends Controller
                 $payorName = trim("{$row->payor_last_name}, {$row->payor_first_name} {$row->payor_middle_name} {$row->payor_suffix}");
                 $fees = $row->fee_breakdown ?? [];
 
-                // 3. HELPER FUNCTION: Get actual amount if toggled ON, else return 0
                 $getAmount = function ($key) use ($fees, $feeSettings) {
                     if (!empty($fees[$key]) && $feeSettings) {
                         return $feeSettings->$key ?? 0;
@@ -172,7 +157,7 @@ class OrRecordController extends Controller
 
                 fputcsv($file, [
                     $row->or_number,
-                    \Carbon\Carbon::parse($row->transaction_date)->format('Y-m-d'), // <-- Formats to date only
+                    \Carbon\Carbon::parse($row->transaction_date)->format('Y-m-d'),
                     $row->agency,
                     $payorName,
                     $row->collecting_officer,
@@ -197,7 +182,7 @@ class OrRecordController extends Controller
     public function import(Request $request)
     {
         $request->validate([
-            'file' => 'required|mimes:csv,txt|max:10240', // 10MB limit
+            'file' => 'required|mimes:csv,txt|max:10240',
         ]);
 
         $file = $request->file('file');
@@ -207,7 +192,6 @@ class OrRecordController extends Controller
         $imported = 0;
         $skipped = 0;
 
-        // Ensure headers match our export format
         $expectedHeaders = ['OR Number', 'Transaction Date', 'Agency', 'Payor Name', 'Collecting Officer', 'Total Amount'];
         foreach ($expectedHeaders as $eh) {
             if (!in_array($eh, $header)) {
@@ -222,13 +206,11 @@ class OrRecordController extends Controller
             $orNumber = $data['OR Number'] ?? null;
             if (!$orNumber) continue;
 
-            // Prevent duplicate records
             if (OrRecord::where('or_number', $orNumber)->exists()) {
                 $skipped++;
                 continue;
             }
 
-            // Parse Payor Name (Format: "LASTNAME, FIRSTNAME MI SUFFIX")
             $fullName = $data['Payor Name'] ?? '';
             $lastName = '';
             $firstName = '';
@@ -240,15 +222,12 @@ class OrRecordController extends Controller
             if (isset($commaSplit[1])) {
                 $rest = trim($commaSplit[1]);
                 $words = explode(' ', $rest);
-
-                // Check for common suffixes
                 $suffixes = ['JR', 'JR.', 'SR', 'SR.', 'I', 'II', 'III', 'IV', 'V'];
                 $lastWord = strtoupper(end($words));
                 if (in_array($lastWord, $suffixes)) {
                     $suffix = array_pop($words);
                 }
 
-                // Check for middle initial
                 $lastWord = end($words);
                 if (strlen(trim($lastWord, '.')) === 1) {
                     $middleName = array_pop($words);
@@ -257,7 +236,6 @@ class OrRecordController extends Controller
                 $firstName = implode(' ', $words);
             }
 
-            // Parse fee breakdown based on amounts present
             $fee_breakdown = [
                 'reg_filing_fee' => floatval($data['REG/Filing Fee'] ?? 0) > 0,
                 'franchise_fee' => floatval($data['Franchise Fee'] ?? 0) > 0,

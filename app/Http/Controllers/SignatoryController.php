@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Auth;
 
 class SignatoryController extends Controller
 {
-    // In app/Http/Controllers/SignatoryController.php, update the index method:
 
     public function index(Request $request)
     {

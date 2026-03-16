@@ -47,8 +47,6 @@ class MtopApplication extends Model
         'show_cedula',
         'show_or',
         'is_manual_validity',
-
-        // Added dropping fields here
         'drop_date',
         'drop_or_number',
         'drop_or_date',

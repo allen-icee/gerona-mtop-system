@@ -21,6 +21,7 @@ export default function DropRecordModal({ show, onClose, application, officials,
         date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
         return date.toISOString().split('T')[0];
     };
+
     const { data, setData, put, processing, reset, errors } = useForm({
         id: null as number | null,
         last_name: '',
@@ -97,11 +98,50 @@ export default function DropRecordModal({ show, onClose, application, officials,
     };
 
     const isAlreadyDropped = application?.status === 'cancelled';
-    const officialNames = officials.map(o => o.name);
+    const officialOptions = officials.map(o => `${o.name} | ${o.position}`);
+
+    const handleEnterKey = (
+        e: React.KeyboardEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+    ) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+
+            const form = e.currentTarget.closest('form'); // Find the parent form
+            if (!form) return;
+
+            // Get all focusable elements inside the form, including the submit button
+            const allInputs = Array.from(
+                form.querySelectorAll(
+                    'input:not([disabled]):not([readonly]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), button[type="submit"]:not([disabled])'
+                )
+            ) as HTMLElement[];
+
+            // Filter out hidden elements
+            const visibleInputs = allInputs.filter(
+                (el) => el.offsetParent !== null
+            );
+
+            const index = visibleInputs.indexOf(e.currentTarget as any);
+
+            if (index > -1) {
+                // If it's not the last element, focus the next one
+                if (index < visibleInputs.length - 1) {
+                    visibleInputs[index + 1].focus();
+                } else {
+                    // If it is the last element (which should be the submit button), trigger submit
+                    const submitButton = form.querySelector('button[type="submit"]') as HTMLButtonElement;
+                    if (submitButton && !submitButton.disabled) {
+                        submitButton.click();
+                    }
+                }
+            }
+        }
+    };
 
     return (
         <Modal show={show} onClose={handleClose} maxWidth="4xl">
-            <div className="flex flex-col h-full sm:h-auto max-h-[90vh]">
+            {/* Wrap the entire modal content (including footer) in the form so the submit button is reachable by handleEnterKey */}
+            <form id="dropping-form" onSubmit={handleSubmit} className="flex flex-col h-full sm:h-auto max-h-[90vh]">
 
                 {/* Header */}
                 <div className="bg-gray-800 px-6 py-4 flex justify-between items-center shrink-0 sm:rounded-t-lg shadow-sm z-10">
@@ -115,7 +155,7 @@ export default function DropRecordModal({ show, onClose, application, officials,
                 </div>
 
                 <div className="bg-gray-100 overflow-y-auto flex-1 p-4">
-                    <form id="dropping-form" onSubmit={handleSubmit} className="space-y-2">
+                    <div className="space-y-2">
 
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
                             {/* APPLICANT CARD */}
@@ -124,22 +164,22 @@ export default function DropRecordModal({ show, onClose, application, officials,
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <div>
                                         <label className="block text-xs font-bold text-gray-600 uppercase tracking-wide mb-1.5">First Name</label>
-                                        <TextInput className="w-full p-3" value={data.first_name} onChange={e => setData('first_name', e.target.value)} required />
+                                        <TextInput className="w-full p-3" value={data.first_name} onChange={e => setData('first_name', e.target.value)} onKeyDown={handleEnterKey} required />
                                         <InputError message={errors.first_name} className="mt-1" />
                                     </div>
                                     <div>
                                         <label className="block text-xs font-bold text-gray-600 uppercase tracking-wide mb-1.5">Middle Name</label>
-                                        <TextInput className="w-full p-3" value={data.middle_name} onChange={e => setData('middle_name', e.target.value)} />
+                                        <TextInput className="w-full p-3" value={data.middle_name} onChange={e => setData('middle_name', e.target.value)} onKeyDown={handleEnterKey} />
                                         <InputError message={errors.middle_name} className="mt-1" />
                                     </div>
                                     <div className="sm:col-span-2">
                                         <label className="block text-xs font-bold text-gray-600 uppercase tracking-wide mb-1.5">Last Name</label>
-                                        <TextInput className="w-full p-3" value={data.last_name} onChange={e => setData('last_name', e.target.value)} required />
+                                        <TextInput className="w-full p-3" value={data.last_name} onChange={e => setData('last_name', e.target.value)} onKeyDown={handleEnterKey} required />
                                         <InputError message={errors.last_name} className="mt-1" />
                                     </div>
                                     <div className="sm:col-span-2">
                                         <label className="block text-xs font-bold text-gray-600 uppercase tracking-wide mb-1.5">Address</label>
-                                        <TextInput className="w-full p-3" value={data.address} onChange={e => setData('address', e.target.value)} required />
+                                        <TextInput className="w-full p-3" value={data.address} onChange={e => setData('address', e.target.value)} onKeyDown={handleEnterKey} required />
                                         <InputError message={errors.address} className="mt-1" />
                                     </div>
                                 </div>
@@ -151,34 +191,34 @@ export default function DropRecordModal({ show, onClose, application, officials,
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <div className="sm:col-span-2">
                                         <label className="block text-xs font-bold text-gray-600 uppercase tracking-wide mb-1.5">Make / Type</label>
-                                        <TextInput className="w-full p-3" value={data.make_type} onChange={e => setData('make_type', e.target.value)} required />
+                                        <TextInput className="w-full p-3" value={data.make_type} onChange={e => setData('make_type', e.target.value)} onKeyDown={handleEnterKey} required />
                                         <InputError message={errors.make_type} className="mt-1" />
                                     </div>
                                     <div>
                                         <label className="block text-xs font-bold text-gray-600 uppercase tracking-wide mb-1.5">Engine No.</label>
-                                        <TextInput className="w-full p-3" value={data.engine_motor_no} onChange={e => setData('engine_motor_no', e.target.value)} required />
+                                        <TextInput className="w-full p-3" value={data.engine_motor_no} onChange={e => setData('engine_motor_no', e.target.value)} onKeyDown={handleEnterKey} required />
                                         <InputError message={errors.engine_motor_no} className="mt-1" />
                                     </div>
                                     <div>
                                         <label className="block text-xs font-bold text-gray-600 uppercase tracking-wide mb-1.5">Chassis No.</label>
-                                        <TextInput className="w-full p-3" value={data.chassis_no} onChange={e => setData('chassis_no', e.target.value)} required />
+                                        <TextInput className="w-full p-3" value={data.chassis_no} onChange={e => setData('chassis_no', e.target.value)} onKeyDown={handleEnterKey} required />
                                         <InputError message={errors.chassis_no} className="mt-1" />
                                     </div>
                                     <div>
                                         <label className="block text-xs font-bold text-gray-600 uppercase tracking-wide mb-1.5">Plate No.</label>
-                                        <TextInput className="w-full p-3" value={data.plate_no} onChange={e => setData('plate_no', e.target.value)} required />
+                                        <TextInput className="w-full p-3" value={data.plate_no} onChange={e => setData('plate_no', e.target.value)} onKeyDown={handleEnterKey} required />
                                         <InputError message={errors.plate_no} className="mt-1" />
                                     </div>
                                     <div>
                                         <label className="block text-xs font-bold text-gray-600 uppercase tracking-wide mb-1.5">Body No.</label>
-                                        <TextInput className="w-full p-3" value={data.body_number} onChange={e => setData('body_number', e.target.value)} />
+                                        <TextInput className="w-full p-3" value={data.body_number} onChange={e => setData('body_number', e.target.value)} onKeyDown={handleEnterKey} />
                                         <InputError message={errors.body_number} className="mt-1" />
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        {/* TRANSACTION CARD (Matches OfficialsForm Theme) */}
+                        {/* TRANSACTION CARD */}
                         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                             <div className="flex items-center justify-between border-b border-yellow-300 mb-5">
                                 <h4 className="font-extrabold text-base uppercase tracking-wide text-yellow-700 flex items-center gap-2">
@@ -190,22 +230,22 @@ export default function DropRecordModal({ show, onClose, application, officials,
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                                 <div>
                                     <label className="block text-xs font-bold text-gray-600 uppercase tracking-wide mb-1.5">Date Dropped</label>
-                                    <TextInput type="date" className="w-full p-3" value={data.drop_date} onChange={e => setData('drop_date', e.target.value)} required />
+                                    <TextInput type="date" className="w-full p-3" value={data.drop_date} onChange={e => setData('drop_date', e.target.value)} onKeyDown={handleEnterKey} required />
                                     <InputError message={errors.drop_date} className="mt-1" />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-gray-600 uppercase tracking-wide mb-1.5">OR Number</label>
-                                    <TextInput className="w-full p-3" placeholder="e.g. 123456" value={data.drop_or_number} onChange={e => setData('drop_or_number', e.target.value)} required />
+                                    <TextInput className="w-full p-3" placeholder="e.g. 123456" value={data.drop_or_number} onChange={e => setData('drop_or_number', e.target.value)} onKeyDown={handleEnterKey} required />
                                     <InputError message={errors.drop_or_number} className="mt-1" />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-gray-600 uppercase tracking-wide mb-1.5">OR Date</label>
-                                    <TextInput type="date" className="w-full p-3" value={data.drop_or_date} onChange={e => setData('drop_or_date', e.target.value)} required />
+                                    <TextInput type="date" className="w-full p-3" value={data.drop_or_date} onChange={e => setData('drop_or_date', e.target.value)} onKeyDown={handleEnterKey} required />
                                     <InputError message={errors.drop_or_date} className="mt-1" />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-gray-600 uppercase tracking-wide mb-1.5">Amount (P)</label>
-                                    <TextInput type="number" step="0.01" className="w-full font-bold p-3" placeholder="100.00" value={data.drop_amount} onChange={e => setData('drop_amount', e.target.value)} required />
+                                    <TextInput type="number" step="0.01" className="w-full font-bold p-3" placeholder="100.00" value={data.drop_amount} onChange={e => setData('drop_amount', e.target.value)} onKeyDown={handleEnterKey} required />
                                     <InputError message={errors.drop_amount} className="mt-1" />
                                 </div>
                             </div>
@@ -218,7 +258,7 @@ export default function DropRecordModal({ show, onClose, application, officials,
                                         label=""
                                         value={data.drop_official}
                                         onChange={handleOfficialChange}
-                                        options={officialNames}
+                                        options={officialOptions}
                                         error={errors.drop_official}
                                         required={true}
                                         className="[&>label]:hidden" /* <-- Placed directly inside the component! */
@@ -231,6 +271,7 @@ export default function DropRecordModal({ show, onClose, application, officials,
                                         placeholder="e.g. Administrative Aide IV"
                                         value={data.drop_position}
                                         onChange={e => setData('drop_position', e.target.value)}
+                                        onKeyDown={handleEnterKey}
                                         required
                                     />
                                     <InputError message={errors.drop_position} className="mt-1" />
@@ -244,7 +285,7 @@ export default function DropRecordModal({ show, onClose, application, officials,
                                 </p>
                             </div>
                         </div>
-                    </form>
+                    </div>
                 </div>
 
                 {/* FOOTER */}
@@ -269,8 +310,7 @@ export default function DropRecordModal({ show, onClose, application, officials,
                     )}
 
                     <button
-                        type="button"
-                        onClick={handleSubmit}
+                        type="submit"
                         disabled={processing}
                         className="w-full sm:w-auto px-6 py-2.5 bg-orange-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-orange-500 active:bg-orange-700 shadow-sm disabled:opacity-25 flex justify-center items-center gap-2 transition-all"
                     >
@@ -278,7 +318,7 @@ export default function DropRecordModal({ show, onClose, application, officials,
                         {processing ? 'Processing...' : (isAlreadyDropped ? 'Save Updates' : 'Confirm Drop')}
                     </button>
                 </div>
-            </div>
+            </form>
         </Modal>
     );
 }

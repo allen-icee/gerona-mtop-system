@@ -12,7 +12,7 @@ export default function Authenticated({
     header,
     children,
 }: PropsWithChildren<{ header?: ReactNode }>) {
-    const user = usePage().props.auth.user as any; // Adding 'as any' just in case TypeScript complains about role
+    const user = usePage().props.auth.user as any;
 
     const [showingNavigationDropdown, setShowingNavigationDropdown] =
         useState(false);
@@ -71,10 +71,10 @@ export default function Authenticated({
                                         OR Records
                                     </NavLink>
 
-                                    {/* --- DESKTOP ADMIN LINKS --- */}
+
                                     {user.role === "admin" && (
                                         <>
-                                            {/* MOVED PRINT SETTINGS HERE */}
+
                                             <NavLink
                                                 href={route("settings.print.edit")}
                                                 active={route().current(
@@ -234,10 +234,10 @@ export default function Authenticated({
                                 OR Records
                             </ResponsiveNavLink>
 
-                             {/* --- MOBILE ADMIN LINKS --- */}
+
                             {user.role === "admin" && (
                                 <>
-                                    {/* MOVED PRINT SETTINGS HERE */}
+
                                     <ResponsiveNavLink
                                         href={route("settings.print.edit")}
                                         active={route().current("settings.print.edit")}

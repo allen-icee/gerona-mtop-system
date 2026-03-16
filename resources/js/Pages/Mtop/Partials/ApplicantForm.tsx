@@ -10,14 +10,12 @@ export default function ApplicantForm({
     onKeyDown,
 }: any) {
     const handleNameChange = (field: string, value: string) => {
-        // Added Ññ to the regex to allow the character
         const cleanValue = value.toUpperCase().replace(/[^A-ZÑñ\s.-]/g, "");
         setData(field, cleanValue);
     };
 
     const togglePaidBy = () => {
         if (!data.show_paid_by) {
-            // Turning it ON: Only auto-fill if the fields are currently empty
             setData({
                 ...data,
                 show_paid_by: true,
@@ -27,7 +25,6 @@ export default function ApplicantForm({
                 paid_by_suffix: data.paid_by_suffix || data.suffix,
             });
         } else {
-            // Turning it OFF: Just hide the section, do NOT delete the data
             setData({
                 ...data,
                 show_paid_by: false,

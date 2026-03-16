@@ -42,7 +42,7 @@ class MtopApplicationController extends Controller
             'filters' => $filters,
             'officials' => $officials,
             'activeEvents' => $activeEvents,
-            'feeSettings' => \App\Models\FeeSetting::first() // <--- Add this
+            'feeSettings' => \App\Models\FeeSetting::first()
         ]);
     }
 
@@ -101,11 +101,9 @@ class MtopApplicationController extends Controller
                 $eventStart = Carbon::parse($e->start_date)->startOfDay();
                 $eventEnd = Carbon::parse($e->end_date)->endOfDay();
 
-                // Only apply the promo if the transaction date falls within the event dates
                 if ($tDate->between($eventStart, $eventEnd)) {
                     $event = $e;
                 } else {
-                    // SECURE FIX: Completely strip the promo data if they backdate!
                     $validated['event_id'] = null;
                     $validated['is_free'] = false;
                 }
@@ -226,7 +224,6 @@ class MtopApplicationController extends Controller
         $application = MtopApplication::findOrFail($id);
         $validated = $request->validated();
 
-        // 1. SANITIZE PAID BY FIELDS IF TOGGLED OFF
         $validated['show_paid_by'] = filter_var($validated['show_paid_by'] ?? false, FILTER_VALIDATE_BOOLEAN);
         if (!$validated['show_paid_by']) {
             $validated['paid_by_last_name'] = null;
@@ -244,11 +241,9 @@ class MtopApplicationController extends Controller
                     $eventStart = Carbon::parse($e->start_date)->startOfDay();
                     $eventEnd = Carbon::parse($e->end_date)->endOfDay();
 
-                    // Only apply the promo if the transaction date falls within the event dates
                     if ($tDate->between($eventStart, $eventEnd)) {
                         $event = $e;
                     } else {
-                        // SECURE FIX: Completely strip the promo data if they backdate!
                         $validated['event_id'] = null;
                         $validated['is_free'] = false;
                     }
@@ -280,9 +275,6 @@ class MtopApplicationController extends Controller
                     throw new \Exception("The Control Number {$final_mt_number} was just updated by another user. Please use a different number.");
                 }
 
-                // ====================================================================
-                // SMART RESET: If Paid By was turned off, wipe it from Driver Name too
-                // ====================================================================
                 if (!$validated['show_paid_by'] && $application->show_paid_by) {
                     $pbInitial = $application->paid_by_middle_name ? substr($application->paid_by_middle_name, 0, 1) . '. ' : '';
                     $pbSfx = $application->paid_by_suffix ? ' ' . $application->paid_by_suffix : '';
@@ -292,12 +284,10 @@ class MtopApplicationController extends Controller
 
                     $currentDriver = trim(strtoupper($application->driver_name ?? ''));
 
-                    // If the current driver name matches the old Paid By name, wipe it!
                     if ($currentDriver === $fullPaidByName || $currentDriver === $basicPaidByName) {
                         $application->driver_name = null;
                     }
                 }
-                // ====================================================================
 
                 $application->update($validated);
                 $this->queueForSync('mtop_applications', $application->fresh()->toArray());
@@ -363,15 +353,12 @@ class MtopApplicationController extends Controller
         $validated['status'] = 'cancelled';
 
         DB::transaction(function () use ($application, $validated) {
-            // Always update the specific application being dropped
             $application->update($validated);
             $this->queueForSync('mtop_applications', $application->fresh()->toArray());
 
             if ($application->franchise_id) {
                 $franchise = MtopFranchise::find($application->franchise_id);
 
-                // BUG FIX: ONLY alter the Franchise if the application being dropped was the Active/Current owner.
-                // If they are dropping an old/archived record, do NOT overwrite the new owner's franchise details!
                 if ($franchise && in_array($application->getOriginal('status'), ['active', 'upcoming'])) {
                     $franchise->update([
                         'status' => 'cancelled',
@@ -390,14 +377,12 @@ class MtopApplicationController extends Controller
             }
         });
 
-        // Return with the ID so the frontend can trigger the print tab
         return redirect()->back()->with('success_data', [
             'id' => $application->id,
             'action' => 'dropped'
         ])->with('message', 'Record dropped and cancelled successfully.');
     }
 
-    // Add this new method
     public function printDrop($id): Response
     {
         $application = MtopApplication::findOrFail($id);
@@ -475,15 +460,14 @@ class MtopApplicationController extends Controller
                 'Cedula Date',
                 'Punong Bayan',
                 'Authorized Official',
-                'Driver Name',          // Added New Field
-                'Is Free/Promo',        // Added New Field
-                'Paid By Details',      // Added New Field
+                'Driver Name',
+                'Is Free/Promo',
+                'Paid By Details',
                 'Valid Until',
                 'Status'
             ]);
 
             foreach ($records as $row) {
-                // Safely format the Paid By details
                 $paidBy = $row->show_paid_by
                     ? trim("{$row->paid_by_first_name} {$row->paid_by_last_name} {$row->paid_by_suffix}")
                     : 'N/A';
@@ -509,9 +493,9 @@ class MtopApplicationController extends Controller
                     $row->cedula_date,
                     $row->punong_bayan,
                     $row->authorized_official,
-                    $row->driver_name ?? 'N/A',            // Injects Driver
-                    $row->is_free ? 'YES' : 'NO',          // Injects Promo Info
-                    $paidBy,                               // Injects Paid By
+                    $row->driver_name ?? 'N/A',
+                    $row->is_free ? 'YES' : 'NO',
+                    $paidBy,
                     $row->valid_until,
                     $row->status
                 ]);
@@ -625,11 +609,9 @@ class MtopApplicationController extends Controller
                 $eventStart = Carbon::parse($e->start_date)->startOfDay();
                 $eventEnd = Carbon::parse($e->end_date)->endOfDay();
 
-                // Only apply the promo if the transaction date falls within the event dates
                 if ($tDate->between($eventStart, $eventEnd)) {
                     $event = $e;
                 } else {
-                    // SECURE FIX: Completely strip the promo data if they backdate!
                     $validated['event_id'] = null;
                     $validated['is_free'] = false;
                 }
@@ -755,11 +737,9 @@ class MtopApplicationController extends Controller
                 $eventStart = Carbon::parse($e->start_date)->startOfDay();
                 $eventEnd = Carbon::parse($e->end_date)->endOfDay();
 
-                // Only apply the promo if the transaction date falls within the event dates
                 if ($tDate->between($eventStart, $eventEnd)) {
                     $event = $e;
                 } else {
-                    // SECURE FIX: Completely strip the promo data if they backdate!
                     $validated['event_id'] = null;
                     $validated['is_free'] = false;
                 }
@@ -846,7 +826,7 @@ class MtopApplicationController extends Controller
     public function importData(Request $request): RedirectResponse
     {
         $request->validate([
-            'import_file' => 'required|file|mimes:csv,txt|max:20480', // Max 20MB
+            'import_file' => 'required|file|mimes:csv,txt|max:20480',
         ]);
 
         try {
@@ -854,7 +834,7 @@ class MtopApplicationController extends Controller
 
             if (($handle = fopen($file->getRealPath(), 'r')) !== false) {
                 $header = fgetcsv($handle, 1000, ',');
-                $validityService = app(\App\Services\ValidityService::class); // Instantiating your service
+                $validityService = app(\App\Services\ValidityService::class);
 
                 DB::transaction(function () use ($handle, $validityService) {
                     while (($row = fgetcsv($handle, 1000, ',')) !== false) {
@@ -878,24 +858,20 @@ class MtopApplicationController extends Controller
 
                         $tDate = !empty(trim($row[1] ?? '')) ? Carbon::parse(trim($row[1])) : now();
 
-                        // 1. SMART FIX: Check if there is an active event for this transaction date
                         $event = \App\Models\Event::where('is_active', true)
                             ->whereDate('start_date', '<=', $tDate)
                             ->whereDate('end_date', '>=', $tDate)
                             ->first();
 
-                        // THE FIX: If there is an event, we treat it as an event validity (false for full 3-year).
                         $wantsFullValidity = $event ? false : true;
 
-                        // Calculate the correct valid_until date using the Event!
                         $expiryResult = $validityService->computeExpiry(
                             $tDate,
                             $plate_no,
-                            $wantsFullValidity, // <--- THIS PREVENTS THE JUMP TO 2030
+                            $wantsFullValidity,
                             $event
                         );
 
-                        // 1. Create or Update Franchise
                         $franchise = MtopFranchise::updateOrCreate(
                             ['mt_number' => $mt_number],
                             [
@@ -914,7 +890,6 @@ class MtopApplicationController extends Controller
                             ]
                         );
 
-                        // 2. Create or Update Application
                         $application = MtopApplication::updateOrCreate(
                             ['mt_number' => $mt_number],
                             [
@@ -940,12 +915,12 @@ class MtopApplicationController extends Controller
                                 'authorized_official' => trim($row[19] ?? '') ?: null,
                                 'status' => 'active',
                                 'processed_by' => Auth::id(),
-                                'is_free' => !$wantsFullValidity, // Sets it to "Promo" so the system understands why it is short
+                                'is_free' => !$wantsFullValidity,
                                 'event_id' => $event ? $event->id : null,
                                 'valid_until' => $expiryResult['expiry_date'],
                             ]
                         );
-                        // 3. Queue both records to sync to offline laptops
+
                         $this->queueForSync('mtop_franchises', $franchise->toArray());
                         $this->queueForSync('mtop_applications', $application->toArray());
                     }

@@ -267,12 +267,10 @@ export default function Create({
                 if (tDate < eStart || tDate > eEnd) {
                     const confirmProceed = window.confirm(
                         "⚠️ WARNING: DATE OUTSIDE PROMO PERIOD\n\n" +
-                            "The transaction date you selected is outside the active dates of the Promo/Event.\n\n" +
-                            "If you click OK, the system will save this record, but the FREE PROMO will be removed and it will be processed as a standard 3-Year validity permit.\n\n" +
-                            "Do you want to proceed?",
+                        "The transaction date you selected is outside the active dates of the Promo/Event.\n\n" +
+                        "If you click OK, the system will save this record, but the FREE PROMO will be removed and it will be processed as a standard 3-Year validity permit.\n\n" +
+                        "Do you want to proceed?",
                     );
-
-                    // If they click "Cancel", we stop the function so it doesn't save!
                     if (!confirmProceed) return;
                 }
             }
@@ -445,11 +443,10 @@ export default function Create({
                                 <button
                                     type="button"
                                     onClick={() => setStep(1)}
-                                    className={`flex-1 py-4 text-xs sm:text-sm hover:cursor-pointer  font-bold uppercase tracking-wider flex items-center justify-center gap-2 rounded-tl-lg ${
-                                        step === 1
+                                    className={`flex-1 py-4 text-xs sm:text-sm hover:cursor-pointer  font-bold uppercase tracking-wider flex items-center justify-center gap-2 rounded-tl-lg ${step === 1
                                             ? "bg-white text-blue-600 border-t-2 border-blue-600"
                                             : "text-gray-400 hover:text-gray-600"
-                                    }`}
+                                        }`}
                                 >
                                     <Icon
                                         icon="solar:user-id-bold"
@@ -466,11 +463,10 @@ export default function Create({
                                                 "Complete Step 1 first",
                                             );
                                     }}
-                                    className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase tracking-wider hover:cursor-pointer flex items-center justify-center gap-2 ${
-                                        step === 2
+                                    className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase tracking-wider hover:cursor-pointer flex items-center justify-center gap-2 ${step === 2
                                             ? "bg-white text-blue-600 border-t-2 border-blue-600"
                                             : "text-gray-400 hover:text-gray-600"
-                                    }`}
+                                        }`}
                                 >
                                     <Icon icon="solar:wheel-bold" width="18" />{" "}
                                     Unit
@@ -485,11 +481,10 @@ export default function Create({
                                                 "Complete Step 1 & 2 first",
                                             );
                                     }}
-                                    className={`flex-1 py-4 text-xs sm:text-sm hover:cursor-pointer font-bold uppercase tracking-wider flex items-center justify-center gap-2 rounded-tr-lg ${
-                                        step === 3
+                                    className={`flex-1 py-4 text-xs sm:text-sm hover:cursor-pointer font-bold uppercase tracking-wider flex items-center justify-center gap-2 rounded-tr-lg ${step === 3
                                             ? "bg-white text-blue-600 border-t-2 border-blue-600"
                                             : "text-gray-400 hover:text-gray-600"
-                                    }`}
+                                        }`}
                                 >
                                     <Icon
                                         icon="solar:file-check-bold"

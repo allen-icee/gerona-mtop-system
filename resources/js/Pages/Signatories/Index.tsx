@@ -36,7 +36,7 @@ const POSITIONS = [
     "Authorized Official",
     "Committee on Transportation",
     "Collecting Officer",
-    "Dropping Official" // <--- Added here
+    "Dropping Official"
 ];
 
 const FILTER_TABS = ["All", ...POSITIONS];
@@ -51,7 +51,7 @@ const FEE_LABELS = {
     id_driver_operator_owner: "I.D. (Driver/Operator/Owner)",
     body_number_plate: "Body Number / Plate",
     penalty: "Penalty",
-    dropping_fee: "Dropping Fee", // <--- Added here
+    dropping_fee: "Dropping Fee",
 };
 
 const DEFAULT_FEES = {
@@ -64,7 +64,7 @@ const DEFAULT_FEES = {
     id_driver_operator_owner: 100,
     body_number_plate: 100,
     penalty: 211.25,
-    dropping_fee: 100, // <--- Added here
+    dropping_fee: 100,
 };
 
 export default function Index({ signatories = [], feeSettings, filters = {} }: Props) {
@@ -79,7 +79,6 @@ export default function Index({ signatories = [], feeSettings, filters = {} }: P
 
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
-    // For handling the custom position typing
     const [isCustomPosition, setIsCustomPosition] = useState(false);
 
     const getInitialFees = () => {
@@ -174,7 +173,6 @@ export default function Index({ signatories = [], feeSettings, filters = {} }: P
         return () => clearTimeout(timer);
     }, [search, positionFilter]);
 
-    // Added a separate state for the dropdown vs the actual value sent
     const [dropdownPosition, setDropdownPosition] = useState("Punong Bayan");
 
     const { data, setData, post, put, reset, errors, processing } = useForm({
@@ -186,13 +184,11 @@ export default function Index({ signatories = [], feeSettings, filters = {} }: P
     const openModal = (signatory?: Signatory) => {
         if (signatory) {
             setEditingId(signatory.id);
-            // Check if the position from DB is one of the standard ones
             if (POSITIONS.includes(signatory.position)) {
                 setDropdownPosition(signatory.position);
                 setIsCustomPosition(signatory.position === "Dropping Official");
                 setData({ name: signatory.name, position: signatory.position, is_active: Boolean(signatory.is_active) });
             } else {
-                // If it's a custom title (like Admin Aide IV), set dropdown to Dropping Official
                 setDropdownPosition("Dropping Official");
                 setIsCustomPosition(true);
                 setData({ name: signatory.name, position: signatory.position, is_active: Boolean(signatory.is_active) });
@@ -211,7 +207,7 @@ export default function Index({ signatories = [], feeSettings, filters = {} }: P
         setDropdownPosition(val);
         if (val === "Dropping Official") {
             setIsCustomPosition(true);
-            setData("position", ""); // Clear it so they can type
+            setData("position", "");
         } else {
             setIsCustomPosition(false);
             setData("position", val);
@@ -220,7 +216,6 @@ export default function Index({ signatories = [], feeSettings, filters = {} }: P
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        // Fallback in case they selected Dropping Official but didn't type anything
         if (dropdownPosition === "Dropping Official" && data.position.trim() === "") {
             setData("position", "Dropping Official");
         }

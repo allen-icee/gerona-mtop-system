@@ -298,10 +298,9 @@ export default function Dashboard({
                             </span>
                         </Link>
 
-                        {/* --- ADMIN ONLY ACTIONS --- */}
+
                         {user.role === "admin" && (
                             <>
-                                {/* PRINT SETTINGS MOVED HERE */}
                                 <Link
                                     href={route("settings.print.edit")}
                                     className="group bg-white p-4 sm:p-6 rounded-xl shadow-sm hover:shadow-md transition-all border border-gray-100 flex flex-col items-center text-center gap-3 hover:-translate-y-1"

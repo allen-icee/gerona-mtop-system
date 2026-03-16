@@ -8,9 +8,9 @@ interface Props {
     show: boolean;
     onClose: () => void;
     onLeave: () => void;
-    onSave?: () => void;       // <--- Added this to fix the error
-    processing?: boolean;      // <--- Added this to fix the error
-    message?: string;          // <--- Added this to make the text dynamic
+    onSave?: () => void;
+    processing?: boolean;
+    message?: string;
 }
 
 export default function UnsavedChangesModal({
@@ -44,7 +44,6 @@ export default function UnsavedChangesModal({
                         Leave Anyway
                     </DangerButton>
 
-                    {/* This Save button only appears if the page supports saving from the modal */}
                     {onSave && (
                         <PrimaryButton
                             onClick={onSave}

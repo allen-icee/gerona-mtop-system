@@ -1,17 +1,25 @@
 <?php
-//GeronaMTOP\routes\web.php
+// C:\GeronaMTOP\routes\web.php
 use App\Http\Controllers\MtopApplicationController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\SignatoryController;
 use App\Http\Controllers\HolidayController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\OrRecordController;
+use App\Http\Controllers\FeeSettingController;
+use App\Http\Controllers\PrintSettingController;
 use App\Http\Middleware\IsAdmin;
-use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 use App\Models\MtopApplication;
 use App\Models\User;
-use App\Http\Controllers\PrintSettingController;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
+use Inertia\Inertia;
+
+/*
+|--------------------------------------------------------------------------
+| Public Routes
+|--------------------------------------------------------------------------
+*/
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -20,8 +28,13 @@ Route::get('/', function () {
     ]);
 });
 
-Route::get('/dashboard', function () {
+/*
+|--------------------------------------------------------------------------
+| Authenticated Routes
+|--------------------------------------------------------------------------
+*/
 
+Route::get('/dashboard', function () {
     $serverIp = getHostByName(getHostName());
 
     return Inertia::render('Dashboard', [
@@ -34,56 +47,70 @@ Route::get('/dashboard', function () {
 
 Route::middleware('auth')->group(function () {
 
-    // Simplified Holiday Controller
-    Route::post('/settings/holidays', [HolidayController::class, 'store'])->name('holidays.store');
-    Route::delete('/settings/holidays/{holiday}', [HolidayController::class, 'destroy'])->name('holidays.destroy');
-    Route::put('/settings/holidays/{holiday}', [HolidayController::class, 'update'])->name('holidays.update');
-
+    // ==========================================
+    // MTOP Applications
+    // ==========================================
     Route::get('/mtop', [MtopApplicationController::class, 'index'])->name('mtop.index');
-
-    // --- OR RECORDS SECTION ---
-    Route::get('/or-records', [\App\Http\Controllers\OrRecordController::class, 'index'])->name('or_records.index');
-    Route::post('/or-records', [\App\Http\Controllers\OrRecordController::class, 'store'])->name('or_records.store');
-    Route::put('/or-records/{id}', [\App\Http\Controllers\OrRecordController::class, 'update'])->name('or_records.update');
-    Route::post('/or-records/import', [\App\Http\Controllers\OrRecordController::class, 'import'])->name('or_records.import');
-    Route::post('/settings/fees', [\App\Http\Controllers\FeeSettingController::class, 'update'])->name('settings.fees.update');
-    Route::get('/or-records/export', [\App\Http\Controllers\OrRecordController::class, 'export'])->name('or_records.export');
-
     Route::get('/mtop/create', [MtopApplicationController::class, 'create'])->name('mtop.create');
     Route::post('/mtop', [MtopApplicationController::class, 'store'])->name('mtop.store');
 
-    Route::post('/mtop/update-driver-info', [MtopApplicationController::class, 'updateDriverInfo'])->name('mtop.update_driver');
-    Route::get('/mtop/print-ids', [MtopApplicationController::class, 'printIds'])->name('mtop.print_ids');
+    // MTOP Specific Actions
+    Route::get('/mtop/{id}/edit', [MtopApplicationController::class, 'edit'])->name('mtop.edit');
+    Route::put('/mtop/{id}', [MtopApplicationController::class, 'update'])->name('mtop.update');
+    Route::put('/mtop/{id}/cancel', [MtopApplicationController::class, 'cancel'])->name('mtop.cancel');
 
+    // MTOP Renewals & Transfers
     Route::get('/mtop/{id}/renew', [MtopApplicationController::class, 'renew'])->name('mtop.renew');
     Route::post('/mtop/{id}/renew', [MtopApplicationController::class, 'storeRenewal'])->name('mtop.store_renewal');
-
     Route::get('/mtop/{id}/transfer', [MtopApplicationController::class, 'transfer'])->name('mtop.transfer');
     Route::post('/mtop/{id}/transfer', [MtopApplicationController::class, 'storeTransfer'])->name('mtop.store_transfer');
 
-    Route::get('/mtop/{id}/edit', [MtopApplicationController::class, 'edit'])->name('mtop.edit');
-    Route::put('/mtop/{id}', [MtopApplicationController::class, 'update'])->name('mtop.update');
-    // Find your existing cancel route and update it:
-    Route::put('/mtop/{id}/cancel', [MtopApplicationController::class, 'cancel'])->name('mtop.cancel');
-
-    // Add the new Print Drop route right below the other print routes:
-    Route::get('/mtop/{id}/print-drop', [MtopApplicationController::class, 'printDrop'])->name('mtop.print_drop');
+    // MTOP Printing & Exports
+    Route::get('/mtop/print-ids', [MtopApplicationController::class, 'printIds'])->name('mtop.print_ids');
     Route::get('/mtop/{id}/print', [MtopApplicationController::class, 'print'])->name('mtop.print');
+    Route::get('/mtop/{id}/print-drop', [MtopApplicationController::class, 'printDrop'])->name('mtop.print_drop');
     Route::get('/mtop/export', [MtopApplicationController::class, 'export'])->name('mtop.export');
-
-    Route::get('/system/audit-logs/export', [UserController::class, 'exportAuditLogs'])->name('audit-logs.export');
-    Route::delete('/system/audit-logs/flush', [UserController::class, 'flushAuditLogs'])->name('audit-logs.flush');
     Route::post('/mtop/import', [MtopApplicationController::class, 'importData'])->name('mtop.import');
 
-    // 👇 THIS HAS BEEN MOVED OUTSIDE THE ADMIN SECTION
-    Route::get('/or-records/{id}/print', [\App\Http\Controllers\OrRecordController::class, 'print'])->name('or_records.print');
+    // MTOP Driver Info
+    Route::post('/mtop/update-driver-info', [MtopApplicationController::class, 'updateDriverInfo'])->name('mtop.update_driver');
 
+    // ==========================================
+    // OR Records
+    // ==========================================
+    Route::get('/or-records', [OrRecordController::class, 'index'])->name('or_records.index');
+    Route::post('/or-records', [OrRecordController::class, 'store'])->name('or_records.store');
+    Route::put('/or-records/{id}', [OrRecordController::class, 'update'])->name('or_records.update');
+    Route::get('/or-records/{id}/print', [OrRecordController::class, 'print'])->name('or_records.print');
+    Route::post('/or-records/import', [OrRecordController::class, 'import'])->name('or_records.import');
+    Route::get('/or-records/export', [OrRecordController::class, 'export'])->name('or_records.export');
+
+    // ==========================================
+    // General Settings (Fees, Print, Holidays)
+    // ==========================================
+    Route::post('/settings/fees', [FeeSettingController::class, 'update'])->name('settings.fees.update');
+
+    Route::get('/settings/print', [PrintSettingController::class, 'edit'])->name('settings.print.edit');
+    Route::post('/settings/print', [PrintSettingController::class, 'update'])->name('settings.print.update');
+
+    Route::post('/settings/holidays', [HolidayController::class, 'store'])->name('holidays.store');
+    Route::put('/settings/holidays/{holiday}', [HolidayController::class, 'update'])->name('holidays.update');
+    Route::delete('/settings/holidays/{holiday}', [HolidayController::class, 'destroy'])->name('holidays.destroy');
+
+    // ==========================================
+    // System & Audit Logs
+    // ==========================================
+    Route::get('/system/audit-logs/export', [UserController::class, 'exportAuditLogs'])->name('audit-logs.export');
+    Route::delete('/system/audit-logs/flush', [UserController::class, 'flushAuditLogs'])->name('audit-logs.flush');
+
+    // ==========================================
+    // Backup & Export Data
+    // ==========================================
     Route::post('/settings/backup', function () {
-
         try {
             Artisan::call('backup:run');
         } catch (\Exception $e) {
-            // If server backup fails, we still try to give them the CSV hehe
+            // Silently handle backup command failure
         }
 
         $records = MtopApplication::latest()->cursor();
@@ -134,25 +161,26 @@ Route::middleware('auth')->group(function () {
         return response()->stream($callback, 200, $headers);
     })->name('settings.backup');
 
-    Route::get('/settings/print', [PrintSettingController::class, 'edit'])->name('settings.print.edit');
-    Route::post('/settings/print', [PrintSettingController::class, 'update'])->name('settings.print.update');
-
-    // --- ADMIN ONLY ROUTES ---
+    /*
+    |--------------------------------------------------------------------------
+    | Administrator Only Routes
+    |--------------------------------------------------------------------------
+    */
     Route::middleware(IsAdmin::class)->group(function () {
 
+        // Admin: Record Deletion
         Route::delete('/mtop/{id}', [MtopApplicationController::class, 'destroy'])->name('mtop.destroy');
+        Route::delete('/or-records/{id}', [OrRecordController::class, 'destroy'])->name('or_records.destroy');
 
-        // Only Admins can delete OR Records
-        Route::delete('/or-records/{id}', [\App\Http\Controllers\OrRecordController::class, 'destroy'])->name('or_records.destroy');
-
-        // (The Print OR Route is no longer here)
-
+        // Admin: User Management
         Route::resource('users', UserController::class);
 
+        // Admin: Signatories Management
         Route::post('/signatories/import', [SignatoryController::class, 'import'])->name('signatories.import');
         Route::get('/signatories/export', [SignatoryController::class, 'export'])->name('signatories.export');
         Route::resource('signatories', SignatoryController::class)->only(['index', 'store', 'update', 'destroy']);
 
+        // Admin: Event Settings
         Route::get('/settings/events', [EventController::class, 'index'])->name('events.index');
         Route::post('/settings/events', [EventController::class, 'store'])->name('events.store');
         Route::put('/settings/events/{event}', [EventController::class, 'update'])->name('events.update');

@@ -96,22 +96,18 @@ export default function SignatorySelect({
 
     return (
         <div className={`relative ${className}`}>
-            {/* Updated Label Styling to match InputGroup */}
             <label className="block mb-1 font-semibold text-gray-800">
                 {label} {required && <span className="text-red-500 ml-1">*</span>}
             </label>
 
             <div className="relative">
-                {/* Updated Input Styling to match InputGroup */}
                 <input
                     type="text"
-                    className={`block w-full h-12 pl-4 pr-10 text-sm font-semibold border-gray-400 rounded-lg shadow-sm focus:border-blue-600 focus:ring-blue-600 transition-all ${
-                        error ? "border-red-500" : ""
-                    } ${
-                        disabled
+                    className={`block w-full h-12 pl-4 pr-10 text-sm font-semibold border-gray-400 rounded-lg shadow-sm focus:border-blue-600 focus:ring-blue-600 transition-all ${error ? "border-red-500" : ""
+                        } ${disabled
                             ? "bg-gray-100 cursor-not-allowed text-gray-500"
                             : "bg-white text-gray-900"
-                    }`}
+                        }`}
                     value={value}
                     disabled={disabled}
                     onChange={(e) => {
@@ -129,7 +125,6 @@ export default function SignatorySelect({
                     onKeyDown={handleKeyDown}
                 />
 
-                {/* Dropdown arrow positioning fixed to center in the new height */}
                 <div className="absolute inset-y-0 right-0 flex items-center pr-3.5 pointer-events-none text-gray-400 z-10">
                     <Icon icon="solar:alt-arrow-down-bold" width="20" height="20" />
                 </div>
@@ -148,11 +143,10 @@ export default function SignatorySelect({
                         return (
                             <li
                                 key={index}
-                                className={`px-4 py-2 cursor-pointer ${
-                                    index === selectedIndex
-                                        ? "bg-blue-100 text-blue-900"
-                                        : "hover:bg-blue-50 text-gray-700"
-                                }`}
+                                className={`px-4 py-2 cursor-pointer ${index === selectedIndex
+                                    ? "bg-blue-100 text-blue-900"
+                                    : "hover:bg-blue-50 text-gray-700"
+                                    }`}
                                 onMouseDown={() => {
                                     onChange(name);
                                     setIsOpen(false);
