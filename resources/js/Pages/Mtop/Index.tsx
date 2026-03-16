@@ -40,6 +40,7 @@ interface Props {
     applications: {
         data: MtopApplication[];
         links: any[];
+        total: number;
     };
     filters: {
         search?: string;
@@ -122,7 +123,7 @@ export default function Index({
             router.reload({
                 only: ["applications"]
             });
-        }, 60000); // 60 seconds is perfect to prevent SQLite locking!
+        }, 60000);
 
         return () => clearInterval(pollInterval);
     }, []);
@@ -174,19 +175,26 @@ export default function Index({
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex flex-col xl:flex-row justify-between items-center mb-6 gap-4">
                         <div className="flex flex-col md:flex-row gap-3 w-full xl:w-auto flex-wrap">
-                            <div className="relative w-full md:w-auto">
-                                <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-gray-500">
-                                    <Icon
-                                        icon="iconamoon:search-bold"
-                                        width="20"
+                            <div className="flex items-center gap-3 w-full md:w-auto">
+                                <div className="relative flex-1 md:flex-none w-full md:w-auto">
+                                    <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-gray-500">
+                                        <Icon
+                                            icon="iconamoon:search-bold"
+                                            width="20"
+                                        />
+                                    </div>
+                                    <TextInput
+                                        className="pl-12 w-full md:w-80 py-3 text-base shadow-sm"
+                                        placeholder="Search..."
+                                        value={search}
+                                        onChange={(e) => setSearch(e.target.value)}
                                     />
                                 </div>
-                                <TextInput
-                                    className="pl-12 w-full md:w-80 py-3 text-base shadow-sm"
-                                    placeholder="Search..."
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
-                                />
+
+                                <div className="flex items-center gap-1.5 bg-indigo-50 text-indigo-700 px-4 py-3 rounded-lg border border-indigo-200 shadow-sm whitespace-nowrap h-full">
+                                    <Icon icon="solar:documents-bold" width="20" className="text-indigo-500" />
+                                    <span className="font-extrabold text-lg leading-none">{applications.total}</span>
+                                </div>
                             </div>
 
                             <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto flex-wrap">
@@ -894,7 +902,7 @@ export default function Index({
                 onClose={() => setDroppingApp(null)}
                 application={droppingApp}
                 officials={officials}
-                feeSettings={feeSettings} // <--- Add this
+                feeSettings={feeSettings}
             />
         </AuthenticatedLayout>
     );

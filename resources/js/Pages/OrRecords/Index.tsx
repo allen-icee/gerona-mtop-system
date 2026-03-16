@@ -1,3 +1,4 @@
+//C\GeronaMTOP\resources\js\Pages\OrRecords\Index.tsx
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, router, usePage } from "@inertiajs/react";
 import { useState, useEffect, useRef } from "react";
@@ -80,29 +81,21 @@ export default function Index({ signatories = [], feeSettings, orRecords = [], n
         });
     };
     const user = usePage().props.auth.user as any;
-
     const [search, setSearch] = useState("");
     const [month, setMonth] = useState("");
     const [year, setYear] = useState("");
-
     const [isReqModalOpen, setIsReqModalOpen] = useState(false);
     const signatoryOptions = signatories.map(sig => sig.position ? `${sig.name} | ${sig.position}` : sig.name);
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
-
     const [deletingId, setDeletingId] = useState<number | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [viewingRecord, setViewingRecord] = useState<OrRecord | null>(null);
     const [editingRecord, setEditingRecord] = useState<OrRecord | null>(null);
-
-    // --- SUCCESS MODAL STATE ---
     const [successModal, setSuccessModal] = useState<{ show: boolean, action: 'create' | 'update' | 'delete', data: any }>({
         show: false, action: 'create', data: null
     });
-
     const { id, created_at, updated_at, ...FEE_PRICES } = feeSettings || {};
-
-    // --- CREATE STATES ---
     const [orNumber, setOrNumber] = useState(nextOrNumber);
     const [transactionDate, setTransactionDate] = useState(new Date().toISOString().split("T")[0]);
     const [agency, setAgency] = useState("LGU GERONA");
@@ -115,7 +108,6 @@ export default function Index({ signatories = [], feeSettings, orRecords = [], n
         body_number_plate: true, penalty: true,
     });
 
-    // --- EDIT STATES ---
     const [editOrNumber, setEditOrNumber] = useState("");
     const [editTransactionDate, setEditTransactionDate] = useState("");
     const [editAgency, setEditAgency] = useState("LGU GERONA");
@@ -128,7 +120,6 @@ export default function Index({ signatories = [], feeSettings, orRecords = [], n
         setOrNumber(nextOrNumber);
     }, [nextOrNumber]);
 
-    // Populate Edit Form when clicking Edit Button
     useEffect(() => {
         if (editingRecord) {
             setEditOrNumber(editingRecord.or_number || "");
@@ -146,14 +137,13 @@ export default function Index({ signatories = [], feeSettings, orRecords = [], n
                 account_clearance: true, sticker_fee: true, id_driver_operator_owner: true,
                 body_number_plate: true, penalty: true,
             });
-            setEditEnableConfigs(false); // Default to disabled
+            setEditEnableConfigs(false);
         }
     }, [editingRecord]);
 
     const openRequirements = () => setIsReqModalOpen(true);
     const proceedToPayment = () => { setIsReqModalOpen(false); setIsPaymentModalOpen(true); };
 
-    // Create Handlers
     const handleToggle = (key: keyof typeof toggles) => setToggles((prev) => ({ ...prev, [key]: !prev[key] }));
     const calculateTotal = () => {
         let total = 0;
@@ -165,7 +155,6 @@ export default function Index({ signatories = [], feeSettings, orRecords = [], n
         setPayorDetails({ ...payorDetails, [field]: cleanValue });
     };
 
-    // Edit Handlers
     const handleEditToggle = (key: keyof typeof editToggles) => setEditToggles((prev) => ({ ...prev, [key]: !prev[key] }));
     const calculateEditTotal = () => {
         let total = 0;
@@ -228,7 +217,7 @@ export default function Index({ signatories = [], feeSettings, orRecords = [], n
             onSuccess: (page: any) => {
                 setIsPaymentModalOpen(false);
                 setIsProcessing(false);
-                toast.success("Application saved successfully"); // Added Toast
+                toast.success("Application saved successfully");
                 const newId = page.props.orRecords[0]?.id;
                 setSuccessModal({
                     show: true,
@@ -259,7 +248,7 @@ export default function Index({ signatories = [], feeSettings, orRecords = [], n
             onSuccess: () => {
                 setEditingRecord(null);
                 setIsProcessing(false);
-                toast.success("Record updated successfully"); // Added Toast
+                toast.success("Record updated successfully");
                 setSuccessModal({
                     show: true,
                     action: 'update',
@@ -285,7 +274,7 @@ export default function Index({ signatories = [], feeSettings, orRecords = [], n
                     setDeletingId(null);
                     setIsDeleting(false);
                     if (recordToDelete) {
-                        toast.success("Record deleted successfully"); // Replaced successModal with Toast
+                        toast.success("Record deleted successfully");
                     }
                 },
             });
@@ -355,10 +344,14 @@ export default function Index({ signatories = [], feeSettings, orRecords = [], n
                                 <option value="">Year</option>
                                 {Array.from({ length: new Date().getFullYear() - 2000 + 2 }, (_, i) => new Date().getFullYear() + 1 - i).map((y) => (<option key={y} value={y}>{y}</option>))}
                             </select>
+
+                            <div className="flex items-center gap-1.5 bg-indigo-50 text-indigo-700 px-4 py-2 sm:py-0 rounded-lg border border-indigo-200 shadow-sm whitespace-nowrap h-full sm:h-12.5">
+                                <Icon icon="solar:documents-bold" width="20" className="text-indigo-500" />
+                                <span className="font-extrabold text-lg leading-none">{filteredRecords.length}</span>
+                                <span className="text-sm font-medium hidden sm:inline">Records</span>
+                            </div>
                         </div>
                     </div>
-
-
 
                     <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
                         <input
@@ -429,8 +422,6 @@ export default function Index({ signatories = [], feeSettings, orRecords = [], n
                                                 <button onClick={() => setEditingRecord(record)} title="Edit Record" className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 hover:text-blue-800 rounded-md transition-colors shadow-sm">
                                                     <Icon icon="solar:pen-new-square-bold" width="18" />
                                                 </button>
-
-                                                {/* Keep the admin check ONLY for the delete button */}
                                                 {user?.role === "admin" && (
                                                     <button onClick={() => confirmDelete(record.id)} title="Delete Record" className="p-2 text-red-600 bg-red-50 hover:bg-red-100 hover:text-red-800 rounded-md transition-colors shadow-sm">
                                                         <Icon icon="solar:trash-bin-trash-bold" width="18" />
@@ -446,7 +437,6 @@ export default function Index({ signatories = [], feeSettings, orRecords = [], n
                 </div>
             </div>
 
-            {/* REQUIREMENTS MODAL */}
             <Modal show={isReqModalOpen} onClose={() => setIsReqModalOpen(false)} maxWidth="md">
                 <div className="bg-gray-800 px-6 py-4 flex justify-between items-center sm:rounded-t-lg">
                     <h3 className="text-white font-bold uppercase tracking-wider flex items-center gap-2">
@@ -466,7 +456,6 @@ export default function Index({ signatories = [], feeSettings, orRecords = [], n
                 </div>
             </Modal>
 
-            {/* CREATE: PAYMENT FORM MODAL */}
             <Modal show={isPaymentModalOpen} onClose={() => setIsPaymentModalOpen(false)} maxWidth="5xl">
                 <div className="bg-gray-800 px-5 py-3 flex justify-between items-center sm:rounded-t-lg">
                     <h3 className="text-white font-bold uppercase tracking-wider text-sm flex items-center gap-2">
@@ -488,22 +477,14 @@ export default function Index({ signatories = [], feeSettings, orRecords = [], n
                                     <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${enableEditConfigs ? "translate-x-4" : "translate-x-0"}`} />
                                 </button>
                             </div>
-                            {/* TWO-ROW COMPACT GRID */}
-                            {/* TWO-ROW COMPACT GRID */}
-                            <div className="grid grid-cols-1 sm:grid-cols-12 gap-x-3 gap-y-1">
 
-                                {/* ROW 1 */}
-                                {/* OR NUMBER - 6 Columns */}
+                            <div className="grid grid-cols-1 sm:grid-cols-12 gap-x-3 gap-y-1">
                                 <div className={`sm:col-span-6 lg:col-span-6 transition-all ${!enableEditConfigs ? "opacity-50 saturate-0 pointer-events-none" : ""}`}>
-                                    {/* Changed text-xs to text-sm to match other labels */}
                                     <label className="block font-semibold text-gray-800 text-sm mb-1 whitespace-nowrap">
                                         OR Number <span className="text-red-500">*</span>
                                     </label>
-
-                                    {/* Removed fixed h-[38px], added items-stretch to align prefix and input naturally */}
                                     <div className="relative flex items-stretch border border-gray-300 rounded-md shadow-sm bg-white overflow-hidden focus-within:ring-1 focus-within:ring-indigo-500 focus-within:border-indigo-500 w-full">
                                         {createPrefix && (
-                                            // Added py-2 to match standard input padding
                                             <div className="px-3 py-3 bg-gray-100 text-gray-600 font-medium border-r border-gray-300 flex items-center justify-center cursor-not-allowed select-none text-sm shrink-0">
                                                 <Icon icon="solar:folder-with-files-bold" className="mr-1.5 text-gray-500" width="16" />
                                                 {createPrefix}
@@ -520,25 +501,20 @@ export default function Index({ signatories = [], feeSettings, orRecords = [], n
                                             }}
                                             onKeyDown={onKeyDown}
                                             placeholder="0001"
-                                            // Added py-2 here as well
                                             className="flex-1 block w-full border-none focus:ring-0 text-sm px-3 py-2 font-bold text-indigo-700 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
                                             required
                                         />
                                     </div>
                                 </div>
 
-                                {/* TRANSACTION DATE - 6 Columns */}
                                 <div className="sm:col-span-6 lg:col-span-6">
                                     <InputGroup id="transactionDate" label="Date" type="date" value={transactionDate} disabled={!enableEditConfigs} onChange={(e) => setTransactionDate(e.target.value)} onKeyDown={onKeyDown} required className={`transition-all ${!enableEditConfigs ? "opacity-50 saturate-0 pointer-events-none" : ""}`} />
                                 </div>
 
-                                {/* ROW 2 */}
-                                {/* AGENCY - 6 Columns */}
                                 <div className="sm:col-span-6 lg:col-span-6">
                                     <InputGroup id="agency" label="Agency" value={agency} disabled onChange={(e) => setAgency(e.target.value)} onKeyDown={onKeyDown} className="opacity-50 saturate-0 pointer-events-none" />
                                 </div>
 
-                                {/* COLLECTING OFFICER - 6 Columns */}
                                 <div className="sm:col-span-6 lg:col-span-6">
                                     <SignatorySelect label="Collecting Officer" value={collectingOfficer} onChange={(val) => setCollectingOfficer(val)} options={signatoryOptions} required={true} disabled={!enableEditConfigs} onKeyDown={onKeyDown} className={`transition-all ${!enableEditConfigs ? "opacity-50 saturate-0 pointer-events-none" : ""}`} />
                                 </div>
@@ -639,7 +615,6 @@ export default function Index({ signatories = [], feeSettings, orRecords = [], n
                 </div>
             </Modal>
 
-            {/* EDIT RECORD MODAL */}
             <Modal show={editingRecord !== null} onClose={() => setEditingRecord(null)} maxWidth="6xl">
                 <div className="bg-gray-800 px-6 py-4 flex justify-between items-center sm:rounded-t-lg">
                     <h3 className="text-white font-bold uppercase tracking-wider flex items-center gap-2">
@@ -780,9 +755,7 @@ export default function Index({ signatories = [], feeSettings, orRecords = [], n
                     <PrimaryButton
                         id="btn-update"
                         onClick={handleUpdateRecord}
-                        // 👇 Added hasChanges to the color condition
                         className={`w-full sm:w-auto shadow-md flex items-center justify-center gap-2 py-2.5 px-8 transition-colors ${isEditFormValid && hasChanges ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400 cursor-not-allowed'}`}
-                        // 👇 Added !hasChanges to the disabled condition
                         disabled={!isEditFormValid || !hasChanges || isProcessing}
                     >
                         <Icon icon="solar:diskette-bold" width="20" />
@@ -791,7 +764,6 @@ export default function Index({ signatories = [], feeSettings, orRecords = [], n
                 </div>
             </Modal>
 
-            {/* VIEW RECORD MODAL */}
             <Modal show={viewingRecord !== null} onClose={() => setViewingRecord(null)} maxWidth="md">
                 <div className="bg-gray-800 px-6 py-4 flex justify-between items-center sm:rounded-t-lg">
                     <h3 className="text-white font-bold uppercase tracking-wider flex items-center gap-2">
@@ -847,10 +819,8 @@ export default function Index({ signatories = [], feeSettings, orRecords = [], n
                 </div>
             </Modal>
 
-            {/* CONFIRM DELETE MODAL */}
             <ConfirmDeleteModal show={deletingId !== null} onClose={() => setDeletingId(null)} onConfirm={handleDelete} processing={isDeleting} />
 
-            {/* --- NEW SUCCESS MODAL --- */}
             <OrSuccessModal
                 show={successModal.show}
                 action={successModal.action}
