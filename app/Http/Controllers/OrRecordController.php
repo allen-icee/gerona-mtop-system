@@ -1,5 +1,5 @@
 <?php
-//C:\GeronaMTOP\app\Http\Controllers\OrRecordController.php
+//GeronaMTOP\app\Http\Controllers\OrRecordController.php
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
