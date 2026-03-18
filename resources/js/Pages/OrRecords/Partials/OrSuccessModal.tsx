@@ -58,23 +58,24 @@ export default function OrSuccessModal({ show, onClose, onEdit, action, data }: 
                 <div className="w-full space-y-3">
                     {!isDelete && (
                         <>
-                            {action === "create" ? (
+
+                            <button
+                                onClick={() => window.open(route('or_records.print', data.id), '_blank')}
+                                className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-sm flex items-center justify-center gap-2 transition-colors"
+                            >
+                                <Icon icon="solar:printer-bold" width="20" />
+                                Print OR
+                            </button>
+
+
+                            {action === "create" && (
                                 <Link
                                     href={route("mtop.create", { payor_name: data.payor_name })}
-                                    className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-sm flex items-center justify-center gap-2 transition-colors"
+                                    className="w-full py-3 bg-gray-800 hover:bg-gray-900 text-white font-bold rounded-lg shadow-sm flex items-center justify-center gap-2 transition-colors"
                                 >
                                     <Icon icon="solar:document-add-bold" width="20" />
                                     Proceed to Application
                                 </Link>
-                            ) : (
-
-                                <button
-                                    onClick={() => window.open(route('or_records.print', data.id), '_blank')}
-                                    className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-sm flex items-center justify-center gap-2 transition-colors"
-                                >
-                                    <Icon icon="solar:printer-bold" width="20" />
-                                    Print OR
-                                </button>
                             )}
 
                             <button
