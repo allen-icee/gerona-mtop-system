@@ -298,24 +298,25 @@ export default function Dashboard({
                             </span>
                         </Link>
 
-                        <Link
-                            href={route("settings.print.edit")}
-                            className="group bg-white p-4 sm:p-6 rounded-xl shadow-sm hover:shadow-md transition-all border border-gray-100 flex flex-col items-center text-center gap-3 hover:-translate-y-1"
-                        >
-                            <div className="p-3 sm:p-4 bg-purple-50 text-purple-600 rounded-full group-hover:bg-purple-600 group-hover:text-white transition-colors">
-                                <Icon
-                                    icon="solar:printer-bold"
-                                    width="24"
-                                    className="sm:w-8 sm:h-8"
-                                />
-                            </div>
-                            <span className="font-semibold text-sm sm:text-base text-gray-700 group-hover:text-orange-900 leading-tight">
-                                Print Settings
-                            </span>
-                        </Link>
 
                         {user.role === "admin" && (
                             <>
+                                <Link
+                                    href={route("settings.print.edit")}
+                                    className="group bg-white p-4 sm:p-6 rounded-xl shadow-sm hover:shadow-md transition-all border border-gray-100 flex flex-col items-center text-center gap-3 hover:-translate-y-1"
+                                >
+                                    <div className="p-3 sm:p-4 bg-purple-50 text-purple-600 rounded-full group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                                        <Icon
+                                            icon="solar:printer-bold"
+                                            width="24"
+                                            className="sm:w-8 sm:h-8"
+                                        />
+                                    </div>
+                                    <span className="font-semibold text-sm sm:text-base text-gray-700 group-hover:text-orange-900 leading-tight">
+                                        Print Settings
+                                    </span>
+                                </Link>
+
                                 <button
                                     onClick={() => setShowImportModal(true)}
                                     className="group cursor-pointer bg-white p-4 sm:p-6 rounded-xl shadow-sm hover:shadow-md transition-all border border-gray-100 flex flex-col items-center text-center gap-3 hover:-translate-y-1 w-full"

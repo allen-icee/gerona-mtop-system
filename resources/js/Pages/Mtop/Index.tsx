@@ -10,6 +10,7 @@ import PermitPreview from "./Partials/PermitPreview";
 import { BARANGAYS } from "@/Constants/Barangays";
 import ConfirmDeleteModal from "@/Components/ConfirmDeleteModal";
 import DriverInfoModal from "./Partials/DriverInfoModal";
+import DropRecordModal from "./Partials/DropRecordModal";
 
 interface MtopApplication {
     id: number;
@@ -39,6 +40,7 @@ interface Props {
     applications: {
         data: MtopApplication[];
         links: any[];
+        total: number;
     };
     filters: {
         search?: string;
@@ -49,6 +51,7 @@ interface Props {
     };
     officials: { name: string; position: string }[];
     activeEvents: any[];
+    feeSettings: any;
 }
 
 export default function Index({
@@ -56,6 +59,7 @@ export default function Index({
     filters,
     officials,
     activeEvents,
+    feeSettings,
 }: Props) {
     const user = usePage().props.auth.user;
 
@@ -68,6 +72,8 @@ export default function Index({
     const [deletingId, setDeletingId] = useState<number | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
+    const [droppingApp, setDroppingApp] = useState<MtopApplication | null>(null);
+
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
     const [showDriverModal, setShowDriverModal] = useState(false);
 
@@ -77,6 +83,14 @@ export default function Index({
         futureDate.setDate(currentDate.getDate() + 60);
         return { now: currentDate, sixtyDaysFromNow: futureDate };
     }, []);
+
+    const flash = usePage().props.flash as any;
+
+    useEffect(() => {
+        if (flash?.success_data?.action === 'dropped') {
+            window.open(route("mtop.print_drop", flash.success_data.id), "_blank");
+        }
+    }, [flash]);
 
     useEffect(() => {
         const searchTimer = setTimeout(() => {
@@ -106,8 +120,10 @@ export default function Index({
 
     useEffect(() => {
         const pollInterval = setInterval(() => {
-            router.reload({ only: ["applications"] });
-        }, 10000);
+            router.reload({
+                only: ["applications"]
+            });
+        }, 60000);
 
         return () => clearInterval(pollInterval);
     }, []);
@@ -159,19 +175,26 @@ export default function Index({
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex flex-col xl:flex-row justify-between items-center mb-6 gap-4">
                         <div className="flex flex-col md:flex-row gap-3 w-full xl:w-auto flex-wrap">
-                            <div className="relative w-full md:w-auto">
-                                <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-gray-500">
-                                    <Icon
-                                        icon="iconamoon:search-bold"
-                                        width="20"
+                            <div className="flex items-center gap-3 w-full md:w-auto">
+                                <div className="relative flex-1 md:flex-none w-full md:w-auto">
+                                    <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-gray-500">
+                                        <Icon
+                                            icon="iconamoon:search-bold"
+                                            width="20"
+                                        />
+                                    </div>
+                                    <TextInput
+                                        className="pl-12 w-full md:w-80 py-3 text-base shadow-sm"
+                                        placeholder="Search..."
+                                        value={search}
+                                        onChange={(e) => setSearch(e.target.value)}
                                     />
                                 </div>
-                                <TextInput
-                                    className="pl-12 w-full md:w-80 py-3 text-base shadow-sm"
-                                    placeholder="Search..."
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
-                                />
+
+                                <div className="flex items-center gap-1.5 bg-indigo-50 text-indigo-700 px-4 py-3 rounded-lg border border-indigo-200 shadow-sm whitespace-nowrap h-full">
+                                    <Icon icon="solar:documents-bold" width="20" className="text-indigo-500" />
+                                    <span className="font-extrabold text-lg leading-none">{applications.total}</span>
+                                </div>
                             </div>
 
                             <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto flex-wrap">
@@ -244,6 +267,9 @@ export default function Index({
                                     <option value="archived">
                                         Archived (History)
                                     </option>
+                                    <option value="cancelled">
+                                        Cancelled
+                                    </option>
                                 </select>
                             </div>
                         </div>
@@ -288,13 +314,12 @@ export default function Index({
                                             type="button"
                                             onClick={toggleSelectAll}
                                             aria-label="Select all records"
-                                            className={`w-5 h-5 mx-auto rounded flex items-center justify-center transition-all duration-200 border ${
-                                                applications.data.length > 0 &&
+                                            className={`w-5 h-5 mx-auto rounded flex items-center justify-center transition-all duration-200 border ${applications.data.length > 0 &&
                                                 selectedIds.length ===
-                                                    applications.data.length
-                                                    ? "bg-indigo-600 border-indigo-600 text-white shadow-inner scale-110"
-                                                    : "bg-white border-gray-300 text-transparent hover:border-indigo-400 hover:bg-indigo-50"
-                                            }`}
+                                                applications.data.length
+                                                ? "bg-indigo-600 border-indigo-600 text-white shadow-inner scale-110"
+                                                : "bg-white border-gray-300 text-transparent hover:border-indigo-400 hover:bg-indigo-50"
+                                                }`}
                                         >
                                             <Icon
                                                 icon="solar:check-read-bold"
@@ -348,6 +373,10 @@ export default function Index({
                                             displayStatus = "Archived";
                                             statusClasses =
                                                 "bg-gray-100 text-gray-500 border border-gray-200";
+                                        } else if (app.status === "cancelled") {
+                                            displayStatus = "Cancelled";
+                                            statusClasses =
+                                                "bg-gray-100 text-gray-800 border border-gray-300";
                                         } else if (
                                             app.status === "expired" ||
                                             (app.status === "active" &&
@@ -389,11 +418,10 @@ export default function Index({
                                                         onClick={() =>
                                                             toggleSelect(app.id)
                                                         }
-                                                        className={`w-5 h-5 mx-auto rounded flex items-center justify-center transition-all duration-200 border ${
-                                                            isSelected
-                                                                ? "bg-indigo-600 border-indigo-600 text-white shadow-sm scale-110"
-                                                                : "bg-white border-gray-300 text-transparent hover:border-indigo-400 hover:bg-indigo-50"
-                                                        }`}
+                                                        className={`w-5 h-5 mx-auto rounded flex items-center justify-center transition-all duration-200 border ${isSelected
+                                                            ? "bg-indigo-600 border-indigo-600 text-white shadow-sm scale-110"
+                                                            : "bg-white border-gray-300 text-transparent hover:border-indigo-400 hover:bg-indigo-50"
+                                                            }`}
                                                     >
                                                         <Icon
                                                             icon="solar:check-read-bold"
@@ -411,7 +439,7 @@ export default function Index({
                                                     {app.first_name}{" "}
                                                     {app.middle_name
                                                         ? app.middle_name[0] +
-                                                          "."
+                                                        "."
                                                         : ""}{" "}
                                                     {app.suffix
                                                         ? app.suffix + ""
@@ -507,23 +535,33 @@ export default function Index({
                                                             </Link>
                                                         )}
 
+
+                                                        <button
+                                                            onClick={() => setDroppingApp(app)}
+                                                            title={app.status === 'cancelled' ? "View/Edit Dropping Record" : "Cancel/Drop Record"}
+                                                            className="p-2 text-orange-600 bg-orange-50 hover:bg-orange-100 hover:text-orange-800 rounded-md transition-colors shadow-sm"
+                                                        >
+                                                            <Icon icon="solar:close-square-bold" width="18" />
+                                                        </button>
+
+
                                                         {user.role ===
                                                             "admin" && (
-                                                            <button
-                                                                onClick={() =>
-                                                                    confirmDelete(
-                                                                        app.id,
-                                                                    )
-                                                                }
-                                                                title="Delete Record"
-                                                                className="p-2 text-red-600 bg-red-50 hover:bg-red-100 hover:text-red-800 rounded-md transition-colors shadow-sm"
-                                                            >
-                                                                <Icon
-                                                                    icon="solar:trash-bin-trash-bold"
-                                                                    width="18"
-                                                                />
-                                                            </button>
-                                                        )}
+                                                                <button
+                                                                    onClick={() =>
+                                                                        confirmDelete(
+                                                                            app.id,
+                                                                        )
+                                                                    }
+                                                                    title="Delete Record"
+                                                                    className="p-2 text-red-600 bg-red-50 hover:bg-red-100 hover:text-red-800 rounded-md transition-colors shadow-sm"
+                                                                >
+                                                                    <Icon
+                                                                        icon="solar:trash-bin-trash-bold"
+                                                                        width="18"
+                                                                    />
+                                                                </button>
+                                                            )}
                                                     </div>
                                                 </td>
                                             </tr>
@@ -560,6 +598,10 @@ export default function Index({
                                     displayStatus = "Archived";
                                     statusClasses =
                                         "bg-gray-100 text-gray-500 border border-gray-200";
+                                } else if (app.status === "cancelled") {
+                                    displayStatus = "Cancelled";
+                                    statusClasses =
+                                        "bg-gray-100 text-gray-800 border border-gray-300";
                                 } else if (
                                     app.status === "expired" ||
                                     (app.status === "active" && isExpired)
@@ -714,6 +756,16 @@ export default function Index({
                                                 </Link>
                                             )}
 
+
+                                            <button
+                                                onClick={() => setDroppingApp(app)}
+                                                title={app.status === 'cancelled' ? "View/Edit Dropping" : "Cancel"}
+                                                className="flex-1 flex justify-center items-center bg-orange-50 text-orange-600 py-2.5 rounded-lg hover:bg-orange-100 transition-colors"
+                                            >
+                                                <Icon icon="solar:close-square-bold" width="20" />
+                                            </button>
+
+
                                             {user.role === "admin" && (
                                                 <button
                                                     onClick={() =>
@@ -742,11 +794,10 @@ export default function Index({
             </div>
 
             <div
-                className={`fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50 transition-all duration-300 ease-out ${
-                    selectedIds.length > 0
-                        ? "translate-y-0 opacity-100 scale-100"
-                        : "translate-y-12 opacity-0 scale-95 pointer-events-none"
-                }`}
+                className={`fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50 transition-all duration-300 ease-out ${selectedIds.length > 0
+                    ? "translate-y-0 opacity-100 scale-100"
+                    : "translate-y-12 opacity-0 scale-95 pointer-events-none"
+                    }`}
             >
                 <div className="bg-slate-900/95 backdrop-blur-md border border-slate-700 p-1.5 rounded-full shadow-2xl flex items-center gap-2">
                     <div className="flex items-center gap-3 pl-3 pr-2">
@@ -844,6 +895,14 @@ export default function Index({
                 onClose={() => setDeletingId(null)}
                 onConfirm={handleDelete}
                 processing={isDeleting}
+            />
+
+            <DropRecordModal
+                show={!!droppingApp}
+                onClose={() => setDroppingApp(null)}
+                application={droppingApp}
+                officials={officials}
+                feeSettings={feeSettings}
             />
         </AuthenticatedLayout>
     );

@@ -1,4 +1,3 @@
-//GeronaMTOP\resources\js\Components\SignatorySelect.tsx
 import { useState, useMemo, useEffect, useRef } from "react";
 import { Icon } from "@iconify/react";
 
@@ -11,6 +10,7 @@ interface Props {
     required?: boolean;
     disabled?: boolean;
     onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+    className?: string;
 }
 
 export default function SignatorySelect({
@@ -22,6 +22,7 @@ export default function SignatorySelect({
     required,
     disabled = false,
     onKeyDown,
+    className = "",
 }: Props) {
     const [isOpen, setIsOpen] = useState(false);
     const [selectedIndex, setSelectedIndex] = useState(-1);
@@ -94,16 +95,19 @@ export default function SignatorySelect({
     };
 
     return (
-        <div className="mb-4 relative">
-            <label className="block font-medium text-sm text-gray-700 mb-1">
-                {label} {required && <span className="text-red-500">*</span>}
+        <div className={`relative ${className}`}>
+            <label className="block mb-1 font-semibold text-gray-800">
+                {label} {required && <span className="text-red-500 ml-1">*</span>}
             </label>
+
             <div className="relative">
                 <input
                     type="text"
-                    className={`block w-full py-3 pl-3 pr-10 border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 ${
-                        error ? "border-red-500" : ""
-                    } ${disabled ? "bg-gray-100 cursor-not-allowed" : ""}`}
+                    className={`block w-full h-12 pl-4 pr-10 text-sm font-semibold border-gray-400 rounded-lg shadow-sm focus:border-blue-600 focus:ring-blue-600 transition-all ${error ? "border-red-500" : ""
+                        } ${disabled
+                            ? "bg-gray-100 cursor-not-allowed text-gray-500"
+                            : "bg-white text-gray-900"
+                        }`}
                     value={value}
                     disabled={disabled}
                     onChange={(e) => {
@@ -111,7 +115,6 @@ export default function SignatorySelect({
                             /[^a-zA-ZñÑ\s.,-]/g,
                             "",
                         );
-
                         onChange(sanitized);
                         setIsOpen(true);
                     }}
@@ -122,8 +125,8 @@ export default function SignatorySelect({
                     onKeyDown={handleKeyDown}
                 />
 
-                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
-                    <Icon icon="solar:alt-arrow-down-bold" />
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3.5 pointer-events-none text-gray-400 z-10">
+                    <Icon icon="solar:alt-arrow-down-bold" width="20" height="20" />
                 </div>
             </div>
 
@@ -140,11 +143,10 @@ export default function SignatorySelect({
                         return (
                             <li
                                 key={index}
-                                className={`px-4 py-2 cursor-pointer ${
-                                    index === selectedIndex
-                                        ? "bg-blue-100 text-blue-900"
-                                        : "hover:bg-blue-50 text-gray-700"
-                                }`}
+                                className={`px-4 py-2 cursor-pointer ${index === selectedIndex
+                                    ? "bg-blue-100 text-blue-900"
+                                    : "hover:bg-blue-50 text-gray-700"
+                                    }`}
                                 onMouseDown={() => {
                                     onChange(name);
                                     setIsOpen(false);
@@ -164,7 +166,7 @@ export default function SignatorySelect({
                     })}
                 </ul>
             )}
-            {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
+            {error && <p className="text-sm text-red-600 mt-1.5">{error}</p>}
         </div>
     );
 }

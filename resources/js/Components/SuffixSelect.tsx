@@ -81,15 +81,15 @@ export default function SuffixSelect({
 
     return (
         <div className="mb-4 relative">
-            <label className="block font-medium text-sm text-gray-700 mb-1">
+            <label className="block text-sm text-gray-800 mb-1">
                 Suffix
             </label>
             <div className="relative">
                 <input
-                    type="text"
-                    className={`block w-full py-3 pl-3 pr-10 border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 cursor-pointer caret-transparent ${
-                        error ? "border-red-500" : ""
-                    }`}
+    type="text"
+    className={`block w-full py-3 pl-3 pr-10 border-gray-400 text-gray-900 bg-white rounded-md shadow-sm focus:border-indigo-600 focus:ring-indigo-600 cursor-pointer caret-transparent ${
+        error ? "border-red-500" : ""
+    }`}
                     value={value || "N/A"}
                     onClick={() => setIsOpen(true)}
                     onFocus={() => setIsOpen(true)}
@@ -99,7 +99,7 @@ export default function SuffixSelect({
                     readOnly={false}
                 />
 
-                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-600">
                     <Icon
                         icon="solar:alt-arrow-down-bold"
                         className={`transition-transform duration-200 ${
@@ -120,7 +120,7 @@ export default function SuffixSelect({
                             key={opt}
                             className={`px-4 py-2 cursor-pointer text-gray-700 ${
                                 index === selectedIndex
-                                    ? "bg-indigo-100 text-indigo-800 font-bold"
+                                    ? "bg-indigo-100 text-indigo-800 font-semibold"
                                     : "hover:bg-indigo-50"
                             }`}
                             onMouseDown={() => {

@@ -10,7 +10,10 @@ export default function ApplicantForm({
     onKeyDown,
 }: any) {
     const handleNameChange = (field: string, value: string) => {
+<<<<<<< HEAD
         // Added Ññ to the regex to allow the character
+=======
+>>>>>>> efed82f183c2c1a8c7535be20c3a5c5fd5e4abb3
         const cleanValue = value.toUpperCase().replace(/[^A-ZÑñ\s.-]/g, "");
         setData(field, cleanValue);
     };
@@ -121,8 +124,13 @@ export default function ApplicantForm({
                             type="button"
                             onClick={togglePaidBy}
                             className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 ${data.show_paid_by
+<<<<<<< HEAD
                                     ? "bg-blue-600"
                                     : "bg-gray-300"
+=======
+                                ? "bg-blue-800"
+                                : "bg-gray-500 hover:bg-gray-600"
+>>>>>>> efed82f183c2c1a8c7535be20c3a5c5fd5e4abb3
                                 }`}
                             role="switch"
                             aria-checked={data.show_paid_by}
@@ -130,8 +138,13 @@ export default function ApplicantForm({
                             <span
                                 aria-hidden="true"
                                 className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${data.show_paid_by
+<<<<<<< HEAD
                                         ? "translate-x-5"
                                         : "translate-x-0"
+=======
+                                    ? "translate-x-5"
+                                    : "translate-x-0"
+>>>>>>> efed82f183c2c1a8c7535be20c3a5c5fd5e4abb3
                                     }`}
                             />
                         </button>
@@ -186,7 +199,11 @@ export default function ApplicantForm({
                                     onChange={(e) => {
                                         const val = e.target.value
                                             .toUpperCase()
+<<<<<<< HEAD
                                             .replace(/[^A-ZÑ]/g, "") // <--- NOW ALLOWS Ñ
+=======
+                                            .replace(/[^A-ZÑ]/g, "")
+>>>>>>> efed82f183c2c1a8c7535be20c3a5c5fd5e4abb3
                                             .slice(0, 1);
                                         setData("middle_name", val);
                                     }}

@@ -111,21 +111,21 @@ export default function BarangaySelect({
 
     return (
         <div className={`mb-4 relative ${isOpen ? "z-50" : "z-10"}`}>
-            <label className="block font-medium text-sm text-gray-700 mb-1">
+            <label className="block font-semibold text-sm text-gray-800 mb-1">
                 Barangay / Address
                 {required && <span className="text-red-500 ml-1">*</span>}
             </label>
             <div className="relative">
-                <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+                <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-600">
                     <Icon icon="solar:map-point-bold" width="20" />
                 </div>
 
                 <input
-                    type="text"
-                    name="address"
-                    className={`block w-full pl-10 pr-10 py-3 border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 ${
-                        error ? "border-red-500" : ""
-                    }`}
+    type="text"
+    name="address"
+    className={`block w-full pl-10 pr-10 py-3 border-gray-400 font-semibold text-gray-900 bg-white rounded-md shadow-sm focus:border-indigo-600 focus:ring-indigo-600 ${
+        error ? "border-red-500" : ""
+    }`}
                     placeholder="Search Barangay..."
                     value={value}
                     onChange={(e) => {
@@ -141,7 +141,7 @@ export default function BarangaySelect({
                     onKeyDown={handleKeyDown}
                 />
 
-                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-00">
                     <Icon
                         icon="solar:alt-arrow-down-bold"
                         className={`transition-transform duration-200 ${

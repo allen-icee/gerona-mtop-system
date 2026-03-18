@@ -19,30 +19,41 @@ if not exist "php\php.exe" (
 )
 
 echo Creating required system folders...
-if not exist "app\storage\framework\views" mkdir "app\storage\framework\views"
-if not exist "app\storage\framework\sessions" mkdir "app\storage\framework\sessions"
-if not exist "app\storage\framework\cache\data" mkdir "app\storage\framework\cache\data"
+if not exist "storage\framework\views" mkdir "storage\framework\views"
+if not exist "storage\framework\sessions" mkdir "storage\framework\sessions"
+if not exist "storage\framework\cache\data" mkdir "storage\framework\cache\data"
+
+echo.
+echo Checking environment file...
+if not exist ".env" (
+    echo [INFO] .env file missing. Copying from .env.example...
+    copy .env.example .env
+)
+
+echo.
+echo Generating Application Security Key...
+"php\php.exe" artisan key:generate
 
 echo.
 echo Clearing old development cache...
-"php\php.exe" "app\artisan" optimize:clear
+"php\php.exe" artisan optimize:clear
 
 echo.
 echo Creating storage link for Images/IDs...
-"php\php.exe" "app\artisan" storage:link
+"php\php.exe" artisan storage:link
 
 echo.
 echo Setting up the database tables...
-"php\php.exe" "app\artisan" migrate --force
+"php\php.exe" artisan migrate --force
 
 echo.
 echo Creating admin account and default settings...
-"php\php.exe" "app\artisan" db:seed --force
+"php\php.exe" artisan db:seed --force
 
 echo.
 echo =====================================================
 echo Setup Complete!
 echo You can now close this window and open the
-echo "GeronaMTOPSystem" shortcut on your Desktop.
+echo "Start_MTOP_System" script.
 echo =====================================================
 pause

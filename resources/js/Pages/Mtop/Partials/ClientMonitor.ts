@@ -50,9 +50,12 @@ export const formatExpiry = (
         return `${m}-${d}`;
     });
 
+<<<<<<< HEAD
     // ==============================================================
     // FRONTEND FIX: Verify if the selected date falls within the Event
     // ==============================================================
+=======
+>>>>>>> efed82f183c2c1a8c7535be20c3a5c5fd5e4abb3
     let isWithinEvent = false;
     if (currentEvent && currentEvent.start_date && currentEvent.end_date) {
         const tDate = new Date(data.transaction_date);
@@ -67,7 +70,10 @@ export const formatExpiry = (
         }
     }
 
+<<<<<<< HEAD
     // Only apply the fixed date if the transaction date is WITHIN the promo
+=======
+>>>>>>> efed82f183c2c1a8c7535be20c3a5c5fd5e4abb3
     if (data.event_id && currentEvent && isWithinEvent) {
         if (data.is_free) {
             validUntil = new Date(currentEvent.fixed_expiry_date + "T00:00:00");
@@ -168,7 +174,10 @@ export const generatePayload = (
         activeEvents?.find((e: any) => e.id == data.event_id) ||
         activeEvents?.[0];
 
+<<<<<<< HEAD
     // Check date range again for the OR text display
+=======
+>>>>>>> efed82f183c2c1a8c7535be20c3a5c5fd5e4abb3
     let isWithinEvent = false;
     if (
         data.transaction_date &&
@@ -187,7 +196,10 @@ export const generatePayload = (
         }
     }
 
+<<<<<<< HEAD
     // Only say "WAIVED (Mandate)" if the date is actually inside the promo
+=======
+>>>>>>> efed82f183c2c1a8c7535be20c3a5c5fd5e4abb3
     if (
         data.is_free &&
         orNumberDisplay === "WAIVED" &&
@@ -198,7 +210,10 @@ export const generatePayload = (
             orNumberDisplay = `WAIVED <span style="font-size: 10pt; font-weight: normal; color: #4b5563;"><br>(${currentEvent.mandated_by})</span>`;
         }
     } else if (data.is_free && orNumberDisplay === "WAIVED" && !isWithinEvent) {
+<<<<<<< HEAD
         // Strip the WAIVED text if they backdated outside the promo
+=======
+>>>>>>> efed82f183c2c1a8c7535be20c3a5c5fd5e4abb3
         orNumberDisplay = "-";
     }
 

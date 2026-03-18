@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 
 class SignatoryController extends Controller
 {
+
     public function index(Request $request)
     {
         $search = $request->input('search');
@@ -20,13 +21,18 @@ class SignatoryController extends Controller
                 $query->where('name', 'like', "%{$search}%");
             })
             ->when($position !== 'All', function ($query) use ($position) {
-                $query->where('position', $position);
+                if ($position === 'Dropping Official') {
+                    $query->where('position', 'like', '%Dropping%')->orWhere('position', $position);
+                } else {
+                    $query->where('position', $position);
+                }
             })
             ->get();
 
         return Inertia::render('Signatories/Index', [
             'signatories' => $signatories,
             'filters' => $request->only(['search', 'position']),
+            'feeSettings' => \App\Models\FeeSetting::first() ?? new \App\Models\FeeSetting()
         ]);
     }
 

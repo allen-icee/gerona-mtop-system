@@ -23,7 +23,6 @@ export default function PrintPage1({ application, operatorName }: Props) {
         return str.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
     };
 
-    // BAGONG FUNCTION: Matalinong inaalam kung taon lang, buwan lang, o pareho
     const formatValidity = (years: number, months: number) => {
         const map: Record<number, string> = {
             1: "isang",
@@ -55,7 +54,6 @@ export default function PrintPage1({ application, operatorName }: Props) {
         return parts.join(" at ");
     };
 
-    // Default to 3 years and 0 months if not set by an event
     const years = application.event?.validity_years ?? 3;
     const months = application.event?.validity_months ?? 0;
 
@@ -65,13 +63,11 @@ export default function PrintPage1({ application, operatorName }: Props) {
 
     let paidByName = "";
     if (application.show_paid_by) {
-        paidByName = `${application.paid_by_first_name || ""} ${
-            application.paid_by_middle_name
+        paidByName = `${application.paid_by_first_name || ""} ${application.paid_by_middle_name
                 ? application.paid_by_middle_name + ". "
                 : ""
-        }${application.paid_by_last_name || ""}${
-            application.paid_by_suffix ? " " + application.paid_by_suffix : ""
-        }`.trim();
+            }${application.paid_by_last_name || ""}${application.paid_by_suffix ? " " + application.paid_by_suffix : ""
+            }`.trim();
     }
 
     return (
@@ -210,7 +206,6 @@ export default function PrintPage1({ application, operatorName }: Props) {
 
                 <div className="mb-8 text-[12pt] leading-[1.15] text-justify">
                     <ol className="list-decimal ml-10 space-y-1">
-                        {/* DITO NA-APPLY ANG BAGONG LOGIC */}
                         <li className="pl-2">
                             Ang Motorized Tricycle Operator's Permit (MTOP) ay
                             may bisa{" "}
@@ -271,7 +266,7 @@ export default function PrintPage1({ application, operatorName }: Props) {
                             <span
                                 className={
                                     application.show_cedula &&
-                                    application.cedula_date
+                                        application.cedula_date
                                         ? "underline"
                                         : ""
                                 }

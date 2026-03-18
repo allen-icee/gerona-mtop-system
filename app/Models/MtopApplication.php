@@ -47,6 +47,12 @@ class MtopApplication extends Model
         'show_cedula',
         'show_or',
         'is_manual_validity',
+        'drop_date',
+        'drop_or_number',
+        'drop_or_date',
+        'drop_amount',
+        'drop_official',
+        'drop_position',
     ];
 
     public function getFullNameAttribute()
@@ -79,12 +85,18 @@ class MtopApplication extends Model
                             });
                     });
                 } elseif ($renewal === 'active') {
-                    $q->where('status', 'active')->whereDate('valid_until', '>=', now());
+                    $q->where('status', 'active')->where(function ($subQ) {
+                        $subQ->whereDate('valid_until', '>=', now())
+                            ->orWhereNull('valid_until');
+                    });
                 } elseif ($renewal === 'archived') {
                     $q->where('status', 'archived');
+                } elseif ($renewal === 'cancelled') {
+                    $q->where('status', 'cancelled');
                 }
             });
     }
+
     public function event()
     {
         return $this->belongsTo(Event::class, 'event_id');

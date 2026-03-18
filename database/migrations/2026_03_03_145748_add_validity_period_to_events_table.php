@@ -7,16 +7,28 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        Schema::table('events', function (Blueprint $table) {
-            $table->integer('validity_years')->default(3);
-            $table->integer('validity_months')->default(0);
-        });
+        if (!Schema::hasColumn('events', 'validity_years')) {
+            Schema::table('events', function (Blueprint $table) {
+                $table->integer('validity_years')->default(3);
+            });
+        }
+
+        if (!Schema::hasColumn('events', 'validity_months')) {
+            Schema::table('events', function (Blueprint $table) {
+                $table->integer('validity_months')->default(0);
+            });
+        }
     }
 
     public function down(): void
     {
         Schema::table('events', function (Blueprint $table) {
-            $table->dropColumn(['validity_years', 'validity_months']);
+            if (Schema::hasColumn('events', 'validity_years')) {
+                $table->dropColumn('validity_years');
+            }
+            if (Schema::hasColumn('events', 'validity_months')) {
+                $table->dropColumn('validity_months');
+            }
         });
     }
 };

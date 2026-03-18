@@ -1,5 +1,5 @@
 <?php
-
+//GeronaMTOP\app\Http\Controllers\EventController.php
 namespace App\Http\Controllers;
 
 use App\Models\Event;
@@ -56,7 +56,6 @@ class EventController extends Controller
             'validity_months' => 'nullable|integer|min:0|max:11',
         ]);
 
-        // Kapag naiwang blangko (null) sa form, isave bilang 0
         $validated['validity_years'] = $validated['validity_years'] ?? 0;
         $validated['validity_months'] = $validated['validity_months'] ?? 0;
 
