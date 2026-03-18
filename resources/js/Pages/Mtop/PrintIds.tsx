@@ -2,7 +2,6 @@ import { Head } from "@inertiajs/react";
 import { Icon } from "@iconify/react";
 import { toPng } from "html-to-image";
 import toast from "react-hot-toast";
-import { useEffect } from "react";
 
 interface Props {
     applications: any[];
@@ -10,15 +9,11 @@ interface Props {
 }
 
 export default function PrintIds({ applications, settings }: Props) {
-    useEffect(() => {
-        setTimeout(() => window.print(), 500);
-    }, []);
-
     const idBackgroundUrl = settings?.id_background_path
         ? `/storage/${settings.id_background_path}`
         : "/images/ID_BG_1.png";
 
-    // EXPORT PNG FUNCTION (Updated to use mt_number)
+    // EXPORT PNG FUNCTION
     const handleDownloadSingle = async (
         elementId: string,
         mtNumber: string,
@@ -36,7 +31,6 @@ export default function PrintIds({ applications, settings }: Props) {
 
             const link = document.createElement("a");
             link.href = image;
-            // Clean up the MT Number for the filename, allowing letters, numbers, and hyphens
             const safeMtNumber = mtNumber
                 ? mtNumber.replace(/[^a-zA-Z0-9-]/g, "_")
                 : "Unknown";
@@ -50,7 +44,7 @@ export default function PrintIds({ applications, settings }: Props) {
         }
     };
 
-    // DIRECT PRINT FUNCTION
+    // DIRECT PRINT FUNCTION (Fixed Printer Clipping)
     const handlePrintSingle = async (elementId: string) => {
         const element = document.getElementById(elementId);
         if (!element) return;
@@ -76,11 +70,12 @@ export default function PrintIds({ applications, settings }: Props) {
                                     display: flex;
                                     justify-content: center;
                                     align-items: flex-start;
-                                    padding-top: 10mm;
+                                    padding-top: 5mm;
                                     background: white;
                                 }
                                 img {
-                                    width: 4in;
+                                    /* Shrunk from 4in to 3.75in so the hardware printer margins don't cut off the black borders on small paper */
+                                    width: 3.75in;
                                     height: auto;
                                 }
                             </style>
@@ -88,9 +83,12 @@ export default function PrintIds({ applications, settings }: Props) {
                         <body>
                             <img src="${image}" />
                             <script>
-                                setTimeout(() => {
-                                    window.print();
-                                }, 500);
+                                window.onload = function() {
+                                    window.focus();
+                                    setTimeout(() => {
+                                        window.print();
+                                    }, 500);
+                                };
                             </script>
                         </body>
                     </html>
@@ -139,15 +137,48 @@ export default function PrintIds({ applications, settings }: Props) {
 
             <div className="mx-auto bg-white shadow-lg print:shadow-none w-[210mm] min-h-[297mm] grid grid-cols-2 content-start px-[2mm] py-[5mm]">
                 {applications.map((app) => {
-                    const printName =
-                        app.driver_name || `${app.first_name} ${app.last_name}`;
+                    // 1. Safely format the original full name for the Operator
+                    const mInitial = app.middle_name
+                        ? `${app.middle_name[0]}. `
+                        : "";
+                    const sfx = app.suffix ? ` ${app.suffix}` : "";
+                    const originalOperatorName =
+                        `${app.first_name} ${mInitial}${app.last_name}${sfx}`.trim();
+
+                    // 2. Format the Paid By name (if it exists)
+                    let paidByName = "";
+                    if (app.show_paid_by) {
+                        const pbInitial = app.paid_by_middle_name
+                            ? `${app.paid_by_middle_name[0]}. `
+                            : "";
+                        const pbSfx = app.paid_by_suffix
+                            ? ` ${app.paid_by_suffix}`
+                            : "";
+                        paidByName =
+                            `${app.paid_by_first_name || ""} ${pbInitial}${app.paid_by_last_name || ""}${pbSfx}`.trim();
+                    }
+
+                    // 3. Operator Name stays as original
+                    const operatorNameToPrint = originalOperatorName;
+
+                    // 4. Smart Driver Name Logic: Paid By overrides Driver
+                    let finalDriverName = app.driver_name;
+                    if (app.show_paid_by && paidByName) {
+                        finalDriverName = paidByName;
+                    } else if (
+                        !finalDriverName ||
+                        finalDriverName.trim() ===
+                            `${app.first_name} ${app.last_name}`.trim()
+                    ) {
+                        finalDriverName = originalOperatorName;
+                    }
 
                     return (
                         <div
                             key={app.id}
                             className="flex flex-col items-center justify-center p-2 break-inside-avoid"
                         >
-                            {/* ACTION BUTTONS (Export & Print) */}
+                            {/* ACTION BUTTONS */}
                             <div className="no-print w-[4in] flex justify-end gap-2 mb-2">
                                 <button
                                     onClick={() =>
@@ -189,12 +220,12 @@ export default function PrintIds({ applications, settings }: Props) {
                                     backgroundRepeat: "no-repeat",
                                 }}
                             >
-                                <div className="relative z-10 grid grid-cols-[60px_1fr] items-center mb-6">
+                                <div className="relative z-10 grid grid-cols-[60px_1fr] items-center mb-4">
                                     <div className="relative flex justify-center items-center h-full">
                                         <img
                                             src="/images/3DMunicipalLogo.png"
                                             alt="Gerona Logo"
-                                            className="absolute max-w-none w-20 h-20 object-contain drop-shadow-md z-10"
+                                            className="absolute max-w-none w-18 h-18 object-contain drop-shadow-md z-10"
                                             style={{
                                                 left: "-10px",
                                                 top: "55%",
@@ -203,7 +234,7 @@ export default function PrintIds({ applications, settings }: Props) {
                                         />
                                     </div>
 
-                                    <div className="text-center leading-tight mt-3 mb-1 ml-0">
+                                    <div className="text-center leading-tight mt-0.75 mb-0 ml-0">
                                         <h1 className="text-[11pt] font-['LEMONMILK'] font-light uppercase tracking-wider [-webkit-text-stroke:1.5px_white] [paint-order:stroke_fill]">
                                             Republic of the Philippines
                                         </h1>
@@ -216,12 +247,12 @@ export default function PrintIds({ applications, settings }: Props) {
                                     </div>
                                 </div>
 
-                                <h1 className="relative z-10 text-center font-['UPBOLTERS'] text-[15pt] tracking-normal py-0 mb-2 leading-none scale-y-[1.5] origin-bottom [-webkit-text-stroke:2px_white] [paint-order:stroke_fill] drop-shadow-[.8px_.8px_0_rgba(0,0,0,0.75)]">
+                                <h1 className="relative z-10 text-center font-['UPBOLTERS'] text-[15pt] tracking-normal py-0 mb-1 leading-none scale-y-[1.5] origin-bottom [-webkit-text-stroke:2px_white] [paint-order:stroke_fill] drop-shadow-[.8px_.8px_0_rgba(0,0,0,0.75)]">
                                     MOTORIZED TRICYCLE OPERATOR'S PERMIT
                                 </h1>
 
                                 <div className="relative z-10 flex justify-between items-end gap-2 mb-1">
-                                    <div className="w-[30mm] h-[30mm] border border-black bg-white flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
+                                    <div className="w-[38.1mm] h-[38.1mm] border border-black bg-white flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
                                         {app.driver_photo_path ? (
                                             <img
                                                 src={`/storage/${app.driver_photo_path}`}
@@ -230,7 +261,7 @@ export default function PrintIds({ applications, settings }: Props) {
                                             />
                                         ) : (
                                             <span className="text-[8px] font-bold text-gray-400">
-                                                1.18in x 1.18in
+                                                1.5in x 1.5in
                                             </span>
                                         )}
                                     </div>
@@ -248,7 +279,7 @@ export default function PrintIds({ applications, settings }: Props) {
                                     </div>
                                 </div>
 
-                                <div className="relative z-10 flex-1 flex flex-col justify-center space-y-1 px-0">
+                                <div className="relative z-10 flex-1 flex flex-col justify-center space-y-0.5 px-0">
                                     <Field
                                         label="DRIVER'S SIGNATURE"
                                         value=""
@@ -257,12 +288,12 @@ export default function PrintIds({ applications, settings }: Props) {
                                     />
                                     <Field
                                         label="DRIVER'S NAME"
-                                        value={app.driver_name || "---"}
+                                        value={finalDriverName}
                                         height="7mm"
                                     />
                                     <Field
                                         label="OPERATOR'S NAME AND ADDRESS"
-                                        value={`${app.first_name} ${app.last_name} / ${
+                                        value={`${operatorNameToPrint} / ${
                                             app.address
                                                 ? app.address
                                                       .split(
@@ -299,18 +330,17 @@ export default function PrintIds({ applications, settings }: Props) {
                                     />
                                 </div>
 
-                                {/* SIGNATORIES SECTION
-                                    Dynamically changes between 'justify-between' and 'justify-center' based on the toggle!
-                                */}
+                                {/* SIGNATORIES SECTION */}
                                 <div
-                                    className={`mt-4 relative z-10 flex items-end pb-1 ${app.show_committee ? "justify-between" : "justify-center"}`}
+                                    className={`mt-4.5 relative z-10 flex items-end pb-1 ${app.show_committee ? "justify-between" : "justify-center"}`}
                                 >
                                     {app.show_committee && (
                                         <div className="text-center w-36 flex flex-col items-center">
                                             <div className="text-[8pt] font-['ArialNarrow7'] font-bold uppercase truncate px-1 tracking-tighter w-full scale-y-[1.2] origin-bottom pb-1 [-webkit-text-stroke:2px_white] [paint-order:stroke_fill] drop-shadow-sm relative z-10">
                                                 {app.print_committee || "---"}
                                             </div>
-                                            <div className="w-full h-0.75 bg-black border border-white -mt-1.5 relative z-0"></div>
+                                            {/* Thicker black line to prevent disappearing on print */}
+                                            <div className="w-full h-[2.5px] bg-black -mt-1.5 relative z-0"></div>
                                             <div className="text-[7pt] font-['DiezmaRd'] font-extrabold leading-none mt-1 tracking-tight [-webkit-text-stroke:1px_white] [paint-order:stroke_fill] drop-shadow-sm">
                                                 COMMITTEE ON TRANSPORTATION
                                             </div>
@@ -318,16 +348,16 @@ export default function PrintIds({ applications, settings }: Props) {
                                     )}
 
                                     <div className="text-center w-36 flex flex-col items-center">
-                                        <div className="text-[8pt] font-['ArialNarrow7'] font-bold uppercase truncate px-1 tracking-tighter w-full scale-y-[1.2] origin-bottom pb-1 [-webkit-text-stroke:2px_white] [paint-order:stroke_fill] drop-shadow-sm relative z-10">
+                                        <div className="text-[8pt] font-['ArialNarrow7'] font-bold uppercase truncate px-1 tracking-tighter w-full scale-y-[1.2] origin-bottom pb-0.5 [-webkit-text-stroke:2px_white] [paint-order:stroke_fill] drop-shadow-sm relative z-10">
                                             {app.print_mayor || "---"}
                                         </div>
-                                        <div className="w-full h-0.75 bg-black border border-white -mt-1.5 relative z-0"></div>
-                                        <div className="text-[7pt] font-['DiezmaRd'] font-extrabold leading-none mt-1 tracking-tight [-webkit-text-stroke:1px_white] [paint-order:stroke_fill] drop-shadow-sm">
+
+                                        <div className="w-full h-[2.5px] bg-black -mt-1.5 relative z-0"></div>
+                                        <div className="text-[7pt] font-['DiezmaRd'] font-extrabold leading-none mt-0.75 tracking-tight [-webkit-text-stroke:1px_white] [paint-order:stroke_fill] drop-shadow-sm">
                                             MUNICIPAL MAYOR
                                         </div>
                                     </div>
                                 </div>
-                                {/* END SIGNATORIES SECTION */}
                             </div>
                         </div>
                     );

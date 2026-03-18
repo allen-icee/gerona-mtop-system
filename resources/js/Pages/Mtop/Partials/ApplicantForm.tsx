@@ -10,28 +10,27 @@ export default function ApplicantForm({
     onKeyDown,
 }: any) {
     const handleNameChange = (field: string, value: string) => {
-        const cleanValue = value.toUpperCase().replace(/[^A-Z\s.-]/g, "");
+        // Added Ññ to the regex to allow the character
+        const cleanValue = value.toUpperCase().replace(/[^A-ZÑñ\s.-]/g, "");
         setData(field, cleanValue);
     };
 
     const togglePaidBy = () => {
         if (!data.show_paid_by) {
+            // Turning it ON: Only auto-fill if the fields are currently empty
             setData({
                 ...data,
                 show_paid_by: true,
-                paid_by_last_name: data.last_name,
-                paid_by_first_name: data.first_name,
-                paid_by_middle_name: data.middle_name,
-                paid_by_suffix: data.suffix,
+                paid_by_last_name: data.paid_by_last_name || data.last_name,
+                paid_by_first_name: data.paid_by_first_name || data.first_name,
+                paid_by_middle_name: data.paid_by_middle_name || data.middle_name,
+                paid_by_suffix: data.paid_by_suffix || data.suffix,
             });
         } else {
+            // Turning it OFF: Just hide the section, do NOT delete the data
             setData({
                 ...data,
                 show_paid_by: false,
-                paid_by_last_name: "",
-                paid_by_first_name: "",
-                paid_by_middle_name: "",
-                paid_by_suffix: "",
             });
         }
     };
@@ -88,7 +87,7 @@ export default function ApplicantForm({
                             onChange={(e) => {
                                 const val = e.target.value
                                     .toUpperCase()
-                                    .replace(/[^A-Z]/g, "")
+                                    .replace(/[^A-ZÑñ]/g, "")
                                     .slice(0, 1);
                                 setData("middle_name", val);
                             }}
@@ -121,21 +120,19 @@ export default function ApplicantForm({
                         <button
                             type="button"
                             onClick={togglePaidBy}
-                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 ${
-                                data.show_paid_by
+                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 ${data.show_paid_by
                                     ? "bg-blue-600"
                                     : "bg-gray-300"
-                            }`}
+                                }`}
                             role="switch"
                             aria-checked={data.show_paid_by}
                         >
                             <span
                                 aria-hidden="true"
-                                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                                    data.show_paid_by
+                                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${data.show_paid_by
                                         ? "translate-x-5"
                                         : "translate-x-0"
-                                }`}
+                                    }`}
                             />
                         </button>
                     </div>
@@ -182,16 +179,16 @@ export default function ApplicantForm({
 
                             <div className="sm:col-span-6 md:col-span-2">
                                 <InputGroup
-                                    id="paid_by_middle_name"
+                                    id="middle_name"
                                     label="M.I."
-                                    name="paid_by_middle_name"
-                                    value={data.paid_by_middle_name}
+                                    name="middle_name"
+                                    value={data.middle_name}
                                     onChange={(e) => {
                                         const val = e.target.value
                                             .toUpperCase()
-                                            .replace(/[^A-Z]/g, "")
+                                            .replace(/[^A-ZÑ]/g, "") // <--- NOW ALLOWS Ñ
                                             .slice(0, 1);
-                                        setData("paid_by_middle_name", val);
+                                        setData("middle_name", val);
                                     }}
                                     error={errors.paid_by_middle_name}
                                     placeholder="A"

@@ -43,20 +43,65 @@ export default function DriverInfoModal({
                 "";
 
             setData({
-                drivers: selectedApps.map((app) => ({
-                    id: app.id,
-                    mt_number: app.mt_number,
-                    driver_name:
-                        app.driver_name || `${app.first_name} ${app.last_name}`,
-                    photo: null as File | null,
-                    preview: app.driver_photo_path
-                        ? `/storage/${app.driver_photo_path}`
-                        : null,
-                    remove_photo: false,
-                    mayor: app.punong_bayan || defaultMayor,
-                    committee: app.authorized_official || defaultCommittee,
-                    show_committee: false,
-                })),
+                drivers: selectedApps.map((app) => {
+                    // 1. Format the full Operator Name with Middle Initial and Suffix
+                    const mInitial = app.middle_name
+                        ? `${app.middle_name[0]}. `
+                        : "";
+                    const sfx = app.suffix ? ` ${app.suffix}` : "";
+                    const fullOperatorName =
+                        `${app.first_name} ${mInitial}${app.last_name}${sfx}`
+                            .trim()
+                            .toUpperCase();
+
+                    // 2. Format the old basic name for comparison
+                    const oldBasicName = `${app.first_name} ${app.last_name}`
+                        .trim()
+                        .toUpperCase();
+
+                    // 3. Format the Paid By name (if it exists)
+                    let paidByName = "";
+                    if (app.show_paid_by) {
+                        const pbInitial = app.paid_by_middle_name
+                            ? `${app.paid_by_middle_name[0]}. `
+                            : "";
+                        const pbSfx = app.paid_by_suffix
+                            ? ` ${app.paid_by_suffix}`
+                            : "";
+                        paidByName =
+                            `${app.paid_by_first_name || ""} ${pbInitial}${app.paid_by_last_name || ""}${pbSfx}`
+                                .trim()
+                                .toUpperCase();
+                    }
+
+                    // 4. Smart Upgrade: Paid By overrides Driver. Otherwise fallback to Operator.
+                    let finalDriverName = app.driver_name
+                        ? app.driver_name.trim().toUpperCase()
+                        : "";
+
+                    if (app.show_paid_by && paidByName) {
+                        finalDriverName = paidByName;
+                    } else if (
+                        !finalDriverName ||
+                        finalDriverName === oldBasicName
+                    ) {
+                        finalDriverName = fullOperatorName;
+                    }
+
+                    return {
+                        id: app.id,
+                        mt_number: app.mt_number,
+                        driver_name: finalDriverName,
+                        photo: null as File | null,
+                        preview: app.driver_photo_path
+                            ? `/storage/${app.driver_photo_path}`
+                            : null,
+                        remove_photo: false,
+                        mayor: app.punong_bayan || defaultMayor,
+                        committee: app.authorized_official || defaultCommittee,
+                        show_committee: false,
+                    };
+                }),
             });
             initialized.current = true;
         }

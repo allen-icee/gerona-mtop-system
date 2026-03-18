@@ -50,7 +50,25 @@ export const formatExpiry = (
         return `${m}-${d}`;
     });
 
-    if (data.event_id && currentEvent) {
+    // ==============================================================
+    // FRONTEND FIX: Verify if the selected date falls within the Event
+    // ==============================================================
+    let isWithinEvent = false;
+    if (currentEvent && currentEvent.start_date && currentEvent.end_date) {
+        const tDate = new Date(data.transaction_date);
+        tDate.setHours(0, 0, 0, 0);
+        const eStart = new Date(currentEvent.start_date);
+        eStart.setHours(0, 0, 0, 0);
+        const eEnd = new Date(currentEvent.end_date);
+        eEnd.setHours(23, 59, 59, 999);
+
+        if (tDate >= eStart && tDate <= eEnd) {
+            isWithinEvent = true;
+        }
+    }
+
+    // Only apply the fixed date if the transaction date is WITHIN the promo
+    if (data.event_id && currentEvent && isWithinEvent) {
         if (data.is_free) {
             validUntil = new Date(currentEvent.fixed_expiry_date + "T00:00:00");
         } else {
@@ -81,8 +99,9 @@ export const formatExpiry = (
         }
     }
 
+    // If it's NOT a free promo (or if the date was outside the promo range), do standard calculation
     if (
-        !data.is_free &&
+        (!data.is_free || !isWithinEvent) &&
         data.plate_no &&
         data.plate_no !== "FOR REGISTRATION"
     ) {
@@ -145,13 +164,42 @@ export const generatePayload = (
         controlNumberDisplay += ` <span style="color: #9333ea; font-size: 10pt; font-weight: bold;">(TRANSFER)</span>`;
     }
 
-    if (data.is_free && orNumberDisplay === "WAIVED" && data.event_id) {
-        const currentEvent =
-            activeEvents?.find((e: any) => e.id == data.event_id) ||
-            activeEvents?.[0];
+    const currentEvent =
+        activeEvents?.find((e: any) => e.id == data.event_id) ||
+        activeEvents?.[0];
+
+    // Check date range again for the OR text display
+    let isWithinEvent = false;
+    if (
+        data.transaction_date &&
+        currentEvent &&
+        currentEvent.start_date &&
+        currentEvent.end_date
+    ) {
+        const tDate = new Date(data.transaction_date);
+        tDate.setHours(0, 0, 0, 0);
+        const eStart = new Date(currentEvent.start_date);
+        eStart.setHours(0, 0, 0, 0);
+        const eEnd = new Date(currentEvent.end_date);
+        eEnd.setHours(23, 59, 59, 999);
+        if (tDate >= eStart && tDate <= eEnd) {
+            isWithinEvent = true;
+        }
+    }
+
+    // Only say "WAIVED (Mandate)" if the date is actually inside the promo
+    if (
+        data.is_free &&
+        orNumberDisplay === "WAIVED" &&
+        data.event_id &&
+        isWithinEvent
+    ) {
         if (currentEvent && currentEvent.mandated_by) {
             orNumberDisplay = `WAIVED <span style="font-size: 10pt; font-weight: normal; color: #4b5563;"><br>(${currentEvent.mandated_by})</span>`;
         }
+    } else if (data.is_free && orNumberDisplay === "WAIVED" && !isWithinEvent) {
+        // Strip the WAIVED text if they backdated outside the promo
+        orNumberDisplay = "-";
     }
 
     return {

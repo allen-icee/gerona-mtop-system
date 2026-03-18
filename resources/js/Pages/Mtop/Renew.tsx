@@ -54,16 +54,24 @@ export default function Renew({
         suffix: application.suffix || "",
         address: application.address || "",
         mt_number: application.mt_number || "",
+
+        // Keeps today's date for the new renewal transaction
         transaction_date: new Date().toISOString().split("T")[0],
+
         make_type: application.make_type || "",
         engine_motor_no: application.engine_motor_no || "",
         chassis_no: application.chassis_no || "",
         plate_no: application.plate_no || "",
         body_number: application.body_number || "",
-        cedula_number: "",
-        cedula_date: "",
-        or_number: "",
-        or_date: "",
+
+        // Safely pull and format previous docs if carrying them over
+        cedula_number: application.cedula_number || "",
+        cedula_date: application.cedula_date
+            ? application.cedula_date.split(" ")[0]
+            : "",
+        or_number: application.or_number || "",
+        or_date: application.or_date ? application.or_date.split(" ")[0] : "",
+
         punong_bayan: application.punong_bayan || "",
         authorized_official: application.authorized_official || "",
         event_id: null,
@@ -77,6 +85,13 @@ export default function Renew({
         valid_until: application.valid_until
             ? application.valid_until.split(" ")[0]
             : "",
+
+        // ADDED MISSING PAID BY STATE INITIALIZATION
+        show_paid_by: !!application.show_paid_by,
+        paid_by_last_name: application.paid_by_last_name || "",
+        paid_by_first_name: application.paid_by_first_name || "",
+        paid_by_middle_name: application.paid_by_middle_name || "",
+        paid_by_suffix: application.paid_by_suffix || "",
     });
 
     useEffect(() => {
@@ -155,6 +170,38 @@ export default function Renew({
         if (requiresOr && !isValidDate(data.or_date))
             return toast.error("Invalid Official Receipt Date.");
 
+        // =================================================================
+        // NEW: PRE-SAVE PROMO WARNING MODAL
+        // =================================================================
+        if (data.is_free && data.event_id) {
+            const currentEvent =
+                activeEvents?.find((ev: any) => ev.id == data.event_id) ||
+                activeEvents?.[0];
+            if (
+                currentEvent &&
+                currentEvent.start_date &&
+                currentEvent.end_date
+            ) {
+                const tDate = new Date(data.transaction_date);
+                tDate.setHours(0, 0, 0, 0);
+                const eStart = new Date(currentEvent.start_date);
+                eStart.setHours(0, 0, 0, 0);
+                const eEnd = new Date(currentEvent.end_date);
+                eEnd.setHours(23, 59, 59, 999);
+
+                if (tDate < eStart || tDate > eEnd) {
+                    const confirmProceed = window.confirm(
+                        "⚠️ WARNING: DATE OUTSIDE PROMO PERIOD\n\n" +
+                            "The transaction date you selected is outside the active dates of the Promo/Event.\n\n" +
+                            "If you click OK, the system will save this record, but the FREE PROMO will be removed and it will be processed as a standard 3-Year validity permit.\n\n" +
+                            "Do you want to proceed?",
+                    );
+
+                    // If they click "Cancel", we stop the function so it doesn't save!
+                    if (!confirmProceed) return;
+                }
+            }
+        }
         post(
             route(
                 window.location.pathname.includes("renew")

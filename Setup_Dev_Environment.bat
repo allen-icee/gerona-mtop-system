@@ -1,10 +1,10 @@
 @echo off
-title MTOP Dev Environment Setup
+title MTOP Dev Environment Setup / Repair
 color 0A
 
 echo =====================================================
 echo    INITIALIZING GERONA MTOP DEVELOPMENT ENVIRONMENT
-echo    Please wait. This will download all packages...
+echo    Please wait...
 echo =====================================================
 echo.
 
@@ -14,31 +14,40 @@ if not exist ".env" (
     copy .env.example .env
 )
 
-:: 2. Install Composer (PHP) Dependencies using local PHP
+:: 2. CLEAR OLD PATH CACHES (CRITICAL WHEN MOVING PCs)
+echo Clearing old PC path caches...
+php\php.exe artisan optimize:clear
+
+:: 3. Install Composer (PHP) Dependencies
 echo.
-echo Installing PHP Dependencies...
+echo Verifying PHP Dependencies...
 php\php.exe composer.phar install
 
-:: 3. Generate Application Key
+:: 4. Generate Application Key (if missing)
 echo.
-echo Generating Application Key...
+echo Verifying Application Key...
 php\php.exe artisan key:generate
 
-:: 4. Install Node (JavaScript/React) Dependencies
+:: 5. Install Node Modules
 echo.
 echo Installing Node Modules...
 call npm install
 
-:: 5. Create Database and Run Migrations/Seeder
+:: 6. Fix Broken Storage Link
 echo.
-echo Setting up Database and linking Storage...
-if not exist "database\database.sqlite" type NUL > database\database.sqlite
-php\php.exe artisan migrate:fresh --seed
+echo Re-linking storage for Images/IDs...
+if exist "public\storage" rmdir /q "public\storage"
 php\php.exe artisan storage:link
+
+:: 7. Create Database if missing
+echo.
+echo Verifying Database...
+if not exist "database\database.sqlite" type NUL > database\database.sqlite
+php\php.exe artisan migrate --force
 
 echo.
 echo =====================================================
-echo    SETUP COMPLETE!
+echo    DEV SETUP COMPLETE!
 echo    You can now run Start_MTOP_System.bat
 echo =====================================================
 pause

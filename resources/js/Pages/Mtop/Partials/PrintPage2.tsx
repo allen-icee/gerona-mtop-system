@@ -115,7 +115,16 @@ export default function PrintPage2({ application, operatorName }: Props) {
     const transactionDate = application.transaction_date
         ? formatDate(application.transaction_date)
         : "_________________";
-
+    let paidByName = "";
+    if (application.show_paid_by) {
+        paidByName = `${application.paid_by_first_name || ""} ${
+            application.paid_by_middle_name
+                ? application.paid_by_middle_name + ". "
+                : ""
+        }${application.paid_by_last_name || ""}${
+            application.paid_by_suffix ? " " + application.paid_by_suffix : ""
+        }`.trim();
+    }
     return (
         <div
             className="w-full h-[11.69in] relative flex flex-col bg-white overflow-hidden text-black leading-tight"
@@ -168,8 +177,20 @@ export default function PrintPage2({ application, operatorName }: Props) {
                         <span className="w-56 shrink-0">
                             Pangalan ng Humihiling:
                         </span>{" "}
-                        <span className="font-bold uppercase underline">
-                            {operatorName}
+                        <span className="font-bold underline">
+                            {operatorName}{" "}
+                            {application.show_paid_by && paidByName ? (
+                                <>
+                                    {" "}
+                                    <span className="font-bold underline">
+                                        Paid by:
+                                    </span>
+                                    <span className="font-bold uppercase underline">
+                                        {" "}
+                                        {paidByName}
+                                    </span>
+                                </>
+                            ) : null}
                         </span>
                     </div>
 

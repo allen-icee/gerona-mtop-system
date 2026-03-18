@@ -243,7 +243,9 @@ export default function PrintPage1({ application, operatorName }: Props) {
                 <div className="flex justify-end mb-4">
                     <div className="text-center min-w-65">
                         <div className="font-bold uppercase border-b border-black text-[12pt] leading-[1.15] px-2 mb-1">
-                            {operatorName}
+                            {application.show_paid_by && paidByName
+                                ? paidByName
+                                : operatorName}
                         </div>
                         <p className="text-[12pt] leading-[1.15]">
                             Pirma ng Humiling/May-ari

@@ -45,7 +45,7 @@ class MtopApplicationController extends Controller
         ]);
     }
 
-    public function create(): \Inertia\Response
+    public function create(): Response
     {
         $year = now()->year;
         $holidays = \App\Models\Holiday::where('is_active', true)->get();
@@ -88,11 +88,28 @@ class MtopApplicationController extends Controller
         ]);
     }
 
-    public function store(MtopApplicationRequest $request, ValidityService $validityService): \Illuminate\Http\RedirectResponse
+    public function store(MtopApplicationRequest $request, ValidityService $validityService): RedirectResponse
     {
         $validated = $request->validated();
 
-        $event = !empty($validated['event_id']) ? \App\Models\Event::find($validated['event_id']) : null;
+        $event = null;
+        if (!empty($validated['event_id'])) {
+            $e = \App\Models\Event::find($validated['event_id']);
+            if ($e) {
+                $tDate = Carbon::parse($request->transaction_date)->startOfDay();
+                $eventStart = Carbon::parse($e->start_date)->startOfDay();
+                $eventEnd = Carbon::parse($e->end_date)->endOfDay();
+
+                // Only apply the promo if the transaction date falls within the event dates
+                if ($tDate->between($eventStart, $eventEnd)) {
+                    $event = $e;
+                } else {
+                    // SECURE FIX: Completely strip the promo data if they backdate!
+                    $validated['event_id'] = null;
+                    $validated['is_free'] = false;
+                }
+            }
+        }
         $isFree = filter_var($validated['is_free'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
         $expiryResult = $validityService->computeExpiry(
@@ -208,8 +225,34 @@ class MtopApplicationController extends Controller
         $application = MtopApplication::findOrFail($id);
         $validated = $request->validated();
 
+        // 1. SANITIZE PAID BY FIELDS IF TOGGLED OFF
+        $validated['show_paid_by'] = filter_var($validated['show_paid_by'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        if (!$validated['show_paid_by']) {
+            $validated['paid_by_last_name'] = null;
+            $validated['paid_by_first_name'] = null;
+            $validated['paid_by_middle_name'] = null;
+            $validated['paid_by_suffix'] = null;
+        }
+
         if ($request->transaction_date) {
-            $event = !empty($validated['event_id']) ? \App\Models\Event::find($validated['event_id']) : null;
+            $event = null;
+            if (!empty($validated['event_id'])) {
+                $e = \App\Models\Event::find($validated['event_id']);
+                if ($e) {
+                    $tDate = Carbon::parse($request->transaction_date)->startOfDay();
+                    $eventStart = Carbon::parse($e->start_date)->startOfDay();
+                    $eventEnd = Carbon::parse($e->end_date)->endOfDay();
+
+                    // Only apply the promo if the transaction date falls within the event dates
+                    if ($tDate->between($eventStart, $eventEnd)) {
+                        $event = $e;
+                    } else {
+                        // SECURE FIX: Completely strip the promo data if they backdate!
+                        $validated['event_id'] = null;
+                        $validated['is_free'] = false;
+                    }
+                }
+            }
             $isFree = filter_var($validated['is_free'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
             $expiryResult = $validityService->computeExpiry(
@@ -236,6 +279,25 @@ class MtopApplicationController extends Controller
                     throw new \Exception("The Control Number {$final_mt_number} was just updated by another user. Please use a different number.");
                 }
 
+                // ====================================================================
+                // SMART RESET: If Paid By was turned off, wipe it from Driver Name too
+                // ====================================================================
+                if (!$validated['show_paid_by'] && $application->show_paid_by) {
+                    $pbInitial = $application->paid_by_middle_name ? substr($application->paid_by_middle_name, 0, 1) . '. ' : '';
+                    $pbSfx = $application->paid_by_suffix ? ' ' . $application->paid_by_suffix : '';
+
+                    $fullPaidByName = trim(strtoupper("{$application->paid_by_first_name} {$pbInitial}{$application->paid_by_last_name}{$pbSfx}"));
+                    $basicPaidByName = trim(strtoupper("{$application->paid_by_first_name} {$application->paid_by_last_name}"));
+
+                    $currentDriver = trim(strtoupper($application->driver_name ?? ''));
+
+                    // If the current driver name matches the old Paid By name, wipe it!
+                    if ($currentDriver === $fullPaidByName || $currentDriver === $basicPaidByName) {
+                        $application->driver_name = null;
+                    }
+                }
+                // ====================================================================
+
                 $application->update($validated);
                 $this->queueForSync('mtop_applications', $application->fresh()->toArray());
 
@@ -254,11 +316,11 @@ class MtopApplicationController extends Controller
                             'engine_motor_no' => $validated['engine_motor_no'],
                             'chassis_no' => $validated['chassis_no'],
                             'plate_no' => $validated['plate_no'],
-                            'show_paid_by' => filter_var($validated['show_paid_by'] ?? false, FILTER_VALIDATE_BOOLEAN),
-                            'paid_by_last_name' => $validated['paid_by_last_name'] ?? null,
-                            'paid_by_first_name' => $validated['paid_by_first_name'] ?? null,
-                            'paid_by_middle_name' => $validated['paid_by_middle_name'] ?? null,
-                            'paid_by_suffix' => $validated['paid_by_suffix'] ?? null,
+                            'show_paid_by' => $validated['show_paid_by'],
+                            'paid_by_last_name' => $validated['paid_by_last_name'],
+                            'paid_by_first_name' => $validated['paid_by_first_name'],
+                            'paid_by_middle_name' => $validated['paid_by_middle_name'],
+                            'paid_by_suffix' => $validated['paid_by_suffix'],
                         ]);
                         $this->queueForSync('mtop_franchises', $franchise->fresh()->toArray());
                     }
@@ -342,11 +404,19 @@ class MtopApplicationController extends Controller
                 'Cedula Date',
                 'Punong Bayan',
                 'Authorized Official',
+                'Driver Name',          // Added New Field
+                'Is Free/Promo',        // Added New Field
+                'Paid By Details',      // Added New Field
                 'Valid Until',
                 'Status'
             ]);
 
             foreach ($records as $row) {
+                // Safely format the Paid By details
+                $paidBy = $row->show_paid_by
+                    ? trim("{$row->paid_by_first_name} {$row->paid_by_last_name} {$row->paid_by_suffix}")
+                    : 'N/A';
+
                 fputcsv($file, [
                     $row->mt_number,
                     $row->transaction_date,
@@ -368,6 +438,9 @@ class MtopApplicationController extends Controller
                     $row->cedula_date,
                     $row->punong_bayan,
                     $row->authorized_official,
+                    $row->driver_name ?? 'N/A',            // Injects Driver
+                    $row->is_free ? 'YES' : 'NO',          // Injects Promo Info
+                    $paidBy,                               // Injects Paid By
                     $row->valid_until,
                     $row->status
                 ]);
@@ -473,7 +546,24 @@ class MtopApplicationController extends Controller
         $oldApp = MtopApplication::findOrFail($id);
         $validated = $request->validated();
 
-        $event = !empty($validated['event_id']) ? \App\Models\Event::find($validated['event_id']) : null;
+        $event = null;
+        if (!empty($validated['event_id'])) {
+            $e = \App\Models\Event::find($validated['event_id']);
+            if ($e) {
+                $tDate = Carbon::parse($request->transaction_date)->startOfDay();
+                $eventStart = Carbon::parse($e->start_date)->startOfDay();
+                $eventEnd = Carbon::parse($e->end_date)->endOfDay();
+
+                // Only apply the promo if the transaction date falls within the event dates
+                if ($tDate->between($eventStart, $eventEnd)) {
+                    $event = $e;
+                } else {
+                    // SECURE FIX: Completely strip the promo data if they backdate!
+                    $validated['event_id'] = null;
+                    $validated['is_free'] = false;
+                }
+            }
+        }
         $isFree = filter_var($validated['is_free'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
         $expiryResult = $validityService->computeExpiry(
@@ -551,7 +641,7 @@ class MtopApplicationController extends Controller
         }
     }
 
-    public function transfer($id): \Inertia\Response
+    public function transfer($id): Response
     {
         $application = MtopApplication::findOrFail($id);
 
@@ -581,12 +671,29 @@ class MtopApplicationController extends Controller
         ]);
     }
 
-    public function storeTransfer(MtopApplicationRequest $request, $id, ValidityService $validityService): \Illuminate\Http\RedirectResponse
+    public function storeTransfer(MtopApplicationRequest $request, $id, ValidityService $validityService): RedirectResponse
     {
         $oldApp = MtopApplication::findOrFail($id);
         $validated = $request->validated();
 
-        $event = !empty($validated['event_id']) ? \App\Models\Event::find($validated['event_id']) : null;
+        $event = null;
+        if (!empty($validated['event_id'])) {
+            $e = \App\Models\Event::find($validated['event_id']);
+            if ($e) {
+                $tDate = Carbon::parse($request->transaction_date)->startOfDay();
+                $eventStart = Carbon::parse($e->start_date)->startOfDay();
+                $eventEnd = Carbon::parse($e->end_date)->endOfDay();
+
+                // Only apply the promo if the transaction date falls within the event dates
+                if ($tDate->between($eventStart, $eventEnd)) {
+                    $event = $e;
+                } else {
+                    // SECURE FIX: Completely strip the promo data if they backdate!
+                    $validated['event_id'] = null;
+                    $validated['is_free'] = false;
+                }
+            }
+        }
         $isFree = filter_var($validated['is_free'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
         $expiryResult = $validityService->computeExpiry(

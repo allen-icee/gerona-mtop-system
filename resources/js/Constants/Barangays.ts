@@ -38,6 +38,7 @@ export const BARANGAYS = [
     "San Jose",
     "Santiago",
     "Sembrano",
+    "Singat",
     "Sta. Lucia",
     "Sulipa",
     "Tagumbao",
