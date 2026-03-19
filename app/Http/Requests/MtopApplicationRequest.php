@@ -55,8 +55,9 @@ class MtopApplicationRequest extends FormRequest
             'show_cedula' => 'boolean',
             'show_or' => 'boolean',
 
+
             'plate_no' => [
-                'required',
+                'nullable',
                 'string',
                 function ($attribute, $value, $fail) {
                     if (strtoupper($value) !== 'FOR REGISTRATION' && strlen($value) > 8) {

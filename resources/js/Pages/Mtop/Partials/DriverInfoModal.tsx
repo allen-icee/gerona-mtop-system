@@ -71,18 +71,25 @@ export default function DriverInfoModal({
                                 .toUpperCase();
                     }
 
+                    // Smart Driver Name Logic: Manual Driver > Paid By > Operator
                     let finalDriverName = app.driver_name
                         ? app.driver_name.trim().toUpperCase()
                         : "";
 
-                    if (app.show_paid_by && paidByName) {
-                        finalDriverName = paidByName;
-                    } else if (
-                        !finalDriverName ||
-                        finalDriverName === oldBasicName
-                    ) {
-                        finalDriverName = fullOperatorName;
+                    // Check if the saved driver_name is just the unformatted default operator name
+                    const isDefaultOperator =
+                        finalDriverName &&
+                        finalDriverName === oldBasicName;
+
+                    // If it's empty OR just the default operator name, use the fallbacks
+                    if (!finalDriverName || isDefaultOperator) {
+                        if (app.show_paid_by && paidByName) {
+                            finalDriverName = paidByName;
+                        } else {
+                            finalDriverName = fullOperatorName;
+                        }
                     }
+                    // Otherwise, it keeps the finalDriverName that you already saved!
 
                     return {
                         id: app.id,

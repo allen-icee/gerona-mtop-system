@@ -101,7 +101,7 @@ export default function Transfer({
             "address",
             "transaction_date",
         ],
-        2: ["plate_no", "make_type", "engine_motor_no", "chassis_no"],
+        2: ["make_type", "engine_motor_no", "chassis_no"],
     };
 
     const isStepValid = (stepNum: number) => {
@@ -188,9 +188,9 @@ export default function Transfer({
                 if (tDate < eStart || tDate > eEnd) {
                     const confirmProceed = window.confirm(
                         "⚠️ WARNING: DATE OUTSIDE PROMO PERIOD\n\n" +
-                            "The transaction date you selected is outside the active dates of the Promo/Event.\n\n" +
-                            "If you click OK, the system will save this record, but the FREE PROMO will be removed and it will be processed as a standard 3-Year validity permit.\n\n" +
-                            "Do you want to proceed?",
+                        "The transaction date you selected is outside the active dates of the Promo/Event.\n\n" +
+                        "If you click OK, the system will save this record, but the FREE PROMO will be removed and it will be processed as a standard 3-Year validity permit.\n\n" +
+                        "Do you want to proceed?",
                     );
 
                     // If they click "Cancel", we stop the function so it doesn't save!

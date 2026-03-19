@@ -180,7 +180,7 @@ export default function Create({
             "address",
             "transaction_date",
         ],
-        2: ["plate_no", "make_type", "engine_motor_no", "chassis_no"],
+        2: ["make_type", "engine_motor_no", "chassis_no"],
     };
 
     const isStepValid = (stepNum: number) => {
@@ -444,8 +444,8 @@ export default function Create({
                                     type="button"
                                     onClick={() => setStep(1)}
                                     className={`flex-1 py-4 text-xs sm:text-sm hover:cursor-pointer  font-bold uppercase tracking-wider flex items-center justify-center gap-2 rounded-tl-lg ${step === 1
-                                            ? "bg-white text-blue-600 border-t-2 border-blue-600"
-                                            : "text-gray-400 hover:text-gray-600"
+                                        ? "bg-white text-blue-600 border-t-2 border-blue-600"
+                                        : "text-gray-400 hover:text-gray-600"
                                         }`}
                                 >
                                     <Icon
@@ -464,8 +464,8 @@ export default function Create({
                                             );
                                     }}
                                     className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase tracking-wider hover:cursor-pointer flex items-center justify-center gap-2 ${step === 2
-                                            ? "bg-white text-blue-600 border-t-2 border-blue-600"
-                                            : "text-gray-400 hover:text-gray-600"
+                                        ? "bg-white text-blue-600 border-t-2 border-blue-600"
+                                        : "text-gray-400 hover:text-gray-600"
                                         }`}
                                 >
                                     <Icon icon="solar:wheel-bold" width="18" />{" "}
@@ -482,8 +482,8 @@ export default function Create({
                                             );
                                     }}
                                     className={`flex-1 py-4 text-xs sm:text-sm hover:cursor-pointer font-bold uppercase tracking-wider flex items-center justify-center gap-2 rounded-tr-lg ${step === 3
-                                            ? "bg-white text-blue-600 border-t-2 border-blue-600"
-                                            : "text-gray-400 hover:text-gray-600"
+                                        ? "bg-white text-blue-600 border-t-2 border-blue-600"
+                                        : "text-gray-400 hover:text-gray-600"
                                         }`}
                                 >
                                     <Icon

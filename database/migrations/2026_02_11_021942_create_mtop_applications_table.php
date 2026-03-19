@@ -25,8 +25,8 @@ return new class extends Migration
             $table->string('make_type', 50);
             $table->string('engine_motor_no', 30);
             $table->string('chassis_no', 30);
-            $table->string('plate_no', 10);
-            $table->string('body_number', 10);
+            $table->string('plate_no', 10)->nullable();
+            $table->string('body_number', 10)->nullable();
 
             $table->string('cedula_number', 20)->nullable();
             $table->date('cedula_date')->nullable();

@@ -163,15 +163,21 @@ export default function PrintIds({ applications, settings }: Props) {
 
                     // 4. Smart Driver Name Logic: Paid By overrides Driver
                     let finalDriverName = app.driver_name;
-                    if (app.show_paid_by && paidByName) {
-                        finalDriverName = paidByName;
-                    } else if (
-                        !finalDriverName ||
-                        finalDriverName.trim() ===
-                            `${app.first_name} ${app.last_name}`.trim()
-                    ) {
-                        finalDriverName = originalOperatorName;
+
+                    // Check if the saved driver_name is just the unformatted default operator name
+                    const isDefaultOperator =
+                        finalDriverName &&
+                        finalDriverName.trim() === `${app.first_name} ${app.last_name}`.trim();
+
+                    // If it's empty OR just the default operator name, use the fallbacks
+                    if (!finalDriverName || isDefaultOperator) {
+                        if (app.show_paid_by && paidByName) {
+                            finalDriverName = paidByName;
+                        } else {
+                            finalDriverName = originalOperatorName;
+                        }
                     }
+                    // Otherwise, it keeps the finalDriverName that you manually typed!
 
                     return (
                         <div
@@ -293,16 +299,15 @@ export default function PrintIds({ applications, settings }: Props) {
                                     />
                                     <Field
                                         label="OPERATOR'S NAME AND ADDRESS"
-                                        value={`${operatorNameToPrint} / ${
-                                            app.address
-                                                ? app.address
-                                                      .split(
-                                                          /Gerona|Tarlac/i,
-                                                      )[0]
-                                                      .replace(/,\s*$/, "")
-                                                      .trim()
-                                                : "---"
-                                        }`}
+                                        value={`${operatorNameToPrint} / ${app.address
+                                            ? app.address
+                                                .split(
+                                                    /Gerona|Tarlac/i,
+                                                )[0]
+                                                .replace(/,\s*$/, "")
+                                                .trim()
+                                            : "---"
+                                            }`}
                                         height="7mm"
                                     />
                                     <Field
@@ -315,15 +320,15 @@ export default function PrintIds({ applications, settings }: Props) {
                                         value={
                                             app.valid_until
                                                 ? new Date(app.valid_until)
-                                                      .toLocaleDateString(
-                                                          "en-US",
-                                                          {
-                                                              month: "long",
-                                                              day: "numeric",
-                                                              year: "numeric",
-                                                          },
-                                                      )
-                                                      .toUpperCase()
+                                                    .toLocaleDateString(
+                                                        "en-US",
+                                                        {
+                                                            month: "long",
+                                                            day: "numeric",
+                                                            year: "numeric",
+                                                        },
+                                                    )
+                                                    .toUpperCase()
                                                 : "---"
                                         }
                                         height="7mm"

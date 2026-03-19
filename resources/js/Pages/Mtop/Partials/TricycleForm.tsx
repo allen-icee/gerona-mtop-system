@@ -59,7 +59,7 @@ export default function TricycleForm({
                         error={errors.body_number}
                         icon="solar:hashtag-square-bold"
                         placeholder={noBodyNumber ? "N/A" : "1234"}
-                        required={!noBodyNumber}
+                        required={false}
                         onKeyDown={onKeyDown}
                         disabled={noBodyNumber}
                         className={
@@ -106,7 +106,6 @@ export default function TricycleForm({
                         placeholder={
                             isForRegistration ? "FOR REGISTRATION" : "123ABC"
                         }
-                        required={true}
                         maxLength={8}
                         onKeyDown={onKeyDown}
                         readOnly={isForRegistration}

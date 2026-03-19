@@ -117,8 +117,8 @@ export default function PrintPage2({ application, operatorName }: Props) {
     let paidByName = "";
     if (application.show_paid_by) {
         paidByName = `${application.paid_by_first_name || ""} ${application.paid_by_middle_name
-                ? application.paid_by_middle_name + ". "
-                : ""
+            ? application.paid_by_middle_name + ". "
+            : ""
             }${application.paid_by_last_name || ""}${application.paid_by_suffix ? " " + application.paid_by_suffix : ""
             }`.trim();
     }
@@ -275,7 +275,7 @@ export default function PrintPage2({ application, operatorName }: Props) {
                                     {application.chassis_no}
                                 </td>
                                 <td className="border border-black p-1 font-bold uppercase">
-                                    {application.plate_no}{" "}
+                                    {application.plate_no === 'FOR REGISTRATION' ? '' : application.plate_no}{" "}
                                     {application.body_number
                                         ? `(#${application.body_number})`
                                         : ""}

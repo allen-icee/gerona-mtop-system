@@ -340,7 +340,7 @@ class MtopApplicationController extends Controller
             'make_type' => 'required|string',
             'engine_motor_no' => 'required|string',
             'chassis_no' => 'required|string',
-            'plate_no' => 'required|string',
+            'plate_no' => 'nullable|string',
             'body_number' => 'nullable|string',
             'drop_date' => 'required|date',
             'drop_or_number' => 'required|string',
