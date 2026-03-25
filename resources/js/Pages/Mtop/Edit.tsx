@@ -38,6 +38,11 @@ interface MtopApplication {
     or_number: string;
     or_date: string;
     driver_name: string;
+    has_driver?: boolean | number;
+    driver_last_name?: string | null;
+    driver_first_name?: string | null;
+    driver_middle_name?: string | null;
+    driver_suffix?: string | null;
     punong_bayan: string;
     authorized_official: string;
 
@@ -93,7 +98,11 @@ export default function Edit({
         first_name: application.first_name || "",
         middle_name: application.middle_name || "",
         suffix: application.suffix || "",
-        driver_name: application.driver_name || "",
+        has_driver: !!application.has_driver,
+        driver_last_name: application.driver_last_name || "",
+        driver_first_name: application.driver_first_name || "",
+        driver_middle_name: application.driver_middle_name || "",
+        driver_suffix: application.driver_suffix || "",
         address: application.address || "",
         mt_number: application.mt_number || "",
         transaction_date: application.transaction_date

@@ -232,6 +232,14 @@ class MtopApplicationController extends Controller
             $validated['paid_by_suffix'] = null;
         }
 
+        $validated['has_driver'] = filter_var($validated['has_driver'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        if (!$validated['has_driver']) {
+            $validated['driver_last_name'] = null;
+            $validated['driver_first_name'] = null;
+            $validated['driver_middle_name'] = null;
+            $validated['driver_suffix'] = null;
+        }
+
         if ($request->transaction_date) {
             $event = null;
             if (!empty($validated['event_id'])) {
@@ -515,7 +523,10 @@ class MtopApplicationController extends Controller
         $request->validate([
             'drivers' => 'required|array',
             'drivers.*.id' => 'required|exists:mtop_applications,id',
-            'drivers.*.driver_name' => 'nullable|string|max:100',
+            'drivers.*.driver_last_name' => 'nullable|string|max:50',
+            'drivers.*.driver_first_name' => 'nullable|string|max:50',
+            'drivers.*.driver_middle_name' => 'nullable|string|max:50',
+            'drivers.*.driver_suffix' => 'nullable|string|max:10',
             'drivers.*.photo' => 'nullable|image|max:10240',
         ]);
 
@@ -524,7 +535,18 @@ class MtopApplicationController extends Controller
         DB::transaction(function () use ($request, $drivers) {
             foreach ($drivers as $index => $data) {
                 $app = MtopApplication::find($data['id']);
-                $updateData = ['driver_name' => $data['driver_name'] ?? $app->driver_name];
+
+                // If they typed a name, ensure 'has_driver' toggle stays true
+                $hasDriver = !empty($data['driver_last_name']) || !empty($data['driver_first_name']);
+
+                $updateData = [
+                    'has_driver' => $hasDriver,
+                    'driver_last_name' => $data['driver_last_name'] ?? null,
+                    'driver_first_name' => $data['driver_first_name'] ?? null,
+                    'driver_middle_name' => $data['driver_middle_name'] ?? null,
+                    'driver_suffix' => $data['driver_suffix'] ?? null,
+                    'driver_name' => null, // We clear the legacy field so the new 4-fields take priority
+                ];
 
                 $removePhoto = filter_var($data['remove_photo'] ?? false, FILTER_VALIDATE_BOOLEAN);
 

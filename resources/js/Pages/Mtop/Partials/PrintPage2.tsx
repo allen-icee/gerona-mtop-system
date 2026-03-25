@@ -165,7 +165,7 @@ export default function PrintPage2({ application, operatorName }: Props) {
                     <p>
                         Pinatutunayan nito na ayon sa mga talaan sa tanggapang
                         ito, ang nasabing pangalan/humihiling ay napagkalooban
-                        ng Motorized Tricycle Operator’s Permit (MTOP):
+                        ng Motorized Trycicle Operator’s Permit (MTOP):
                     </p>
                 </div>
 
