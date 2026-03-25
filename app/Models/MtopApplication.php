@@ -15,6 +15,7 @@ class MtopApplication extends Model
         'middle_name',
         'address',
         'suffix',
+        'driver_name',
         'contact_number',
         'mt_number',
         'transaction_date',

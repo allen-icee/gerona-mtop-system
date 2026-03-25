@@ -32,6 +32,10 @@ export default function ApplicantForm({
         }
     };
 
+    const toggleDriver = () => {
+        setData("has_driver", !data.has_driver);
+    };
+
     return (
         <div className="space-y-3">
             <div className="space-y-3">
@@ -41,6 +45,7 @@ export default function ApplicantForm({
                     </h3>
                 </div>
 
+                {/* Operator's Name */}
                 <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
                     <div className="sm:col-span-12 md:col-span-4">
                         <InputGroup
@@ -105,6 +110,103 @@ export default function ApplicantForm({
                     </div>
                 </div>
 
+                {/* Driver's Name Section */}
+                <div className="space-y-3 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <div className="flex items-center justify-between border-b border-gray-200 pb-2">
+                        <h3 className="font-bold text-sm uppercase tracking-wide text-gray-700">
+                            Include{" "}
+                            <span className="font-extrabold text-blue-800">
+                                Driver
+                            </span>{" "}
+                            for ID?
+                        </h3>
+                        <button
+                            type="button"
+                            onClick={toggleDriver}
+                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 ${data.has_driver
+                                ? "bg-blue-800"
+                                : "bg-gray-500 hover:bg-gray-600"
+                                }`}
+                            role="switch"
+                            aria-checked={data.has_driver}
+                        >
+                            <span
+                                aria-hidden="true"
+                                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${data.has_driver
+                                    ? "translate-x-5"
+                                    : "translate-x-0"
+                                    }`}
+                            />
+                        </button>
+                    </div>
+
+                    {data.has_driver && (
+                        <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 pt-2">
+                            <div className="sm:col-span-12 md:col-span-4">
+                                <InputGroup
+                                    id="driver_last_name"
+                                    label="Driver: Last Name"
+                                    name="driver_last_name"
+                                    value={data.driver_last_name || ""}
+                                    onChange={(e) =>
+                                        handleNameChange("driver_last_name", e.target.value)
+                                    }
+                                    error={errors.driver_last_name}
+                                    placeholder="DEQUIROS"
+                                    onKeyDown={onKeyDown}
+                                    required
+                                />
+                            </div>
+
+                            <div className="sm:col-span-12 md:col-span-4">
+                                <InputGroup
+                                    id="driver_first_name"
+                                    label="Driver: First Name"
+                                    name="driver_first_name"
+                                    value={data.driver_first_name || ""}
+                                    onChange={(e) =>
+                                        handleNameChange("driver_first_name", e.target.value)
+                                    }
+                                    error={errors.driver_first_name}
+                                    placeholder="ALLEN ICEE"
+                                    onKeyDown={onKeyDown}
+                                    required
+                                />
+                            </div>
+
+                            <div className="sm:col-span-6 md:col-span-2">
+                                <InputGroup
+                                    id="driver_middle_name"
+                                    label="M.I."
+                                    name="driver_middle_name"
+                                    value={data.driver_middle_name || ""}
+                                    onChange={(e) => {
+                                        const val = e.target.value
+                                            .toUpperCase()
+                                            .replace(/[^A-ZÑñ]/g, "")
+                                            .slice(0, 1);
+                                        setData("driver_middle_name", val);
+                                    }}
+                                    error={errors.driver_middle_name}
+                                    placeholder="A"
+                                    maxLength={1}
+                                    onKeyDown={onKeyDown}
+                                />
+                            </div>
+
+                            <div className="sm:col-span-6 md:col-span-2">
+                                <SuffixSelect
+                                    value={data.driver_suffix || ""}
+                                    onChange={(val) => setData("driver_suffix", val)}
+                                    error={errors.driver_suffix}
+                                    onKeyDown={onKeyDown}
+                                />
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Paid By Section */}
                 <div className="space-y-3 bg-gray-50 p-4 rounded-lg border border-gray-200">
                     <div className="flex items-center justify-between border-b border-gray-200 pb-2">
                         <h3 className="font-bold text-sm uppercase tracking-wide text-gray-700">
@@ -176,16 +278,16 @@ export default function ApplicantForm({
 
                             <div className="sm:col-span-6 md:col-span-2">
                                 <InputGroup
-                                    id="middle_name"
+                                    id="paid_by_middle_name"
                                     label="M.I."
-                                    name="middle_name"
-                                    value={data.middle_name}
+                                    name="paid_by_middle_name"
+                                    value={data.paid_by_middle_name}
                                     onChange={(e) => {
                                         const val = e.target.value
                                             .toUpperCase()
                                             .replace(/[^A-ZÑ]/g, "")
                                             .slice(0, 1);
-                                        setData("middle_name", val);
+                                        setData("paid_by_middle_name", val); // <-- BUG FIXED HERE
                                     }}
                                     error={errors.paid_by_middle_name}
                                     placeholder="A"
@@ -207,6 +309,7 @@ export default function ApplicantForm({
                         </div>
                     )}
                 </div>
+
                 <div>
                     <BarangaySelect
                         value={data.address}

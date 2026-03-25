@@ -37,6 +37,7 @@ interface MtopApplication {
     cedula_date: string;
     or_number: string;
     or_date: string;
+    driver_name: string;
     punong_bayan: string;
     authorized_official: string;
 
@@ -92,6 +93,7 @@ export default function Edit({
         first_name: application.first_name || "",
         middle_name: application.middle_name || "",
         suffix: application.suffix || "",
+        driver_name: application.driver_name || "",
         address: application.address || "",
         mt_number: application.mt_number || "",
         transaction_date: application.transaction_date
