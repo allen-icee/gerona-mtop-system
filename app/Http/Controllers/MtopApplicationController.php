@@ -456,7 +456,7 @@ class MtopApplicationController extends Controller
                 'Middle Name',
                 'Suffix',
                 'Paid By Details',
-                'Driver Name',
+                'Driver Name', // Column header
                 'Address',
                 'Contact #',
                 'Body Number',
@@ -470,9 +470,7 @@ class MtopApplicationController extends Controller
                 'Cedula Date',
                 'Punong Bayan',
                 'Authorized Official',
-                'Driver Name',
                 'Is Free/Promo',
-                'Paid By Details',
                 'Valid Until',
                 'Status'
             ]);
@@ -481,6 +479,13 @@ class MtopApplicationController extends Controller
                 $paidBy = $row->show_paid_by
                     ? trim("{$row->paid_by_first_name} {$row->paid_by_last_name} {$row->paid_by_suffix}")
                     : 'N/A';
+
+                // Construct Driver Name from new fields
+                $driverName = 'N/A';
+                if ($row->has_driver) {
+                    $dMiddle = $row->driver_middle_name ? substr($row->driver_middle_name, 0, 1) . '. ' : '';
+                    $driverName = trim("{$row->driver_first_name} {$dMiddle}{$row->driver_last_name} {$row->driver_suffix}");
+                }
 
                 fputcsv($file, [
                     $row->mt_number,
@@ -491,7 +496,7 @@ class MtopApplicationController extends Controller
                     $row->middle_name,
                     $row->suffix,
                     $paidBy,
-                    $row->driver_name ?? 'N/A',
+                    $driverName, // Use constructed name
                     $row->address,
                     $row->contact_number,
                     $row->body_number,
@@ -505,9 +510,7 @@ class MtopApplicationController extends Controller
                     $row->cedula_date,
                     $row->punong_bayan,
                     $row->authorized_official,
-                    $row->driver_name ?? 'N/A',
                     $row->is_free ? 'YES' : 'NO',
-                    $paidBy,
                     $row->valid_until,
                     $row->status
                 ]);
