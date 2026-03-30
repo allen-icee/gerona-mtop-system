@@ -219,9 +219,6 @@ export default function Edit({
         if (requiresOr && !isValidDate(data.or_date))
             return toast.error("Invalid Official Receipt Date.");
 
-        // =================================================================
-        // NEW: PRE-SAVE PROMO WARNING MODAL
-        // =================================================================
         if (data.is_free && data.event_id) {
             const currentEvent =
                 activeEvents?.find((ev: any) => ev.id == data.event_id) ||

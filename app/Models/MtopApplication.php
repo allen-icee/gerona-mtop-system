@@ -1,5 +1,5 @@
 <?php
-
+//GeronaMTOP\app\Models\MtopApplication.php
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -37,13 +37,11 @@ class MtopApplication extends Model
         'transaction_type',
         'processed_by',
 
-        // --- ADDED DRIVER FIELDS HERE ---
         'has_driver',
         'driver_last_name',
         'driver_first_name',
         'driver_middle_name',
         'driver_suffix',
-        // --------------------------------
 
         'show_paid_by',
         'paid_by_last_name',

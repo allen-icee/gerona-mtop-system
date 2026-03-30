@@ -1,5 +1,5 @@
 <?php
-
+//GeronaMTOP\app\Console\Commands\AutoDropPermits.php
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
@@ -21,7 +21,6 @@ class AutoDropPermits extends Command
 
         $sixMonthsAgo = Carbon::today()->subMonths(6);
 
-        // Find applications that are currently active or expired, but their validity is 6 months past
         $appsToDrop = MtopApplication::whereIn('status', ['active', 'expired'])
             ->whereNotNull('valid_until')
             ->whereDate('valid_until', '<=', $sixMonthsAgo)
@@ -32,7 +31,6 @@ class AutoDropPermits extends Command
         DB::transaction(function () use ($appsToDrop, &$count) {
             foreach ($appsToDrop as $app) {
 
-                // 1. Update the Application to 'cancelled' (dropped)
                 $app->update([
                     'status' => 'cancelled',
                     'drop_date' => Carbon::today()->format('Y-m-d'),
@@ -49,7 +47,6 @@ class AutoDropPermits extends Command
                     'status' => 'pending'
                 ]);
 
-                // 2. Also drop/cancel the attached Franchise record
                 if ($app->franchise_id) {
                     $franchise = MtopFranchise::find($app->franchise_id);
 

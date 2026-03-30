@@ -456,7 +456,7 @@ class MtopApplicationController extends Controller
                 'Middle Name',
                 'Suffix',
                 'Paid By Details',
-                'Driver Name', // Column header
+                'Driver Name',
                 'Address',
                 'Contact #',
                 'Body Number',
@@ -480,7 +480,7 @@ class MtopApplicationController extends Controller
                     ? trim("{$row->paid_by_first_name} {$row->paid_by_last_name} {$row->paid_by_suffix}")
                     : 'N/A';
 
-                // Construct Driver Name from new fields
+
                 $driverName = 'N/A';
                 if ($row->has_driver) {
                     $dMiddle = $row->driver_middle_name ? substr($row->driver_middle_name, 0, 1) . '. ' : '';
@@ -496,7 +496,7 @@ class MtopApplicationController extends Controller
                     $row->middle_name,
                     $row->suffix,
                     $paidBy,
-                    $driverName, // Use constructed name
+                    $driverName,
                     $row->address,
                     $row->contact_number,
                     $row->body_number,
@@ -539,7 +539,6 @@ class MtopApplicationController extends Controller
             foreach ($drivers as $index => $data) {
                 $app = MtopApplication::find($data['id']);
 
-                // If they typed a name, ensure 'has_driver' toggle stays true
                 $hasDriver = !empty($data['driver_last_name']) || !empty($data['driver_first_name']);
 
                 $updateData = [
@@ -548,7 +547,7 @@ class MtopApplicationController extends Controller
                     'driver_first_name' => $data['driver_first_name'] ?? null,
                     'driver_middle_name' => $data['driver_middle_name'] ?? null,
                     'driver_suffix' => $data['driver_suffix'] ?? null,
-                    'driver_name' => null, // We clear the legacy field so the new 4-fields take priority
+                    'driver_name' => null,
                 ];
 
                 $removePhoto = filter_var($data['remove_photo'] ?? false, FILTER_VALIDATE_BOOLEAN);

@@ -117,7 +117,6 @@ export default function Create({
             defaultFirst = tokens.join(' ');
         }
     }
-    // -----------------------------------------------------
 
     const { data, setData, post, processing, errors, reset } = useForm({
         last_name: defaultLast,
@@ -129,7 +128,7 @@ export default function Create({
         driver_last_name: "",
         driver_middle_name: "",
         driver_suffix: "",
-        driver_name: "", // ADDED: Ensuring driver name correctly saves
+        driver_name: "",
         address: "",
         mt_number: suggested_mt_number || "",
         transaction_date: new Date().toISOString().split("T")[0],
@@ -155,14 +154,11 @@ export default function Create({
             activeEvents && activeEvents.length > 0 ? activeEvents[0].id : null,
         is_free: activeEvents && activeEvents.length > 0 ? true : false,
         or_unlocked: false,
-
         show_auth_official: false,
         show_cedula: false,
         show_or: false,
         is_manual_validity: false,
         valid_until: "",
-
-        // ADDED: Ensuring "Paid By" details securely save
         show_paid_by: false,
         paid_by_last_name: "",
         paid_by_first_name: "",
@@ -187,7 +183,6 @@ export default function Create({
 
     const isStepValid = (stepNum: number) => {
         if (stepNum === 1 || stepNum === 2) {
-            // @ts-ignore
             const fields = requiredFields[stepNum];
             const basicCheck = fields.every(
                 (field: string) =>

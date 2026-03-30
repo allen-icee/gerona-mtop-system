@@ -1,5 +1,5 @@
 <?php
-
+//GeronaMTOP\database\migrations\2026_03_03_145748_add_validity_period_to_events_table.php
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;

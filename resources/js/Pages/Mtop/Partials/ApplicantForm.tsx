@@ -287,7 +287,7 @@ export default function ApplicantForm({
                                             .toUpperCase()
                                             .replace(/[^A-ZÑ]/g, "")
                                             .slice(0, 1);
-                                        setData("paid_by_middle_name", val); // <-- BUG FIXED HERE
+                                        setData("paid_by_middle_name", val);
                                     }}
                                     error={errors.paid_by_middle_name}
                                     placeholder="A"

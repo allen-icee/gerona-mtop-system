@@ -1,5 +1,5 @@
 <?php
-
+//GeronaMTOP\app\Http\Requests\MtopApplicationRequest.php
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
@@ -44,13 +44,11 @@ class MtopApplicationRequest extends FormRequest
             'authorized_official' => ['nullable', 'string', 'max:100', 'regex:/^[a-zA-ZñÑ\s\.\,\-\|]+$/'],
             'driver_name' => ['nullable', 'string', 'max:100', 'regex:/^[a-zA-ZñÑ\s\.\,\-]+$/'],
 
-            // --- NEW DRIVER RULES ADDED HERE ---
             'has_driver' => 'boolean',
             'driver_last_name' => ['nullable', 'string', 'max:50', 'regex:/^[a-zA-ZñÑ\s\.\,\-]+$/'],
             'driver_first_name' => ['nullable', 'string', 'max:50', 'regex:/^[a-zA-ZñÑ\s\.\,\-]+$/'],
             'driver_middle_name' => ['nullable', 'string', 'max:50', 'regex:/^[a-zA-ZñÑ\s\.\,\-]+$/'],
             'driver_suffix' => ['nullable', 'string', 'max:10', 'regex:/^[a-zA-ZñÑ\s\.\,\-]+$/'],
-            // -----------------------------------
 
             'show_paid_by' => 'boolean',
             'paid_by_last_name' => ['nullable', 'string', 'max:50', 'regex:/^[a-zA-ZñÑ\s\.\,\-]+$/'],

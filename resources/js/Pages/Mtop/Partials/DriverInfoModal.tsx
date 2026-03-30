@@ -1,3 +1,4 @@
+//GeronaMTOP\resources\js\Pages\Mtop\Partials\DriverInfoModal.tsx
 import Modal from "@/Components/Modal";
 import PrimaryButton from "@/Components/PrimaryButton";
 import SecondaryButton from "@/Components/SecondaryButton";
@@ -367,7 +368,7 @@ export default function DriverInfoModal({
                                                 type="text"
                                                 value={driver.driver_last_name}
                                                 onChange={(e) => handleDriverChange(index, "driver_last_name", e.target.value.toUpperCase().replace(/[^A-ZÑñ\s.-]/g, ""))}
-                                                className="w-full h-[42px] px-3 text-sm bg-white"
+                                                className="w-full h-10.5 px-3 text-sm bg-white"
                                                 placeholder="Last Name"
                                             />
                                         </div>
@@ -378,7 +379,7 @@ export default function DriverInfoModal({
                                                 type="text"
                                                 value={driver.driver_first_name}
                                                 onChange={(e) => handleDriverChange(index, "driver_first_name", e.target.value.toUpperCase().replace(/[^A-ZÑñ\s.-]/g, ""))}
-                                                className="w-full h-[42px] px-3 text-sm bg-white"
+                                                className="w-full h-10.5 px-3 text-sm bg-white"
                                                 placeholder="First Name"
                                             />
                                         </div>
@@ -390,7 +391,7 @@ export default function DriverInfoModal({
                                                 type="text"
                                                 value={driver.driver_middle_name}
                                                 onChange={(e) => handleDriverChange(index, "driver_middle_name", e.target.value.toUpperCase().replace(/[^A-ZÑñ]/g, "").slice(0, 1))}
-                                                className="w-full h-[42px] px-3 text-sm text-center bg-white"
+                                                className="w-full h-10.5 px-3 text-sm text-center bg-white"
                                                 placeholder="M.I."
                                                 maxLength={1}
                                             />
@@ -398,7 +399,7 @@ export default function DriverInfoModal({
 
                                         <div className="col-span-8 sm:col-span-4">
                                             <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1.5">Suffix</label>
-                                            <div className="[&_label]:!hidden [&>div.mb-4]:!mb-0 [&_input]:!h-[42px] [&_input]:!py-0 [&_input]:!px-3 [&_input]:!text-sm [&_input]:!border-gray-300">
+                                            <div className="[&_label]:hidden! [&>div.mb-4]:mb-0! [&_input]:h-10.5! [&_input]:py-0! [&_input]:px-3! [&_input]:text-sm! [&_input]:border-gray-300!">
                                                 <SuffixSelect
                                                     value={driver.driver_suffix}
                                                     onChange={(val) => handleDriverChange(index, "driver_suffix", val)}
