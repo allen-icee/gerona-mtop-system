@@ -21,12 +21,27 @@ class MtopApplicationController extends Controller
 {
     public function index(Request $request): Response
     {
-        $filters = $request->only(['search', 'month', 'year', 'barangay', 'renewal']);
+        $filters = $request->only(['search', 'month', 'year', 'barangay', 'renewal', 'sortAlphabetical']);
 
-        $applications = MtopApplication::filter($filters)
-            ->orderBy('mt_number', 'desc')
-            ->paginate(10)
-            ->withQueryString();
+        $query = MtopApplication::filter($filters);
+
+        // Handle the Combined Alphabetical Filter
+        if (!empty($filters['sortAlphabetical'])) {
+            if ($filters['sortAlphabetical'] === 'all') {
+                // Sort everything A-Z
+                $query->orderBy('last_name', 'asc')->orderBy('first_name', 'asc');
+            } elseif (strlen($filters['sortAlphabetical']) === 1) {
+                // Filter by specific letter AND sort A-Z
+                $query->where('last_name', 'like', $filters['sortAlphabetical'] . '%')
+                    ->orderBy('last_name', 'asc')
+                    ->orderBy('first_name', 'asc');
+            }
+        } else {
+            // Default sorting
+            $query->orderBy('mt_number', 'desc');
+        }
+
+        $applications = $query->paginate(10)->withQueryString();
 
         $officials = Signatory::where('is_active', true)->get()->map(function ($s) {
             return ['name' => $s->name, 'position' => $s->position];
@@ -444,9 +459,23 @@ class MtopApplicationController extends Controller
 
     public function export(Request $request)
     {
-        $records = MtopApplication::filter($request->all())
-            ->orderBy('mt_number', 'desc')
-            ->cursor();
+        $filters = $request->all();
+        $query = MtopApplication::filter($filters);
+
+        // Handle the Combined Alphabetical Filter for Exports
+        if (!empty($filters['sortAlphabetical'])) {
+            if ($filters['sortAlphabetical'] === 'all') {
+                $query->orderBy('last_name', 'asc')->orderBy('first_name', 'asc');
+            } elseif (strlen($filters['sortAlphabetical']) === 1) {
+                $query->where('last_name', 'like', $filters['sortAlphabetical'] . '%')
+                    ->orderBy('last_name', 'asc')
+                    ->orderBy('first_name', 'asc');
+            }
+        } else {
+            $query->orderBy('mt_number', 'desc');
+        }
+
+        $records = $query->cursor();
 
         $csvFileName = 'mtop_records_' . date('Y-m-d_H-i') . '.csv';
         $headers = [

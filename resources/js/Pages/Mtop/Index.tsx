@@ -48,6 +48,7 @@ interface Props {
         year?: string;
         barangay?: string;
         renewal?: string;
+        sortAlphabetical?: string;
     };
     officials: { name: string; position: string }[];
     activeEvents: any[];
@@ -68,6 +69,7 @@ export default function Index({
     const [year, setYear] = useState(filters.year || "");
     const [barangay, setBarangay] = useState(filters.barangay || "");
     const [renewal, setRenewal] = useState(filters.renewal || "");
+    const [sortAlphabetical, setSortAlphabetical] = useState(filters.sortAlphabetical || "");
     const [viewingApp, setViewingApp] = useState<MtopApplication | null>(null);
     const [deletingId, setDeletingId] = useState<number | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -92,6 +94,7 @@ export default function Index({
         }
     }, [flash]);
 
+
     useEffect(() => {
         const searchTimer = setTimeout(() => {
             const queryParams = new URLSearchParams(window.location.search);
@@ -105,6 +108,7 @@ export default function Index({
                     year,
                     barangay,
                     renewal,
+                    sortAlphabetical,
                     page: currentPage,
                 },
                 {
@@ -116,7 +120,7 @@ export default function Index({
         }, 300);
 
         return () => clearTimeout(searchTimer);
-    }, [search, month, year, barangay, renewal]);
+    }, [search, month, year, barangay, renewal, sortAlphabetical]);
 
     useEffect(() => {
         const pollInterval = setInterval(() => {
@@ -257,19 +261,24 @@ export default function Index({
                                     onChange={(e) => setRenewal(e.target.value)}
                                 >
                                     <option value="">All Status</option>
-                                    <option value="active">
-                                        Active (Valid)
-                                    </option>
-                                    <option value="upcoming">
-                                        For Renewal
-                                    </option>
+                                    <option value="active">Active (Valid)</option>
+                                    <option value="upcoming">For Renewal</option>
                                     <option value="expired">Expired</option>
-                                    <option value="archived">
-                                        Archived (History)
-                                    </option>
-                                    <option value="cancelled">
-                                        Cancelled
-                                    </option>
+                                    <option value="archived">Archived (History)</option>
+                                    <option value="cancelled">Cancelled</option>
+                                </select>
+
+                                {/* THE COMBINED ALPHABETICAL DROPDOWN */}
+                                <select
+                                    className="border-gray-300 rounded-md shadow-sm text-base py-3 w-full sm:w-48 focus:border-indigo-500 focus:ring-indigo-500 cursor-pointer"
+                                    value={sortAlphabetical}
+                                    onChange={(e) => setSortAlphabetical(e.target.value)}
+                                >
+                                    <option value="">Default Sort</option>
+                                    <option value="all">All Letters (A - Z)</option>
+                                    {Array.from('ABCDEFGHIJKLMNOPQRSTUVWXYZ').map(letter => (
+                                        <option key={letter} value={letter}>Starts with {letter}</option>
+                                    ))}
                                 </select>
                             </div>
                         </div>
@@ -283,15 +292,13 @@ export default function Index({
                                         year,
                                         barangay,
                                         renewal,
+                                        sortAlphabetical, // Include in export
                                     },
                                 })}
                                 target="_blank"
                                 className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg flex items-center justify-center gap-2 shadow-md w-full sm:w-auto text-base transition-transform hover:scale-105"
                             >
-                                <Icon
-                                    icon="solar:file-download-bold"
-                                    width="24"
-                                />{" "}
+                                <Icon icon="solar:file-download-bold" width="24" />{" "}
                                 Export
                             </a>
 
