@@ -84,6 +84,7 @@ export default function Index({ signatories = [], feeSettings, orRecords = [], n
     const [search, setSearch] = useState("");
     const [month, setMonth] = useState("");
     const [year, setYear] = useState("");
+    const [sortAlphabetical, setSortAlphabetical] = useState("");
     const [isReqModalOpen, setIsReqModalOpen] = useState(false);
     const signatoryOptions = signatories.map(sig => sig.position ? `${sig.name} | ${sig.position}` : sig.name);
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
@@ -281,19 +282,36 @@ export default function Index({ signatories = [], feeSettings, orRecords = [], n
         }
     };
 
-    const filteredRecords = orRecords.filter(record => {
+    let filteredRecords = orRecords.filter(record => {
         const searchLower = search.toLowerCase();
         const matchesSearch = (record.or_number || "").toLowerCase().includes(searchLower) ||
             (record.payor_last_name || "").toLowerCase().includes(searchLower) ||
             (record.payor_first_name || "").toLowerCase().includes(searchLower);
-        let matchesMonth = true, matchesYear = true;
+
+        let matchesMonth = true, matchesYear = true, matchesLetter = true;
+
         if (month || year) {
             const recordDate = new Date(record.transaction_date);
             if (month) matchesMonth = (recordDate.getMonth() + 1).toString() === month;
             if (year) matchesYear = recordDate.getFullYear().toString() === year;
         }
-        return matchesSearch && matchesMonth && matchesYear;
+
+        // Apply starting letter filter
+        if (sortAlphabetical && sortAlphabetical !== 'all') {
+            matchesLetter = (record.payor_last_name || "").toUpperCase().startsWith(sortAlphabetical);
+        }
+
+        return matchesSearch && matchesMonth && matchesYear && matchesLetter;
     });
+
+    // Apply Alphabetical Sorting (A to Z)
+    if (sortAlphabetical) {
+        filteredRecords.sort((a, b) => {
+            const nameA = `${a.payor_last_name || ''} ${a.payor_first_name || ''}`.toLowerCase();
+            const nameB = `${b.payor_last_name || ''} ${b.payor_first_name || ''}`.toLowerCase();
+            return nameA.localeCompare(nameB);
+        });
+    }
 
     let createPrefix = "";
     let createSequence = "";
@@ -345,6 +363,19 @@ export default function Index({ signatories = [], feeSettings, orRecords = [], n
                                 {Array.from({ length: new Date().getFullYear() - 2000 + 2 }, (_, i) => new Date().getFullYear() + 1 - i).map((y) => (<option key={y} value={y}>{y}</option>))}
                             </select>
 
+                            {/* ADDED ALPHABETICAL DROPDOWN HERE */}
+                            <select
+                                className="border-gray-300 rounded-md shadow-sm text-base py-3 w-full sm:w-48 focus:border-indigo-500 focus:ring-indigo-500 cursor-pointer"
+                                value={sortAlphabetical}
+                                onChange={(e) => setSortAlphabetical(e.target.value)}
+                            >
+                                <option value="">Default Sort</option>
+                                <option value="all">All Letters (A - Z)</option>
+                                {Array.from('ABCDEFGHIJKLMNOPQRSTUVWXYZ').map(letter => (
+                                    <option key={letter} value={letter}>Starts with {letter}</option>
+                                ))}
+                            </select>
+
                             <div className="flex items-center gap-1.5 bg-indigo-50 text-indigo-700 px-4 py-2 sm:py-0 rounded-lg border border-indigo-200 shadow-sm whitespace-nowrap h-full sm:h-12.5">
                                 <Icon icon="solar:documents-bold" width="20" className="text-indigo-500" />
                                 <span className="font-extrabold text-lg leading-none">{filteredRecords.length}</span>
@@ -373,7 +404,7 @@ export default function Index({ signatories = [], feeSettings, orRecords = [], n
 
                         <a
                             href={route('or_records.export', {
-                                _query: { search, month, year }
+                                _query: { search, month, year, sortAlphabetical } // <--- ADDED sortAlphabetical HERE
                             })}
                             className="bg-green-600 hover:bg-green-700 text-white border font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 shadow-sm transition-all flex-1 sm:flex-none"
                         >

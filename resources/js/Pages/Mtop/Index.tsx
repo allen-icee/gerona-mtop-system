@@ -295,7 +295,6 @@ export default function Index({
                                         sortAlphabetical, // Include in export
                                     },
                                 })}
-                                target="_blank"
                                 className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg flex items-center justify-center gap-2 shadow-md w-full sm:w-auto text-base transition-transform hover:scale-105"
                             >
                                 <Icon icon="solar:file-download-bold" width="24" />{" "}
