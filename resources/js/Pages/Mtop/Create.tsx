@@ -34,12 +34,14 @@ const isValidDate = (dateString: string): boolean => {
 
 export default function Create({
     suggested_mt_number,
+    suggested_body_number,
     punong_bayans,
     officials,
     activeEvents,
     holidays,
 }: {
     suggested_mt_number: string;
+    suggested_body_number: string;
     punong_bayans: string[];
     officials: string[];
     activeEvents: any;
@@ -136,7 +138,7 @@ export default function Create({
         engine_motor_no: "",
         chassis_no: "",
         plate_no: "",
-        body_number: "",
+        body_number: suggested_body_number || "",
         cedula_number: "",
         cedula_date: "",
         or_number: "",

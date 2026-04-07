@@ -79,9 +79,11 @@ class MtopApplicationController extends Controller
             ->whereDate('start_date', '<=', now())
             ->whereDate('end_date', '>=', now())
             ->get();
+        $suggested_body_number = $this->generateNextAvailableBodyNumber();
 
         return Inertia::render('Mtop/Create', [
             'suggested_mt_number' => $suggested_mt_number,
+            'suggested_body_number' => $suggested_body_number,
             'punong_bayans' => $punong_bayans,
             'officials' => $officials,
             'activeEvents' => $activeEvents,
@@ -123,6 +125,17 @@ class MtopApplicationController extends Controller
             $mtop = DB::transaction(function () use ($validated, $request, $expiryResult, $isFree) {
                 $final_mt_number = $validated['mt_number'];
                 $year = now()->year;
+                // === ADD THIS BLOCK ===
+                // Check if the frontend provided a body number. If it's empty OR already taken, generate a new one safely.
+                $final_body_number = $validated['body_number'] ?? null;
+                $isBodyNumberTaken = MtopFranchise::where('body_number', $final_body_number)
+                    ->where('status', '!=', 'cancelled')
+                    ->exists();
+
+                if (empty($final_body_number) || $isBodyNumberTaken) {
+                    $final_body_number = $this->generateNextAvailableBodyNumber();
+                }
+                // =======================
 
                 MtopFranchise::where('mt_number', 'like', "$year-%")->lockForUpdate()->pluck('id');
 
@@ -134,7 +147,7 @@ class MtopApplicationController extends Controller
 
                 $franchise = MtopFranchise::create([
                     'mt_number' => $final_mt_number,
-                    'body_number' => $validated['body_number'] ?? null,
+                    'body_number' => $final_body_number,
                     'last_name' => $validated['last_name'],
                     'first_name' => $validated['first_name'],
                     'middle_name' => $validated['middle_name'] ?? null,
@@ -970,5 +983,31 @@ class MtopApplicationController extends Controller
             'payload_json' => $payload,
             'status' => 'pending'
         ]);
+    }
+
+    /**
+     * Automatically generates the lowest available body number.
+     * Recycles gaps from 'cancelled' records and increments up to 99999.
+     */
+
+    private function generateNextAvailableBodyNumber(): string
+    {
+        // 1. Fetch all body numbers that are currently active/in-use
+        // We exclude 'cancelled' records so those numbers can be recycled
+        $occupiedNumbers = DB::table('mtop_franchises')
+            ->where('status', '!=', 'cancelled')
+            ->whereNotNull('body_number')
+            ->pluck('body_number')
+            ->map(fn($num) => (int) $num)
+            ->toArray();
+
+        // 2. Loop from 1 to 99999 to find the first missing gap
+        for ($number = 1; $number <= 99999; $number++) {
+            if (!in_array($number, $occupiedNumbers)) {
+                return (string) $number;
+            }
+        }
+
+        throw new \Exception("Maximum 5-digit capacity reached. All 99999 body numbers are occupied.");
     }
 }
