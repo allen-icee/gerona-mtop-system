@@ -907,6 +907,8 @@ class MtopApplicationController extends Controller
                 $validityService = app(\App\Services\ValidityService::class);
 
                 DB::transaction(function () use ($handle, $validityService) {
+                    $seenBodyNumbers = []; // Tracker for duplicates in memory
+
                     while (($row = fgetcsv($handle, 1000, ',')) !== false) {
                         if (count($row) < 14) continue;
 
@@ -916,10 +918,25 @@ class MtopApplicationController extends Controller
                         $short_year = substr($mt_number, 2, 2);
                         $seq = substr($mt_number, 5);
 
+                        // --- SANITIZE AND PREVENT DUPLICATE BODY NUMBERS ---
                         $body_number = trim($row[9] ?? '');
-                        if (empty($body_number)) {
-                            $body_number = "T{$short_year}-{$seq}";
+                        if (empty($body_number) || strtoupper($body_number) === 'N/A' || strtoupper($body_number) === 'NONE') {
+                            $body_number = "T{$short_year}-{$seq}"; // Original fallback
                         }
+
+                        $existsInDb = DB::table('mtop_franchises')
+                            ->where('body_number', $body_number)
+                            ->where('mt_number', '!=', $mt_number)
+                            ->exists();
+
+                        if (in_array($body_number, $seenBodyNumbers) || $existsInDb) {
+                            $body_number = null; // Force null to completely bypass unique constraint crash
+                        } else {
+                            if ($body_number !== null) {
+                                $seenBodyNumbers[] = $body_number; // Remember it
+                            }
+                        }
+                        // ---------------------------------------------------
 
                         $plate_no = trim($row[10] ?? '');
                         if (empty($plate_no)) {
@@ -1004,7 +1021,6 @@ class MtopApplicationController extends Controller
             return redirect()->back()->withErrors(['import_file' => 'Error importing file: ' . $e->getMessage()]);
         }
     }
-
     private function queueForSync(string $tableName, array $payload)
     {
         SyncQueue::create([
