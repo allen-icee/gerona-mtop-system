@@ -127,9 +127,46 @@ Route::middleware('auth')->group(function () {
         $callback = function () use ($records) {
             $file = fopen('php://output', 'w');
 
-            fputcsv($file, ['Control No', 'Transaction Date', 'Transaction Type', 'Last Name', 'First Name', 'Middle Name', 'Suffix', 'Address', 'Contact #', 'Body Number', 'Plate No', 'Make/Type', 'Engine No', 'Chassis No', 'OR No', 'OR Date', 'Cedula No', 'Cedula Date', 'Punong Bayan', 'Authorized Official', 'Valid Until', 'Status']);
+            // EXACT same headers as MtopApplicationController export
+            fputcsv($file, [
+                'Control No',
+                'Transaction Date',
+                'Transaction Type',
+                'Last Name',
+                'First Name',
+                'Middle Name',
+                'Suffix',
+                'Paid By Details',
+                'Driver Name',
+                'Address',
+                'Contact #',
+                'Body Number',
+                'Plate No',
+                'Make/Type',
+                'Engine No',
+                'Chassis No',
+                'OR No',
+                'OR Date',
+                'Cedula No',
+                'Cedula Date',
+                'Punong Bayan',
+                'Authorized Official',
+                'Is Free/Promo',
+                'Valid Until',
+                'Status'
+            ]);
 
             foreach ($records as $row) {
+                $paidBy = $row->show_paid_by
+                    ? trim("{$row->paid_by_first_name} {$row->paid_by_last_name} {$row->paid_by_suffix}")
+                    : 'N/A';
+
+                $driverName = 'N/A';
+                if ($row->has_driver) {
+                    $dMiddle = $row->driver_middle_name ? substr($row->driver_middle_name, 0, 1) . '. ' : '';
+                    $driverName = trim("{$row->driver_first_name} {$dMiddle}{$row->driver_last_name} {$row->driver_suffix}");
+                }
+
                 fputcsv($file, [
                     $row->mt_number,
                     $row->transaction_date,
@@ -138,6 +175,8 @@ Route::middleware('auth')->group(function () {
                     $row->first_name,
                     $row->middle_name,
                     $row->suffix,
+                    $paidBy,
+                    $driverName,
                     $row->address,
                     $row->contact_number,
                     $row->body_number,
@@ -151,6 +190,7 @@ Route::middleware('auth')->group(function () {
                     $row->cedula_date,
                     $row->punong_bayan,
                     $row->authorized_official,
+                    $row->is_free ? 'YES' : 'NO',
                     $row->valid_until,
                     $row->status
                 ]);

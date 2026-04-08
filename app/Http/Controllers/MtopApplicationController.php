@@ -903,25 +903,40 @@ class MtopApplicationController extends Controller
             $file = $request->file('import_file');
 
             if (($handle = fopen($file->getRealPath(), 'r')) !== false) {
-                $header = fgetcsv($handle, 1000, ',');
+                // 1. Read and clean headers to map columns dynamically
+                $rawHeaders = fgetcsv($handle, 1000, ',');
+                $headers = array_map(function ($h) {
+                    // Remove BOM characters, quotes, and whitespace, then lowercase
+                    $clean = preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $h);
+                    return strtolower(trim(str_replace('"', '', $clean)));
+                }, $rawHeaders);
+
+                // This creates a mapping so we don't rely on strict index numbers
+                $colMap = array_flip($headers);
+
                 $validityService = app(\App\Services\ValidityService::class);
 
-                DB::transaction(function () use ($handle, $validityService) {
-                    $seenBodyNumbers = []; // Tracker for duplicates in memory
+                DB::transaction(function () use ($handle, $colMap, $validityService) {
+                    $seenBodyNumbers = [];
 
                     while (($row = fgetcsv($handle, 1000, ',')) !== false) {
-                        if (count($row) < 14) continue;
+                        if (empty(array_filter($row))) continue; // Skip empty rows
 
-                        $mt_number = trim($row[0] ?? '');
+                        // Helper function to safely get a column value based on its header name
+                        $getVal = function ($key) use ($row, $colMap) {
+                            return trim($row[$colMap[$key] ?? -1] ?? '');
+                        };
+
+                        $mt_number = $getVal('control no');
                         if (empty($mt_number)) continue;
 
                         $short_year = substr($mt_number, 2, 2);
                         $seq = substr($mt_number, 5);
 
-                        // --- SANITIZE AND PREVENT DUPLICATE BODY NUMBERS ---
-                        $body_number = trim($row[9] ?? '');
+                        // Safely generate or capture Body Number
+                        $body_number = $getVal('body number');
                         if (empty($body_number) || strtoupper($body_number) === 'N/A' || strtoupper($body_number) === 'NONE') {
-                            $body_number = "T{$short_year}-{$seq}"; // Original fallback
+                            $body_number = "T{$short_year}-{$seq}";
                         }
 
                         $existsInDb = DB::table('mtop_franchises')
@@ -930,20 +945,20 @@ class MtopApplicationController extends Controller
                             ->exists();
 
                         if (in_array($body_number, $seenBodyNumbers) || $existsInDb) {
-                            $body_number = null; // Force null to completely bypass unique constraint crash
+                            $body_number = null;
                         } else {
                             if ($body_number !== null) {
-                                $seenBodyNumbers[] = $body_number; // Remember it
+                                $seenBodyNumbers[] = $body_number;
                             }
                         }
-                        // ---------------------------------------------------
 
-                        $plate_no = trim($row[10] ?? '');
+                        $plate_no = $getVal('plate no');
                         if (empty($plate_no)) {
                             $plate_no = "P{$short_year}-{$seq}";
                         }
 
-                        $tDate = !empty(trim($row[1] ?? '')) ? Carbon::parse(trim($row[1])) : now();
+                        $tDateRaw = $getVal('transaction date');
+                        $tDate = !empty($tDateRaw) ? Carbon::parse($tDateRaw) : now();
 
                         $event = \App\Models\Event::where('is_active', true)
                             ->whereDate('start_date', '<=', $tDate)
@@ -959,52 +974,98 @@ class MtopApplicationController extends Controller
                             $event
                         );
 
+                        // --- NEW: SPLIT "PAID BY" BACK INTO FIRST & LAST NAME ---
+                        $paidByRaw = $getVal('paid by details');
+                        $show_paid_by = false;
+                        $pb_first = null;
+                        $pb_last = null;
+                        if (!empty($paidByRaw) && strtoupper($paidByRaw) !== 'N/A') {
+                            $show_paid_by = true;
+                            $pbParts = explode(' ', $paidByRaw);
+                            $pb_last = array_pop($pbParts); // Last word is last name
+                            $pb_first = implode(' ', $pbParts); // Rest is first name
+                            if (empty($pb_first)) {
+                                $pb_first = $pb_last;
+                                $pb_last = null;
+                            }
+                        }
+
+                        // --- NEW: SPLIT "DRIVER NAME" BACK INTO FIRST & LAST NAME ---
+                        $driverRaw = $getVal('driver name');
+                        $has_driver = false;
+                        $drv_first = null;
+                        $drv_last = null;
+                        if (!empty($driverRaw) && strtoupper($driverRaw) !== 'N/A') {
+                            $has_driver = true;
+                            $drvParts = explode(' ', $driverRaw);
+                            $drv_last = array_pop($drvParts); // Last word is last name
+                            $drv_first = implode(' ', $drvParts); // Rest is first name
+                            if (empty($drv_first)) {
+                                $drv_first = $drv_last;
+                                $drv_last = null;
+                            }
+                        }
+
                         $franchise = MtopFranchise::updateOrCreate(
                             ['mt_number' => $mt_number],
                             [
-                                'last_name' => trim($row[3] ?? ''),
-                                'first_name' => trim($row[4] ?? ''),
-                                'middle_name' => trim($row[5] ?? '') ?: null,
-                                'suffix' => trim($row[6] ?? '') ?: null,
-                                'address' => trim($row[7] ?? ''),
-                                'contact_number' => trim($row[8] ?? '') ?: null,
+                                'last_name' => $getVal('last name'),
+                                'first_name' => $getVal('first name'),
+                                'middle_name' => $getVal('middle name') ?: null,
+                                'suffix' => $getVal('suffix') ?: null,
+                                'address' => $getVal('address'),
+                                'contact_number' => $getVal('contact #') ?: null,
                                 'body_number' => $body_number,
                                 'plate_no' => $plate_no,
-                                'make_type' => trim($row[11] ?? ''),
-                                'engine_motor_no' => trim($row[12] ?? ''),
-                                'chassis_no' => trim($row[13] ?? ''),
+                                'make_type' => $getVal('make/type'),
+                                'engine_motor_no' => $getVal('engine no'),
+                                'chassis_no' => $getVal('chassis no'),
                                 'status' => 'active',
+                                'show_paid_by' => $show_paid_by,
+                                'paid_by_first_name' => $pb_first,
+                                'paid_by_last_name' => $pb_last,
                             ]
                         );
+
+                        $orDateRaw = $getVal('or date');
+                        $cedDateRaw = $getVal('cedula date');
 
                         $application = MtopApplication::updateOrCreate(
                             ['mt_number' => $mt_number],
                             [
                                 'franchise_id' => $franchise->id,
                                 'transaction_date' => $tDate->format('Y-m-d'),
-                                'transaction_type' => trim($row[2] ?? '') ?: 'New',
-                                'last_name' => trim($row[3] ?? ''),
-                                'first_name' => trim($row[4] ?? ''),
-                                'middle_name' => trim($row[5] ?? '') ?: null,
-                                'suffix' => trim($row[6] ?? '') ?: null,
-                                'address' => trim($row[7] ?? ''),
-                                'contact_number' => trim($row[8] ?? '') ?: null,
+                                'transaction_type' => $getVal('transaction type') ?: 'New',
+                                'last_name' => $getVal('last name'),
+                                'first_name' => $getVal('first name'),
+                                'middle_name' => $getVal('middle name') ?: null,
+                                'suffix' => $getVal('suffix') ?: null,
+                                'address' => $getVal('address'),
+                                'contact_number' => $getVal('contact #') ?: null,
                                 'body_number' => $body_number,
                                 'plate_no' => $plate_no,
-                                'make_type' => trim($row[11] ?? ''),
-                                'engine_motor_no' => trim($row[12] ?? ''),
-                                'chassis_no' => trim($row[13] ?? ''),
-                                'or_number' => trim($row[14] ?? '') ?: null,
-                                'or_date' => !empty(trim($row[15] ?? '')) ? date('Y-m-d', strtotime(trim($row[15]))) : null,
-                                'cedula_number' => trim($row[16] ?? '') ?: null,
-                                'cedula_date' => !empty(trim($row[17] ?? '')) ? date('Y-m-d', strtotime(trim($row[17]))) : null,
-                                'punong_bayan' => trim($row[18] ?? '') ?: null,
-                                'authorized_official' => trim($row[19] ?? '') ?: null,
+                                'make_type' => $getVal('make/type'),
+                                'engine_motor_no' => $getVal('engine no'),
+                                'chassis_no' => $getVal('chassis no'),
+                                'or_number' => $getVal('or no') ?: null,
+                                'or_date' => !empty($orDateRaw) ? date('Y-m-d', strtotime($orDateRaw)) : null,
+                                'cedula_number' => $getVal('cedula no') ?: null,
+                                'cedula_date' => !empty($cedDateRaw) ? date('Y-m-d', strtotime($cedDateRaw)) : null,
+                                'punong_bayan' => $getVal('punong bayan') ?: null,
+                                'authorized_official' => $getVal('authorized official') ?: null,
                                 'status' => 'active',
                                 'processed_by' => Auth::id(),
                                 'is_free' => !$wantsFullValidity,
                                 'event_id' => $event ? $event->id : null,
                                 'valid_until' => $expiryResult['expiry_date'],
+
+                                // INJECTING PARSED NAMES HERE
+                                'has_driver' => $has_driver,
+                                'driver_first_name' => $drv_first,
+                                'driver_last_name' => $drv_last,
+                                'show_paid_by' => $show_paid_by,
+                                'paid_by_first_name' => $pb_first,
+                                'paid_by_last_name' => $pb_last,
                             ]
                         );
 
@@ -1021,6 +1082,7 @@ class MtopApplicationController extends Controller
             return redirect()->back()->withErrors(['import_file' => 'Error importing file: ' . $e->getMessage()]);
         }
     }
+
     private function queueForSync(string $tableName, array $payload)
     {
         SyncQueue::create([
