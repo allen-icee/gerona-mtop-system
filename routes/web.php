@@ -14,6 +14,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
 use Inertia\Inertia;
+use Rap2hpoutre\FastExcel\FastExcel;
 
 /*
 |--------------------------------------------------------------------------
@@ -114,91 +115,47 @@ Route::middleware('auth')->group(function () {
         }
 
         $records = MtopApplication::latest()->cursor();
-        $csvFileName = 'FULL_BACKUP_MTOP_' . date('Y-m-d_H-i') . '.csv';
+        $fileName = 'FULL_BACKUP_MTOP_' . date('Y-m-d_H-i') . '.xlsx';
 
-        $headers = [
-            "Content-type" => "text/csv",
-            "Content-Disposition" => "attachment; filename=$csvFileName",
-            "Pragma" => "no-cache",
-            "Cache-Control" => "must-revalidate, post-check=0, pre-check=0",
-            "Expires" => "0"
-        ];
+        return (new FastExcel($records))->download($fileName, function ($row) {
+            $paidBy = $row->show_paid_by
+                ? trim("{$row->paid_by_first_name} {$row->paid_by_last_name} {$row->paid_by_suffix}")
+                : 'N/A';
 
-        $callback = function () use ($records) {
-            $file = fopen('php://output', 'w');
-
-            // EXACT same headers as MtopApplicationController export
-            fputcsv($file, [
-                'Control No',
-                'Transaction Date',
-                'Transaction Type',
-                'Last Name',
-                'First Name',
-                'Middle Name',
-                'Suffix',
-                'Paid By Details',
-                'Driver Name',
-                'Address',
-                'Contact #',
-                'Body Number',
-                'Plate No',
-                'Make/Type',
-                'Engine No',
-                'Chassis No',
-                'OR No',
-                'OR Date',
-                'Cedula No',
-                'Cedula Date',
-                'Punong Bayan',
-                'Authorized Official',
-                'Is Free/Promo',
-                'Valid Until',
-                'Status'
-            ]);
-
-            foreach ($records as $row) {
-                $paidBy = $row->show_paid_by
-                    ? trim("{$row->paid_by_first_name} {$row->paid_by_last_name} {$row->paid_by_suffix}")
-                    : 'N/A';
-
-                $driverName = 'N/A';
-                if ($row->has_driver) {
-                    $dMiddle = $row->driver_middle_name ? substr($row->driver_middle_name, 0, 1) . '. ' : '';
-                    $driverName = trim("{$row->driver_first_name} {$dMiddle}{$row->driver_last_name} {$row->driver_suffix}");
-                }
-
-                fputcsv($file, [
-                    $row->mt_number,
-                    $row->transaction_date,
-                    $row->transaction_type,
-                    $row->last_name,
-                    $row->first_name,
-                    $row->middle_name,
-                    $row->suffix,
-                    $paidBy,
-                    $driverName,
-                    $row->address,
-                    $row->contact_number,
-                    $row->body_number,
-                    $row->plate_no,
-                    $row->make_type,
-                    $row->engine_motor_no,
-                    $row->chassis_no,
-                    $row->or_number,
-                    $row->or_date,
-                    $row->cedula_number,
-                    $row->cedula_date,
-                    $row->punong_bayan,
-                    $row->authorized_official,
-                    $row->is_free ? 'YES' : 'NO',
-                    $row->valid_until,
-                    $row->status
-                ]);
+            $driverName = 'N/A';
+            if ($row->has_driver) {
+                $dMiddle = $row->driver_middle_name ? substr($row->driver_middle_name, 0, 1) . '. ' : '';
+                $driverName = trim("{$row->driver_first_name} {$dMiddle}{$row->driver_last_name} {$row->driver_suffix}");
             }
-            fclose($file);
-        };
 
-        return response()->stream($callback, 200, $headers);
+            return [
+                'Control No' => (string) $row->mt_number,
+                'Transaction Date' => $row->transaction_date,
+                'Transaction Type' => $row->transaction_type,
+                'Last Name' => $row->last_name,
+                'First Name' => $row->first_name,
+                'Middle Name' => $row->middle_name,
+                'Suffix' => $row->suffix,
+                'Paid By Details' => $paidBy,
+                'Driver Name' => $driverName,
+                'Address' => $row->address,
+                'Contact #' => (string) $row->contact_number,
+                'Body Number' => (string) $row->body_number,
+                'Plate No' => $row->plate_no,
+                'Make/Type' => $row->make_type,
+                'Engine No' => (string) $row->engine_motor_no,
+                'Chassis No' => (string) $row->chassis_no,
+                'OR No' => (string) $row->or_number,
+                'OR Date' => $row->or_date,
+                'Cedula No' => (string) $row->cedula_number,
+                'Cedula Date' => $row->cedula_date,
+                'Punong Bayan' => $row->punong_bayan,
+                'Authorized Official' => $row->authorized_official,
+                'Is Free/Promo' => $row->is_free ? 'YES' : 'NO',
+                'Valid Until' => $row->valid_until,
+                'Status' => $row->status
+            ];
+        });
     })->name('settings.backup');
 
     /*

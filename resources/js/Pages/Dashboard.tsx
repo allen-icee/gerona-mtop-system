@@ -386,7 +386,7 @@ export default function Dashboard({
                     <form onSubmit={submitImport} className="space-y-4">
                         <div className="bg-blue-50 border border-blue-100 text-blue-800 p-4 rounded-lg text-sm">
                             Upload an <strong>.sqlite</strong> backup file or a{" "}
-                            <strong>.csv</strong> file. The system will safely
+                            <strong>.csv/.xls/xlsx</strong> file. The system will safely
                             merge the data using Control Numbers to update
                             existing records and add new ones without creating
                             duplicates.
@@ -394,7 +394,7 @@ export default function Dashboard({
                         <div>
                             <input
                                 type="file"
-                                accept=".csv,.sqlite,.db"
+                                accept=".xlsx, .xls, .csv"
                                 onChange={(e) =>
                                     setImportData(
                                         "import_file",

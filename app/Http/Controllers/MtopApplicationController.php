@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\SyncQueue;
 use App\Http\Requests\MtopApplicationRequest;
 use App\Services\ValidityService;
+use Rap2hpoutre\FastExcel\FastExcel;
 
 class MtopApplicationController extends Controller
 {
@@ -478,91 +479,48 @@ class MtopApplicationController extends Controller
         }
 
         $records = $query->cursor();
+        $fileName = 'mtop_records_' . date('Y-m-d_H-i') . '.xlsx';
 
-        $csvFileName = 'mtop_records_' . date('Y-m-d_H-i') . '.csv';
-        $headers = [
-            "Content-type" => "text/csv",
-            "Content-Disposition" => "attachment; filename=$csvFileName",
-            "Pragma" => "no-cache",
-            "Cache-Control" => "must-revalidate, post-check=0, pre-check=0",
-            "Expires" => "0"
-        ];
+        // FastExcel automatically handles creating the XLSX file
+        return (new FastExcel($records))->download($fileName, function ($row) {
+            $paidBy = $row->show_paid_by
+                ? trim("{$row->paid_by_first_name} {$row->paid_by_last_name} {$row->paid_by_suffix}")
+                : 'N/A';
 
-        $callback = function () use ($records) {
-            $file = fopen('php://output', 'w');
-
-            fputcsv($file, [
-                'Control No',
-                'Transaction Date',
-                'Transaction Type',
-                'Last Name',
-                'First Name',
-                'Middle Name',
-                'Suffix',
-                'Paid By Details',
-                'Driver Name',
-                'Address',
-                'Contact #',
-                'Body Number',
-                'Plate No',
-                'Make/Type',
-                'Engine No',
-                'Chassis No',
-                'OR No',
-                'OR Date',
-                'Cedula No',
-                'Cedula Date',
-                'Punong Bayan',
-                'Authorized Official',
-                'Is Free/Promo',
-                'Valid Until',
-                'Status'
-            ]);
-
-            foreach ($records as $row) {
-                $paidBy = $row->show_paid_by
-                    ? trim("{$row->paid_by_first_name} {$row->paid_by_last_name} {$row->paid_by_suffix}")
-                    : 'N/A';
-
-
-                $driverName = 'N/A';
-                if ($row->has_driver) {
-                    $dMiddle = $row->driver_middle_name ? substr($row->driver_middle_name, 0, 1) . '. ' : '';
-                    $driverName = trim("{$row->driver_first_name} {$dMiddle}{$row->driver_last_name} {$row->driver_suffix}");
-                }
-
-                fputcsv($file, [
-                    $row->mt_number,
-                    $row->transaction_date,
-                    $row->transaction_type,
-                    $row->last_name,
-                    $row->first_name,
-                    $row->middle_name,
-                    $row->suffix,
-                    $paidBy,
-                    $driverName,
-                    $row->address,
-                    $row->contact_number,
-                    $row->body_number,
-                    $row->plate_no,
-                    $row->make_type,
-                    $row->engine_motor_no,
-                    $row->chassis_no,
-                    $row->or_number,
-                    $row->or_date,
-                    $row->cedula_number,
-                    $row->cedula_date,
-                    $row->punong_bayan,
-                    $row->authorized_official,
-                    $row->is_free ? 'YES' : 'NO',
-                    $row->valid_until,
-                    $row->status
-                ]);
+            $driverName = 'N/A';
+            if ($row->has_driver) {
+                $dMiddle = $row->driver_middle_name ? substr($row->driver_middle_name, 0, 1) . '. ' : '';
+                $driverName = trim("{$row->driver_first_name} {$dMiddle}{$row->driver_last_name} {$row->driver_suffix}");
             }
-            fclose($file);
-        };
 
-        return response()->stream($callback, 200, $headers);
+            return [
+                'Control No' => (string) $row->mt_number, // (string) forces it to keep leading zeroes
+                'Transaction Date' => $row->transaction_date,
+                'Transaction Type' => $row->transaction_type,
+                'Last Name' => $row->last_name,
+                'First Name' => $row->first_name,
+                'Middle Name' => $row->middle_name,
+                'Suffix' => $row->suffix,
+                'Paid By Details' => $paidBy,
+                'Driver Name' => $driverName,
+                'Address' => $row->address,
+                'Contact #' => (string) $row->contact_number,
+                'Body Number' => (string) $row->body_number,
+                'Plate No' => $row->plate_no,
+                'Make/Type' => $row->make_type,
+                'Engine No' => (string) $row->engine_motor_no,
+                'Chassis No' => (string) $row->chassis_no,
+                'OR No' => (string) $row->or_number,
+                'OR Date' => $row->or_date,
+                'Cedula No' => (string) $row->cedula_number,
+                'Cedula Date' => $row->cedula_date,
+                'Punong Bayan' => $row->punong_bayan,
+                'Authorized Official' => $row->authorized_official,
+                'Is Free/Promo' => $row->is_free ? 'YES' : 'NO',
+                'Valid Until' => $row->valid_until,
+                'Status' => $row->status
+            ];
+        });
     }
 
     public function updateDriverInfo(Request $request)
@@ -897,194 +855,180 @@ class MtopApplicationController extends Controller
 
     public function importData(Request $request): RedirectResponse
     {
+        // Added xlsx and xls to the allowed extensions
         $request->validate([
-            'import_file' => 'required|file|mimes:csv,txt|max:20480',
+            'import_file' => 'required|file|extensions:xlsx,xls,csv,txt|max:20480', // <--- FIXED
         ]);
 
         try {
             $file = $request->file('import_file');
+            $validityService = app(\App\Services\ValidityService::class);
 
-            if (($handle = fopen($file->getRealPath(), 'r')) !== false) {
-                // 1. Read and clean headers to map columns dynamically
-                $rawHeaders = fgetcsv($handle, 1000, ',');
-                $headers = array_map(function ($h) {
-                    // Remove BOM characters, quotes, and whitespace, then lowercase
-                    $clean = preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $h);
-                    return strtolower(trim(str_replace('"', '', $clean)));
-                }, $rawHeaders);
+            DB::transaction(function () use ($file, $validityService) {
+                $seenBodyNumbers = [];
 
-                // This creates a mapping so we don't rely on strict index numbers
-                $colMap = array_flip($headers);
+                // FastExcel reads the file and returns rows as associative arrays
+                (new FastExcel)->import($file->getRealPath(), function ($row) use (&$seenBodyNumbers, $validityService) {
 
-                $validityService = app(\App\Services\ValidityService::class);
-
-                DB::transaction(function () use ($handle, $colMap, $validityService) {
-                    $seenBodyNumbers = [];
-
-                    while (($row = fgetcsv($handle, 1000, ',')) !== false) {
-                        if (empty(array_filter($row))) continue; // Skip empty rows
-
-                        // Helper function to safely get a column value based on its header name
-                        $getVal = function ($key) use ($row, $colMap) {
-                            return trim($row[$colMap[$key] ?? -1] ?? '');
-                        };
-
-                        $mt_number = $getVal('control no');
-                        if (empty($mt_number)) continue;
-
-                        $short_year = substr($mt_number, 2, 2);
-                        $seq = substr($mt_number, 5);
-
-                        // Safely generate or capture Body Number
-                        $body_number = $getVal('body number');
-                        if (empty($body_number) || strtoupper($body_number) === 'N/A' || strtoupper($body_number) === 'NONE') {
-                            $body_number = "T{$short_year}-{$seq}";
-                        }
-
-                        $existsInDb = DB::table('mtop_franchises')
-                            ->where('body_number', $body_number)
-                            ->where('mt_number', '!=', $mt_number)
-                            ->exists();
-
-                        if (in_array($body_number, $seenBodyNumbers) || $existsInDb) {
-                            $body_number = null;
-                        } else {
-                            if ($body_number !== null) {
-                                $seenBodyNumbers[] = $body_number;
-                            }
-                        }
-
-                        $plate_no = $getVal('plate no');
-                        if (empty($plate_no)) {
-                            $plate_no = "P{$short_year}-{$seq}";
-                        }
-
-                        $tDateRaw = $getVal('transaction date');
-                        $tDate = !empty($tDateRaw) ? Carbon::parse($tDateRaw) : now();
-
-                        $event = \App\Models\Event::where('is_active', true)
-                            ->whereDate('start_date', '<=', $tDate)
-                            ->whereDate('end_date', '>=', $tDate)
-                            ->first();
-
-                        $wantsFullValidity = $event ? false : true;
-
-                        $expiryResult = $validityService->computeExpiry(
-                            $tDate,
-                            $plate_no,
-                            $wantsFullValidity,
-                            $event
-                        );
-
-                        // --- NEW: SPLIT "PAID BY" BACK INTO FIRST & LAST NAME ---
-                        $paidByRaw = $getVal('paid by details');
-                        $show_paid_by = false;
-                        $pb_first = null;
-                        $pb_last = null;
-                        if (!empty($paidByRaw) && strtoupper($paidByRaw) !== 'N/A') {
-                            $show_paid_by = true;
-                            $pbParts = explode(' ', $paidByRaw);
-                            $pb_last = array_pop($pbParts); // Last word is last name
-                            $pb_first = implode(' ', $pbParts); // Rest is first name
-                            if (empty($pb_first)) {
-                                $pb_first = $pb_last;
-                                $pb_last = null;
-                            }
-                        }
-
-                        // --- NEW: SPLIT "DRIVER NAME" BACK INTO FIRST & LAST NAME ---
-                        $driverRaw = $getVal('driver name');
-                        $has_driver = false;
-                        $drv_first = null;
-                        $drv_last = null;
-                        if (!empty($driverRaw) && strtoupper($driverRaw) !== 'N/A') {
-                            $has_driver = true;
-                            $drvParts = explode(' ', $driverRaw);
-                            $drv_last = array_pop($drvParts); // Last word is last name
-                            $drv_first = implode(' ', $drvParts); // Rest is first name
-                            if (empty($drv_first)) {
-                                $drv_first = $drv_last;
-                                $drv_last = null;
-                            }
-                        }
-
-                        $franchise = MtopFranchise::updateOrCreate(
-                            ['mt_number' => $mt_number],
-                            [
-                                'last_name' => $getVal('last name'),
-                                'first_name' => $getVal('first name'),
-                                'middle_name' => $getVal('middle name') ?: null,
-                                'suffix' => $getVal('suffix') ?: null,
-                                'address' => $getVal('address'),
-                                'contact_number' => $getVal('contact #') ?: null,
-                                'body_number' => $body_number,
-                                'plate_no' => $plate_no,
-                                'make_type' => $getVal('make/type'),
-                                'engine_motor_no' => $getVal('engine no'),
-                                'chassis_no' => $getVal('chassis no'),
-                                'status' => $getVal('status') ?: 'active',
-                                'show_paid_by' => $show_paid_by,
-                                'paid_by_first_name' => $pb_first,
-                                'paid_by_last_name' => $pb_last,
-                            ]
-                        );
-
-                        $orDateRaw = $getVal('or date');
-                        $cedDateRaw = $getVal('cedula date');
-
-                        $application = MtopApplication::updateOrCreate(
-                            ['mt_number' => $mt_number],
-                            [
-                                'franchise_id' => $franchise->id,
-                                'transaction_date' => $tDate->format('Y-m-d'),
-                                'transaction_type' => $getVal('transaction type') ?: 'New',
-                                'last_name' => $getVal('last name'),
-                                'first_name' => $getVal('first name'),
-                                'middle_name' => $getVal('middle name') ?: null,
-                                'suffix' => $getVal('suffix') ?: null,
-                                'address' => $getVal('address'),
-                                'contact_number' => $getVal('contact #') ?: null,
-                                'body_number' => $body_number,
-                                'plate_no' => $plate_no,
-                                'make_type' => $getVal('make/type'),
-                                'engine_motor_no' => $getVal('engine no'),
-                                'chassis_no' => $getVal('chassis no'),
-                                'or_number' => $getVal('or no') ?: null,
-                                'or_date' => !empty($orDateRaw) ? date('Y-m-d', strtotime($orDateRaw)) : null,
-                                'cedula_number' => $getVal('cedula no') ?: null,
-                                'cedula_date' => !empty($cedDateRaw) ? date('Y-m-d', strtotime($cedDateRaw)) : null,
-                                'punong_bayan' => $getVal('punong bayan') ?: null,
-                                'authorized_official' => $getVal('authorized official') ?: null,
-                                'status' => $getVal('status') ?: 'active',
-                                'processed_by' => Auth::id(),
-                                'is_free' => !$wantsFullValidity,
-                                'event_id' => $event ? $event->id : null,
-                                'valid_until' => $expiryResult['expiry_date'],
-
-                                // INJECTING PARSED NAMES HERE
-                                'has_driver' => $has_driver,
-                                'driver_first_name' => $drv_first,
-                                'driver_last_name' => $drv_last,
-                                'show_paid_by' => $show_paid_by,
-                                'paid_by_first_name' => $pb_first,
-                                'paid_by_last_name' => $pb_last,
-                            ]
-                        );
-
-                        $this->queueForSync('mtop_franchises', $franchise->toArray());
-                        $this->queueForSync('mtop_applications', $application->toArray());
+                    // Normalize headers dynamically like your previous logic
+                    $cleanRow = [];
+                    foreach ($row as $key => $val) {
+                        $clean = preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $key);
+                        $cleanRow[strtolower(trim($clean))] = trim((string)$val);
                     }
-                });
 
-                fclose($handle);
-            }
+                    $getVal = function ($key) use ($cleanRow) {
+                        return $cleanRow[$key] ?? '';
+                    };
+
+                    $mt_number = $getVal('control no');
+                    if (empty($mt_number)) return; // "return" replaces "continue" inside a closure
+
+                    $short_year = substr($mt_number, 2, 2);
+                    $seq = substr($mt_number, 5);
+
+                    $body_number = $getVal('body number');
+                    if (empty($body_number) || strtoupper($body_number) === 'N/A' || strtoupper($body_number) === 'NONE') {
+                        $body_number = "T{$short_year}-{$seq}";
+                    }
+
+                    $existsInDb = DB::table('mtop_franchises')
+                        ->where('body_number', $body_number)
+                        ->where('mt_number', '!=', $mt_number)
+                        ->exists();
+
+                    if (in_array($body_number, $seenBodyNumbers) || $existsInDb) {
+                        $body_number = null;
+                    } else {
+                        if ($body_number !== null) {
+                            $seenBodyNumbers[] = $body_number;
+                        }
+                    }
+
+                    $plate_no = $getVal('plate no');
+                    if (empty($plate_no)) {
+                        $plate_no = "P{$short_year}-{$seq}";
+                    }
+
+                    $tDateRaw = $getVal('transaction date');
+                    $tDate = !empty($tDateRaw) ? Carbon::parse($tDateRaw) : now();
+
+                    $event = \App\Models\Event::where('is_active', true)
+                        ->whereDate('start_date', '<=', $tDate)
+                        ->whereDate('end_date', '>=', $tDate)
+                        ->first();
+
+                    $wantsFullValidity = $event ? false : true;
+
+                    $expiryResult = $validityService->computeExpiry(
+                        $tDate,
+                        $plate_no,
+                        $wantsFullValidity,
+                        $event
+                    );
+
+                    $paidByRaw = $getVal('paid by details');
+                    $show_paid_by = false;
+                    $pb_first = null;
+                    $pb_last = null;
+                    if (!empty($paidByRaw) && strtoupper($paidByRaw) !== 'N/A') {
+                        $show_paid_by = true;
+                        $pbParts = explode(' ', $paidByRaw);
+                        $pb_last = array_pop($pbParts);
+                        $pb_first = implode(' ', $pbParts);
+                        if (empty($pb_first)) {
+                            $pb_first = $pb_last;
+                            $pb_last = null;
+                        }
+                    }
+
+                    $driverRaw = $getVal('driver name');
+                    $has_driver = false;
+                    $drv_first = null;
+                    $drv_last = null;
+                    if (!empty($driverRaw) && strtoupper($driverRaw) !== 'N/A') {
+                        $has_driver = true;
+                        $drvParts = explode(' ', $driverRaw);
+                        $drv_last = array_pop($drvParts);
+                        $drv_first = implode(' ', $drvParts);
+                        if (empty($drv_first)) {
+                            $drv_first = $drv_last;
+                            $drv_last = null;
+                        }
+                    }
+
+                    $franchise = MtopFranchise::updateOrCreate(
+                        ['mt_number' => $mt_number],
+                        [
+                            'last_name' => $getVal('last name'),
+                            'first_name' => $getVal('first name'),
+                            'middle_name' => $getVal('middle name') ?: null,
+                            'suffix' => $getVal('suffix') ?: null,
+                            'address' => $getVal('address'),
+                            'contact_number' => $getVal('contact #') ?: null,
+                            'body_number' => $body_number,
+                            'plate_no' => $plate_no,
+                            'make_type' => $getVal('make/type'),
+                            'engine_motor_no' => $getVal('engine no'),
+                            'chassis_no' => $getVal('chassis no'),
+                            'status' => $getVal('status') ?: 'active',
+                            'show_paid_by' => $show_paid_by,
+                            'paid_by_first_name' => $pb_first,
+                            'paid_by_last_name' => $pb_last,
+                        ]
+                    );
+
+                    $orDateRaw = $getVal('or date');
+                    $cedDateRaw = $getVal('cedula date');
+
+                    $application = MtopApplication::updateOrCreate(
+                        ['mt_number' => $mt_number],
+                        [
+                            'franchise_id' => $franchise->id,
+                            'transaction_date' => $tDate->format('Y-m-d'),
+                            'transaction_type' => $getVal('transaction type') ?: 'New',
+                            'last_name' => $getVal('last name'),
+                            'first_name' => $getVal('first name'),
+                            'middle_name' => $getVal('middle name') ?: null,
+                            'suffix' => $getVal('suffix') ?: null,
+                            'address' => $getVal('address'),
+                            'contact_number' => $getVal('contact #') ?: null,
+                            'body_number' => $body_number,
+                            'plate_no' => $plate_no,
+                            'make_type' => $getVal('make/type'),
+                            'engine_motor_no' => $getVal('engine no'),
+                            'chassis_no' => $getVal('chassis no'),
+                            'or_number' => $getVal('or no') ?: null,
+                            'or_date' => !empty($orDateRaw) ? date('Y-m-d', strtotime($orDateRaw)) : null,
+                            'cedula_number' => $getVal('cedula no') ?: null,
+                            'cedula_date' => !empty($cedDateRaw) ? date('Y-m-d', strtotime($cedDateRaw)) : null,
+                            'punong_bayan' => $getVal('punong bayan') ?: null,
+                            'authorized_official' => $getVal('authorized official') ?: null,
+                            'status' => $getVal('status') ?: 'active',
+                            'processed_by' => Auth::id(),
+                            'is_free' => !$wantsFullValidity,
+                            'event_id' => $event ? $event->id : null,
+                            'valid_until' => $expiryResult['expiry_date'],
+
+                            'has_driver' => $has_driver,
+                            'driver_first_name' => $drv_first,
+                            'driver_last_name' => $drv_last,
+                            'show_paid_by' => $show_paid_by,
+                            'paid_by_first_name' => $pb_first,
+                            'paid_by_last_name' => $pb_last,
+                        ]
+                    );
+
+                    $this->queueForSync('mtop_franchises', $franchise->toArray());
+                    $this->queueForSync('mtop_applications', $application->toArray());
+                });
+            });
 
             return redirect()->back()->with('message', 'Data imported and validities recalculated successfully!');
         } catch (\Exception $e) {
             return redirect()->back()->withErrors(['import_file' => 'Error importing file: ' . $e->getMessage()]);
         }
     }
-
     private function queueForSync(string $tableName, array $payload)
     {
         SyncQueue::create([
