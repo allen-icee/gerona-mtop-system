@@ -8,6 +8,7 @@ export default function TricycleForm({
     setData,
     errors,
     onKeyDown,
+    suggested_body_number
 }: any) {
     const isForRegistration = data.plate_no === "FOR REGISTRATION";
 
@@ -51,14 +52,24 @@ export default function TricycleForm({
                         name="body_number"
                         value={data.body_number || ""}
                         onChange={(e: any) => {
+                            // Limits input to 4 digits maximum while typing
                             setData(
                                 "body_number",
-                                e.target.value.replace(/\D/g, "").slice(0, 5),
+                                e.target.value.replace(/\D/g, "").slice(0, 4),
                             );
+                        }}
+                        onBlur={(e: any) => {
+                            // Automatically pads with zeros when the user clicks away
+                            if (e.target.value) {
+                                setData(
+                                    "body_number",
+                                    String(e.target.value).padStart(4, "0")
+                                );
+                            }
                         }}
                         error={errors.body_number}
                         icon="solar:hashtag-square-bold"
-                        placeholder={noBodyNumber ? "N/A" : "1234"}
+                        placeholder={noBodyNumber ? "N/A" : "0001"}
                         required={false}
                         onKeyDown={onKeyDown}
                         disabled={noBodyNumber}
@@ -66,22 +77,41 @@ export default function TricycleForm({
                             noBodyNumber ? "bg-gray-100 text-gray-400" : ""
                         }
                     />
-                    <div className="flex justify-end pt-1">
+
+                    {/* AUTO-ASSIGN & TOGGLE ROW (Improved Layout) */}
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
+                        {/* Auto-Assign Button */}
+                        {suggested_body_number ? (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setData("body_number", String(suggested_body_number).padStart(4, "0"));
+                                    setNoBodyNumber(false);
+                                }}
+                                className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800 rounded-md transition-colors border border-blue-200 focus:outline-none text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider shadow-sm"
+                            >
+                                <Icon icon="solar:magic-stick-3-bold" width="14" /> Auto-Assign
+                            </button>
+                        ) : (
+                            <div></div> // Empty div to keep the flex layout balanced if no suggestion exists
+                        )}
+
+                        {/* No Body Number Toggle */}
                         <button
                             type="button"
                             onClick={toggleNoBodyNumber}
-                            className="flex items-center gap-2 focus:outline-none group cursor-pointer"
+                            className="flex items-center gap-2 focus:outline-none group cursor-pointer px-1"
                         >
                             <span
-                                className={`text-xs font-bold uppercase tracking-wider transition-colors ${noBodyNumber ? "text-indigo-800" : "text-gray-700 group-hover:text-gray-900"}`}
+                                className={`text-[11px] font-bold uppercase tracking-wider transition-colors ${noBodyNumber ? "text-indigo-800" : "text-gray-700 group-hover:text-gray-900"}`}
                             >
                                 No Body Number
                             </span>
                             <div
-                                className={`w-10 h-5 flex items-center rounded-full p-1 transition-colors duration-300 shadow-inner ${noBodyNumber ? "bg-indigo-800" : "bg-gray-500 group-hover:bg-gray-600"}`}
+                                className={`w-8 h-4 flex items-center rounded-full p-1 transition-colors duration-300 shadow-inner ${noBodyNumber ? "bg-indigo-800" : "bg-gray-500 group-hover:bg-gray-600"}`}
                             >
                                 <div
-                                    className={`bg-white w-3.5 h-3.5 rounded-full shadow-md transform transition-transform duration-300 ${noBodyNumber ? "translate-x-4" : "translate-x-0"}`}
+                                    className={`bg-white w-2.5 h-2.5 rounded-full shadow-md transform transition-transform duration-300 ${noBodyNumber ? "translate-x-3.5" : "translate-x-0"}`}
                                 ></div>
                             </div>
                         </button>
@@ -115,22 +145,24 @@ export default function TricycleForm({
                                 : ""
                         }
                     />
-                    <div className="flex justify-end pt-1">
+
+                    {/* For Registration Toggle (Improved Padding) */}
+                    <div className="flex justify-end pt-2 px-1">
                         <button
                             type="button"
                             onClick={toggleForRegistration}
                             className="flex items-center gap-2 focus:outline-none group cursor-pointer"
                         >
                             <span
-                                className={`text-xs font-bold uppercase tracking-wider transition-colors ${isForRegistration ? "text-indigo-800" : "text-gray-700 group-hover:text-gray-900"}`}
+                                className={`text-[11px] font-bold uppercase tracking-wider transition-colors ${isForRegistration ? "text-indigo-800" : "text-gray-700 group-hover:text-gray-900"}`}
                             >
                                 For Registration
                             </span>
                             <div
-                                className={`w-10 h-5 flex items-center rounded-full p-1 transition-colors duration-300 shadow-inner ${isForRegistration ? "bg-indigo-800" : "bg-gray-500 group-hover:bg-gray-600"}`}
+                                className={`w-8 h-4 flex items-center rounded-full p-1 transition-colors duration-300 shadow-inner ${isForRegistration ? "bg-indigo-800" : "bg-gray-500 group-hover:bg-gray-600"}`}
                             >
                                 <div
-                                    className={`bg-white w-3.5 h-3.5 rounded-full shadow-md transform transition-transform duration-300 ${isForRegistration ? "translate-x-4" : "translate-x-0"}`}
+                                    className={`bg-white w-2.5 h-2.5 rounded-full shadow-md transform transition-transform duration-300 ${isForRegistration ? "translate-x-3.5" : "translate-x-0"}`}
                                 ></div>
                             </div>
                         </button>

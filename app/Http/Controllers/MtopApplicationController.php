@@ -221,6 +221,7 @@ class MtopApplicationController extends Controller
     public function edit($id): Response
     {
         $application = MtopApplication::findOrFail($id);
+        $suggested_body_number = $this->generateNextAvailableBodyNumber();
         $punong_bayans = Signatory::where('position', 'Punong Bayan')
             ->where('is_active', true)
             ->selectRaw("CONCAT(name, ' | ', position) as formatted_name")
@@ -243,7 +244,8 @@ class MtopApplicationController extends Controller
             'punong_bayans' => $punong_bayans,
             'officials' => $officials,
             'activeEvents' => $activeEvents,
-            'holidays' => $holidays
+            'holidays' => $holidays,
+            'suggested_body_number' => $suggested_body_number
         ]);
     }
 
@@ -1099,8 +1101,6 @@ class MtopApplicationController extends Controller
 
     private function generateNextAvailableBodyNumber(): string
     {
-        // 1. Fetch all body numbers that are currently active/in-use
-        // We exclude 'cancelled' records so those numbers can be recycled
         $occupiedNumbers = DB::table('mtop_franchises')
             ->where('status', '!=', 'cancelled')
             ->whereNotNull('body_number')
@@ -1108,13 +1108,15 @@ class MtopApplicationController extends Controller
             ->map(fn($num) => (int) $num)
             ->toArray();
 
-        // 2. Loop from 1 to 99999 to find the first missing gap
-        for ($number = 1; $number <= 99999; $number++) {
+        // Loop up to 9999 (4-digits max)
+        for ($number = 1; $number <= 9999; $number++) {
             if (!in_array($number, $occupiedNumbers)) {
-                return (string) $number;
+                // sprintf("%04d") forces the number to be exactly 4 digits
+                // by adding leading zeros (e.g., 1 becomes "0001", 12 becomes "0012")
+                return sprintf("%04d", $number);
             }
         }
 
-        throw new \Exception("Maximum 5-digit capacity reached. All 99999 body numbers are occupied.");
+        throw new \Exception("Maximum 4-digit capacity reached. All 9999 body numbers are occupied.");
     }
 }

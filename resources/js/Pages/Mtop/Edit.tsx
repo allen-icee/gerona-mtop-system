@@ -81,12 +81,14 @@ export default function Edit({
     officials,
     activeEvents,
     holidays,
+    suggested_body_number,
 }: {
     application: MtopApplication;
     punong_bayans: string[];
     officials: string[];
     activeEvents: any;
     holidays: any[];
+    suggested_body_number: string;
 }) {
     const [step, setStep] = useState(1);
     const [showMobilePreview, setShowMobilePreview] = useState(false);
@@ -507,6 +509,7 @@ export default function Edit({
                                         setData={setData}
                                         errors={errors}
                                         onKeyDown={handleEnterKey}
+                                        suggested_body_number={suggested_body_number}
                                     />
                                 </div>
 
