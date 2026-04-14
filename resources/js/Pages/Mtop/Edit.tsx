@@ -82,6 +82,7 @@ export default function Edit({
     activeEvents,
     holidays,
     suggested_body_number,
+    occupied_body_numbers, // Added prop
 }: {
     application: MtopApplication;
     punong_bayans: string[];
@@ -89,6 +90,7 @@ export default function Edit({
     activeEvents: any;
     holidays: any[];
     suggested_body_number: string;
+    occupied_body_numbers: number[]; // Added prop type
 }) {
     const [step, setStep] = useState(1);
     const [showMobilePreview, setShowMobilePreview] = useState(false);
@@ -504,12 +506,14 @@ export default function Edit({
                                             : "hidden"
                                     }
                                 >
+                                    {/* Added occupied_body_numbers prop here */}
                                     <TricycleForm
                                         data={data}
                                         setData={setData}
                                         errors={errors}
                                         onKeyDown={handleEnterKey}
                                         suggested_body_number={suggested_body_number}
+                                        occupied_body_numbers={occupied_body_numbers}
                                     />
                                 </div>
 

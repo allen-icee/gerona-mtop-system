@@ -103,7 +103,8 @@ class MtopApplicationController extends Controller
             'punong_bayans' => $punong_bayans,
             'officials' => $officials,
             'activeEvents' => $activeEvents,
-            'holidays' => $holidays
+            'holidays' => $holidays,
+            'occupied_body_numbers' => $this->getOccupiedBodyNumbers()
         ]);
     }
 
@@ -246,7 +247,8 @@ class MtopApplicationController extends Controller
             'officials' => $officials,
             'activeEvents' => $activeEvents,
             'holidays' => $holidays,
-            'suggested_body_number' => $suggested_body_number
+            'suggested_body_number' => $suggested_body_number,
+            'occupied_body_numbers' => $this->getOccupiedBodyNumbers()
         ]);
     }
 
@@ -622,7 +624,8 @@ class MtopApplicationController extends Controller
             'punong_bayans' => $punong_bayans,
             'officials' => $officials,
             'activeEvents' => $activeEvents,
-            'holidays' => $holidays
+            'holidays' => $holidays,
+            'occupied_body_numbers' => $this->getOccupiedBodyNumbers()
         ]);
     }
 
@@ -750,7 +753,8 @@ class MtopApplicationController extends Controller
             'punong_bayans' => $punong_bayans,
             'officials' => $officials,
             'activeEvents' => $activeEvents,
-            'holidays' => $holidays
+            'holidays' => $holidays,
+            'occupied_body_numbers' => $this->getOccupiedBodyNumbers()
         ]);
     }
 
@@ -1039,18 +1043,25 @@ class MtopApplicationController extends Controller
     }
 
     /**
-     * Automatically generates the lowest available body number.
-     * Recycles gaps from 'cancelled' records and increments up to 99999.
+     * Helper to retrieve an array of currently occupied body numbers.
      */
-
-    private function generateNextAvailableBodyNumber(): string
+    private function getOccupiedBodyNumbers(): array
     {
-        $occupiedNumbers = DB::table('mtop_franchises')
+        return DB::table('mtop_franchises')
             ->where('status', '!=', 'cancelled')
             ->whereNotNull('body_number')
             ->pluck('body_number')
             ->map(fn($num) => (int) $num)
             ->toArray();
+    }
+
+    /**
+     * Automatically generates the lowest available body number.
+     * Recycles gaps from 'cancelled' records and increments up to 9999.
+     */
+    private function generateNextAvailableBodyNumber(): string
+    {
+        $occupiedNumbers = $this->getOccupiedBodyNumbers();
 
         // Loop up to 9999 (4-digits max)
         for ($number = 1; $number <= 9999; $number++) {
