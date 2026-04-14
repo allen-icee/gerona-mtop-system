@@ -37,13 +37,9 @@ export default function Renew({
     officials,
     activeEvents,
     holidays,
-}: {
-    application: any;
-    punong_bayans: string[];
-    officials: string[];
-    activeEvents: any;
-    holidays: any[];
-}) {
+    occupied_body_numbers,
+    suggested_body_number,
+}: any) {
     const [step, setStep] = useState(1);
     const [showMobilePreview, setShowMobilePreview] = useState(false);
 
@@ -459,6 +455,8 @@ export default function Renew({
                                         setData={setData}
                                         errors={errors}
                                         onKeyDown={handleEnterKey}
+                                        suggested_body_number={suggested_body_number}
+                                        occupied_body_numbers={occupied_body_numbers}
                                     />
                                 </div>
                                 <div

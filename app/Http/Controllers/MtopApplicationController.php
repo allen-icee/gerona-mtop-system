@@ -480,11 +480,21 @@ class MtopApplicationController extends Controller
             $query->orderBy('mt_number', 'desc');
         }
 
+        // Get the LazyCollection cursor
         $records = $query->cursor();
         $fileName = 'mtop_records_' . date('Y-m-d_H-i') . '.xlsx';
 
-        // FastExcel automatically handles creating the XLSX file
-        return (new FastExcel($records))->download($fileName, function ($row) {
+        // FastExcel needs a standard Generator, Collection, or array.
+        // A LazyCollection is not accepted natively in older/some versions.
+        // We convert the LazyCollection into a standard Generator here:
+        $generator = function () use ($records) {
+            foreach ($records as $record) {
+                yield $record;
+            }
+        };
+
+        // Pass the generator to FastExcel
+        return (new FastExcel($generator()))->download($fileName, function ($row) {
             $paidBy = $row->show_paid_by
                 ? trim("{$row->paid_by_first_name} {$row->paid_by_last_name} {$row->paid_by_suffix}")
                 : 'N/A';
@@ -619,13 +629,17 @@ class MtopApplicationController extends Controller
 
         $holidays = \App\Models\Holiday::where('is_active', true)->get();
 
+        // Generate the suggested number
+        $suggested_body_number = $this->generateNextAvailableBodyNumber();
+
         return Inertia::render('Mtop/Renew', [
             'application' => $application,
             'punong_bayans' => $punong_bayans,
             'officials' => $officials,
             'activeEvents' => $activeEvents,
             'holidays' => $holidays,
-            'occupied_body_numbers' => $this->getOccupiedBodyNumbers()
+            'occupied_body_numbers' => $this->getOccupiedBodyNumbers(),
+            'suggested_body_number' => $suggested_body_number // <--- ADD THIS
         ]);
     }
 
@@ -748,13 +762,17 @@ class MtopApplicationController extends Controller
 
         $holidays = \App\Models\Holiday::where('is_active', true)->get();
 
+        // Generate the suggested number
+        $suggested_body_number = $this->generateNextAvailableBodyNumber();
+
         return Inertia::render('Mtop/Transfer', [
             'application' => $application,
             'punong_bayans' => $punong_bayans,
             'officials' => $officials,
             'activeEvents' => $activeEvents,
             'holidays' => $holidays,
-            'occupied_body_numbers' => $this->getOccupiedBodyNumbers()
+            'occupied_body_numbers' => $this->getOccupiedBodyNumbers(),
+            'suggested_body_number' => $suggested_body_number // <--- ADD THIS
         ]);
     }
 

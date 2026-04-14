@@ -39,6 +39,7 @@ export default function Create({
     officials,
     activeEvents,
     holidays,
+    occupied_body_numbers, // Added prop
 }: {
     suggested_mt_number: string;
     suggested_body_number: string;
@@ -46,6 +47,7 @@ export default function Create({
     officials: string[];
     activeEvents: any;
     holidays: any[];
+    occupied_body_numbers: number[]; // Added prop type
 }) {
     const { props } = usePage();
     const [step, setStep] = useState(1);
@@ -528,6 +530,8 @@ export default function Create({
                                         setData={setData}
                                         errors={errors}
                                         onKeyDown={handleEnterKey}
+                                        suggested_body_number={suggested_body_number}
+                                        occupied_body_numbers={occupied_body_numbers}
                                     />
                                 </div>
 

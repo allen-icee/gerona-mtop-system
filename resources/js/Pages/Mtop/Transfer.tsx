@@ -36,6 +36,8 @@ export default function Transfer({
     officials,
     activeEvents,
     holidays,
+    occupied_body_numbers,
+    suggested_body_number,
 }: any) {
     const [step, setStep] = useState(1);
     const [showMobilePreview, setShowMobilePreview] = useState(false);
@@ -455,6 +457,8 @@ export default function Transfer({
                                         setData={setData}
                                         errors={errors}
                                         onKeyDown={handleEnterKey}
+                                        occupied_body_numbers={occupied_body_numbers}
+                                        suggested_body_number={suggested_body_number}
                                     />
                                 </div>
                                 <div
@@ -526,7 +530,7 @@ export default function Transfer({
                                         ) : (
                                             <PrimaryButton
                                                 type="submit"
-                                                className={`bg-purple-600 hover:bg-purple-700 text-white ${processing || !isFormValid ? "opacity-50 cursor-not-allowed" : ""}`}
+                                                className={`bg-purple-600 hover:purple-700 text-white ${processing || !isFormValid ? "opacity-50 cursor-not-allowed" : ""}`}
                                                 disabled={
                                                     processing || !isFormValid
                                                 }

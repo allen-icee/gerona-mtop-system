@@ -171,6 +171,13 @@ export default function Index({
         return applications.data.filter((app) => selectedIds.includes(app.id));
     }, [selectedIds, applications.data]);
 
+    // NEW: Handle Export properly via standard browser navigation
+    const handleExport = () => {
+        const currentParams = new URLSearchParams(window.location.search);
+        const exportUrl = `${route("mtop.export")}?${currentParams.toString()}`;
+        window.location.href = exportUrl;
+    };
+
     return (
         <AuthenticatedLayout>
             <Head title="MTOP Records" />
@@ -284,22 +291,15 @@ export default function Index({
                         </div>
 
                         <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
-                            <a
-                                href={route("mtop.export", {
-                                    _query: {
-                                        search,
-                                        month,
-                                        year,
-                                        barangay,
-                                        renewal,
-                                        sortAlphabetical, // Include in export
-                                    },
-                                })}
+                            {/* REPLACED WITH PROPER BUTTON EXPORT */}
+                            <button
+                                onClick={handleExport}
+                                type="button"
                                 className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg flex items-center justify-center gap-2 shadow-md w-full sm:w-auto text-base transition-transform hover:scale-105"
                             >
                                 <Icon icon="solar:file-download-bold" width="24" />{" "}
                                 Export
-                            </a>
+                            </button>
 
                             <Link
                                 href={route("mtop.create")}
