@@ -394,7 +394,7 @@ export default function Dashboard({
                         <div>
                             <input
                                 type="file"
-                                accept=".xlsx"
+                                accept=".xlsx, .xls, .csv, .sqlite"
                                 onChange={(e) =>
                                     setImportData(
                                         "import_file",
