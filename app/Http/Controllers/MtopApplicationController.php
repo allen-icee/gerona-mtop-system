@@ -1,5 +1,5 @@
 <?php
-//GeronaMTOP\app\Http\Controllers\MtopApplicationController.php
+
 namespace App\Http\Controllers;
 
 use App\Models\MtopApplication;
@@ -142,17 +142,16 @@ class MtopApplicationController extends Controller
             $mtop = DB::transaction(function () use ($validated, $request, $expiryResult, $isFree) {
                 $final_mt_number = $validated['mt_number'];
                 $year = now()->year;
-                // === ADD THIS BLOCK ===
+
                 // Check if the frontend provided a body number. If it's empty OR already taken, generate a new one safely.
                 $final_body_number = $validated['body_number'] ?? null;
                 $isBodyNumberTaken = MtopFranchise::where('body_number', $final_body_number)
-                    ->where('status', '!=', 'cancelled')
+                    ->whereNotIn('status', ['cancelled', 'archived', 'expired'])
                     ->exists();
 
                 if (empty($final_body_number) || $isBodyNumberTaken) {
                     $final_body_number = $this->generateNextAvailableBodyNumber();
                 }
-                // =======================
 
                 MtopFranchise::where('mt_number', 'like', "$year-%")->lockForUpdate()->pluck('id');
 
@@ -380,29 +379,28 @@ class MtopApplicationController extends Controller
         $validated['status'] = 'cancelled';
 
         DB::transaction(function () use ($application, $validated) {
-            // 1. Capture the original status BEFORE updating the application
+            // Capture the original status BEFORE updating the application
             $originalStatus = $application->status;
 
-            // 2. Now update the application
             $application->update($validated);
             $this->queueForSync('mtop_applications', $application->fresh()->toArray());
 
             if ($application->franchise_id) {
                 $franchise = MtopFranchise::find($application->franchise_id);
 
-                // 3. Check using the captured $originalStatus variable
+                // Check using the captured $originalStatus variable
                 if ($franchise && in_array($originalStatus, ['active', 'upcoming', 'expired'])) {
                     $franchise->update([
                         'status' => 'cancelled',
-                        'last_name' => $validated['last_name'],
-                        'first_name' => $validated['first_name'],
-                        'middle_name' => $validated['middle_name'],
-                        'address' => $validated['address'],
-                        'make_type' => $validated['make_type'],
-                        'engine_motor_no' => $validated['engine_motor_no'],
-                        'chassis_no' => $validated['chassis_no'],
-                        'plate_no' => $validated['plate_no'],
-                        'body_number' => $validated['body_number'],
+                        'last_name' => $validated['last_name'] ?? $franchise->last_name,
+                        'first_name' => $validated['first_name'] ?? $franchise->first_name,
+                        'middle_name' => $validated['middle_name'] ?? $franchise->middle_name,
+                        'address' => $validated['address'] ?? $franchise->address,
+                        'make_type' => $validated['make_type'] ?? $franchise->make_type,
+                        'engine_motor_no' => $validated['engine_motor_no'] ?? $franchise->engine_motor_no,
+                        'chassis_no' => $validated['chassis_no'] ?? $franchise->chassis_no,
+                        'plate_no' => $validated['plate_no'] ?? $franchise->plate_no,
+                        'body_number' => $validated['body_number'] ?? $franchise->body_number,
                     ]);
                     $this->queueForSync('mtop_franchises', $franchise->fresh()->toArray());
                 }
@@ -414,6 +412,7 @@ class MtopApplicationController extends Controller
             'action' => 'dropped'
         ])->with('message', 'Record dropped and cancelled successfully.');
     }
+
     public function printDrop($id): Response
     {
         $application = MtopApplication::findOrFail($id);
@@ -435,13 +434,21 @@ class MtopApplicationController extends Controller
             $application->delete();
             $this->queueForSync('mtop_applications', ['id' => $id, '_action' => 'delete']);
 
-            if ($isNew && $franchiseId) {
-                MtopFranchise::where('id', $franchiseId)->delete();
-                $this->queueForSync('mtop_franchises', ['id' => $franchiseId, '_action' => 'delete']);
+            if ($franchiseId) {
+                if ($isNew) {
+                    MtopFranchise::where('id', $franchiseId)->delete();
+                    $this->queueForSync('mtop_franchises', ['id' => $franchiseId, '_action' => 'delete']);
+                } else {
+                    $franchise = MtopFranchise::find($franchiseId);
+                    if ($franchise) {
+                        $franchise->update(['status' => 'cancelled']);
+                        $this->queueForSync('mtop_franchises', $franchise->fresh()->toArray());
+                    }
+                }
             }
         });
 
-        return redirect()->back()->with('message', 'Record deleted successfully.');
+        return redirect()->back()->with('message', 'Record deleted and body number freed successfully.');
     }
 
     public function print($id): Response
@@ -475,8 +482,6 @@ class MtopApplicationController extends Controller
         $fileName = 'mtop_records_' . date('Y-m-d_H-i') . '.xlsx';
 
         // FastExcel needs a standard Generator, Collection, or array.
-        // A LazyCollection is not accepted natively in older/some versions.
-        // We convert the LazyCollection into a standard Generator here:
         $generator = function () use ($records) {
             foreach ($records as $record) {
                 yield $record;
@@ -485,42 +490,58 @@ class MtopApplicationController extends Controller
 
         // Pass the generator to FastExcel
         return (new FastExcel($generator()))->download($fileName, function ($row) {
-            $paidBy = $row->show_paid_by
-                ? trim("{$row->paid_by_first_name} {$row->paid_by_last_name} {$row->paid_by_suffix}")
-                : 'N/A';
 
-            $driverName = 'N/A';
+            // 1. Helper function: converts empty values, nulls, or "N/A" into "-"
+            $formatValue = function ($value) {
+                $val = trim((string)$value);
+                return ($val === '' || strtoupper($val) === 'N/A') ? '-' : $val;
+            };
+
+            // Format Paid By Details
+            $paidBy = '-';
+            if ($row->show_paid_by) {
+                $pbMiddle = $row->paid_by_middle_name ? substr($row->paid_by_middle_name, 0, 1) . '. ' : '';
+                $paidBy = trim("{$row->paid_by_first_name} {$pbMiddle}{$row->paid_by_last_name} {$row->paid_by_suffix}");
+            }
+
+            // Format Driver Name
+            $driverName = '-';
             if ($row->has_driver) {
                 $dMiddle = $row->driver_middle_name ? substr($row->driver_middle_name, 0, 1) . '. ' : '';
                 $driverName = trim("{$row->driver_first_name} {$dMiddle}{$row->driver_last_name} {$row->driver_suffix}");
             }
 
+            // Format Valid Until to strictly show the Date (removes 00:00:00 time)
+            $validUntilDate = '-';
+            if (!empty($row->valid_until)) {
+                $validUntilDate = date('Y-m-d', strtotime($row->valid_until));
+            }
+
             return [
-                'Control No' => (string) $row->mt_number, // (string) forces it to keep leading zeroes
-                'Transaction Date' => $row->transaction_date,
-                'Transaction Type' => $row->transaction_type,
-                'Last Name' => $row->last_name,
-                'First Name' => $row->first_name,
-                'Middle Name' => $row->middle_name,
-                'Suffix' => $row->suffix,
-                'Paid By Details' => $paidBy,
-                'Driver Name' => $driverName,
-                'Address' => $row->address,
-                'Contact #' => (string) $row->contact_number,
-                'Body Number' => (string) $row->body_number,
-                'Plate No' => $row->plate_no,
-                'Make/Type' => $row->make_type,
-                'Engine No' => (string) $row->engine_motor_no,
-                'Chassis No' => (string) $row->chassis_no,
-                'OR No' => (string) $row->or_number,
-                'OR Date' => $row->or_date,
-                'Cedula No' => (string) $row->cedula_number,
-                'Cedula Date' => $row->cedula_date,
-                'Punong Bayan' => $row->punong_bayan,
-                'Authorized Official' => $row->authorized_official,
+                'Control No' => $formatValue($row->mt_number),
+                'Transaction Date' => $formatValue($row->transaction_date),
+                'Transaction Type' => $formatValue($row->transaction_type),
+                'Last Name' => $formatValue($row->last_name),
+                'First Name' => $formatValue($row->first_name),
+                'Middle Name' => $formatValue($row->middle_name),
+                'Suffix' => $formatValue($row->suffix),
+                'Paid By' => $formatValue($paidBy),
+                'Driver Name' => $formatValue($driverName),
+                'Address' => $formatValue($row->address),
+                'Body No' => $formatValue($row->body_number),
+                'Plate No' => $formatValue($row->plate_no),
+                'Make/Type' => $formatValue($row->make_type),
+                'Engine No' => $formatValue($row->engine_motor_no),
+                'Chassis No' => $formatValue($row->chassis_no),
+                'OR No' => $formatValue($row->or_number),
+                'OR Date' => $formatValue($row->or_date),
+                'Cedula No' => $formatValue($row->cedula_number),
+                'Cedula Date' => $formatValue($row->cedula_date),
+                'Punong Bayan' => $formatValue($row->punong_bayan),
+                'Authorized Official' => $formatValue($row->authorized_official),
                 'Is Free/Promo' => $row->is_free ? 'YES' : 'NO',
-                'Valid Until' => $row->valid_until,
-                'Status' => $row->status
+                'Valid Until' => $validUntilDate,
+                'Status' => $formatValue($row->status)
             ];
         });
     }
@@ -619,7 +640,6 @@ class MtopApplicationController extends Controller
 
         $holidays = \App\Models\Holiday::where('is_active', true)->get();
 
-        // Generate the suggested number
         $suggested_body_number = $this->generateNextAvailableBodyNumber();
 
         return Inertia::render('Mtop/Renew', [
@@ -629,7 +649,7 @@ class MtopApplicationController extends Controller
             'activeEvents' => $activeEvents,
             'holidays' => $holidays,
             'occupied_body_numbers' => $this->getOccupiedBodyNumbers(),
-            'suggested_body_number' => $suggested_body_number // <--- ADD THIS
+            'suggested_body_number' => $suggested_body_number
         ]);
     }
 
@@ -752,7 +772,6 @@ class MtopApplicationController extends Controller
 
         $holidays = \App\Models\Holiday::where('is_active', true)->get();
 
-        // Generate the suggested number
         $suggested_body_number = $this->generateNextAvailableBodyNumber();
 
         return Inertia::render('Mtop/Transfer', [
@@ -762,7 +781,7 @@ class MtopApplicationController extends Controller
             'activeEvents' => $activeEvents,
             'holidays' => $holidays,
             'occupied_body_numbers' => $this->getOccupiedBodyNumbers(),
-            'suggested_body_number' => $suggested_body_number // <--- ADD THIS
+            'suggested_body_number' => $suggested_body_number
         ]);
     }
 
@@ -876,7 +895,6 @@ class MtopApplicationController extends Controller
             $validityService = app(\App\Services\ValidityService::class);
             $extension = strtolower($file->getClientOriginalExtension());
 
-            // --- THE FIX IS HERE ---
             // 1. Define the exact physical destination path
             $filename = 'import_' . time() . '_' . uniqid() . '.' . $extension;
             $destinationPath = storage_path('app' . DIRECTORY_SEPARATOR . 'temp');
@@ -889,7 +907,6 @@ class MtopApplicationController extends Controller
             // 3. Force move the file physically (Bypasses virtual disk issues)
             $file->move($destinationPath, $filename);
             $fullPath = $destinationPath . DIRECTORY_SEPARATOR . $filename;
-            // -----------------------
 
             // 4. Traffic Controller: Route to the correct processing logic
             if ($extension === 'sqlite') {
@@ -917,7 +934,6 @@ class MtopApplicationController extends Controller
      */
     private function processSqliteImport(string $backupPath)
     {
-        // Dynamically connect to the uploaded SQLite file
         \Illuminate\Support\Facades\Config::set('database.connections.sqlite_backup', [
             'driver' => 'sqlite',
             'database' => $backupPath,
@@ -926,49 +942,58 @@ class MtopApplicationController extends Controller
         ]);
         DB::purge('sqlite_backup');
 
-        $oldFranchises = DB::connection('sqlite_backup')->table('mtop_franchises')->get();
-        $oldApplications = DB::connection('sqlite_backup')->table('mtop_applications')->get();
+        try {
+            $oldFranchises = DB::connection('sqlite_backup')->table('mtop_franchises')->get();
+            $oldApplications = DB::connection('sqlite_backup')->table('mtop_applications')->get();
 
-        DB::transaction(function () use ($oldFranchises, $oldApplications) {
-            $seenBodyNumbers = [];
+            DB::transaction(function () use ($oldFranchises, $oldApplications) {
+                $seenBodyNumbers = [];
 
-            foreach ($oldFranchises as $franchise) {
-                $exists = DB::table('mtop_franchises')->where('mt_number', $franchise->mt_number)->exists();
-                if (!$exists) {
-                    $franchiseData = (array) $franchise;
+                foreach ($oldFranchises as $franchise) {
+                    $exists = DB::table('mtop_franchises')->where('mt_number', $franchise->mt_number)->exists();
+                    if (!$exists) {
+                        $franchiseData = (array) $franchise;
+                        $status = strtolower($franchiseData['status'] ?? 'active');
 
-                    $bodyNum = trim($franchiseData['body_number'] ?? '');
-                    if ($bodyNum === '' || strtoupper($bodyNum) === 'N/A' || strtoupper($bodyNum) === 'NONE') {
-                        $franchiseData['body_number'] = null;
-                    }
-
-                    if ($franchiseData['body_number'] !== null) {
-                        $bNum = $franchiseData['body_number'];
-                        $bodyExistsInDb = DB::table('mtop_franchises')->where('body_number', $bNum)->exists();
-
-                        if (in_array($bNum, $seenBodyNumbers) || $bodyExistsInDb) {
+                        $bNum = trim($franchiseData['body_number'] ?? '');
+                        if ($bNum === '' || strtoupper($bNum) === 'N/A' || strtoupper($bNum) === 'NONE') {
                             $franchiseData['body_number'] = null;
                         } else {
-                            $seenBodyNumbers[] = $bNum;
+                            // The Safe Lock Fix (includes 'expired')
+                            if (in_array($status, ['cancelled', 'archived', 'expired'])) {
+                                $franchiseData['body_number'] = null;
+                            } else {
+                                $bodyExistsInDb = DB::table('mtop_franchises')->where('body_number', $bNum)
+                                    ->whereNotIn('status', ['cancelled', 'archived', 'expired'])
+                                    ->exists();
+
+                                if (in_array($bNum, $seenBodyNumbers) || $bodyExistsInDb) {
+                                    $franchiseData['body_number'] = null;
+                                } else {
+                                    $seenBodyNumbers[] = $bNum;
+                                }
+                            }
                         }
+                        DB::table('mtop_franchises')->insert($franchiseData);
                     }
-                    DB::table('mtop_franchises')->insert($franchiseData);
                 }
-            }
 
-            foreach ($oldApplications as $app) {
-                $exists = DB::table('mtop_applications')->where('id', $app->id)->exists();
-                if (!$exists) {
-                    $data = (array) $app;
-                    // Fallbacks for missing columns in legacy databases
-                    if (!array_key_exists('is_manual_validity', $data)) $data['is_manual_validity'] = 0;
-                    if (!array_key_exists('is_free', $data)) $data['is_free'] = 0;
-                    if (!array_key_exists('show_paid_by', $data)) $data['show_paid_by'] = 0;
+                foreach ($oldApplications as $app) {
+                    $exists = DB::table('mtop_applications')->where('id', $app->id)->exists();
+                    if (!$exists) {
+                        $data = (array) $app;
+                        if (!array_key_exists('is_manual_validity', $data)) $data['is_manual_validity'] = 0;
+                        if (!array_key_exists('is_free', $data)) $data['is_free'] = 0;
+                        if (!array_key_exists('show_paid_by', $data)) $data['show_paid_by'] = 0;
 
-                    DB::table('mtop_applications')->insert($data);
+                        DB::table('mtop_applications')->insert($data);
+                    }
                 }
-            }
-        });
+            });
+        } finally {
+            DB::disconnect('sqlite_backup');
+            DB::purge('sqlite_backup');
+        }
     }
 
     /**
@@ -997,21 +1022,33 @@ class MtopApplicationController extends Controller
                 $short_year = substr($mt_number, 2, 2);
                 $seq = substr($mt_number, 5);
 
-                $body_number = $getVal('body number');
-                if (empty($body_number) || strtoupper($body_number) === 'N/A' || strtoupper($body_number) === 'NONE') {
-                    $body_number = "T{$short_year}-{$seq}";
+                $raw_body = $getVal('body number');
+                if (empty($raw_body) || strtoupper($raw_body) === 'N/A' || strtoupper($raw_body) === 'NONE') {
+                    $raw_body = "T{$short_year}-{$seq}";
                 }
 
-                $existsInDb = DB::table('mtop_franchises')
-                    ->where('body_number', $body_number)
-                    ->where('mt_number', '!=', $mt_number)
-                    ->exists();
+                $row_status = strtolower($getVal('status') ?: 'active');
 
-                if (in_array($body_number, $seenBodyNumbers) || $existsInDb) {
-                    $body_number = null;
+                // 1. The Application always keeps the body number for historical display
+                $app_body_number = $raw_body;
+
+                // 2. The Franchise loses the body number if it's cancelled, archived, or expired
+                $franchise_body_number = $raw_body;
+
+                // Safely apply the rule just ONCE
+                if (in_array($row_status, ['cancelled', 'archived', 'expired'])) {
+                    $franchise_body_number = null;
                 } else {
-                    if ($body_number !== null) {
-                        $seenBodyNumbers[] = $body_number;
+                    $existsInDb = DB::table('mtop_franchises')
+                        ->where('body_number', $franchise_body_number)
+                        ->where('mt_number', '!=', $mt_number)
+                        ->whereNotIn('status', ['cancelled', 'archived', 'expired'])
+                        ->exists();
+
+                    if (in_array($franchise_body_number, $seenBodyNumbers) || $existsInDb) {
+                        $franchise_body_number = null;
+                    } else {
+                        $seenBodyNumbers[] = $franchise_body_number;
                     }
                 }
 
@@ -1037,7 +1074,7 @@ class MtopApplicationController extends Controller
                     $event
                 );
 
-                $paidByRaw = $getVal('paid by details');
+                $paidByRaw = $getVal('paid by details') ?: $getVal('paid by');
                 $show_paid_by = false;
                 $pb_first = null;
                 $pb_last = null;
@@ -1076,12 +1113,12 @@ class MtopApplicationController extends Controller
                         'suffix' => $getVal('suffix') ?: null,
                         'address' => $getVal('address'),
                         'contact_number' => $getVal('contact #') ?: null,
-                        'body_number' => $body_number,
+                        'body_number' => $franchise_body_number, // Safe franchise number
                         'plate_no' => $plate_no,
                         'make_type' => $getVal('make/type'),
                         'engine_motor_no' => $getVal('engine no'),
                         'chassis_no' => $getVal('chassis no'),
-                        'status' => $getVal('status') ?: 'active',
+                        'status' => $row_status,
                         'show_paid_by' => $show_paid_by,
                         'paid_by_first_name' => $pb_first,
                         'paid_by_last_name' => $pb_last,
@@ -1103,7 +1140,7 @@ class MtopApplicationController extends Controller
                         'suffix' => $getVal('suffix') ?: null,
                         'address' => $getVal('address'),
                         'contact_number' => $getVal('contact #') ?: null,
-                        'body_number' => $body_number,
+                        'body_number' => $app_body_number, // Historical application number
                         'plate_no' => $plate_no,
                         'make_type' => $getVal('make/type'),
                         'engine_motor_no' => $getVal('engine no'),
@@ -1114,7 +1151,7 @@ class MtopApplicationController extends Controller
                         'cedula_date' => !empty($cedDateRaw) ? date('Y-m-d', strtotime($cedDateRaw)) : null,
                         'punong_bayan' => $getVal('punong bayan') ?: null,
                         'authorized_official' => $getVal('authorized official') ?: null,
-                        'status' => $getVal('status') ?: 'active',
+                        'status' => $row_status,
                         'processed_by' => Auth::id(),
                         'is_free' => !$wantsFullValidity,
                         'event_id' => $event ? $event->id : null,
@@ -1150,7 +1187,7 @@ class MtopApplicationController extends Controller
     private function getOccupiedBodyNumbers(): array
     {
         return DB::table('mtop_franchises')
-            ->where('status', '!=', 'cancelled')
+            ->whereNotIn('status', ['cancelled', 'archived', 'expired'])
             ->whereNotNull('body_number')
             ->pluck('body_number')
             ->map(fn($num) => (int) $num)
