@@ -82,7 +82,7 @@ export default function Edit({
     activeEvents,
     holidays,
     suggested_body_number,
-    occupied_body_numbers, // Added prop
+    occupied_body_numbers,
 }: {
     application: MtopApplication;
     punong_bayans: string[];
@@ -90,7 +90,7 @@ export default function Edit({
     activeEvents: any;
     holidays: any[];
     suggested_body_number: string;
-    occupied_body_numbers: number[]; // Added prop type
+    occupied_body_numbers: number[];
 }) {
     const [step, setStep] = useState(1);
     const [showMobilePreview, setShowMobilePreview] = useState(false);
@@ -196,13 +196,7 @@ export default function Edit({
                 if (!isValidDate(data.cedula_date)) return false;
             }
 
-            const requiresOr =
-                (!data.is_free || data.or_unlocked) && data.show_or;
-            if (requiresOr) {
-                if (!data.or_number || data.or_number.trim() === "")
-                    return false;
-                if (!isValidDate(data.or_date)) return false;
-            }
+            // REMOVED OR STRICT VALIDATION HERE
         }
 
         return true;
@@ -219,8 +213,8 @@ export default function Edit({
         if (data.show_cedula && !isValidDate(data.cedula_date))
             return toast.error("Invalid Cedula Date.");
 
-        const requiresOr = (!data.is_free || data.or_unlocked) && data.show_or;
-        if (requiresOr && !isValidDate(data.or_date))
+        // UPDATED OR STRICT VALIDATION HERE (Only check if date is actually typed)
+        if (data.show_or && data.or_date && !isValidDate(data.or_date))
             return toast.error("Invalid Official Receipt Date.");
 
         if (data.is_free && data.event_id) {
@@ -285,9 +279,10 @@ export default function Edit({
                 );
         }
         if (step === 3) {
-            if (!isValidDate(data.cedula_date))
+            // UPDATED DATE VALIDATIONS TO ALLOW EMPTY FIELDS
+            if (data.show_cedula && data.cedula_date && !isValidDate(data.cedula_date))
                 return toast.error("Invalid Cedula Date! Check calendar.");
-            if (!isValidDate(data.or_date))
+            if (data.show_or && data.or_date && !isValidDate(data.or_date))
                 return toast.error("Invalid OR Date! Check calendar.");
         }
 
@@ -506,7 +501,6 @@ export default function Edit({
                                             : "hidden"
                                     }
                                 >
-                                    {/* Added occupied_body_numbers prop here */}
                                     <TricycleForm
                                         data={data}
                                         setData={setData}
@@ -590,7 +584,12 @@ export default function Edit({
                                         ) : (
                                             <PrimaryButton
                                                 type="submit"
-                                                className={`bg-blue-800 hover:bg-blue-900 ${!isDirty || processing || !isFormValid ? "opacity-50 cursor-not-allowed" : ""}`}
+                                                className={`bg-blue-800 hover:bg-blue-900 ${!isDirty ||
+                                                    processing ||
+                                                    !isFormValid
+                                                    ? "opacity-50 cursor-not-allowed"
+                                                    : ""
+                                                    }`}
                                                 disabled={
                                                     processing ||
                                                     !isDirty ||
@@ -656,7 +655,10 @@ export default function Edit({
                                 e.preventDefault();
                                 handleNext();
                             }}
-                            className={`px-6 py-2 bg-blue-600 text-white rounded-lg font-bold text-sm flex items-center ${!isStepValid(step) ? "opacity-70 cursor-not-allowed" : ""}`}
+                            className={`px-6 py-2 bg-blue-600 text-white rounded-lg font-bold text-sm flex items-center ${!isStepValid(step)
+                                ? "opacity-70 cursor-not-allowed"
+                                : ""
+                                }`}
                         >
                             Next{" "}
                             <Icon
@@ -668,7 +670,10 @@ export default function Edit({
                         <button
                             onClick={submit}
                             disabled={processing || !isDirty || !isFormValid}
-                            className={`px-6 py-2 bg-blue-800 text-white rounded-lg font-bold text-sm flex items-center ${!isDirty || processing || !isFormValid ? "opacity-50 cursor-not-allowed" : ""}`}
+                            className={`px-6 py-2 bg-blue-800 text-white rounded-lg font-bold text-sm flex items-center ${!isDirty || processing || !isFormValid
+                                ? "opacity-50 cursor-not-allowed"
+                                : ""
+                                }`}
                         >
                             <Icon icon="solar:diskette-bold" className="mr-1" />{" "}
                             Update

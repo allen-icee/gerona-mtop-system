@@ -13,6 +13,8 @@ export default function OfficialReceiptForm({
     const isWaived = data.is_free && !data.or_unlocked;
 
     const locked = isHidden || isWaived;
+    // We no longer strictly need isRequired since we made the inputs optional,
+    // but we can leave it here so it doesn't break anything else.
     const isRequired = (!data.is_free || data.or_unlocked) && data.show_or;
 
     useEffect(() => {
@@ -42,8 +44,8 @@ export default function OfficialReceiptForm({
                                 setData("or_unlocked", !data.or_unlocked)
                             }
                             className={`flex items-center gap-1 text-xs font-bold transition-colors ${data.or_unlocked
-                                    ? "text-red-500 hover:text-red-700"
-                                    : "text-gray-400 hover:text-gray-600"
+                                ? "text-red-500 hover:text-red-700"
+                                : "text-gray-400 hover:text-gray-600"
                                 }`}
                         >
                             <Icon
@@ -79,8 +81,8 @@ export default function OfficialReceiptForm({
             <div className="relative mt-2">
                 <div
                     className={`grid grid-cols-1 gap-2 p-2 rounded-xl bg-white transition-all ${locked
-                            ? "opacity-50 blur-[0.4px] pointer-events-none"
-                            : ""
+                        ? "opacity-50 blur-[0.4px] pointer-events-none"
+                        : ""
                         }`}
                 >
                     <InputGroup
@@ -96,7 +98,7 @@ export default function OfficialReceiptForm({
                         }}
                         icon="solar:hashtag-square-bold"
                         placeholder="e.g. OR 2026-0001"
-                        required={isRequired}
+                        required={false} // CHANGED: Now completely optional
                         disabled={locked}
                         onKeyDown={onKeyDown}
                     />
@@ -112,7 +114,7 @@ export default function OfficialReceiptForm({
                             setData("or_date", e.target.value)
                         }
                         icon="solar:calendar-date-bold"
-                        required={isRequired}
+                        required={false} // CHANGED: Now completely optional
                         disabled={locked}
                         onKeyDown={onKeyDown}
                     />
