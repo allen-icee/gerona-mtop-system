@@ -37,13 +37,9 @@ export default function Renew({
     officials,
     activeEvents,
     holidays,
-}: {
-    application: any;
-    punong_bayans: string[];
-    officials: string[];
-    activeEvents: any;
-    holidays: any[];
-}) {
+    occupied_body_numbers,
+    suggested_body_number,
+}: any) {
     const [step, setStep] = useState(1);
     const [showMobilePreview, setShowMobilePreview] = useState(false);
 
@@ -106,7 +102,7 @@ export default function Renew({
             "address",
             "transaction_date",
         ],
-        2: ["plate_no", "make_type", "engine_motor_no", "chassis_no"],
+        2: ["make_type", "engine_motor_no", "chassis_no"],
     };
 
     const isStepValid = (stepNum: number) => {
@@ -192,9 +188,9 @@ export default function Renew({
                 if (tDate < eStart || tDate > eEnd) {
                     const confirmProceed = window.confirm(
                         "⚠️ WARNING: DATE OUTSIDE PROMO PERIOD\n\n" +
-                            "The transaction date you selected is outside the active dates of the Promo/Event.\n\n" +
-                            "If you click OK, the system will save this record, but the FREE PROMO will be removed and it will be processed as a standard 3-Year validity permit.\n\n" +
-                            "Do you want to proceed?",
+                        "The transaction date you selected is outside the active dates of the Promo/Event.\n\n" +
+                        "If you click OK, the system will save this record, but the FREE PROMO will be removed and it will be processed as a standard 3-Year validity permit.\n\n" +
+                        "Do you want to proceed?",
                     );
 
                     // If they click "Cancel", we stop the function so it doesn't save!
@@ -370,11 +366,10 @@ export default function Renew({
                                 <button
                                     type="button"
                                     onClick={() => setStep(1)}
-                                    className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 rounded-tl-lg ${
-                                        step === 1
-                                            ? "bg-white text-blue-600 border-t-2 border-blue-600"
-                                            : "text-gray-400 hover:text-gray-600"
-                                    }`}
+                                    className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 rounded-tl-lg ${step === 1
+                                        ? "bg-white text-blue-600 border-t-2 border-blue-600"
+                                        : "text-gray-400 hover:text-gray-600"
+                                        }`}
                                 >
                                     <Icon
                                         icon="solar:user-id-bold"
@@ -391,11 +386,10 @@ export default function Renew({
                                                 "Complete Step 1 first",
                                             );
                                     }}
-                                    className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase hover:cursor-pointer tracking-wider flex items-center justify-center gap-2 ${
-                                        step === 2
-                                            ? "bg-white text-blue-600 border-t-2 border-blue-600"
-                                            : "text-gray-400 hover:text-gray-600"
-                                    }`}
+                                    className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase hover:cursor-pointer tracking-wider flex items-center justify-center gap-2 ${step === 2
+                                        ? "bg-white text-blue-600 border-t-2 border-blue-600"
+                                        : "text-gray-400 hover:text-gray-600"
+                                        }`}
                                 >
                                     <Icon icon="solar:wheel-bold" width="18" />{" "}
                                     Unit
@@ -410,11 +404,10 @@ export default function Renew({
                                                 "Complete Step 1 & 2 first",
                                             );
                                     }}
-                                    className={`flex-1 py-4 text-xs sm:text-sm hover:cursor-pointer font-bold uppercase tracking-wider flex items-center justify-center gap-2 rounded-tr-lg ${
-                                        step === 3
-                                            ? "bg-white text-blue-600 border-t-2 border-blue-600"
-                                            : "text-gray-400 hover:text-gray-600"
-                                    }`}
+                                    className={`flex-1 py-4 text-xs sm:text-sm hover:cursor-pointer font-bold uppercase tracking-wider flex items-center justify-center gap-2 rounded-tr-lg ${step === 3
+                                        ? "bg-white text-blue-600 border-t-2 border-blue-600"
+                                        : "text-gray-400 hover:text-gray-600"
+                                        }`}
                                 >
                                     <Icon
                                         icon="solar:file-check-bold"
@@ -462,6 +455,8 @@ export default function Renew({
                                         setData={setData}
                                         errors={errors}
                                         onKeyDown={handleEnterKey}
+                                        suggested_body_number={suggested_body_number}
+                                        occupied_body_numbers={occupied_body_numbers}
                                     />
                                 </div>
                                 <div

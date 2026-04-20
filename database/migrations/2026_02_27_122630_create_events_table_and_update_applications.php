@@ -1,5 +1,5 @@
 <?php
-
+//GeronaMTOP\database\migrations\2026_02_27_122630_create_events_table_and_update_applications.php
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;

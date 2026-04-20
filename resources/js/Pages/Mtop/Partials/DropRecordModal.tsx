@@ -206,7 +206,7 @@ export default function DropRecordModal({ show, onClose, application, officials,
                                     </div>
                                     <div>
                                         <label className="block text-xs font-bold text-gray-600 uppercase tracking-wide mb-1.5">Plate No.</label>
-                                        <TextInput className="w-full p-3" value={data.plate_no} onChange={e => setData('plate_no', e.target.value)} onKeyDown={handleEnterKey} required />
+                                        <TextInput className="w-full p-3" value={data.plate_no} onChange={e => setData('plate_no', e.target.value)} onKeyDown={handleEnterKey} />
                                         <InputError message={errors.plate_no} className="mt-1" />
                                     </div>
                                     <div>

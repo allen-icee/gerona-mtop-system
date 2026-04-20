@@ -1,5 +1,5 @@
 <?php
-
+//GeronaMTOP\database\migrations\2026_03_09_150303_create_fee_settings_table.php
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;

@@ -1,5 +1,5 @@
 <?php
-
+//GeronaMTOP\database\migrations\2026_03_02_200041_create_holidays_table.php
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -8,35 +8,20 @@ return new class extends Migration
 {
     public function up(): void
     {
-        /*
-        |--------------------------------------------------------------------------
-        | CASE 1: Table Does Not Exist (Fresh Install)
-        |--------------------------------------------------------------------------
-        */
+
         if (!Schema::hasTable('holidays')) {
 
             Schema::create('holidays', function (Blueprint $table) {
                 $table->id();
                 $table->string('name');
-
-                // Recurring holiday support (Month-Day only)
-                $table->unsignedTinyInteger('month'); // 1–12
-                $table->unsignedTinyInteger('day');   // 1–31
-
-                // Required for your business-day gatekeeper
+                $table->unsignedTinyInteger('month');
+                $table->unsignedTinyInteger('day');
                 $table->boolean('is_active')->default(true);
-
                 $table->timestamps();
             });
 
             return;
         }
-
-        /*
-        |--------------------------------------------------------------------------
-        | CASE 2: Table Exists (Patch Missing Columns Safely)
-        |--------------------------------------------------------------------------
-        */
 
         Schema::table('holidays', function (Blueprint $table) {
 

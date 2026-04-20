@@ -23,7 +23,7 @@ return new class extends Migration
             $table->string('make_type', 50);
             $table->string('engine_motor_no', 30);
             $table->string('chassis_no', 30);
-            $table->string('plate_no', 10);
+            $table->string('plate_no', 10)->nullable();
 
             $table->string('status', 20)->default('active');
             $table->timestamps();

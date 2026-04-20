@@ -23,7 +23,7 @@ export default function PrintSuccessModal({
     if (!data) return null;
 
     return (
-        <Modal show={show} onClose={() => {}} closeable={false} maxWidth="md">
+        <Modal show={show} onClose={() => { }} closeable={false} maxWidth="md">
             <div className="p-6 flex flex-col items-center text-center">
                 <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-4">
                     <Icon icon="solar:check-circle-bold" width="40" />

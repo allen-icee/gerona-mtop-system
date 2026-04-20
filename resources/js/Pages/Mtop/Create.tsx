@@ -34,16 +34,20 @@ const isValidDate = (dateString: string): boolean => {
 
 export default function Create({
     suggested_mt_number,
+    suggested_body_number,
     punong_bayans,
     officials,
     activeEvents,
     holidays,
+    occupied_body_numbers, // Added prop
 }: {
     suggested_mt_number: string;
+    suggested_body_number: string;
     punong_bayans: string[];
     officials: string[];
     activeEvents: any;
     holidays: any[];
+    occupied_body_numbers: number[]; // Added prop type
 }) {
     const { props } = usePage();
     const [step, setStep] = useState(1);
@@ -63,41 +67,34 @@ export default function Create({
 
     if (rawPayorName) {
         const cleanName = rawPayorName.trim().toUpperCase();
-        // Common suffixes to look out for
         const suffixList = ["JR", "JR.", "SR", "SR.", "I", "II", "III", "IV", "V", "VI"];
 
         if (cleanName.includes(',')) {
-            // Format: LASTNAME, FIRSTNAME [MI] [SUFFIX] (e.g., DELA CRUZ, JUAN JR. P.)
             const parts = cleanName.split(',');
             defaultLast = parts[0].trim();
 
             let remainingTokens = parts.slice(1).join(',').trim().split(/\s+/);
 
-            // 1. Extract and remove Suffix
             remainingTokens = remainingTokens.filter(token => {
                 if (suffixList.includes(token)) {
-                    defaultSuffix = token.replace('.', ''); // normalize to "JR", "SR", etc.
+                    defaultSuffix = token.replace('.', '');
                     return false;
                 }
                 return true;
             });
 
-            // 2. Extract and remove Middle Initial (Single letter with or without a dot)
             remainingTokens = remainingTokens.filter(token => {
                 if (/^[A-Z]\.?$/.test(token)) {
-                    defaultMiddle = token.replace('.', ''); // normalize to just the letter
+                    defaultMiddle = token.replace('.', '');
                     return false;
                 }
                 return true;
             });
 
-            // 3. Whatever is left is the First Name
             defaultFirst = remainingTokens.join(' ');
         } else {
-            // Format: FIRSTNAME [MI] LASTNAME [SUFFIX] (e.g., JUAN P. DELA CRUZ JR.)
             let tokens = cleanName.split(/\s+/);
 
-            // 1. Extract and remove Suffix
             tokens = tokens.filter(token => {
                 if (suffixList.includes(token)) {
                     defaultSuffix = token.replace('.', '');
@@ -106,7 +103,6 @@ export default function Create({
                 return true;
             });
 
-            // 2. The very last word remaining is likely the Last Name
             if (tokens.length > 1) {
                 defaultLast = tokens.pop() || "";
             } else {
@@ -114,7 +110,6 @@ export default function Create({
                 tokens = [];
             }
 
-            // 3. Extract and remove Middle Initial
             tokens = tokens.filter(token => {
                 if (/^[A-Z]\.?$/.test(token)) {
                     defaultMiddle = token.replace('.', '');
@@ -123,18 +118,21 @@ export default function Create({
                 return true;
             });
 
-            // 4. Whatever is left is the First Name
             defaultFirst = tokens.join(' ');
         }
     }
-    // -----------------------------------------------------
 
     const { data, setData, post, processing, errors, reset } = useForm({
-        // Inject the smartly parsed defaults
         last_name: defaultLast,
         first_name: defaultFirst,
-        middle_name: defaultMiddle, // Now populated correctly
-        suffix: defaultSuffix,      // Now populated correctly
+        middle_name: defaultMiddle,
+        suffix: defaultSuffix,
+        has_driver: false,
+        driver_first_name: "",
+        driver_last_name: "",
+        driver_middle_name: "",
+        driver_suffix: "",
+        driver_name: "",
         address: "",
         mt_number: suggested_mt_number || "",
         transaction_date: new Date().toISOString().split("T")[0],
@@ -142,7 +140,7 @@ export default function Create({
         engine_motor_no: "",
         chassis_no: "",
         plate_no: "",
-        body_number: "",
+        body_number: suggested_body_number || "",
         cedula_number: "",
         cedula_date: "",
         or_number: "",
@@ -160,12 +158,16 @@ export default function Create({
             activeEvents && activeEvents.length > 0 ? activeEvents[0].id : null,
         is_free: activeEvents && activeEvents.length > 0 ? true : false,
         or_unlocked: false,
-
         show_auth_official: false,
         show_cedula: false,
         show_or: false,
         is_manual_validity: false,
         valid_until: "",
+        show_paid_by: false,
+        paid_by_last_name: "",
+        paid_by_first_name: "",
+        paid_by_middle_name: "",
+        paid_by_suffix: "",
     });
 
     useEffect(() => {
@@ -180,12 +182,11 @@ export default function Create({
             "address",
             "transaction_date",
         ],
-        2: ["plate_no", "make_type", "engine_motor_no", "chassis_no"],
+        2: ["make_type", "engine_motor_no", "chassis_no"],
     };
 
     const isStepValid = (stepNum: number) => {
         if (stepNum === 1 || stepNum === 2) {
-            // @ts-ignore
             const fields = requiredFields[stepNum];
             const basicCheck = fields.every(
                 (field: string) =>
@@ -245,9 +246,6 @@ export default function Create({
         if (requiresOr && !isValidDate(data.or_date))
             return toast.error("Invalid Official Receipt Date.");
 
-        // =================================================================
-        // NEW: PRE-SAVE PROMO WARNING MODAL
-        // =================================================================
         if (data.is_free && data.event_id) {
             const currentEvent =
                 activeEvents?.find((ev: any) => ev.id == data.event_id) ||
@@ -275,7 +273,6 @@ export default function Create({
                 }
             }
         }
-        // =================================================================
 
         post(route("mtop.store"), {
             onSuccess: (page: any) => {
@@ -444,8 +441,8 @@ export default function Create({
                                     type="button"
                                     onClick={() => setStep(1)}
                                     className={`flex-1 py-4 text-xs sm:text-sm hover:cursor-pointer  font-bold uppercase tracking-wider flex items-center justify-center gap-2 rounded-tl-lg ${step === 1
-                                            ? "bg-white text-blue-600 border-t-2 border-blue-600"
-                                            : "text-gray-400 hover:text-gray-600"
+                                        ? "bg-white text-blue-600 border-t-2 border-blue-600"
+                                        : "text-gray-400 hover:text-gray-600"
                                         }`}
                                 >
                                     <Icon
@@ -464,8 +461,8 @@ export default function Create({
                                             );
                                     }}
                                     className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase tracking-wider hover:cursor-pointer flex items-center justify-center gap-2 ${step === 2
-                                            ? "bg-white text-blue-600 border-t-2 border-blue-600"
-                                            : "text-gray-400 hover:text-gray-600"
+                                        ? "bg-white text-blue-600 border-t-2 border-blue-600"
+                                        : "text-gray-400 hover:text-gray-600"
                                         }`}
                                 >
                                     <Icon icon="solar:wheel-bold" width="18" />{" "}
@@ -482,8 +479,8 @@ export default function Create({
                                             );
                                     }}
                                     className={`flex-1 py-4 text-xs sm:text-sm hover:cursor-pointer font-bold uppercase tracking-wider flex items-center justify-center gap-2 rounded-tr-lg ${step === 3
-                                            ? "bg-white text-blue-600 border-t-2 border-blue-600"
-                                            : "text-gray-400 hover:text-gray-600"
+                                        ? "bg-white text-blue-600 border-t-2 border-blue-600"
+                                        : "text-gray-400 hover:text-gray-600"
                                         }`}
                                 >
                                     <Icon
@@ -533,6 +530,8 @@ export default function Create({
                                         setData={setData}
                                         errors={errors}
                                         onKeyDown={handleEnterKey}
+                                        suggested_body_number={suggested_body_number}
+                                        occupied_body_numbers={occupied_body_numbers}
                                     />
                                 </div>
 

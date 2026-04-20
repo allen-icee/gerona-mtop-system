@@ -45,7 +45,7 @@ class BackupDatabase extends Command
             if ($records->isNotEmpty()) {
                 $csvContent = fopen('php://temp', 'r+');
 
-                // UPDATED HEADERS to match the newly added fields
+                // EXACT same headers as MtopApplicationController export
                 fputcsv($csvContent, [
                     'Control No',
                     'Transaction Date',
@@ -54,20 +54,36 @@ class BackupDatabase extends Command
                     'First Name',
                     'Middle Name',
                     'Suffix',
+                    'Paid By Details',
+                    'Driver Name',
                     'Address',
+                    'Contact #',
+                    'Body Number',
                     'Plate No',
                     'Make/Type',
-                    'Driver Name',      // Added
-                    'Is Free/Promo',    // Added
-                    'Paid By Details',  // Added
+                    'Engine No',
+                    'Chassis No',
+                    'OR No',
+                    'OR Date',
+                    'Cedula No',
+                    'Cedula Date',
+                    'Punong Bayan',
+                    'Authorized Official',
+                    'Is Free/Promo',
+                    'Valid Until',
                     'Status'
                 ]);
 
                 foreach ($records as $row) {
-                    // Safely format Paid By details
                     $paidBy = $row->show_paid_by
                         ? trim("{$row->paid_by_first_name} {$row->paid_by_last_name} {$row->paid_by_suffix}")
                         : 'N/A';
+
+                    $driverName = 'N/A';
+                    if ($row->has_driver) {
+                        $dMiddle = $row->driver_middle_name ? substr($row->driver_middle_name, 0, 1) . '. ' : '';
+                        $driverName = trim("{$row->driver_first_name} {$dMiddle}{$row->driver_last_name} {$row->driver_suffix}");
+                    }
 
                     fputcsv($csvContent, [
                         $row->mt_number,
@@ -77,12 +93,23 @@ class BackupDatabase extends Command
                         $row->first_name,
                         $row->middle_name,
                         $row->suffix,
+                        $paidBy,
+                        $driverName,
                         $row->address,
+                        $row->contact_number,
+                        $row->body_number,
                         $row->plate_no,
                         $row->make_type,
-                        $row->driver_name ?? 'N/A',     // Injects Driver Name
-                        $row->is_free ? 'YES' : 'NO',   // Injects Promo Info
-                        $paidBy,                        // Injects Paid By details
+                        $row->engine_motor_no,
+                        $row->chassis_no,
+                        $row->or_number,
+                        $row->or_date,
+                        $row->cedula_number,
+                        $row->cedula_date,
+                        $row->punong_bayan,
+                        $row->authorized_official,
+                        $row->is_free ? 'YES' : 'NO',
+                        $row->valid_until,
                         $row->status
                     ]);
                 }

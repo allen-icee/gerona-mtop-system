@@ -43,13 +43,39 @@ class ImportOldSqliteData extends Command
         $this->info("Found {$oldFranchises->count()} franchises and {$oldApplications->count()} applications.");
 
         DB::transaction(function () use ($oldFranchises, $oldApplications) {
-
             $franchiseCount = 0;
+            $seenBodyNumbers = []; // Track body numbers in memory to prevent duplicate crashes
+
             foreach ($oldFranchises as $franchise) {
                 $exists = DB::table('mtop_franchises')->where('mt_number', $franchise->mt_number)->exists();
 
                 if (!$exists) {
-                    DB::table('mtop_franchises')->insert((array) $franchise);
+                    $franchiseData = (array) $franchise;
+
+                    // 1. Sanitize the body_number first
+                    $bodyNum = trim($franchiseData['body_number'] ?? '');
+                    if ($bodyNum === '' || strtoupper($bodyNum) === 'N/A' || strtoupper($bodyNum) === 'NONE') {
+                        $franchiseData['body_number'] = null;
+                    }
+
+                    // 2. Explicitly prevent duplicates using both memory and database checks
+                    if ($franchiseData['body_number'] !== null) {
+                        $bNum = $franchiseData['body_number'];
+
+                        // Check if we already saw this body_number during this import loop OR if it's already in the DB
+                        $bodyExistsInDb = DB::table('mtop_franchises')->where('body_number', $bNum)->exists();
+
+                        if (in_array($bNum, $seenBodyNumbers) || $bodyExistsInDb) {
+                            // Automatically set duplicates to null so the import continues safely
+                            $this->warn("Duplicate body_number '{$bNum}' found for mt_number '{$franchiseData['mt_number']}'. Setting to NULL.");
+                            $franchiseData['body_number'] = null;
+                        } else {
+                            // Remember this body number so we don't insert it again
+                            $seenBodyNumbers[] = $bNum;
+                        }
+                    }
+
+                    DB::table('mtop_franchises')->insert($franchiseData);
                     $franchiseCount++;
                 }
             }

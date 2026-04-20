@@ -333,32 +333,28 @@ export default function Dashboard({
                                     </span>
                                 </button>
 
-                                <button
-                                    onClick={handleBackup}
-                                    disabled={backingUp}
-                                    className="group cursor-pointer bg-white p-4 sm:p-6 rounded-xl shadow-sm hover:shadow-md transition-all border border-gray-100 flex flex-col items-center text-center gap-3 hover:-translate-y-1 w-full"
-                                >
-                                    <div className="p-3 sm:p-4 bg-red-50 text-red-600 rounded-full group-hover:bg-red-600 group-hover:text-white transition-colors">
-                                        {backingUp ? (
-                                            <Icon
-                                                icon="solar:restart-bold"
-                                                width="24"
-                                                className="animate-spin sm:w-8 sm:h-8"
-                                            />
-                                        ) : (
+                                <form method="POST" action={route("settings.backup")} className="w-full">
+                                    <input
+                                        type="hidden"
+                                        name="_token"
+                                        value={document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''}
+                                    />
+                                    <button
+                                        type="submit"
+                                        className="group cursor-pointer bg-white p-4 sm:p-6 rounded-xl shadow-sm hover:shadow-md transition-all border border-gray-100 flex flex-col items-center text-center gap-3 hover:-translate-y-1 w-full"
+                                    >
+                                        <div className="p-3 sm:p-4 bg-red-50 text-red-600 rounded-full group-hover:bg-red-600 group-hover:text-white transition-colors">
                                             <Icon
                                                 icon="solar:shield-bold"
                                                 width="24"
                                                 className="sm:w-8 sm:h-8"
                                             />
-                                        )}
-                                    </div>
-                                    <span className="font-semibold text-sm sm:text-base text-gray-700 group-hover:text-red-900 leading-tight">
-                                        {backingUp
-                                            ? "Backing up..."
-                                            : "Backup Database"}
-                                    </span>
-                                </button>
+                                        </div>
+                                        <span className="font-semibold text-sm sm:text-base text-gray-700 group-hover:text-red-900 leading-tight">
+                                            Backup Database
+                                        </span>
+                                    </button>
+                                </form>
                             </>
                         )}
                     </div>
@@ -386,7 +382,7 @@ export default function Dashboard({
                     <form onSubmit={submitImport} className="space-y-4">
                         <div className="bg-blue-50 border border-blue-100 text-blue-800 p-4 rounded-lg text-sm">
                             Upload an <strong>.sqlite</strong> backup file or a{" "}
-                            <strong>.csv</strong> file. The system will safely
+                            <strong>.xlsx</strong> file. The system will safely
                             merge the data using Control Numbers to update
                             existing records and add new ones without creating
                             duplicates.
@@ -394,7 +390,7 @@ export default function Dashboard({
                         <div>
                             <input
                                 type="file"
-                                accept=".csv,.sqlite,.db"
+                                accept=".xlsx, .xls, .csv, .sqlite"
                                 onChange={(e) =>
                                     setImportData(
                                         "import_file",

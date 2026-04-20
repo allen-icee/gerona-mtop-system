@@ -37,6 +37,12 @@ interface MtopApplication {
     cedula_date: string;
     or_number: string;
     or_date: string;
+    driver_name: string;
+    has_driver?: boolean | number;
+    driver_last_name?: string | null;
+    driver_first_name?: string | null;
+    driver_middle_name?: string | null;
+    driver_suffix?: string | null;
     punong_bayan: string;
     authorized_official: string;
 
@@ -75,12 +81,16 @@ export default function Edit({
     officials,
     activeEvents,
     holidays,
+    suggested_body_number,
+    occupied_body_numbers,
 }: {
     application: MtopApplication;
     punong_bayans: string[];
     officials: string[];
     activeEvents: any;
     holidays: any[];
+    suggested_body_number: string;
+    occupied_body_numbers: number[];
 }) {
     const [step, setStep] = useState(1);
     const [showMobilePreview, setShowMobilePreview] = useState(false);
@@ -92,6 +102,11 @@ export default function Edit({
         first_name: application.first_name || "",
         middle_name: application.middle_name || "",
         suffix: application.suffix || "",
+        has_driver: !!application.has_driver,
+        driver_last_name: application.driver_last_name || "",
+        driver_first_name: application.driver_first_name || "",
+        driver_middle_name: application.driver_middle_name || "",
+        driver_suffix: application.driver_suffix || "",
         address: application.address || "",
         mt_number: application.mt_number || "",
         transaction_date: application.transaction_date
@@ -143,7 +158,7 @@ export default function Edit({
             "address",
             "transaction_date",
         ],
-        2: ["plate_no", "make_type", "engine_motor_no", "chassis_no"],
+        2: ["make_type", "engine_motor_no", "chassis_no"],
     };
 
     const isStepValid = (stepNum: number) => {
@@ -181,13 +196,7 @@ export default function Edit({
                 if (!isValidDate(data.cedula_date)) return false;
             }
 
-            const requiresOr =
-                (!data.is_free || data.or_unlocked) && data.show_or;
-            if (requiresOr) {
-                if (!data.or_number || data.or_number.trim() === "")
-                    return false;
-                if (!isValidDate(data.or_date)) return false;
-            }
+            // REMOVED OR STRICT VALIDATION HERE
         }
 
         return true;
@@ -204,13 +213,10 @@ export default function Edit({
         if (data.show_cedula && !isValidDate(data.cedula_date))
             return toast.error("Invalid Cedula Date.");
 
-        const requiresOr = (!data.is_free || data.or_unlocked) && data.show_or;
-        if (requiresOr && !isValidDate(data.or_date))
+        // UPDATED OR STRICT VALIDATION HERE (Only check if date is actually typed)
+        if (data.show_or && data.or_date && !isValidDate(data.or_date))
             return toast.error("Invalid Official Receipt Date.");
 
-        // =================================================================
-        // NEW: PRE-SAVE PROMO WARNING MODAL
-        // =================================================================
         if (data.is_free && data.event_id) {
             const currentEvent =
                 activeEvents?.find((ev: any) => ev.id == data.event_id) ||
@@ -273,9 +279,10 @@ export default function Edit({
                 );
         }
         if (step === 3) {
-            if (!isValidDate(data.cedula_date))
+            // UPDATED DATE VALIDATIONS TO ALLOW EMPTY FIELDS
+            if (data.show_cedula && data.cedula_date && !isValidDate(data.cedula_date))
                 return toast.error("Invalid Cedula Date! Check calendar.");
-            if (!isValidDate(data.or_date))
+            if (data.show_or && data.or_date && !isValidDate(data.or_date))
                 return toast.error("Invalid OR Date! Check calendar.");
         }
 
@@ -410,8 +417,8 @@ export default function Edit({
                                     type="button"
                                     onClick={() => setStep(1)}
                                     className={`flex-1 py-4 text-xs sm:text-sm hover:cursor-pointer font-bold uppercase tracking-wider flex items-center justify-center gap-2 rounded-tl-lg ${step === 1
-                                            ? "bg-white text-blue-600 border-t-2 border-blue-600"
-                                            : "text-gray-400 hover:text-gray-600"
+                                        ? "bg-white text-blue-600 border-t-2 border-blue-600"
+                                        : "text-gray-400 hover:text-gray-600"
                                         }`}
                                 >
                                     <Icon
@@ -430,8 +437,8 @@ export default function Edit({
                                             );
                                     }}
                                     className={`flex-1 py-4 text-xs sm:text-sm font-bold hover:cursor-pointer uppercase tracking-wider flex items-center justify-center gap-2 ${step === 2
-                                            ? "bg-white text-blue-600 border-t-2 border-blue-600"
-                                            : "text-gray-400 hover:text-gray-600"
+                                        ? "bg-white text-blue-600 border-t-2 border-blue-600"
+                                        : "text-gray-400 hover:text-gray-600"
                                         }`}
                                 >
                                     <Icon icon="solar:wheel-bold" width="18" />{" "}
@@ -448,8 +455,8 @@ export default function Edit({
                                             );
                                     }}
                                     className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase hover:cursor-pointer tracking-wider flex items-center justify-center gap-2 rounded-tr-lg ${step === 3
-                                            ? "bg-white text-blue-600 border-t-2 border-blue-600"
-                                            : "text-gray-400 hover:text-gray-600"
+                                        ? "bg-white text-blue-600 border-t-2 border-blue-600"
+                                        : "text-gray-400 hover:text-gray-600"
                                         }`}
                                 >
                                     <Icon
@@ -499,6 +506,8 @@ export default function Edit({
                                         setData={setData}
                                         errors={errors}
                                         onKeyDown={handleEnterKey}
+                                        suggested_body_number={suggested_body_number}
+                                        occupied_body_numbers={occupied_body_numbers}
                                     />
                                 </div>
 
@@ -575,7 +584,12 @@ export default function Edit({
                                         ) : (
                                             <PrimaryButton
                                                 type="submit"
-                                                className={`bg-blue-800 hover:bg-blue-900 ${!isDirty || processing || !isFormValid ? "opacity-50 cursor-not-allowed" : ""}`}
+                                                className={`bg-blue-800 hover:bg-blue-900 ${!isDirty ||
+                                                    processing ||
+                                                    !isFormValid
+                                                    ? "opacity-50 cursor-not-allowed"
+                                                    : ""
+                                                    }`}
                                                 disabled={
                                                     processing ||
                                                     !isDirty ||
@@ -641,7 +655,10 @@ export default function Edit({
                                 e.preventDefault();
                                 handleNext();
                             }}
-                            className={`px-6 py-2 bg-blue-600 text-white rounded-lg font-bold text-sm flex items-center ${!isStepValid(step) ? "opacity-70 cursor-not-allowed" : ""}`}
+                            className={`px-6 py-2 bg-blue-600 text-white rounded-lg font-bold text-sm flex items-center ${!isStepValid(step)
+                                ? "opacity-70 cursor-not-allowed"
+                                : ""
+                                }`}
                         >
                             Next{" "}
                             <Icon
@@ -653,7 +670,10 @@ export default function Edit({
                         <button
                             onClick={submit}
                             disabled={processing || !isDirty || !isFormValid}
-                            className={`px-6 py-2 bg-blue-800 text-white rounded-lg font-bold text-sm flex items-center ${!isDirty || processing || !isFormValid ? "opacity-50 cursor-not-allowed" : ""}`}
+                            className={`px-6 py-2 bg-blue-800 text-white rounded-lg font-bold text-sm flex items-center ${!isDirty || processing || !isFormValid
+                                ? "opacity-50 cursor-not-allowed"
+                                : ""
+                                }`}
                         >
                             <Icon icon="solar:diskette-bold" className="mr-1" />{" "}
                             Update

@@ -7,6 +7,7 @@ import { Icon } from "@iconify/react";
 import { FormEventHandler, useEffect, useRef, useState } from "react";
 import TextInput from "@/Components/TextInput";
 import SignatorySelect from "@/Components/SignatorySelect";
+import SuffixSelect from "@/Components/SuffixSelect";
 import toast from "react-hot-toast";
 
 interface Props {
@@ -31,74 +32,44 @@ export default function DriverInfoModal({
 
     useEffect(() => {
         if (show && selectedApps.length > 0 && !initialized.current) {
-            const defaultMayor =
-                officials.find((o) => o.position === "Punong Bayan")?.name ||
-                "";
+            const defaultMayor = officials.find((o) => o.position === "Punong Bayan")?.name || "";
             const defaultCommittee =
-                officials.find(
-                    (o) => o.position === "Committee on Transportation",
-                )?.name ||
-                officials.find((o) => o.position === "Authorized Official")
-                    ?.name ||
-                "";
+                officials.find((o) => o.position === "Committee on Transportation")?.name ||
+                officials.find((o) => o.position === "Authorized Official")?.name || "";
 
             setData({
                 drivers: selectedApps.map((app) => {
-                    const mInitial = app.middle_name
-                        ? `${app.middle_name[0]}. `
-                        : "";
-                    const sfx = app.suffix ? ` ${app.suffix}` : "";
-                    const fullOperatorName =
-                        `${app.first_name} ${mInitial}${app.last_name}${sfx}`
-                            .trim()
-                            .toUpperCase();
+                    let dLast = "";
+                    let dFirst = "";
+                    let dMid = "";
+                    let dSuf = "";
 
-                    const oldBasicName = `${app.first_name} ${app.last_name}`
-                        .trim()
-                        .toUpperCase();
-
-                    let paidByName = "";
-                    if (app.show_paid_by) {
-                        const pbInitial = app.paid_by_middle_name
-                            ? `${app.paid_by_middle_name[0]}. `
-                            : "";
-                        const pbSfx = app.paid_by_suffix
-                            ? ` ${app.paid_by_suffix}`
-                            : "";
-                        paidByName =
-                            `${app.paid_by_first_name || ""} ${pbInitial}${app.paid_by_last_name || ""}${pbSfx}`
-                                .trim()
-                                .toUpperCase();
+                    if (app.has_driver || app.driver_first_name || app.driver_last_name) {
+                        dLast = app.driver_last_name || "";
+                        dFirst = app.driver_first_name || "";
+                        dMid = app.driver_middle_name || "";
+                        dSuf = app.driver_suffix || "";
+                    } else if (app.show_paid_by && (app.paid_by_first_name || app.paid_by_last_name)) {
+                        dLast = app.paid_by_last_name || "";
+                        dFirst = app.paid_by_first_name || "";
+                        dMid = app.paid_by_middle_name || "";
+                        dSuf = app.paid_by_suffix || "";
+                    } else {
+                        dLast = app.last_name || "";
+                        dFirst = app.first_name || "";
+                        dMid = app.middle_name || "";
+                        dSuf = app.suffix || "";
                     }
-
-                    // Smart Driver Name Logic: Manual Driver > Paid By > Operator
-                    let finalDriverName = app.driver_name
-                        ? app.driver_name.trim().toUpperCase()
-                        : "";
-
-                    // Check if the saved driver_name is just the unformatted default operator name
-                    const isDefaultOperator =
-                        finalDriverName &&
-                        finalDriverName === oldBasicName;
-
-                    // If it's empty OR just the default operator name, use the fallbacks
-                    if (!finalDriverName || isDefaultOperator) {
-                        if (app.show_paid_by && paidByName) {
-                            finalDriverName = paidByName;
-                        } else {
-                            finalDriverName = fullOperatorName;
-                        }
-                    }
-                    // Otherwise, it keeps the finalDriverName that you already saved!
 
                     return {
                         id: app.id,
                         mt_number: app.mt_number,
-                        driver_name: finalDriverName,
+                        driver_last_name: dLast,
+                        driver_first_name: dFirst,
+                        driver_middle_name: dMid,
+                        driver_suffix: dSuf,
                         photo: null as File | null,
-                        preview: app.driver_photo_path
-                            ? `/storage/${app.driver_photo_path}`
-                            : null,
+                        preview: app.driver_photo_path ? `/storage/${app.driver_photo_path}` : null,
                         remove_photo: false,
                         mayor: app.punong_bayan || defaultMayor,
                         committee: app.authorized_official || defaultCommittee,
@@ -122,9 +93,7 @@ export default function DriverInfoModal({
                 fetch(base64Data)
                     .then((res) => res.blob())
                     .then((blob) => {
-                        const file = new File([blob], "driver_photo.png", {
-                            type: "image/png",
-                        });
+                        const file = new File([blob], "driver_photo.png", { type: "image/png" });
                         handlePhotoChange(cameraIndex, file);
                     });
             }
@@ -157,43 +126,28 @@ export default function DriverInfoModal({
     };
 
     const openCamera = async (index: number) => {
-        const isSecure =
-            window.isSecureContext ||
-            window.location.hostname === "localhost" ||
-            window.location.hostname === "127.0.0.1";
+        const isSecure = window.isSecureContext || window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
 
         if (!isSecure) {
-            toast.error(
-                "Camera access is restricted on this client. Please use the Main Application Server to capture photos.",
-                { duration: 5000 },
-            );
+            toast.error("Camera access is restricted on this client. Please use the Main Application Server to capture photos.", { duration: 5000 });
             return;
         }
 
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({
-                video: true,
-            });
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
             stream.getTracks().forEach((track) => track.stop());
         } catch (err) {
-            toast.error(
-                "Permission was not granted. Please allow camera access to use this feature.",
-            );
+            toast.error("Permission was not granted. Please allow camera access to use this feature.");
             return;
         }
 
         setCameraIndex(index);
-
         const width = 500;
         const height = 750;
         const left = window.screen.width / 2 - width / 2;
         const top = window.screen.height / 2 - height / 2;
 
-        const camWindow = window.open(
-            "",
-            "CameraCapture",
-            `width=${width},height=${height},left=${left},top=${top},menubar=no,status=no,toolbar=no`,
-        );
+        const camWindow = window.open("", "CameraCapture", `width=${width},height=${height},left=${left},top=${top},menubar=no,status=no,toolbar=no`);
 
         if (camWindow) {
             camWindow.document.write(`
@@ -219,13 +173,11 @@ export default function DriverInfoModal({
                                 <span class="iconify" data-icon="solar:monitor-camera-bold"></span> Cast to Client Monitor
                             </button>
                         </div>
-
                         <div class="camera-container flex-1">
                             <video id="video" autoplay playsinline></video>
                             <img id="preview-img" src="" />
                             <div id="guide" class="guide-overlay"><div class="circle"></div></div>
                         </div>
-
                         <div class="p-6 bg-white border-t">
                             <button id="capture-btn" class="w-full py-4 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold text-lg shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2">
                                 <span class="iconify" data-icon="solar:camera-minimalistic-bold"></span> Take Photo
@@ -246,9 +198,7 @@ export default function DriverInfoModal({
                         const previewImg = document.getElementById('preview-img');
                         const reviewActions = document.getElementById('review-actions');
                         const captureBtn = document.getElementById('capture-btn');
-
                         let clientWindow = null;
-
                         async function initCamera() {
                             try {
                                 const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 1280, height: 720 } });
@@ -257,12 +207,8 @@ export default function DriverInfoModal({
                             } catch (e) { alert("Unable to initialize camera."); }
                         }
                         initCamera();
-
                         document.getElementById('cast-btn').onclick = () => {
-                            if (clientWindow && !clientWindow.closed) {
-                                clientWindow.focus();
-                                return;
-                            }
+                            if (clientWindow && !clientWindow.closed) { clientWindow.focus(); return; }
                             clientWindow = window.open('', 'ClientMonitor', 'width=800,height=600,menubar=no,toolbar=no');
                             clientWindow.document.write(\`
                                 <html><head><title>Client Monitor View</title></head>
@@ -275,16 +221,11 @@ export default function DriverInfoModal({
                             \`);
                             clientWindow.document.getElementById('c-video').srcObject = window.stream;
                         };
-
                         captureBtn.onclick = () => {
                             const canvas = document.getElementById('canvas');
                             canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-
                             const ctx = canvas.getContext('2d');
-                            ctx.translate(canvas.width, 0);
-                            ctx.scale(-1, 1);
-                            ctx.drawImage(video, 0, 0);
-
+                            ctx.translate(canvas.width, 0); ctx.scale(-1, 1); ctx.drawImage(video, 0, 0);
                             canvas.toBlob((blob) => {
                                 window.currentBlob = blob;
                                 previewImg.src = URL.createObjectURL(blob);
@@ -292,20 +233,16 @@ export default function DriverInfoModal({
                                 document.getElementById('guide').style.display = 'none';
                                 document.getElementById('header-title').innerText = "Review Capture";
                                 captureBtn.classList.add('hidden');
-                                reviewActions.classList.remove('hidden');
-                                reviewActions.classList.add('flex');
+                                reviewActions.classList.remove('hidden'); reviewActions.classList.add('flex');
                             }, 'image/png');
                         };
-
                         document.getElementById('retake-btn').onclick = () => {
                             previewImg.style.display = 'none'; video.style.display = 'block';
                             document.getElementById('guide').style.display = 'flex';
                             document.getElementById('header-title').innerText = "Encoder Control Panel";
                             captureBtn.classList.remove('hidden');
-                            reviewActions.classList.add('hidden');
-                            reviewActions.classList.remove('flex');
+                            reviewActions.classList.add('hidden'); reviewActions.classList.remove('flex');
                         };
-
                         document.getElementById('save-btn').onclick = () => {
                             if (clientWindow) clientWindow.close();
                             const reader = new FileReader();
@@ -327,9 +264,7 @@ export default function DriverInfoModal({
             e.preventDefault();
             const form = e.currentTarget;
             const focusableElements = Array.from(
-                form.querySelectorAll(
-                    'input:not([type="hidden"]), select, textarea, [tabindex]:not([tabindex="-1"])',
-                ),
+                form.querySelectorAll('input:not([type="hidden"]), select, textarea, [tabindex]:not([tabindex="-1"])')
             ) as HTMLElement[];
             const activeElement = document.activeElement as HTMLElement;
             const currentIndex = focusableElements.indexOf(activeElement);
@@ -352,10 +287,7 @@ export default function DriverInfoModal({
                 data.drivers.forEach((d) => {
                     params.append(`mayors[${d.id}]`, d.mayor);
                     params.append(`committees[${d.id}]`, d.committee);
-                    params.append(
-                        `show_committees[${d.id}]`,
-                        d.show_committee ? "1" : "0",
-                    );
+                    params.append(`show_committees[${d.id}]`, d.show_committee ? "1" : "0");
                 });
                 const url = `${route("mtop.print_ids")}?${params.toString()}`;
                 window.open(url, "_blank");
@@ -365,222 +297,135 @@ export default function DriverInfoModal({
         });
     };
 
-    const baseMayorOptions = officials
-        .filter((o) => o.position === "Punong Bayan")
-        .map((o) => `${o.name} | ${o.position}`);
-
+    const baseMayorOptions = officials.filter((o) => o.position === "Punong Bayan").map((o) => `${o.name} | ${o.position}`);
     const customMayors = data.drivers.map((d) => d.mayor).filter(Boolean);
-    const mayorOptions = Array.from(
-        new Set([...baseMayorOptions, ...customMayors]),
-    );
+    const mayorOptions = Array.from(new Set([...baseMayorOptions, ...customMayors]));
 
-    const baseCommitteeOptions = officials
-        .filter(
-            (o) =>
-                o.position === "Committee on Transportation" ||
-                o.position === "Authorized Official",
-        )
-        .map((o) => `${o.name} | ${o.position}`);
-
-    const customCommittees = data.drivers
-        .map((d) => d.committee)
-        .filter(Boolean);
-    const committeeOptions = Array.from(
-        new Set([...baseCommitteeOptions, ...customCommittees]),
-    );
+    const baseCommitteeOptions = officials.filter((o) => o.position === "Committee on Transportation" || o.position === "Authorized Official").map((o) => `${o.name} | ${o.position}`);
+    const customCommittees = data.drivers.map((d) => d.committee).filter(Boolean);
+    const committeeOptions = Array.from(new Set([...baseCommitteeOptions, ...customCommittees]));
 
     return (
-        <Modal show={show} onClose={onClose} maxWidth="xl">
-            <form
-                onSubmit={submit}
-                onKeyDown={handleFormKeyDown}
-                className="p-6 flex flex-col h-[85vh]"
-            >
+        <Modal show={show} onClose={onClose} maxWidth="2xl">
+            <form onSubmit={submit} onKeyDown={handleFormKeyDown} className="p-6 flex flex-col h-[85vh]">
                 <div className="flex justify-between items-center mb-6 shrink-0 border-b border-gray-100 pb-4">
                     <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                        <Icon
-                            icon="solar:printer-bold"
-                            className="text-blue-600"
-                        />
-                        Print Setup ({data.drivers.length} IDs)
+                        <Icon icon="solar:printer-bold" className="text-blue-600" /> Print Setup ({data.drivers.length} IDs)
                     </h2>
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="text-gray-400 hover:text-red-500 transition-colors"
-                    >
+                    <button type="button" onClick={onClose} className="text-gray-400 hover:text-red-500 transition-colors">
                         <Icon icon="solar:close-circle-bold" width="28" />
                     </button>
                 </div>
 
                 <div className="flex-1 overflow-y-auto pr-2 space-y-6 pb-4">
                     {data.drivers.map((driver, index) => (
-                        <div
-                            key={driver.id}
-                            className="flex flex-col sm:flex-row gap-6 p-5 border border-gray-200 rounded-xl bg-white shadow-sm hover:shadow-md transition-shadow relative"
-                        >
-                            <div className="absolute bottom-0 left-0 bg-gray-100 text-gray-400 font-black text-4xl px-3 py-1 rounded-tr-xl rounded-bl-xl select-none z-0 opacity-50">
-                                #{index + 1}
-                            </div>
+                        <div key={driver.id} className="flex flex-col sm:flex-row gap-6 p-5 border border-gray-200 rounded-xl bg-white shadow-sm hover:shadow-md transition-shadow relative">
+                            <div className="absolute bottom-0 left-0 bg-gray-100 text-gray-400 font-black text-4xl px-3 py-1 rounded-tr-xl rounded-bl-xl select-none z-0 opacity-50">#{index + 1}</div>
 
                             <div className="shrink-0 flex flex-col items-center gap-3 w-full sm:w-40 border-b sm:border-b-0 sm:border-r border-gray-100 pb-4 sm:pb-0 sm:pr-6 z-10">
                                 <div className="flex items-center justify-end gap-3">
-                                    <span className="bg-gray-800 text-white text-xs font-bold px-2 py-1 rounded">
-                                        MTOP: {driver.mt_number}
-                                    </span>
+                                    <span className="bg-gray-800 text-white text-xs font-bold px-2 py-1 rounded">MTOP: {driver.mt_number}</span>
                                 </div>
                                 <div className="w-32 h-32 bg-gray-50 border-2 border-gray-300 border-dashed rounded-lg flex items-center justify-center overflow-hidden relative group">
                                     {driver.preview ? (
-                                        <img
-                                            src={driver.preview}
-                                            alt="Preview"
-                                            className="w-full h-full object-cover"
-                                        />
+                                        <img src={driver.preview} alt="Preview" className="w-full h-full object-cover" />
                                     ) : (
                                         <div className="text-center text-gray-300">
-                                            <Icon
-                                                icon="solar:camera-add-bold"
-                                                width="40"
-                                                className="mx-auto mb-1"
-                                            />
-                                            <span className="text-[10px] font-bold uppercase">
-                                                No Photo
-                                            </span>
+                                            <Icon icon="solar:camera-add-bold" width="40" className="mx-auto mb-1" />
+                                            <span className="text-[10px] font-bold uppercase">No Photo</span>
                                         </div>
                                     )}
                                 </div>
-
                                 <div className="flex gap-2 w-full">
                                     <label className="flex-1 text-center cursor-pointer bg-blue-50 text-blue-600 border border-blue-100 py-2 rounded-md text-xs font-bold uppercase tracking-wide hover:scale-105 active:scale-95">
                                         Upload
-                                        <input
-                                            type="file"
-                                            accept="image/*"
-                                            className="hidden"
-                                            onChange={(e) =>
-                                                e.target.files &&
-                                                handlePhotoChange(
-                                                    index,
-                                                    e.target.files[0],
-                                                )
-                                            }
-                                        />
+                                        <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files && handlePhotoChange(index, e.target.files[0])} />
                                     </label>
                                     {driver.preview && (
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                handleRemovePhoto(index)
-                                            }
-                                            className="flex-1 text-center cursor-pointer bg-red-50 text-red-600 border border-red-100 py-2 rounded-md text-xs font-bold uppercase tracking-wide hover:scale-105 active:scale-95"
-                                        >
+                                        <button type="button" onClick={() => handleRemovePhoto(index)} className="flex-1 text-center cursor-pointer bg-red-50 text-red-600 border border-red-100 py-2 rounded-md text-xs font-bold uppercase tracking-wide hover:scale-105 active:scale-95">
                                             Remove
                                         </button>
                                     )}
                                 </div>
-
                                 <div className="w-full">
-                                    <button
-                                        type="button"
-                                        onClick={() => openCamera(index)}
-                                        className="w-full text-center bg-green-50 text-green-600 border border-green-100 py-2 rounded-md text-xs font-bold uppercase tracking-wide hover:scale-105 active:scale-95"
-                                    >
+                                    <button type="button" onClick={() => openCamera(index)} className="w-full text-center bg-green-50 text-green-600 border border-green-100 py-2 rounded-md text-xs font-bold uppercase tracking-wide hover:scale-105 active:scale-95">
                                         Capture
                                     </button>
                                 </div>
                             </div>
 
                             <div className="flex-1 flex flex-col gap-4 z-10 pt-2 sm:pt-0">
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
-                                        Driver Name
-                                    </label>
-                                    <TextInput
-                                        type="text"
-                                        value={driver.driver_name}
-                                        onChange={(e) =>
-                                            handleDriverChange(
-                                                index,
-                                                "driver_name",
-                                                e.target.value.toUpperCase(),
-                                            )
-                                        }
-                                        className="w-full py-2.5 pl-2"
-                                        placeholder="Enter driver name"
-                                    />
-                                </div>
-                                <div>
-                                    <div className="relative">
-                                        <div className="absolute right-0 top-0 z-20">
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    handleDriverChange(
-                                                        index,
-                                                        "show_committee",
-                                                        !driver.show_committee,
-                                                    )
-                                                }
-                                                className="flex items-center gap-2 focus:outline-none group"
-                                            >
-                                                <div
-                                                    className={`w-8 h-4 flex items-center rounded-full p-1 transition-colors duration-300 ${driver.show_committee ? "bg-indigo-600" : "bg-gray-300"}`}
-                                                >
-                                                    <div
-                                                        className={`bg-white w-2.5 h-2.5 rounded-full shadow-sm transform transition-transform duration-300 ${driver.show_committee ? "translate-x-3.5" : "translate-x-0"}`}
-                                                    ></div>
-                                                </div>
-                                            </button>
-                                        </div>
 
-                                        <div
-                                            className={`transition-all ${!driver.show_committee ? "opacity-50 blur-[0.4px] pointer-events-none" : ""}`}
-                                        >
-                                            <SignatorySelect
-                                                label="Committee on Transportation"
-                                                value={driver.committee}
-                                                onChange={(val) =>
-                                                    handleDriverChange(
-                                                        index,
-                                                        "committee",
-                                                        val,
-                                                    )
-                                                }
-                                                options={committeeOptions}
-                                                required={driver.show_committee}
-                                                disabled={
-                                                    !driver.show_committee
-                                                }
+                                <div>
+                                    <label className="block text-[13px] font-bold text-gray-800 mb-3">Driver Name (Editable Override)</label>
+
+                                    <div className="grid grid-cols-12 gap-4">
+
+                                        {/* ROW 1: LAST NAME & FIRST NAME */}
+                                        <div className="col-span-12 sm:col-span-6">
+                                            <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1.5">Last Name</label>
+                                            <TextInput
+                                                type="text"
+                                                value={driver.driver_last_name}
+                                                onChange={(e) => handleDriverChange(index, "driver_last_name", e.target.value.toUpperCase().replace(/[^A-ZÑñ\s.-]/g, ""))}
+                                                className="w-full h-10.5 px-3 text-sm bg-white"
+                                                placeholder="Last Name"
                                             />
                                         </div>
 
-                                        {!driver.show_committee && (
-                                            <div className="absolute inset-x-0 bottom-0 top-6 flex items-center justify-center z-30 pointer-events-none bg-black/5 rounded">
-                                                <div className="flex flex-col items-center">
-                                                    <Icon
-                                                        icon="solar:eye-closed-bold"
-                                                        width="24"
-                                                        className="text-slate-400"
-                                                    />
-                                                </div>
+                                        <div className="col-span-12 sm:col-span-6">
+                                            <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1.5">First Name</label>
+                                            <TextInput
+                                                type="text"
+                                                value={driver.driver_first_name}
+                                                onChange={(e) => handleDriverChange(index, "driver_first_name", e.target.value.toUpperCase().replace(/[^A-ZÑñ\s.-]/g, ""))}
+                                                className="w-full h-10.5 px-3 text-sm bg-white"
+                                                placeholder="First Name"
+                                            />
+                                        </div>
+
+                                        {/* ROW 2: M.I. & SUFFIX WITH NARROWER WIDTHS */}
+                                        <div className="col-span-4 sm:col-span-2">
+                                            <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1.5">M.I.</label>
+                                            <TextInput
+                                                type="text"
+                                                value={driver.driver_middle_name}
+                                                onChange={(e) => handleDriverChange(index, "driver_middle_name", e.target.value.toUpperCase().replace(/[^A-ZÑñ]/g, "").slice(0, 1))}
+                                                className="w-full h-10.5 px-3 text-sm text-center bg-white"
+                                                placeholder="M.I."
+                                                maxLength={1}
+                                            />
+                                        </div>
+
+                                        <div className="col-span-8 sm:col-span-4">
+                                            <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1.5">Suffix</label>
+                                            <div className="[&_label]:hidden! [&>div.mb-4]:mb-0! [&_input]:h-10.5! [&_input]:py-0! [&_input]:px-3! [&_input]:text-sm! [&_input]:border-gray-300!">
+                                                <SuffixSelect
+                                                    value={driver.driver_suffix}
+                                                    onChange={(val) => handleDriverChange(index, "driver_suffix", val)}
+                                                />
                                             </div>
-                                        )}
+                                        </div>
+
+                                    </div>
+                                </div>
+
+                                <div className="mt-2">
+                                    <div className="relative">
+                                        <div className="absolute right-0 top-0 z-20">
+                                            <button type="button" onClick={() => handleDriverChange(index, "show_committee", !driver.show_committee)} className="flex items-center gap-2 focus:outline-none group">
+                                                <div className={`w-8 h-4 flex items-center rounded-full p-1 transition-colors duration-300 ${driver.show_committee ? "bg-indigo-600" : "bg-gray-300"}`}>
+                                                    <div className={`bg-white w-2.5 h-2.5 rounded-full shadow-sm transform transition-transform duration-300 ${driver.show_committee ? "translate-x-3.5" : "translate-x-0"}`}></div>
+                                                </div>
+                                            </button>
+                                        </div>
+                                        <div className={`transition-all ${!driver.show_committee ? "opacity-50 blur-[0.4px] pointer-events-none" : ""}`}>
+                                            <SignatorySelect label="Committee on Transportation" value={driver.committee} onChange={(val) => handleDriverChange(index, "committee", val)} options={committeeOptions} required={driver.show_committee} disabled={!driver.show_committee} />
+                                        </div>
                                     </div>
                                 </div>
                                 <div>
-                                    <SignatorySelect
-                                        label="Municipal Mayor"
-                                        value={driver.mayor}
-                                        onChange={(val) =>
-                                            handleDriverChange(
-                                                index,
-                                                "mayor",
-                                                val,
-                                            )
-                                        }
-                                        options={mayorOptions}
-                                        required
-                                    />
+                                    <SignatorySelect label="Municipal Mayor" value={driver.mayor} onChange={(val) => handleDriverChange(index, "mayor", val)} options={mayorOptions} required />
                                 </div>
                             </div>
                         </div>
@@ -588,16 +433,9 @@ export default function DriverInfoModal({
                 </div>
 
                 <div className="mt-4 flex justify-end gap-3 pt-4 border-t border-gray-100 shrink-0">
-                    <SecondaryButton onClick={onClose} disabled={processing}>
-                        Cancel
-                    </SecondaryButton>
-                    <PrimaryButton
-                        type="submit"
-                        disabled={processing}
-                        className="bg-indigo-600 hover:bg-indigo-700 shadow-md transition-transform hover:scale-105 cursor-pointer"
-                    >
-                        <Icon icon="solar:printer-bold" className="mr-2" />
-                        Save & Print
+                    <SecondaryButton onClick={onClose} disabled={processing}>Cancel</SecondaryButton>
+                    <PrimaryButton type="submit" disabled={processing} className="bg-indigo-600 hover:bg-indigo-700 shadow-md transition-transform hover:scale-105 cursor-pointer">
+                        <Icon icon="solar:printer-bold" className="mr-2" /> Save & Print
                     </PrimaryButton>
                 </div>
             </form>
