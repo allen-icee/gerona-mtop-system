@@ -114,7 +114,7 @@ Route::middleware('auth')->group(function () {
             // Silently handle backup command failure
         }
 
-        $records = MtopApplication::latest()->cursor();
+        $records = MtopApplication::latest()->get();
         $fileName = 'FULL_BACKUP_MTOP_' . date('Y-m-d_H-i') . '.xlsx';
 
         return (new FastExcel($records))->download($fileName, function ($row) {

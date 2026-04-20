@@ -1013,7 +1013,13 @@ class MtopApplicationController extends Controller
                 }
 
                 $getVal = function ($key) use ($cleanRow) {
-                    return $cleanRow[$key] ?? '';
+                    $val = trim((string)($cleanRow[$key] ?? ''));
+
+                    if ($val === '-' || strtoupper($val) === 'N/A') {
+                        return '';
+                    }
+
+                    return $val;
                 };
 
                 $mt_number = $getVal('control no');
