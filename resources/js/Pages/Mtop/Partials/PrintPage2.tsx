@@ -116,21 +116,11 @@ export default function PrintPage2({ application, operatorName }: Props) {
         : "_________________";
     let paidByName = "";
     if (application.show_paid_by) {
-<<<<<<< HEAD
-        paidByName = `${application.paid_by_first_name || ""} ${
-            application.paid_by_middle_name
-                ? application.paid_by_middle_name + ". "
-                : ""
-        }${application.paid_by_last_name || ""}${
-            application.paid_by_suffix ? " " + application.paid_by_suffix : ""
-        }`.trim();
-=======
         paidByName = `${application.paid_by_first_name || ""} ${application.paid_by_middle_name
                 ? application.paid_by_middle_name + ". "
                 : ""
             }${application.paid_by_last_name || ""}${application.paid_by_suffix ? " " + application.paid_by_suffix : ""
             }`.trim();
->>>>>>> efed82f183c2c1a8c7535be20c3a5c5fd5e4abb3
     }
     return (
         <div

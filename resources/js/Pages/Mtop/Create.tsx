@@ -267,19 +267,10 @@ export default function Create({
                 if (tDate < eStart || tDate > eEnd) {
                     const confirmProceed = window.confirm(
                         "⚠️ WARNING: DATE OUTSIDE PROMO PERIOD\n\n" +
-<<<<<<< HEAD
-                            "The transaction date you selected is outside the active dates of the Promo/Event.\n\n" +
-                            "If you click OK, the system will save this record, but the FREE PROMO will be removed and it will be processed as a standard 3-Year validity permit.\n\n" +
-                            "Do you want to proceed?",
-                    );
-
-                    // If they click "Cancel", we stop the function so it doesn't save!
-=======
                         "The transaction date you selected is outside the active dates of the Promo/Event.\n\n" +
                         "If you click OK, the system will save this record, but the FREE PROMO will be removed and it will be processed as a standard 3-Year validity permit.\n\n" +
                         "Do you want to proceed?",
                     );
->>>>>>> efed82f183c2c1a8c7535be20c3a5c5fd5e4abb3
                     if (!confirmProceed) return;
                 }
             }

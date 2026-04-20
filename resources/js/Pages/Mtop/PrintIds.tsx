@@ -162,16 +162,22 @@ export default function PrintIds({ applications, settings }: Props) {
                     const operatorNameToPrint = originalOperatorName;
 
                     // 4. Smart Driver Name Logic: Paid By overrides Driver
-                    let finalDriverName = app.driver_name;
-                    if (app.show_paid_by && paidByName) {
-                        finalDriverName = paidByName;
-                    } else if (
-                        !finalDriverName ||
-                        finalDriverName.trim() ===
-                            `${app.first_name} ${app.last_name}`.trim()
-                    ) {
-                        finalDriverName = originalOperatorName;
+                     let finalDriverName = app.driver_name;
+
+                    // Check if the saved driver_name is just the unformatted default operator name
+                    const isDefaultOperator =
+                        finalDriverName &&
+                        finalDriverName.trim() === `${app.first_name} ${app.last_name}`.trim();
+
+                    // If it's empty OR just the default operator name, use the fallbacks
+                    if (!finalDriverName || isDefaultOperator) {
+                        if (app.show_paid_by && paidByName) {
+                            finalDriverName = paidByName;
+                        } else {
+                            finalDriverName = originalOperatorName;
+                        }
                     }
+                    // Otherwise, it keeps the finalDriverName that you manually typed!
 
                     return (
                         <div

@@ -23,11 +23,7 @@ export default defineConfig(({ mode }) => {
             port: 5173,
             cors: true,
             hmr: {
-<<<<<<< HEAD
-            host: "192.168.10.197",
-=======
-            host: "192.168.11.128",
->>>>>>> efed82f183c2c1a8c7535be20c3a5c5fd5e4abb3
+            host: "192.168.10.179",
             },
         },
 

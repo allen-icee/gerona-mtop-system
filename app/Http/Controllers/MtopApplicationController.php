@@ -101,17 +101,9 @@ class MtopApplicationController extends Controller
                 $eventStart = Carbon::parse($e->start_date)->startOfDay();
                 $eventEnd = Carbon::parse($e->end_date)->endOfDay();
 
-<<<<<<< HEAD
-                // Only apply the promo if the transaction date falls within the event dates
                 if ($tDate->between($eventStart, $eventEnd)) {
                     $event = $e;
                 } else {
-                    // SECURE FIX: Completely strip the promo data if they backdate!
-=======
-                if ($tDate->between($eventStart, $eventEnd)) {
-                    $event = $e;
-                } else {
->>>>>>> efed82f183c2c1a8c7535be20c3a5c5fd5e4abb3
                     $validated['event_id'] = null;
                     $validated['is_free'] = false;
                 }
@@ -232,10 +224,6 @@ class MtopApplicationController extends Controller
         $application = MtopApplication::findOrFail($id);
         $validated = $request->validated();
 
-<<<<<<< HEAD
-        // 1. SANITIZE PAID BY FIELDS IF TOGGLED OFF
-=======
->>>>>>> efed82f183c2c1a8c7535be20c3a5c5fd5e4abb3
         $validated['show_paid_by'] = filter_var($validated['show_paid_by'] ?? false, FILTER_VALIDATE_BOOLEAN);
         if (!$validated['show_paid_by']) {
             $validated['paid_by_last_name'] = null;
@@ -253,17 +241,9 @@ class MtopApplicationController extends Controller
                     $eventStart = Carbon::parse($e->start_date)->startOfDay();
                     $eventEnd = Carbon::parse($e->end_date)->endOfDay();
 
-<<<<<<< HEAD
-                    // Only apply the promo if the transaction date falls within the event dates
                     if ($tDate->between($eventStart, $eventEnd)) {
                         $event = $e;
                     } else {
-                        // SECURE FIX: Completely strip the promo data if they backdate!
-=======
-                    if ($tDate->between($eventStart, $eventEnd)) {
-                        $event = $e;
-                    } else {
->>>>>>> efed82f183c2c1a8c7535be20c3a5c5fd5e4abb3
                         $validated['event_id'] = null;
                         $validated['is_free'] = false;
                     }
@@ -295,12 +275,6 @@ class MtopApplicationController extends Controller
                     throw new \Exception("The Control Number {$final_mt_number} was just updated by another user. Please use a different number.");
                 }
 
-<<<<<<< HEAD
-                // ====================================================================
-                // SMART RESET: If Paid By was turned off, wipe it from Driver Name too
-                // ====================================================================
-=======
->>>>>>> efed82f183c2c1a8c7535be20c3a5c5fd5e4abb3
                 if (!$validated['show_paid_by'] && $application->show_paid_by) {
                     $pbInitial = $application->paid_by_middle_name ? substr($application->paid_by_middle_name, 0, 1) . '. ' : '';
                     $pbSfx = $application->paid_by_suffix ? ' ' . $application->paid_by_suffix : '';
@@ -310,18 +284,10 @@ class MtopApplicationController extends Controller
 
                     $currentDriver = trim(strtoupper($application->driver_name ?? ''));
 
-<<<<<<< HEAD
-                    // If the current driver name matches the old Paid By name, wipe it!
-=======
->>>>>>> efed82f183c2c1a8c7535be20c3a5c5fd5e4abb3
                     if ($currentDriver === $fullPaidByName || $currentDriver === $basicPaidByName) {
                         $application->driver_name = null;
                     }
                 }
-<<<<<<< HEAD
-                // ====================================================================
-=======
->>>>>>> efed82f183c2c1a8c7535be20c3a5c5fd5e4abb3
 
                 $application->update($validated);
                 $this->queueForSync('mtop_applications', $application->fresh()->toArray());
@@ -494,24 +460,14 @@ class MtopApplicationController extends Controller
                 'Cedula Date',
                 'Punong Bayan',
                 'Authorized Official',
-<<<<<<< HEAD
-                'Driver Name',          // Added New Field
-                'Is Free/Promo',        // Added New Field
-                'Paid By Details',      // Added New Field
-=======
                 'Driver Name',
                 'Is Free/Promo',
                 'Paid By Details',
->>>>>>> efed82f183c2c1a8c7535be20c3a5c5fd5e4abb3
                 'Valid Until',
                 'Status'
             ]);
 
             foreach ($records as $row) {
-<<<<<<< HEAD
-                // Safely format the Paid By details
-=======
->>>>>>> efed82f183c2c1a8c7535be20c3a5c5fd5e4abb3
                 $paidBy = $row->show_paid_by
                     ? trim("{$row->paid_by_first_name} {$row->paid_by_last_name} {$row->paid_by_suffix}")
                     : 'N/A';
@@ -537,15 +493,9 @@ class MtopApplicationController extends Controller
                     $row->cedula_date,
                     $row->punong_bayan,
                     $row->authorized_official,
-<<<<<<< HEAD
-                    $row->driver_name ?? 'N/A',            // Injects Driver
-                    $row->is_free ? 'YES' : 'NO',          // Injects Promo Info
-                    $paidBy,                               // Injects Paid By
-=======
                     $row->driver_name ?? 'N/A',
                     $row->is_free ? 'YES' : 'NO',
                     $paidBy,
->>>>>>> efed82f183c2c1a8c7535be20c3a5c5fd5e4abb3
                     $row->valid_until,
                     $row->status
                 ]);
@@ -659,17 +609,9 @@ class MtopApplicationController extends Controller
                 $eventStart = Carbon::parse($e->start_date)->startOfDay();
                 $eventEnd = Carbon::parse($e->end_date)->endOfDay();
 
-<<<<<<< HEAD
-                // Only apply the promo if the transaction date falls within the event dates
                 if ($tDate->between($eventStart, $eventEnd)) {
                     $event = $e;
                 } else {
-                    // SECURE FIX: Completely strip the promo data if they backdate!
-=======
-                if ($tDate->between($eventStart, $eventEnd)) {
-                    $event = $e;
-                } else {
->>>>>>> efed82f183c2c1a8c7535be20c3a5c5fd5e4abb3
                     $validated['event_id'] = null;
                     $validated['is_free'] = false;
                 }
@@ -795,17 +737,9 @@ class MtopApplicationController extends Controller
                 $eventStart = Carbon::parse($e->start_date)->startOfDay();
                 $eventEnd = Carbon::parse($e->end_date)->endOfDay();
 
-<<<<<<< HEAD
-                // Only apply the promo if the transaction date falls within the event dates
                 if ($tDate->between($eventStart, $eventEnd)) {
                     $event = $e;
                 } else {
-                    // SECURE FIX: Completely strip the promo data if they backdate!
-=======
-                if ($tDate->between($eventStart, $eventEnd)) {
-                    $event = $e;
-                } else {
->>>>>>> efed82f183c2c1a8c7535be20c3a5c5fd5e4abb3
                     $validated['event_id'] = null;
                     $validated['is_free'] = false;
                 }

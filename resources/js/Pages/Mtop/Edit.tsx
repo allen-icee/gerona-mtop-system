@@ -49,10 +49,6 @@ interface MtopApplication {
     is_manual_validity?: boolean | number;
     valid_until?: string | null;
 
-<<<<<<< HEAD
-    // ADDED MISSING PAID BY FIELDS HERE
-=======
->>>>>>> efed82f183c2c1a8c7535be20c3a5c5fd5e4abb3
     show_paid_by?: boolean | number;
     paid_by_last_name?: string | null;
     paid_by_first_name?: string | null;
@@ -128,10 +124,6 @@ export default function Edit({
             ? application.valid_until.split(" ")[0]
             : "",
 
-<<<<<<< HEAD
-        // ADDED MISSING STATE INITIALIZATION HERE
-=======
->>>>>>> efed82f183c2c1a8c7535be20c3a5c5fd5e4abb3
         show_paid_by: !!application.show_paid_by,
         paid_by_last_name: application.paid_by_last_name || "",
         paid_by_first_name: application.paid_by_first_name || "",
@@ -238,19 +230,10 @@ export default function Edit({
                 if (tDate < eStart || tDate > eEnd) {
                     const confirmProceed = window.confirm(
                         "⚠️ WARNING: DATE OUTSIDE PROMO PERIOD\n\n" +
-<<<<<<< HEAD
-                            "The transaction date you selected is outside the active dates of the Promo/Event.\n\n" +
-                            "If you click OK, the system will save this record, but the FREE PROMO will be removed and it will be processed as a standard 3-Year validity permit.\n\n" +
-                            "Do you want to proceed?",
-                    );
-
-                    // If they click "Cancel", we stop the function so it doesn't save!
-=======
                         "The transaction date you selected is outside the active dates of the Promo/Event.\n\n" +
                         "If you click OK, the system will save this record, but the FREE PROMO will be removed and it will be processed as a standard 3-Year validity permit.\n\n" +
                         "Do you want to proceed?",
                     );
->>>>>>> efed82f183c2c1a8c7535be20c3a5c5fd5e4abb3
                     if (!confirmProceed) return;
                 }
             }
