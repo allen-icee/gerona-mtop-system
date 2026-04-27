@@ -1,5 +1,5 @@
 <?php
-
+//GeronaMTOP\app\Http\Controllers\MtopApplicationController.php
 namespace App\Http\Controllers;
 
 use App\Models\MtopApplication;
@@ -104,7 +104,8 @@ class MtopApplicationController extends Controller
             'officials' => $officials,
             'activeEvents' => $activeEvents,
             'holidays' => $holidays,
-            'occupied_body_numbers' => $this->getOccupiedBodyNumbers()
+            // FORCE IT TO BE AN OBJECT HERE:
+            'occupied_body_numbers' => (object) $this->getOccupiedBodyNumbers()
         ]);
     }
 
@@ -247,7 +248,8 @@ class MtopApplicationController extends Controller
             'activeEvents' => $activeEvents,
             'holidays' => $holidays,
             'suggested_body_number' => $suggested_body_number,
-            'occupied_body_numbers' => $this->getOccupiedBodyNumbers()
+            // FORCE IT TO BE AN OBJECT HERE:
+            'occupied_body_numbers' => (object) $this->getOccupiedBodyNumbers()
         ]);
     }
 
@@ -517,6 +519,9 @@ class MtopApplicationController extends Controller
                 $validUntilDate = date('Y-m-d', strtotime($row->valid_until));
             }
 
+            // Automatically clean out "T" placeholders during export
+            $exportBodyNum = preg_match('/^T\d{2}-\d+$/', (string)$row->body_number) ? '-' : $formatValue($row->body_number);
+
             return [
                 'Control No' => $formatValue($row->mt_number),
                 'Transaction Date' => $formatValue($row->transaction_date),
@@ -525,10 +530,11 @@ class MtopApplicationController extends Controller
                 'First Name' => $formatValue($row->first_name),
                 'Middle Name' => $formatValue($row->middle_name),
                 'Suffix' => $formatValue($row->suffix),
-                'Paid By' => $formatValue($paidBy),
+                'Paid By Details' => $formatValue($paidBy),
                 'Driver Name' => $formatValue($driverName),
                 'Address' => $formatValue($row->address),
-                'Body No' => $formatValue($row->body_number),
+                'Contact #' => $formatValue($row->contact_number),
+                'Body Number' => $exportBodyNum,
                 'Plate No' => $formatValue($row->plate_no),
                 'Make/Type' => $formatValue($row->make_type),
                 'Engine No' => $formatValue($row->engine_motor_no),
@@ -648,7 +654,8 @@ class MtopApplicationController extends Controller
             'officials' => $officials,
             'activeEvents' => $activeEvents,
             'holidays' => $holidays,
-            'occupied_body_numbers' => $this->getOccupiedBodyNumbers(),
+            // FORCE IT TO BE AN OBJECT HERE:
+            'occupied_body_numbers' => (object) $this->getOccupiedBodyNumbers(),
             'suggested_body_number' => $suggested_body_number
         ]);
     }
@@ -780,7 +787,8 @@ class MtopApplicationController extends Controller
             'officials' => $officials,
             'activeEvents' => $activeEvents,
             'holidays' => $holidays,
-            'occupied_body_numbers' => $this->getOccupiedBodyNumbers(),
+            // FORCE IT TO BE AN OBJECT HERE:
+            'occupied_body_numbers' => (object) $this->getOccupiedBodyNumbers(),
             'suggested_body_number' => $suggested_body_number
         ]);
     }
@@ -1030,7 +1038,7 @@ class MtopApplicationController extends Controller
 
                 $raw_body = $getVal('body number');
                 if (empty($raw_body) || strtoupper($raw_body) === 'N/A' || strtoupper($raw_body) === 'NONE') {
-                    $raw_body = "T{$short_year}-{$seq}";
+                    $raw_body = null; // <--- This forces it to stay blank/empty
                 }
 
                 $row_status = strtolower($getVal('status') ?: 'active');
@@ -1192,12 +1200,21 @@ class MtopApplicationController extends Controller
      */
     private function getOccupiedBodyNumbers(): array
     {
-        return DB::table('mtop_franchises')
+        // 1. Fetch the body number AND the names from the database
+        $franchises = DB::table('mtop_franchises')
             ->whereNotIn('status', ['cancelled', 'archived', 'expired'])
             ->whereNotNull('body_number')
-            ->pluck('body_number')
-            ->map(fn($num) => (int) $num)
-            ->toArray();
+            ->get(['body_number', 'first_name', 'last_name']);
+
+        $occupied = [];
+        foreach ($franchises as $f) {
+            // 2. Map the number to the owner's full name so React can read it!
+            // Force the key to be a string to ensure it's treated as a JSON Object, not an Array
+            $num = (int) $f->body_number;
+            $occupied[(string)$num] = trim("{$f->first_name} {$f->last_name}");
+        }
+
+        return $occupied;
     }
 
     /**
@@ -1206,13 +1223,13 @@ class MtopApplicationController extends Controller
      */
     private function generateNextAvailableBodyNumber(): string
     {
+        // 3. We now check against the keys (the numbers) since the values are names
         $occupiedNumbers = $this->getOccupiedBodyNumbers();
+        $occupiedKeys = array_keys($occupiedNumbers);
 
         // Loop up to 9999 (4-digits max)
         for ($number = 1; $number <= 9999; $number++) {
-            if (!in_array($number, $occupiedNumbers)) {
-                // sprintf("%04d") forces the number to be exactly 4 digits
-                // by adding leading zeros (e.g., 1 becomes "0001", 12 becomes "0012")
+            if (!in_array((string)$number, $occupiedKeys) && !in_array($number, $occupiedKeys)) {
                 return sprintf("%04d", $number);
             }
         }
