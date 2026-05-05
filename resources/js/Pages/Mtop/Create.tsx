@@ -39,7 +39,7 @@ export default function Create({
     officials,
     activeEvents,
     holidays,
-    occupied_body_numbers, // Added prop
+    occupied_body_numbers,
 }: {
     suggested_mt_number: string;
     suggested_body_number: string;
@@ -47,16 +47,13 @@ export default function Create({
     officials: string[];
     activeEvents: any;
     holidays: any[];
-    occupied_body_numbers: number[]; // Added prop type
+    occupied_body_numbers: number[];
 }) {
     const { props } = usePage();
     const [step, setStep] = useState(1);
     const [showMobilePreview, setShowMobilePreview] = useState(false);
-
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [createdRecord, setCreatedRecord] = useState<any>(null);
-
-    // --- SMART PAYOR NAME PARSER ---
     const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
     const rawPayorName = searchParams?.get('payor_name') || '';
 

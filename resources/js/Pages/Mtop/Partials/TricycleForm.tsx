@@ -1,3 +1,4 @@
+//GeronaMTOP\resources\js\Pages\Mtop\Partials\TricycleForm.tsx
 import InputGroup from "@/Components/InputGroup";
 import { Icon } from "@iconify/react";
 import React, { useState, useEffect, useMemo } from "react";
@@ -23,8 +24,6 @@ export default function TricycleForm({
     const [searchQuery, setSearchQuery] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const ITEMS_PER_PAGE = 100;
-
-    // Mouse-tracking Tooltip State
     const [tooltip, setTooltip] = useState({ show: false, num: 0, isTaken: false, owner: "", x: 0, y: 0 });
 
     useEffect(() => {
@@ -342,7 +341,6 @@ export default function TricycleForm({
                                         return (
                                             <div
                                                 key={num}
-                                                // ADDED: cursor-not-allowed is now on the wrapper!
                                                 className={`relative group w-full flex hover:z-[100] ${isTaken ? 'cursor-not-allowed' : ''}`}
                                                 onMouseMove={(e) => {
                                                     setTooltip({
@@ -367,7 +365,6 @@ export default function TricycleForm({
                                                         }
                                                     }}
                                                     disabled={isTaken}
-                                                    // ADDED: pointer-events-none when taken so the mouse ignores the button and hits the wrapper div!
                                                     className={`py-3 px-2 w-full text-base sm:text-lg tracking-widest font-mono font-extrabold rounded-xl border-2 transition-all duration-150 ${isTaken
                                                         ? 'bg-red-50 text-red-500 border-red-200 opacity-80 pointer-events-none'
                                                         : 'bg-white text-green-700 border-green-300 hover:bg-green-50 hover:border-green-500 hover:-translate-y-0.5 shadow-sm cursor-pointer hover:shadow-md'

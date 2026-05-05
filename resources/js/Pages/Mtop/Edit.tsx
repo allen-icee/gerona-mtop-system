@@ -163,7 +163,6 @@ export default function Edit({
 
     const isStepValid = (stepNum: number) => {
         if (stepNum === 1 || stepNum === 2) {
-            // @ts-ignore
             const fields = requiredFields[stepNum];
             const basicCheck = fields.every(
                 (field: string) =>
@@ -195,8 +194,6 @@ export default function Edit({
                     return false;
                 if (!isValidDate(data.cedula_date)) return false;
             }
-
-            // REMOVED OR STRICT VALIDATION HERE
         }
 
         return true;
@@ -213,7 +210,6 @@ export default function Edit({
         if (data.show_cedula && !isValidDate(data.cedula_date))
             return toast.error("Invalid Cedula Date.");
 
-        // UPDATED OR STRICT VALIDATION HERE (Only check if date is actually typed)
         if (data.show_or && data.or_date && !isValidDate(data.or_date))
             return toast.error("Invalid Official Receipt Date.");
 
@@ -279,7 +275,6 @@ export default function Edit({
                 );
         }
         if (step === 3) {
-            // UPDATED DATE VALIDATIONS TO ALLOW EMPTY FIELDS
             if (data.show_cedula && data.cedula_date && !isValidDate(data.cedula_date))
                 return toast.error("Invalid Cedula Date! Check calendar.");
             if (data.show_or && data.or_date && !isValidDate(data.or_date))

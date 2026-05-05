@@ -296,7 +296,6 @@ export default function Index({ signatories = [], feeSettings, orRecords = [], n
             if (year) matchesYear = recordDate.getFullYear().toString() === year;
         }
 
-        // Apply starting letter filter
         if (sortAlphabetical && sortAlphabetical !== 'all') {
             matchesLetter = (record.payor_last_name || "").toUpperCase().startsWith(sortAlphabetical);
         }
@@ -304,7 +303,6 @@ export default function Index({ signatories = [], feeSettings, orRecords = [], n
         return matchesSearch && matchesMonth && matchesYear && matchesLetter;
     });
 
-    // Apply Alphabetical Sorting (A to Z)
     if (sortAlphabetical) {
         filteredRecords.sort((a, b) => {
             const nameA = `${a.payor_last_name || ''} ${a.payor_first_name || ''}`.toLowerCase();

@@ -1,3 +1,4 @@
+//GeronaMTOP\resources\js\Pages\Mtop\Transfer.tsx
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import PrimaryButton from "@/Components/PrimaryButton";
 import { Head, Link, useForm, usePage } from "@inertiajs/react";
@@ -43,25 +44,18 @@ export default function Transfer({
     const [showMobilePreview, setShowMobilePreview] = useState(false);
 
     const { data, setData, post, processing, errors } = useForm({
-        // Blank because it is being transferred to a new owner
         last_name: "",
         first_name: "",
         middle_name: "",
         suffix: "",
         address: "",
-
-        // Carried over unit details
         mt_number: application.mt_number || "",
         make_type: application.make_type || "",
         engine_motor_no: application.engine_motor_no || "",
         chassis_no: application.chassis_no || "",
         plate_no: application.plate_no || "",
         body_number: application.body_number || "",
-
-        // Current transaction date
         transaction_date: new Date().toISOString().split("T")[0],
-
-        // Safely pull previous docs (if applicable) and format timestamps
         cedula_number: application.cedula_number || "",
         cedula_date: application.cedula_date
             ? application.cedula_date.split(" ")[0]
@@ -74,7 +68,6 @@ export default function Transfer({
         event_id: null,
         is_free: false,
         or_unlocked: false,
-
         show_auth_official: !!application.show_auth_official,
         show_cedula: !!application.show_cedula,
         show_or: !!application.show_or,
@@ -82,8 +75,6 @@ export default function Transfer({
         valid_until: application.valid_until
             ? application.valid_until.split(" ")[0]
             : "",
-
-        // ADDED MISSING PAID BY STATE INITIALIZATION
         show_paid_by: !!application.show_paid_by,
         paid_by_last_name: application.paid_by_last_name || "",
         paid_by_first_name: application.paid_by_first_name || "",
@@ -108,7 +99,6 @@ export default function Transfer({
 
     const isStepValid = (stepNum: number) => {
         if (stepNum === 1 || stepNum === 2) {
-            // @ts-ignore
             const fields = requiredFields[stepNum];
             const basicCheck = fields.every(
                 (field: string) =>
@@ -168,9 +158,6 @@ export default function Transfer({
         if (requiresOr && !isValidDate(data.or_date))
             return toast.error("Invalid Official Receipt Date.");
 
-        // =================================================================
-        // NEW: PRE-SAVE PROMO WARNING MODAL
-        // =================================================================
         if (data.is_free && data.event_id) {
             const currentEvent =
                 activeEvents?.find((ev: any) => ev.id == data.event_id) ||
@@ -194,8 +181,6 @@ export default function Transfer({
                         "If you click OK, the system will save this record, but the FREE PROMO will be removed and it will be processed as a standard 3-Year validity permit.\n\n" +
                         "Do you want to proceed?",
                     );
-
-                    // If they click "Cancel", we stop the function so it doesn't save!
                     if (!confirmProceed) return;
                 }
             }

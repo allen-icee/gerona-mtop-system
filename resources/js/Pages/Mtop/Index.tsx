@@ -171,7 +171,6 @@ export default function Index({
         return applications.data.filter((app) => selectedIds.includes(app.id));
     }, [selectedIds, applications.data]);
 
-    // NEW: Handle Export properly via standard browser navigation
     const handleExport = () => {
         const currentParams = new URLSearchParams(window.location.search);
         const exportUrl = `${route("mtop.export")}?${currentParams.toString()}`;

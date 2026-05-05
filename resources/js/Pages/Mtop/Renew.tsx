@@ -50,30 +50,23 @@ export default function Renew({
         suffix: application.suffix || "",
         address: application.address || "",
         mt_number: application.mt_number || "",
-
-        // Keeps today's date for the new renewal transaction
         transaction_date: new Date().toISOString().split("T")[0],
-
         make_type: application.make_type || "",
         engine_motor_no: application.engine_motor_no || "",
         chassis_no: application.chassis_no || "",
         plate_no: application.plate_no || "",
         body_number: application.body_number || "",
-
-        // Safely pull and format previous docs if carrying them over
         cedula_number: application.cedula_number || "",
         cedula_date: application.cedula_date
             ? application.cedula_date.split(" ")[0]
             : "",
         or_number: application.or_number || "",
         or_date: application.or_date ? application.or_date.split(" ")[0] : "",
-
         punong_bayan: application.punong_bayan || "",
         authorized_official: application.authorized_official || "",
         event_id: null,
         is_free: false,
         or_unlocked: false,
-
         show_auth_official: !!application.show_auth_official,
         show_cedula: !!application.show_cedula,
         show_or: !!application.show_or,
@@ -81,8 +74,6 @@ export default function Renew({
         valid_until: application.valid_until
             ? application.valid_until.split(" ")[0]
             : "",
-
-        // ADDED MISSING PAID BY STATE INITIALIZATION
         show_paid_by: !!application.show_paid_by,
         paid_by_last_name: application.paid_by_last_name || "",
         paid_by_first_name: application.paid_by_first_name || "",
@@ -107,7 +98,6 @@ export default function Renew({
 
     const isStepValid = (stepNum: number) => {
         if (stepNum === 1 || stepNum === 2) {
-            // @ts-ignore
             const fields = requiredFields[stepNum];
             const basicCheck = fields.every(
                 (field: string) =>
@@ -166,9 +156,6 @@ export default function Renew({
         if (requiresOr && !isValidDate(data.or_date))
             return toast.error("Invalid Official Receipt Date.");
 
-        // =================================================================
-        // NEW: PRE-SAVE PROMO WARNING MODAL
-        // =================================================================
         if (data.is_free && data.event_id) {
             const currentEvent =
                 activeEvents?.find((ev: any) => ev.id == data.event_id) ||
@@ -193,7 +180,6 @@ export default function Renew({
                         "Do you want to proceed?",
                     );
 
-                    // If they click "Cancel", we stop the function so it doesn't save!
                     if (!confirmProceed) return;
                 }
             }
