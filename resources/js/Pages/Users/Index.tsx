@@ -248,15 +248,15 @@ export default function Index({ users, auditLogs, filters }: Props) {
         <AuthenticatedLayout>
             <Head title="System Users" />
 
-            <div className="py-6 sm:py-12">
+            <div className="py-4 sm:py-6">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+                    <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-3">
                         <div className="relative w-full sm:w-auto">
-                            <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-gray-500">
-                                <Icon icon="iconamoon:search-bold" width="20" />
+                            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                                <Icon icon="iconamoon:search-bold" width="18" />
                             </div>
                             <TextInput
-                                className="pl-12 w-full sm:w-80 py-3 text-base shadow-sm"
+                                className="pl-10 w-full sm:w-80 py-2 text-sm shadow-sm border-slate-200"
                                 placeholder="Search users..."
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
@@ -264,9 +264,9 @@ export default function Index({ users, auditLogs, filters }: Props) {
                         </div>
                         <button
                             onClick={() => openModal()}
-                            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg flex items-center gap-2 shadow-md w-full sm:w-auto justify-center transition-transform hover:scale-105"
+                            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm py-2 px-4 rounded-md flex items-center gap-2 shadow-sm w-full sm:w-auto justify-center transition-colors"
                         >
-                            <Icon icon="solar:user-plus-bold" width="24" />
+                            <Icon icon="solar:user-plus-bold" width="20" />
                             Add New User
                         </button>
                     </div>
@@ -337,25 +337,25 @@ export default function Index({ users, auditLogs, filters }: Props) {
                         )}
                     </div>
 
-                    <div className="hidden md:block bg-white overflow-hidden shadow-sm sm:rounded-lg border border-gray-100 mb-6">
+                    <div className="hidden md:block bg-slate-50 overflow-hidden shadow-sm rounded-lg border border-slate-200 mb-6">
                         <div className="overflow-x-auto">
-                            <table className="w-full text-sm text-left text-gray-500">
-                                <thead className="text-xs text-gray-700 uppercase bg-gray-50 border-b">
+                            <table className="w-full text-sm text-left text-slate-500 border-collapse [&_th]:border [&_th]:border-slate-200 [&_td]:border [&_td]:border-slate-200">
+                                <thead className="text-[11px] text-slate-100 uppercase bg-slate-700 border-b border-slate-800">
                                     <tr>
-                                        <th className="px-6 py-4">Name</th>
-                                        <th className="px-6 py-4">Username</th>
-                                        <th className="px-6 py-4">Role</th>
-                                        <th className="px-6 py-4 text-center">
+                                        <th className="px-4 py-3 text-center">Name</th>
+                                        <th className="px-4 py-3 text-center">Username</th>
+                                        <th className="px-4 py-3 text-center">Role</th>
+                                        <th className="px-4 py-3 text-center">
                                             Action
                                         </th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody className="divide-y divide-slate-100">
                                     {users.data.length === 0 ? (
                                         <tr>
                                             <td
                                                 colSpan={4}
-                                                className="px-6 py-8 text-center text-gray-400"
+                                                className="px-4 py-6 text-center text-slate-400"
                                             >
                                                 No users found.
                                             </td>
@@ -364,54 +364,40 @@ export default function Index({ users, auditLogs, filters }: Props) {
                                         users.data.map((user) => (
                                             <tr
                                                 key={user.id}
-                                                className="bg-white border-b hover:bg-gray-50 transition-colors"
+                                                className="bg-white even:bg-blue-50 hover:bg-slate-100 transition-colors border-b border-slate-200 last:border-0"
                                             >
-                                                <td className="px-6 py-4 font-bold text-gray-800 text-base">
+                                                <td className="px-4 py-3 font-semibold text-slate-700 text-sm text-center">
                                                     {user.name}
                                                 </td>
-                                                <td className="px-6 py-4">
+                                                <td className="px-4 py-3 text-sm text-slate-600 text-center">
                                                     {user.username}
                                                 </td>
-                                                <td className="px-6 py-4">
+                                                <td className="px-4 py-3 text-center">
                                                     <span
-                                                        className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${user.role === "admin" ? "bg-purple-100 text-purple-700 border-purple-200" : "bg-blue-100 text-blue-700 border-blue-200"}`}
+                                                        className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider border ${user.role === "admin" ? "bg-purple-100/50 text-purple-700 border-purple-200/50" : "bg-blue-100/50 text-blue-700 border-blue-200/50"}`}
                                                     >
                                                         {user.role}
                                                     </span>
                                                 </td>
-                                                <td className="px-6 py-4 text-center">
-                                                    <div className="flex justify-center gap-3">
+                                                <td className="px-4 py-3 text-center">
+                                                    <div className="flex justify-center gap-2">
                                                         <button
-                                                            onClick={() =>
-                                                                openModal(user)
-                                                            }
-                                                            className="bg-blue-50 text-blue-600 px-4 py-2 rounded-md font-bold text-sm flex items-center justify-center gap-2 hover:bg-blue-100 transition-colors"
+                                                            onClick={() => openModal(user)}
+                                                            className="bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 border border-blue-200 px-3 py-1.5 rounded text-xs font-semibold flex items-center justify-center gap-1 transition-colors shadow-sm"
                                                         >
-                                                            <Icon
-                                                                icon="solar:pen-new-square-bold"
-                                                                width="18"
-                                                            />
+                                                            <Icon icon="solar:pen-new-square-bold" width="14" />
                                                             Edit
                                                         </button>
                                                         <button
-                                                            onClick={() =>
-                                                                confirmDelete(
-                                                                    user.id,
-                                                                )
-                                                            }
-                                                            disabled={
+                                                            onClick={() => confirmDelete(user.id)}
+                                                            disabled={user.id === 1}
+                                                            className={`px-3 py-1.5 rounded text-xs font-semibold flex items-center justify-center gap-1 transition-colors shadow-sm border ${
                                                                 user.id === 1
-                                                            }
-                                                            className={`bg-red-50 text-red-600 px-4 py-2 rounded-md font-bold text-sm flex items-center justify-center gap-2 hover:bg-red-100 transition-colors ${
-                                                                user.id === 1
-                                                                    ? "opacity-50 cursor-not-allowed"
-                                                                    : ""
+                                                                    ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed"
+                                                                    : "bg-red-50 text-red-600 border-red-200 hover:bg-red-100 hover:text-red-700"
                                                             }`}
                                                         >
-                                                            <Icon
-                                                                icon="solar:trash-bin-trash-bold"
-                                                                width="18"
-                                                            />
+                                                            <Icon icon="solar:trash-bin-trash-bold" width="14" />
                                                             Delete
                                                         </button>
                                                     </div>
@@ -425,20 +411,20 @@ export default function Index({ users, auditLogs, filters }: Props) {
                     </div>
                     <Pagination links={users.links} />
 
-                    <div className="mt-16">
-                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                    <div className="mt-8 border-t border-slate-200 pt-6">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
                             <div className="flex items-center gap-3">
-                                <div className="p-3 bg-indigo-50 text-indigo-600 rounded-lg shadow-sm hidden sm:block">
+                                <div className="p-2 bg-indigo-100/50 border border-indigo-200/50 text-indigo-600 rounded-lg hidden sm:block">
                                     <Icon
                                         icon="solar:history-bold-duotone"
-                                        width="28"
+                                        width="20"
                                     />
                                 </div>
                                 <div>
-                                    <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight">
+                                    <h2 className="text-lg font-bold text-slate-700 tracking-tight">
                                         System Audit Logs
                                     </h2>
-                                    <p className="text-sm text-gray-500 font-medium mt-0.5">
+                                    <p className="text-xs text-slate-500 font-medium mt-0.5">
                                         Track user actions and system changes
                                     </p>
                                 </div>
@@ -447,11 +433,11 @@ export default function Index({ users, auditLogs, filters }: Props) {
                             <div className="flex items-center gap-2 w-full sm:w-auto">
                                 <a
                                     href={route("audit-logs.export")}
-                                    className="flex-1 sm:flex-none justify-center bg-green-600 hover:bg-green-700 text-white border border-emerald-200 hover:border-emerald-600 font-bold py-2.5 px-5 rounded-lg flex items-center gap-2 shadow-sm transition-all whitespace-nowrap"
+                                    className="flex-1 sm:flex-none justify-center bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded-md flex items-center gap-2 shadow-sm transition-colors text-sm whitespace-nowrap"
                                 >
                                     <Icon
                                         icon="solar:file-download-bold"
-                                        width="20"
+                                        width="18"
                                     />
                                     <span className="hidden sm:inline">
                                         Export CSV
@@ -459,11 +445,11 @@ export default function Index({ users, auditLogs, filters }: Props) {
                                 </a>
                                 <button
                                     onClick={() => setIsFlushModalOpen(true)}
-                                    className="flex-1 sm:flex-none justify-center bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 px-5 rounded-lg flex items-center gap-2 shadow-sm transition-all whitespace-nowrap"
+                                    className="flex-1 sm:flex-none justify-center bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-md flex items-center gap-2 shadow-sm transition-colors text-sm whitespace-nowrap"
                                 >
                                     <Icon
                                         icon="solar:trash-bin-trash-bold"
-                                        width="20"
+                                        width="18"
                                     />
                                     <span className="hidden sm:inline">
                                         Clear Logs
@@ -472,29 +458,29 @@ export default function Index({ users, auditLogs, filters }: Props) {
                             </div>
                         </div>
 
-                        <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg border border-gray-100">
+                        <div className="bg-slate-50 overflow-hidden shadow-sm rounded-lg border border-slate-200">
                             <div className="overflow-x-auto">
-                                <table className="w-full text-sm text-left text-gray-500 whitespace-nowrap">
-                                    <thead className="text-xs text-gray-700 uppercase bg-gray-50 border-b">
+                                <table className="w-full text-sm text-left text-slate-500 whitespace-nowrap border-collapse [&_th]:border [&_th]:border-slate-200 [&_td]:border [&_td]:border-slate-200">
+                                    <thead className="text-[11px] text-slate-100 uppercase bg-slate-700 border-b border-slate-800">
                                         <tr>
-                                            <th className="px-6 py-4">
+                                            <th className="px-4 py-3 text-center">
                                                 Timestamp
                                             </th>
-                                            <th className="px-6 py-4">User</th>
-                                            <th className="px-6 py-4">
+                                            <th className="px-4 py-3 text-center">User</th>
+                                            <th className="px-4 py-3 text-center">
                                                 Action
                                             </th>
-                                            <th className="px-6 py-4 w-1/2">
+                                            <th className="px-4 py-3 w-1/2 text-center">
                                                 Details
                                             </th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody className="divide-y divide-slate-100">
                                         {auditLogs.data.length === 0 ? (
                                             <tr>
                                                 <td
                                                     colSpan={4}
-                                                    className="px-6 py-8 text-center text-gray-400"
+                                                    className="px-4 py-6 text-center text-slate-400"
                                                 >
                                                     No audit logs found.
                                                 </td>
@@ -503,14 +489,14 @@ export default function Index({ users, auditLogs, filters }: Props) {
                                             auditLogs.data.map((log) => (
                                                 <tr
                                                     key={log.id}
-                                                    className="bg-white border-b hover:bg-gray-50 transition-colors"
+                                                    className="bg-white even:bg-blue-50 hover:bg-slate-100 transition-colors"
                                                 >
-                                                    <td className="px-6 py-4 font-mono text-xs text-gray-500">
+                                                    <td className="px-4 py-3 font-mono text-[11px] text-slate-500 text-center">
                                                         {formatDateTime(
                                                             log.created_at,
                                                         )}
                                                     </td>
-                                                    <td className="px-6 py-4 font-bold text-gray-800">
+                                                    <td className="px-4 py-3 font-semibold text-slate-700 text-sm text-center">
                                                         {log.user ? (
                                                             log.user.name
                                                         ) : (
@@ -519,12 +505,12 @@ export default function Index({ users, auditLogs, filters }: Props) {
                                                             </span>
                                                         )}
                                                     </td>
-                                                    <td className="px-6 py-4">
-                                                        <span className="bg-gray-100 text-gray-700 border border-gray-200 px-2 py-1 rounded text-xs font-bold uppercase tracking-wider">
+                                                    <td className="px-4 py-3 text-center">
+                                                        <span className="bg-slate-200/50 text-slate-700 border border-slate-300/50 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
                                                             {log.action}
                                                         </span>
                                                     </td>
-                                                    <td className="px-6 py-4 text-gray-700">
+                                                    <td className="px-4 py-3 text-slate-600 text-xs">
                                                         {renderPayload(
                                                             log.payload,
                                                         )}
@@ -544,229 +530,194 @@ export default function Index({ users, auditLogs, filters }: Props) {
             </div>
 
             <Modal show={isModalOpen} onClose={closeModal} maxWidth="xl">
-                <div className="flex justify-between items-center bg-gray-800 px-6 py-4 rounded-t-lg">
-                    <h3 className="text-white font-bold text-lg flex items-center gap-2">
-                        <Icon
-                            icon={
-                                editingUser
-                                    ? "solar:pen-new-square-bold"
-                                    : "solar:user-plus-bold"
-                            }
-                            width="24"
-                        />
-                        {editingUser ? "Edit User" : "Add New User"}
-                    </h3>
-                    <button
-                        onClick={closeModal}
-                        className="text-gray-400 hover:text-white transition-colors"
-                    >
-                        <Icon icon="solar:close-circle-bold" width="28" />
-                    </button>
-                </div>
+                <div className="bg-slate-50 rounded-none sm:rounded-lg h-full flex flex-col">
+                    <div className="flex justify-between items-center bg-slate-700 px-5 py-3 rounded-none sm:rounded-t-lg border-b border-slate-800">
+                        <h3 className="text-white font-bold text-base flex items-center gap-2">
+                            <Icon
+                                icon={
+                                    editingUser
+                                        ? "solar:pen-new-square-bold"
+                                        : "solar:user-plus-bold"
+                                }
+                                width="20"
+                                className="text-blue-400"
+                            />
+                            {editingUser ? "Edit User" : "Add New User"}
+                        </h3>
+                        <button
+                            onClick={closeModal}
+                            className="text-slate-400 hover:text-white transition-colors"
+                        >
+                            <Icon icon="solar:close-circle-bold" width="22" />
+                        </button>
+                    </div>
 
-                <div className="p-6 bg-gray-50">
-                    <form id="user-form" onSubmit={submit}>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <InputGroup
-                                id="name"
-                                label="Full Name"
-                                value={data.name}
-                                onChange={(e) =>
-                                    setData("name", e.target.value)
-                                }
-                                error={errors.name || nameError}
-                                icon="solar:user-id-bold"
-                                placeholder="e.g. Juan Cruz"
-                                required
-                            />
-                            <InputGroup
-                                id="username"
-                                label="Username"
-                                value={data.username}
-                                onChange={(e) =>
-                                    setData("username", e.target.value)
-                                }
-                                error={errors.username || usernameError}
-                                icon="solar:user-bold"
-                                placeholder="e.g. juanc"
-                                required
-                            />
-                        </div>
+                    <div className="p-5">
+                        <form id="user-form" onSubmit={submit}>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1.5">
+                                        Full Name <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        id="name"
+                                        type="text"
+                                        value={data.name}
+                                        onChange={(e) => setData("name", e.target.value)}
+                                        className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-colors placeholder:text-slate-400"
+                                        placeholder="e.g. Juan Cruz"
+                                        required
+                                    />
+                                    {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
+                                    {nameError && !errors.name && <p className="text-red-500 text-xs mt-1">{nameError}</p>}
+                                </div>
+                                <div>
+                                    <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1.5">
+                                        Username <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        id="username"
+                                        type="text"
+                                        value={data.username}
+                                        onChange={(e) => setData("username", e.target.value)}
+                                        className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-colors placeholder:text-slate-400"
+                                        placeholder="e.g. juanc"
+                                        required
+                                    />
+                                    {errors.username && <p className="text-red-500 text-xs mt-1">{errors.username}</p>}
+                                    {usernameError && !errors.username && <p className="text-red-500 text-xs mt-1">{usernameError}</p>}
+                                </div>
+                            </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                            <InputGroup
-                                id="email"
-                                label="Email (Optional)"
-                                type="email"
-                                value={data.email}
-                                onChange={(e) =>
-                                    setData("email", e.target.value)
-                                }
-                                error={errors.email || emailError}
-                                icon="solar:letter-bold"
-                                placeholder="email@example.com"
-                            />
-                            <div>
-                                <InputLabel
-                                    htmlFor="role"
-                                    value="System Role"
-                                    className="mb-1 font-semibold text-gray-700"
-                                />
-                                <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-gray-400 z-10">
-                                        <Icon
-                                            icon="solar:shield-user-bold"
-                                            width="20"
-                                        />
-                                    </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+                                <div>
+                                    <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1.5">
+                                        Email (Optional)
+                                    </label>
+                                    <input
+                                        id="email"
+                                        type="email"
+                                        value={data.email}
+                                        onChange={(e) => setData("email", e.target.value)}
+                                        className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-colors placeholder:text-slate-400"
+                                        placeholder="email@example.com"
+                                    />
+                                    {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+                                    {emailError && !errors.email && <p className="text-red-500 text-xs mt-1">{emailError}</p>}
+                                </div>
+                                <div>
+                                    <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1.5">
+                                        System Role <span className="text-red-500">*</span>
+                                    </label>
                                     <select
                                         id="role"
                                         value={data.role}
-                                        onChange={(e) =>
-                                            setData("role", e.target.value)
-                                        }
-                                        className="block w-full pl-11 py-2.5 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg shadow-sm text-sm bg-gray-50 focus:bg-white transition-colors"
+                                        onChange={(e) => setData("role", e.target.value)}
+                                        className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-colors"
                                     >
-                                        <option value="staff">
-                                            Staff (Limited Access)
-                                        </option>
-                                        <option value="admin">
-                                            Administrator (Full Access)
-                                        </option>
+                                        <option value="staff">Staff (Limited Access)</option>
+                                        <option value="admin">Administrator (Full Access)</option>
                                     </select>
+                                    {errors.role && <p className="text-red-500 text-xs mt-1">{errors.role}</p>}
                                 </div>
-                                <InputError
-                                    message={errors.role}
-                                    className="mt-1.5"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="border-t border-gray-200 pt-4 mt-2">
-                            <div className="flex items-center justify-between mb-4">
-                                <h4 className="text-xs font-bold text-gray-500 uppercase flex items-center gap-1">
-                                    <Icon
-                                        icon="solar:lock-password-bold"
-                                        width="16"
-                                    />
-                                    {editingUser
-                                        ? "Change Password"
-                                        : "Set Password"}
-                                </h4>
-                                {editingUser && (
-                                    <span className="text-[10px] bg-gray-200 text-gray-500 font-bold px-2 py-1 rounded uppercase tracking-widest">
-                                        Optional
-                                    </span>
-                                )}
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="flex flex-col">
-                                    <InputGroup
-                                        id="password"
-                                        label="New Password"
-                                        type="password"
-                                        value={data.password}
-                                        onChange={(e) =>
-                                            setData("password", e.target.value)
-                                        }
-                                        error={errors.password}
-                                        icon="solar:key-minimalistic-bold"
-                                        showPasswordToggle={true}
-                                        required={!editingUser}
-                                    />
-                                    {data.password.length > 0 && (
-                                        <div className="mt-3 p-3 bg-white rounded-lg border border-gray-200 shadow-sm text-xs">
-                                            <p className="font-bold text-gray-500 mb-2">
-                                                Password must contain:
-                                            </p>
-                                            <ul className="space-y-1">
-                                                <RequirementItem
-                                                    met={requirements.length}
-                                                    label="At least 8 characters"
-                                                />
-                                                <RequirementItem
-                                                    met={requirements.uppercase}
-                                                    label="One uppercase letter (A-Z)"
-                                                />
-                                                <RequirementItem
-                                                    met={requirements.number}
-                                                    label="One number (0-9)"
-                                                />
-                                                <RequirementItem
-                                                    met={requirements.symbol}
-                                                    label="One symbol (!@#$)"
-                                                />
-                                            </ul>
-                                        </div>
+                            <div className="border-t border-slate-200 pt-4">
+                                <div className="flex items-center justify-between mb-3">
+                                    <h4 className="text-[11px] font-bold text-slate-500 uppercase flex items-center gap-1 tracking-wide">
+                                        <Icon icon="solar:lock-password-bold" width="14" />
+                                        {editingUser ? "Change Password" : "Set Password"}
+                                    </h4>
+                                    {editingUser && (
+                                        <span className="text-[9px] bg-slate-200 text-slate-500 font-bold px-1.5 py-0.5 rounded uppercase tracking-widest">
+                                            Optional
+                                        </span>
                                     )}
                                 </div>
 
-                                <div className="flex flex-col">
-                                    <InputGroup
-                                        id="password_confirmation"
-                                        label="Confirm Password"
-                                        type="password"
-                                        value={data.password_confirmation}
-                                        onChange={(e) =>
-                                            setData(
-                                                "password_confirmation",
-                                                e.target.value,
-                                            )
-                                        }
-                                        error={errors.password_confirmation}
-                                        icon="solar:shield-check-bold"
-                                        showPasswordToggle={true}
-                                        required={!editingUser}
-                                    />
-                                    {data.password_confirmation.length > 0 && (
-                                        <div
-                                            className={`mt-3 text-xs font-bold flex items-center gap-1.5 ${passwordsMatch ? "text-green-600" : "text-red-500"}`}
-                                        >
-                                            <Icon
-                                                icon={
-                                                    passwordsMatch
-                                                        ? "solar:check-circle-bold"
-                                                        : "solar:close-circle-bold"
-                                                }
-                                                width="16"
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="flex flex-col">
+                                        <div>
+                                            <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1.5">
+                                                New Password {(!editingUser) && <span className="text-red-500">*</span>}
+                                            </label>
+                                            <input
+                                                id="password"
+                                                type="password"
+                                                value={data.password}
+                                                onChange={(e) => setData("password", e.target.value)}
+                                                className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-colors"
+                                                required={!editingUser}
+                                                placeholder="••••••••"
                                             />
-                                            {passwordsMatch
-                                                ? "Passwords match!"
-                                                : "Passwords do not match."}
+                                            {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
                                         </div>
-                                    )}
+                                        {data.password.length > 0 && (
+                                            <div className="mt-2 p-2.5 bg-white rounded border border-slate-200 shadow-sm text-[11px]">
+                                                <p className="font-bold text-slate-500 mb-1.5">
+                                                    Password must contain:
+                                                </p>
+                                                <ul className="space-y-1">
+                                                    <RequirementItem met={requirements.length} label="At least 8 characters" />
+                                                    <RequirementItem met={requirements.uppercase} label="One uppercase letter (A-Z)" />
+                                                    <RequirementItem met={requirements.number} label="One number (0-9)" />
+                                                    <RequirementItem met={requirements.symbol} label="One symbol (!@#$)" />
+                                                </ul>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="flex flex-col">
+                                        <div>
+                                            <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1.5">
+                                                Confirm Password {(!editingUser) && <span className="text-red-500">*</span>}
+                                            </label>
+                                            <input
+                                                id="password_confirmation"
+                                                type="password"
+                                                value={data.password_confirmation}
+                                                onChange={(e) => setData("password_confirmation", e.target.value)}
+                                                className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-colors"
+                                                required={!editingUser}
+                                                placeholder="••••••••"
+                                            />
+                                            {errors.password_confirmation && <p className="text-red-500 text-xs mt-1">{errors.password_confirmation}</p>}
+                                        </div>
+                                        {data.password_confirmation.length > 0 && (
+                                            <div className={`mt-2 text-[11px] font-bold flex items-center gap-1.5 ${passwordsMatch ? "text-green-600" : "text-red-500"}`}>
+                                                <Icon
+                                                    icon={passwordsMatch ? "solar:check-circle-bold" : "solar:close-circle-bold"}
+                                                    width="14"
+                                                />
+                                                {passwordsMatch ? "Passwords match!" : "Passwords do not match."}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </form>
-                </div>
 
-                <div className="bg-white border-t px-6 py-4 flex justify-end gap-3 rounded-b-lg">
-                    <SecondaryButton
-                        onClick={closeModal}
-                        className="justify-center flex-1 sm:flex-none"
-                    >
-                        Cancel
-                    </SecondaryButton>
-                    <PrimaryButton
-                        className={`justify-center flex-1 sm:flex-none shadow-md transition-all ${!isFormValid || processing ? "opacity-50 cursor-not-allowed bg-blue-400" : "bg-blue-600 hover:bg-blue-700"}`}
-                        disabled={!isFormValid || processing}
-                        onClick={() => {
-                            (
-                                document.getElementById(
-                                    "user-form",
-                                ) as HTMLFormElement
-                            )?.requestSubmit();
-                        }}
-                    >
-                        <Icon
-                            icon="solar:diskette-bold"
-                            className="mr-2"
-                            width="20"
-                        />
-                        {editingUser ? "Save Changes" : "Create User"}
-                    </PrimaryButton>
+                            <div className="flex justify-end gap-2 pt-5 border-t border-slate-200 mt-5">
+                                <button
+                                    type="button"
+                                    onClick={closeModal}
+                                    className="px-4 py-2 bg-slate-200 text-slate-700 rounded text-sm font-bold hover:bg-slate-300 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    disabled={!isFormValid || processing}
+                                    onClick={() => {
+                                        (document.getElementById("user-form") as HTMLFormElement)?.requestSubmit();
+                                    }}
+                                    className="px-4 py-2 bg-blue-600 text-white rounded text-sm font-bold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                                >
+                                    <Icon icon="solar:diskette-bold" width="16" />
+                                    {editingUser ? "Save Changes" : "Create User"}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </Modal>
 

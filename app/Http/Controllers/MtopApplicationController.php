@@ -58,6 +58,30 @@ class MtopApplicationController extends Controller
         ]);
     }
 
+    private function handleBodyNumberReassignment($body_number, $force_reassign, $ignore_franchise_id = null)
+    {
+        if (empty($body_number)) return;
+
+        $query = \App\Models\MtopFranchise::where('body_number', $body_number)
+            ->where('status', 'active');
+            
+        if ($ignore_franchise_id) {
+            $query->where('id', '!=', $ignore_franchise_id);
+        }
+
+        $existingActive = $query->first();
+
+        if ($existingActive) {
+            if (!$force_reassign) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'body_number' => 'REASSIGN_CONFIRMATION_REQUIRED'
+                ]);
+            } else {
+                $existingActive->update(['status' => 'dropped']);
+            }
+        }
+    }
+
     public function create(): Response
     {
         $year = now()->year;
@@ -139,13 +163,13 @@ class MtopApplicationController extends Controller
                 $final_mt_number = $validated['mt_number'];
                 $year = now()->year;
                 $final_body_number = $validated['body_number'] ?? null;
-                $isBodyNumberTaken = MtopFranchise::where('body_number', $final_body_number)
-                    ->whereNotIn('status', ['cancelled', 'archived', 'expired'])
-                    ->exists();
-
-                if (empty($final_body_number) || $isBodyNumberTaken) {
+                // Client requested to allow overriding body numbers instead of restricting it.
+                // We will still auto-generate one if left entirely blank.
+                if (empty($final_body_number)) {
                     $final_body_number = $this->generateNextAvailableBodyNumber();
                 }
+
+                $this->handleBodyNumberReassignment($final_body_number, filter_var($validated['force_reassign'] ?? false, FILTER_VALIDATE_BOOLEAN));
 
                 MtopFranchise::where('mt_number', 'like', "$year-%")->lockForUpdate()->pluck('id');
 
@@ -241,7 +265,7 @@ class MtopApplicationController extends Controller
             'activeEvents' => $activeEvents,
             'holidays' => $holidays,
             'suggested_body_number' => $suggested_body_number,
-            'occupied_body_numbers' => (object) $this->getOccupiedBodyNumbers()
+            'occupied_body_numbers' => (object) $this->getOccupiedBodyNumbers($application->franchise_id)
         ]);
     }
 
@@ -326,6 +350,7 @@ class MtopApplicationController extends Controller
                 if ($application->franchise_id) {
                     $franchise = MtopFranchise::find($application->franchise_id);
                     if ($franchise) {
+                        $this->handleBodyNumberReassignment($validated['body_number'] ?? null, filter_var($validated['force_reassign'] ?? false, FILTER_VALIDATE_BOOLEAN), $franchise->id);
                         $franchise->update([
                             'mt_number' => $final_mt_number,
                             'body_number' => $validated['body_number'] ?? $franchise->body_number,
@@ -626,7 +651,7 @@ class MtopApplicationController extends Controller
             'officials' => $officials,
             'activeEvents' => $activeEvents,
             'holidays' => $holidays,
-            'occupied_body_numbers' => (object) $this->getOccupiedBodyNumbers(),
+            'occupied_body_numbers' => (object) $this->getOccupiedBodyNumbers($application->franchise_id),
             'suggested_body_number' => $suggested_body_number
         ]);
     }
@@ -679,6 +704,7 @@ class MtopApplicationController extends Controller
 
                 if ($oldApp->franchise_id) {
                     $franchise = MtopFranchise::where('id', $oldApp->franchise_id)->first();
+                    $this->handleBodyNumberReassignment($validated['body_number'] ?? null, filter_var($validated['force_reassign'] ?? false, FILTER_VALIDATE_BOOLEAN), $franchise->id);
                     $franchise->update([
                         'mt_number' => $final_mt_number,
                         'body_number' => $validated['body_number'] ?? null,
@@ -758,7 +784,7 @@ class MtopApplicationController extends Controller
             'officials' => $officials,
             'activeEvents' => $activeEvents,
             'holidays' => $holidays,
-            'occupied_body_numbers' => (object) $this->getOccupiedBodyNumbers(),
+            'occupied_body_numbers' => (object) $this->getOccupiedBodyNumbers($application->franchise_id),
             'suggested_body_number' => $suggested_body_number
         ]);
     }
@@ -811,6 +837,7 @@ class MtopApplicationController extends Controller
 
                 if ($oldApp->franchise_id) {
                     $franchise = MtopFranchise::where('id', $oldApp->franchise_id)->first();
+                    $this->handleBodyNumberReassignment($validated['body_number'] ?? null, filter_var($validated['force_reassign'] ?? false, FILTER_VALIDATE_BOOLEAN), $franchise->id);
                     $franchise->update([
                         'mt_number' => $final_mt_number,
                         'body_number' => $validated['body_number'] ?? null,
@@ -1146,12 +1173,17 @@ class MtopApplicationController extends Controller
         ]);
     }
 
-    private function getOccupiedBodyNumbers(): array
+    private function getOccupiedBodyNumbers($excludeFranchiseId = null): array
     {
-        $franchises = DB::table('mtop_franchises')
+        $query = DB::table('mtop_franchises')
             ->whereNotIn('status', ['cancelled', 'archived', 'expired'])
-            ->whereNotNull('body_number')
-            ->get(['body_number', 'first_name', 'last_name']);
+            ->whereNotNull('body_number');
+
+        if ($excludeFranchiseId) {
+            $query->where('id', '!=', $excludeFranchiseId);
+        }
+
+        $franchises = $query->get(['body_number', 'first_name', 'last_name']);
 
         $occupied = [];
         foreach ($franchises as $f) {
@@ -1174,5 +1206,25 @@ class MtopApplicationController extends Controller
         }
 
         throw new \Exception("Maximum 4-digit capacity reached. All 9999 body numbers are occupied.");
+    }
+
+    public function clear(): RedirectResponse
+    {
+        DB::beginTransaction();
+        try {
+            MtopApplication::query()->delete();
+            MtopFranchise::query()->delete();
+            
+            // Delete all associated files in storage
+            Storage::disk('public')->deleteDirectory('signatures');
+            Storage::disk('public')->deleteDirectory('pictures');
+            Storage::disk('public')->deleteDirectory('generated_ids');
+
+            DB::commit();
+            return redirect()->route('mtop.index')->with('success', 'All MTOP records have been cleared successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->route('mtop.index')->with('error', 'Failed to clear records: ' . $e->getMessage());
+        }
     }
 }

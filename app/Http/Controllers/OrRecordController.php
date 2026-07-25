@@ -268,4 +268,10 @@ class OrRecordController extends Controller
 
         return back()->with('success', "Import completed: {$imported} added, {$skipped} skipped (duplicates).");
     }
+
+    public function clear(\Illuminate\Http\RedirectResponse $redirectResponse = null)
+    {
+        OrRecord::query()->delete();
+        return back()->with('success', 'All OR records have been cleared successfully.');
+    }
 }

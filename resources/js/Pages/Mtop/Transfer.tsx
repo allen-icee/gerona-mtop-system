@@ -17,6 +17,9 @@ import PermitPreview, {
     updateClientMonitor,
     formatExpiry,
 } from "./Partials/PermitPreview";
+import DiscardModal from "@/Components/DiscardModal";
+import ReassignConfirmationModal from "@/Components/ReassignConfirmationModal";
+import useDirtyNavigation from "@/Hooks/useDirtyNavigation";
 
 const isValidDate = (dateString: string): boolean => {
     if (!dateString) return false;
@@ -42,8 +45,9 @@ export default function Transfer({
 }: any) {
     const [step, setStep] = useState(1);
     const [showMobilePreview, setShowMobilePreview] = useState(false);
+    const [showReassignModal, setShowReassignModal] = useState(false);
 
-    const { data, setData, post, processing, errors } = useForm({
+    const { data, setData, post, processing, errors, isDirty, reset, transform } = useForm({
         last_name: "",
         first_name: "",
         middle_name: "",
@@ -81,6 +85,8 @@ export default function Transfer({
         paid_by_middle_name: application.paid_by_middle_name || "",
         paid_by_suffix: application.paid_by_suffix || "",
     });
+
+    const { showDiscardModal, confirmDiscard, cancelDiscard } = useDirtyNavigation(isDirty);
 
     useEffect(() => {
         updateClientMonitor(data, activeEvents);
@@ -185,6 +191,15 @@ export default function Transfer({
                 }
             }
         }
+        
+        executeSubmit();
+    };
+
+    const executeSubmit = (forceReassign = false) => {
+        transform((currentData) => ({
+            ...currentData,
+            force_reassign: forceReassign,
+        }));
         post(
             route(
                 window.location.pathname.includes("renew")
@@ -194,18 +209,25 @@ export default function Transfer({
             ),
             {
                 onError: (errs) => {
-                    if (errs.mt_number) {
-                        setStep(1);
-                        toast.error(errs.mt_number);
-                    } else if (errs.body_number) {
-                        setStep(2);
-                        toast.error(errs.body_number);
-                    } else {
-                        const firstError = Object.values(errs)[0];
-                        toast.error(
-                            firstError || "Failed to process. Check inputs.",
-                        );
+                    if (errs.body_number === 'REASSIGN_CONFIRMATION_REQUIRED') {
+                        setShowReassignModal(true);
+                        return;
                     }
+
+                    const step1Fields = ['last_name', 'first_name', 'middle_name', 'address', 'mt_number', 'transaction_date', 'driver_first_name', 'driver_last_name'];
+                    const step2Fields = ['make_type', 'engine_motor_no', 'chassis_no', 'plate_no', 'body_number'];
+                    
+                    const firstErrKey = Object.keys(errs)[0];
+                    if (!firstErrKey) return;
+                    
+                    if (step1Fields.includes(firstErrKey)) {
+                        setStep(1);
+                    } else if (step2Fields.includes(firstErrKey)) {
+                        setStep(2);
+                    } else {
+                        setStep(3);
+                    }
+                    toast.error(errs[firstErrKey]);
                 },
             },
         );
@@ -289,22 +311,31 @@ export default function Transfer({
     };
 
     return (
+        <>
+        <DiscardModal
+            show={showDiscardModal}
+            onClose={cancelDiscard}
+            onDiscard={confirmDiscard}
+        />
         <AuthenticatedLayout
             header={
                 <div className="flex justify-between items-center">
                     <div className="flex items-center gap-3">
-                        <div className="bg-purple-100 p-2 rounded-lg text-purple-600 hidden sm:flex items-center justify-center shadow-inner">
+                        <Link href={route("mtop.index")} className="text-slate-500 hover:text-slate-700 transition-colors p-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg">
+                            <Icon icon="solar:alt-arrow-left-bold" width="20" />
+                        </Link>
+                        <div className="bg-purple-100 p-1.5 rounded-md text-purple-600 hidden sm:flex items-center justify-center shadow-inner">
                             <Icon
                                 icon="solar:users-group-two-rounded-bold-duotone"
-                                width="24"
+                                width="20"
                             />
                         </div>
                         <div>
                             <div className="flex items-center gap-3">
-                                <h2 className="font-extrabold text-lg sm:text-xl text-gray-800 tracking-tight flex items-center gap-2">
+                                <h2 className="font-extrabold text-base sm:text-lg text-gray-800 tracking-tight flex items-center gap-2">
                                     <Icon
                                         icon="solar:users-group-two-rounded-bold-duotone"
-                                        width="20"
+                                        width="18"
                                         className="sm:hidden text-purple-600"
                                     />
                                     Transfer Ownership
@@ -313,7 +344,7 @@ export default function Transfer({
                                     {application.mt_number}
                                 </span>
                             </div>
-                            <p className="text-xs text-gray-500 font-medium mt-0.5 hidden sm:block">
+                            <p className="text-[11px] text-gray-500 font-medium hidden sm:block">
                                 Transfer this MTOP Franchise to a new operator.
                             </p>
                         </div>
@@ -321,31 +352,33 @@ export default function Transfer({
                     <button
                         type="button"
                         onClick={() => setShowMobilePreview(true)}
-                        className="xl:hidden flex items-center gap-2 px-3 py-2 bg-indigo-50 text-indigo-600 font-bold text-xs rounded-lg hover:bg-indigo-100 transition-colors border border-indigo-100 shadow-sm"
+                        className="xl:hidden flex items-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-600 font-bold text-xs rounded-lg hover:bg-indigo-100 transition-colors border border-indigo-100 shadow-sm"
+                        title="Preview Permit"
                     >
-                        <Icon icon="solar:eye-bold" width="18" />
-                        <span className="hidden sm:inline">Preview Permit</span>
+                        <Icon icon="solar:eye-bold" width="16" />
+                        <span className="hidden sm:inline">Preview</span>
                     </button>
                 </div>
             }
         >
             <Head title={`Transfer ${application.mt_number}`} />
 
-            <div className="py-6 pb-24 sm:pb-12">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-                    <div className="bg-red-50 border border-red-200 text-red-800 p-4 rounded-xl mb-6 text-sm font-medium flex items-start gap-3 shadow-sm">
+            <div className="py-6 sm:py-8 pb-24">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="mb-4 bg-purple-50 p-4 rounded-lg border border-purple-100 flex gap-3">
                         <Icon
-                            icon="solar:danger-triangle-bold-duotone"
-                            width="24"
-                            className="shrink-0 mt-0.5 text-red-600"
+                            icon="solar:transfer-horizontal-bold"
+                            className="text-purple-600 mt-0.5 shrink-0"
+                            width="20"
                         />
                         <div>
-                            <p className="font-bold text-red-900 mb-1">
-                                Transferring Ownership
-                            </p>
-                            <p>
-                                You are transferring MTOP Control No.{" "}
-                                <strong>{application.mt_number}</strong> from{" "}
+                            <h3 className="text-purple-900 font-bold text-sm">
+                                Transfer of Ownership
+                            </h3>
+                            <p className="text-purple-700 text-xs mt-1">
+                                You are transferring MTOP{" "}
+                                <strong>{application.mt_number}</strong>{" "}
+                                from{" "}
                                 <strong>
                                     {application.first_name}{" "}
                                     {application.last_name}
@@ -357,13 +390,13 @@ export default function Transfer({
                     </div>
 
                     <div className="grid grid-cols-1 items-start transition-all duration-500 ease-in-out xl:grid-cols-12 gap-6">
-                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 transition-all duration-500 relative xl:col-span-7">
-                            <div className="flex border-b border-gray-200 bg-gray-50 rounded-t-lg">
-                                <button
-                                    type="button"
-                                    onClick={() => setStep(1)}
-                                    className={`flex-1 py-4 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 rounded-tl-lg ${step === 1 ? "bg-white text-purple-600 border-t-2 border-purple-600" : "text-gray-400 hover:text-gray-600"}`}
-                                >
+                        <div className="bg-white rounded-lg shadow-sm border border-slate-200 transition-all duration-500 relative xl:col-span-7 flex flex-col">
+                                    <div className="flex border-b border-slate-200 bg-slate-50 rounded-t-lg shrink-0">
+                                        <button
+                                            type="button"
+                                            onClick={() => setStep(1)}
+                                            className={`flex-1 py-3 text-xs sm:text-sm font-bold uppercase hover:cursor-pointer tracking-wider flex items-center justify-center gap-2 rounded-tl-lg ${step === 1 ? "bg-white text-purple-600 border-t-2 border-purple-600" : "text-gray-400 hover:text-gray-600"}`}
+                                        >
                                     <Icon
                                         icon="solar:user-id-bold"
                                         width="18"
@@ -477,13 +510,8 @@ export default function Transfer({
                                     />
                                 </div>
 
-                                <div className="hidden sm:flex items-center justify-between mt-8 pt-4 border-t border-gray-100">
-                                    <Link
-                                        href={route("mtop.index")}
-                                        className="text-gray-500 hover:text-red-600 text-sm font-bold"
-                                    >
-                                        Cancel
-                                    </Link>
+                                <div className="flex justify-end gap-2 pt-5 border-t border-slate-200 mt-2">
+
                                     <div className="flex gap-3">
                                         {step > 1 && (
                                             <button
@@ -491,7 +519,7 @@ export default function Transfer({
                                                 onClick={() =>
                                                     setStep(step - 1)
                                                 }
-                                                className="px-4 py-2 bg-gray-100 hover:cursor-pointer  text-gray-700 rounded-md font-bold hover:bg-gray-200 text-sm"
+                                                className="px-4 py-2 bg-slate-100 text-slate-700 rounded text-sm font-bold hover:bg-slate-200 transition-colors"
                                             >
                                                 Back
                                             </button>
@@ -500,11 +528,11 @@ export default function Transfer({
                                             <PrimaryButton
                                                 type="button"
                                                 onClick={handleNext}
-                                                className={
+                                                className={`px-4 py-2 text-sm font-bold ${
                                                     !isStepValid(step)
-                                                        ? "opacity-50 cursor-not-allowed"
-                                                        : "hover:cursor-pointer"
-                                                }
+                                                        ? "opacity-50 cursor-not-allowed bg-blue-600 text-white"
+                                                        : "bg-blue-600 hover:bg-blue-700 text-white"
+                                                }`}
                                             >
                                                 Next Step{" "}
                                                 <Icon
@@ -515,7 +543,7 @@ export default function Transfer({
                                         ) : (
                                             <PrimaryButton
                                                 type="submit"
-                                                className={`bg-purple-600 hover:purple-700 text-white ${processing || !isFormValid ? "opacity-50 cursor-not-allowed" : ""}`}
+                                                className={`px-4 py-2 text-sm font-bold bg-purple-600 hover:bg-purple-700 text-white ${processing || !isFormValid ? "opacity-50 cursor-not-allowed" : ""}`}
                                                 disabled={
                                                     processing || !isFormValid
                                                 }
@@ -542,48 +570,6 @@ export default function Transfer({
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 sm:hidden z-40 flex justify-between items-center safe-area-pb">
-                <Link
-                    href={route("mtop.index")}
-                    className="text-gray-500 font-bold text-sm"
-                >
-                    Cancel
-                </Link>
-                <div className="flex gap-2">
-                    {step > 1 && (
-                        <button
-                            type="button"
-                            onClick={() => setStep(step - 1)}
-                            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-bold text-sm"
-                        >
-                            Back
-                        </button>
-                    )}
-                    {step < 3 ? (
-                        <button
-                            type="button"
-                            onClick={handleNext}
-                            className={`px-6 py-2 bg-purple-600 text-white rounded-lg font-bold text-sm flex items-center ${!isStepValid(step) ? "opacity-70 cursor-not-allowed" : ""}`}
-                        >
-                            Next{" "}
-                            <Icon
-                                icon="solar:arrow-right-bold"
-                                className="ml-1"
-                            />
-                        </button>
-                    ) : (
-                        <button
-                            onClick={submit}
-                            disabled={processing || !isFormValid}
-                            className={`px-6 py-2 bg-purple-600 text-white rounded-lg font-bold text-sm flex items-center ${processing || !isFormValid ? "opacity-50 cursor-not-allowed" : ""}`}
-                        >
-                            <Icon icon="solar:diskette-bold" className="mr-1" />{" "}
-                            Transfer
-                        </button>
-                    )}
                 </div>
             </div>
 
@@ -622,6 +608,16 @@ export default function Transfer({
                     </div>
                 </div>
             </Modal>
+            <ReassignConfirmationModal
+                show={showReassignModal}
+                bodyNumber={data.body_number}
+                onClose={() => setShowReassignModal(false)}
+                onConfirm={() => {
+                    setShowReassignModal(false);
+                    executeSubmit(true);
+                }}
+            />
         </AuthenticatedLayout>
+        </>
     );
 }

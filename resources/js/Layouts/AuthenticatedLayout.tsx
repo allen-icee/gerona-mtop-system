@@ -33,24 +33,23 @@ export default function Authenticated({
             <div className="relative z-10 flex flex-col min-h-dvh">
                 <ToastListener />
 
-                <nav className="bg-blue-900 border-b border-blue-800 shadow-md">
+                <nav className="bg-slate-800 border-b border-slate-700">
                     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                        <div className="flex h-16 justify-between">
-                            <div className="flex">
+                        <div className="flex h-14 justify-between items-center">
+                            <div className="flex items-center h-full">
                                 <div className="flex shrink-0 items-center">
                                     <Link href="/">
-                                        <ApplicationLogo className="block h-10 w-auto fill-current text-white" />
+                                        <ApplicationLogo className="block h-7 w-auto fill-current text-white" />
                                     </Link>
-                                    <span className="ml-3 text-white font-bold tracking-widest text-sm hidden sm:block">
-                                        MTOP SYSTEM
+                                    <span className="ml-3 text-white font-medium tracking-wide text-[13px] hidden sm:block">
+                                        MTOP System
                                     </span>
                                 </div>
 
-                                <div className="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
+                                <div className="hidden space-x-6 sm:-my-px sm:ms-8 sm:flex h-full">
                                     <NavLink
                                         href={route("dashboard")}
                                         active={route().current("dashboard")}
-                                        className="text-blue-100 hover:text-white focus:text-white border-transparent hover:border-white focus:border-white"
                                     >
                                         Dashboard
                                     </NavLink>
@@ -58,7 +57,6 @@ export default function Authenticated({
                                     <NavLink
                                         href={route("mtop.index")}
                                         active={route().current("mtop.*")}
-                                        className="text-blue-100 hover:text-white focus:text-white border-transparent hover:border-white focus:border-white"
                                     >
                                         MTOP Records
                                     </NavLink>
@@ -66,7 +64,6 @@ export default function Authenticated({
                                     <NavLink
                                         href={route("or_records.index")}
                                         active={route().current("or_records.*")}
-                                        className="text-blue-100 hover:text-white focus:text-white border-transparent hover:border-white focus:border-white"
                                     >
                                         OR Records
                                     </NavLink>
@@ -80,9 +77,8 @@ export default function Authenticated({
                                                 active={route().current(
                                                     "settings.print.edit",
                                                 )}
-                                                className="text-blue-100 hover:text-white focus:text-white border-transparent hover:border-white focus:border-white"
                                             >
-                                                Print Settings
+                                                Printing
                                             </NavLink>
 
                                             <NavLink
@@ -92,7 +88,6 @@ export default function Authenticated({
                                                 active={route().current(
                                                     "signatories.*",
                                                 )}
-                                                className="text-blue-100 hover:text-white focus:text-white border-transparent hover:border-white focus:border-white"
                                             >
                                                 Signatories
                                             </NavLink>
@@ -102,9 +97,8 @@ export default function Authenticated({
                                                 active={route().current(
                                                     "users.*",
                                                 )}
-                                                className="text-blue-100 hover:text-white focus:text-white border-transparent hover:border-white focus:border-white"
                                             >
-                                                System Users
+                                                Users
                                             </NavLink>
 
                                             <NavLink
@@ -112,9 +106,8 @@ export default function Authenticated({
                                                 active={route().current(
                                                     "events.*",
                                                 )}
-                                                className="text-blue-100 hover:text-white focus:text-white border-transparent hover:border-white focus:border-white"
                                             >
-                                                Events/Promos
+                                                Events
                                             </NavLink>
                                         </>
                                     )}
@@ -128,21 +121,20 @@ export default function Authenticated({
                                             <span className="inline-flex rounded-md">
                                                 <button
                                                     type="button"
-                                                    className="inline-flex items-center rounded-md border border-transparent bg-blue-800 px-3 py-2 text-sm font-medium leading-4 text-white transition duration-150 ease-in-out hover:bg-blue-700 focus:outline-none shadow-sm"
+                                                    className="inline-flex items-center border border-transparent px-2 py-1 text-sm font-medium leading-4 text-slate-200 hover:text-white focus:outline-none transition"
                                                 >
-                                                    <div className="flex flex-col items-start mr-2">
-                                                        <span className="leading-none">
+                                                    <div className="flex flex-col items-end mr-2 text-right">
+                                                        <span className="leading-none text-[13px] font-medium">
                                                             {user.name}
                                                         </span>
-                                                        <span className="text-[10px] uppercase text-blue-200 font-bold tracking-wider">
+                                                        <span className="text-[11px] text-slate-400 mt-1 capitalize">
                                                             {user.role}
                                                         </span>
                                                     </div>
-
                                                     <Icon
                                                         icon="solar:alt-arrow-down-bold"
-                                                        width="16"
-                                                        className="ml-1 text-blue-300"
+                                                        width="14"
+                                                        className="text-slate-400"
                                                     />
                                                 </button>
                                             </span>
@@ -207,21 +199,19 @@ export default function Authenticated({
                     <div
                         className={
                             (showingNavigationDropdown ? "block" : "hidden") +
-                            " sm:hidden bg-blue-800 border-t border-blue-700"
+                            " sm:hidden bg-slate-800 border-t border-slate-700"
                         }
                     >
                         <div className="space-y-1 pb-3 pt-2">
                             <ResponsiveNavLink
                                 href={route("dashboard")}
                                 active={route().current("dashboard")}
-                                className="text-white hover:bg-blue-700 focus:bg-blue-700 border-l-4 border-transparent hover:border-yellow-400"
                             >
                                 Dashboard
                             </ResponsiveNavLink>
                             <ResponsiveNavLink
                                 href={route("mtop.index")}
                                 active={route().current("mtop.*")}
-                                className="text-white hover:bg-blue-700 focus:bg-blue-700 border-l-4 border-transparent hover:border-yellow-400"
                             >
                                 MTOP Records
                             </ResponsiveNavLink>
@@ -229,7 +219,6 @@ export default function Authenticated({
                             <ResponsiveNavLink
                                 href={route("or_records.index")}
                                 active={route().current("or_records.*")}
-                                className="text-white hover:bg-blue-700 focus:bg-blue-700 border-l-4 border-transparent hover:border-yellow-400"
                             >
                                 OR Records
                             </ResponsiveNavLink>
@@ -241,9 +230,8 @@ export default function Authenticated({
                                     <ResponsiveNavLink
                                         href={route("settings.print.edit")}
                                         active={route().current("settings.print.edit")}
-                                        className="text-white hover:bg-blue-700 focus:bg-blue-700 border-l-4 border-transparent hover:border-yellow-400"
                                     >
-                                        Print Settings
+                                        Printing
                                     </ResponsiveNavLink>
 
                                     <ResponsiveNavLink
@@ -251,7 +239,6 @@ export default function Authenticated({
                                         active={route().current(
                                             "signatories.*",
                                         )}
-                                        className="text-white hover:bg-blue-700 focus:bg-blue-700 border-l-4 border-transparent hover:border-yellow-400"
                                     >
                                         Signatories
                                     </ResponsiveNavLink>
@@ -259,17 +246,15 @@ export default function Authenticated({
                                     <ResponsiveNavLink
                                         href={route("users.index")}
                                         active={route().current("users.*")}
-                                        className="text-white hover:bg-blue-700 focus:bg-blue-700 border-l-4 border-transparent hover:border-yellow-400"
                                     >
-                                        System Users
+                                        Users
                                     </ResponsiveNavLink>
 
                                     <ResponsiveNavLink
                                         href={route("events.index")}
                                         active={route().current("events.*")}
-                                        className="text-white hover:bg-blue-700 focus:bg-blue-700 border-l-4 border-transparent hover:border-yellow-400"
                                     >
-                                        Events/Promos
+                                        Events
                                     </ResponsiveNavLink>
                                 </>
                             )}
@@ -289,7 +274,6 @@ export default function Authenticated({
                                     method="post"
                                     href={route("logout")}
                                     as="button"
-                                    className="text-blue-200 hover:text-white hover:bg-blue-700"
                                 >
                                     Log Out
                                 </ResponsiveNavLink>
@@ -300,7 +284,7 @@ export default function Authenticated({
 
                 {header && (
                     <header className="bg-white shadow relative z-10">
-                        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+                        <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
                             {header}
                         </div>
                     </header>

@@ -1,5 +1,5 @@
 //GeronaMTOP\resources\js\Components\SuffixSelect.tsx
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { Icon } from "@iconify/react";
 
 interface Props {
@@ -19,7 +19,9 @@ export default function SuffixSelect({
 }: Props) {
     const [isOpen, setIsOpen] = useState(false);
     const [selectedIndex, setSelectedIndex] = useState(-1);
+    const [dropUp, setDropUp] = useState(false);
     const listRef = useRef<HTMLUListElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         setSelectedIndex(SUFFIXES.indexOf(value));
@@ -43,6 +45,15 @@ export default function SuffixSelect({
             }
         }
     }, [selectedIndex, isOpen]);
+
+    useLayoutEffect(() => {
+        if (isOpen && containerRef.current) {
+            const rect = containerRef.current.getBoundingClientRect();
+            const spaceBelow = window.innerHeight - rect.bottom;
+            // max-h-40 is 160px
+            setDropUp(spaceBelow < 200 && rect.top > 200);
+        }
+    }, [isOpen]);
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (!isOpen && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
@@ -80,15 +91,14 @@ export default function SuffixSelect({
     };
 
     return (
-        <div className="mb-4 relative">
-            <label className="block text-sm text-gray-800 mb-1">
+        <div className="relative">
+            <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1.5">
                 Suffix
             </label>
-            <div className="relative">
+            <div className="relative" ref={containerRef}>
                 <input
                     type="text"
-                    className={`block w-full py-3 pl-3 pr-10 border-gray-400 text-gray-900 bg-white rounded-md shadow-sm focus:border-indigo-600 focus:ring-indigo-600 cursor-pointer caret-transparent ${error ? "border-red-500" : ""
-                        }`}
+                    className={`block w-full px-3 py-2 text-sm font-semibold bg-white border ${error ? "border-red-500" : "border-slate-300"} rounded shadow-sm focus:border-red-500 focus:ring-1 focus:ring-red-500 pr-9 cursor-pointer caret-transparent transition-all`}
                     value={value || "N/A"}
                     onClick={() => setIsOpen(true)}
                     onFocus={() => setIsOpen(true)}
@@ -98,7 +108,7 @@ export default function SuffixSelect({
                     readOnly={false}
                 />
 
-                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-600">
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-500">
                     <Icon
                         icon="solar:alt-arrow-down-bold"
                         className={`transition-transform duration-200 ${isOpen ? "rotate-180" : ""
@@ -111,7 +121,7 @@ export default function SuffixSelect({
             {isOpen && (
                 <ul
                     ref={listRef}
-                    className="absolute z-50 w-full bg-white border border-gray-200 mt-1 max-h-40 overflow-y-auto shadow-lg rounded-md text-sm"
+                    className={`absolute z-50 w-full bg-white border border-gray-200 max-h-40 overflow-y-auto shadow-lg rounded-md text-sm ${dropUp ? "bottom-full mb-1" : "top-full mt-1"}`}
                 >
                     {SUFFIXES.map((opt, index) => (
                         <li
@@ -131,7 +141,7 @@ export default function SuffixSelect({
                     ))}
                 </ul>
             )}
-            {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
+            {error && <p className="mt-1 text-[11px] font-bold text-red-500">{error}</p>}
         </div>
     );
 }

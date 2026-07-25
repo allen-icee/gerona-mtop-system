@@ -40,3 +40,6 @@ Thumbs.db
 
 # ✅ Portable PHP Engine (Optional: Remove this line if you want to push PHP to GitHub)
 /php/
+
+.agent/
+.env.example.local

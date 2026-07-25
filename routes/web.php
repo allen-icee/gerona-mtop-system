@@ -127,6 +127,8 @@ Route::middleware('auth')->group(function () {
     })->name('settings.backup');
 
     Route::middleware(IsAdmin::class)->group(function () {
+        Route::delete('/mtop/clear/all', [MtopApplicationController::class, 'clear'])->name('mtop.clear');
+        Route::delete('/or-records/clear/all', [OrRecordController::class, 'clear'])->name('or_records.clear');
 
         Route::delete('/mtop/{id}', [MtopApplicationController::class, 'destroy'])->name('mtop.destroy');
         Route::delete('/or-records/{id}', [OrRecordController::class, 'destroy'])->name('or_records.destroy');
