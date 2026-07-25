@@ -307,17 +307,17 @@ export default function DriverInfoModal({
 
     return (
         <Modal show={show} onClose={onClose} maxWidth="2xl">
-            <form onSubmit={submit} onKeyDown={handleFormKeyDown} className="p-6 flex flex-col h-[85vh]">
-                <div className="flex justify-between items-center mb-6 shrink-0 border-b border-gray-100 pb-4">
-                    <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                        <Icon icon="solar:printer-bold" className="text-blue-600" /> Print Setup ({data.drivers.length} IDs)
-                    </h2>
-                    <button type="button" onClick={onClose} className="text-gray-400 hover:text-red-500 transition-colors">
-                        <Icon icon="solar:close-circle-bold" width="28" />
+            <form onSubmit={submit} onKeyDown={handleFormKeyDown} className="bg-slate-50 rounded-none sm:rounded-lg h-full sm:h-auto max-h-[90vh] flex flex-col overflow-hidden">
+                <div className="flex justify-between items-center bg-slate-700 px-5 py-3 rounded-none sm:rounded-t-lg border-b border-slate-800 shrink-0">
+                    <h3 className="text-white font-bold text-base flex items-center gap-2">
+                        <Icon icon="solar:printer-bold" width="20" /> Print Setup ({data.drivers.length} IDs)
+                    </h3>
+                    <button type="button" onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
+                        <Icon icon="solar:close-circle-bold" width="24" />
                     </button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto pr-2 space-y-6 pb-4">
+                <div className="flex-1 overflow-y-auto p-5 space-y-6">
                     {data.drivers.map((driver, index) => (
                         <div key={driver.id} className="flex flex-col sm:flex-row gap-6 p-5 border border-gray-200 rounded-xl bg-white shadow-sm hover:shadow-md transition-shadow relative">
                             <div className="absolute bottom-0 left-0 bg-gray-100 text-gray-400 font-black text-4xl px-3 py-1 rounded-tr-xl rounded-bl-xl select-none z-0 opacity-50">#{index + 1}</div>
@@ -357,54 +357,51 @@ export default function DriverInfoModal({
                             <div className="flex-1 flex flex-col gap-4 z-10 pt-2 sm:pt-0">
 
                                 <div>
-                                    <label className="block text-[13px] font-bold text-gray-800 mb-3">Driver Name (Editable Override)</label>
+                                    <label className="block text-[13px] font-bold text-slate-800 mb-3">Driver Name (Editable Override)</label>
 
                                     <div className="grid grid-cols-12 gap-4">
 
                                         {/* ROW 1: LAST NAME & FIRST NAME */}
                                         <div className="col-span-12 sm:col-span-6">
-                                            <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1.5">Last Name</label>
-                                            <TextInput
+                                            <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1.5">Last Name</label>
+                                            <input
                                                 type="text"
                                                 value={driver.driver_last_name}
                                                 onChange={(e) => handleDriverChange(index, "driver_last_name", e.target.value.toUpperCase().replace(/[^A-ZÑñ\s.-]/g, ""))}
-                                                className="w-full h-10.5 px-3 text-sm bg-white"
+                                                className="w-full px-3 py-2 text-sm font-semibold bg-white border border-slate-300 rounded shadow-sm focus:border-red-500 focus:ring-1 focus:ring-red-500"
                                                 placeholder="Last Name"
                                             />
                                         </div>
 
                                         <div className="col-span-12 sm:col-span-6">
-                                            <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1.5">First Name</label>
-                                            <TextInput
+                                            <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1.5">First Name</label>
+                                            <input
                                                 type="text"
                                                 value={driver.driver_first_name}
                                                 onChange={(e) => handleDriverChange(index, "driver_first_name", e.target.value.toUpperCase().replace(/[^A-ZÑñ\s.-]/g, ""))}
-                                                className="w-full h-10.5 px-3 text-sm bg-white"
+                                                className="w-full px-3 py-2 text-sm font-semibold bg-white border border-slate-300 rounded shadow-sm focus:border-red-500 focus:ring-1 focus:ring-red-500"
                                                 placeholder="First Name"
                                             />
                                         </div>
 
                                         {/* ROW 2: M.I. & SUFFIX WITH NARROWER WIDTHS */}
                                         <div className="col-span-4 sm:col-span-2">
-                                            <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1.5">M.I.</label>
-                                            <TextInput
+                                            <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1.5">M.I.</label>
+                                            <input
                                                 type="text"
                                                 value={driver.driver_middle_name}
                                                 onChange={(e) => handleDriverChange(index, "driver_middle_name", e.target.value.toUpperCase().replace(/[^A-ZÑñ]/g, "").slice(0, 1))}
-                                                className="w-full h-10.5 px-3 text-sm text-center bg-white"
+                                                className="w-full px-3 py-2 text-sm font-semibold text-center bg-white border border-slate-300 rounded shadow-sm focus:border-red-500 focus:ring-1 focus:ring-red-500"
                                                 placeholder="M.I."
                                                 maxLength={1}
                                             />
                                         </div>
 
                                         <div className="col-span-8 sm:col-span-4">
-                                            <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1.5">Suffix</label>
-                                            <div className="[&_label]:hidden! [&>div.mb-4]:mb-0! [&_input]:h-10.5! [&_input]:py-0! [&_input]:px-3! [&_input]:text-sm! [&_input]:border-gray-300!">
-                                                <SuffixSelect
-                                                    value={driver.driver_suffix}
-                                                    onChange={(val) => handleDriverChange(index, "driver_suffix", val)}
-                                                />
-                                            </div>
+                                            <SuffixSelect
+                                                value={driver.driver_suffix}
+                                                onChange={(val) => handleDriverChange(index, "driver_suffix", val)}
+                                            />
                                         </div>
 
                                     </div>
@@ -414,29 +411,57 @@ export default function DriverInfoModal({
                                     <div className="relative">
                                         <div className="absolute right-0 top-0 z-20">
                                             <button type="button" onClick={() => handleDriverChange(index, "show_committee", !driver.show_committee)} className="flex items-center gap-2 focus:outline-none group">
-                                                <div className={`w-8 h-4 flex items-center rounded-full p-1 transition-colors duration-300 ${driver.show_committee ? "bg-indigo-600" : "bg-gray-300"}`}>
+                                                <div className={`w-8 h-4 flex items-center rounded-full p-1 transition-colors duration-300 ${driver.show_committee ? "bg-indigo-600" : "bg-slate-300"}`}>
                                                     <div className={`bg-white w-2.5 h-2.5 rounded-full shadow-sm transform transition-transform duration-300 ${driver.show_committee ? "translate-x-3.5" : "translate-x-0"}`}></div>
                                                 </div>
                                             </button>
                                         </div>
                                         <div className={`transition-all ${!driver.show_committee ? "opacity-50 blur-[0.4px] pointer-events-none" : ""}`}>
-                                            <SignatorySelect label="Committee on Transportation" value={driver.committee} onChange={(val) => handleDriverChange(index, "committee", val)} options={committeeOptions} required={driver.show_committee} disabled={!driver.show_committee} />
+                                            <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1.5">Committee on Transportation</label>
+                                            <SignatorySelect 
+                                                label="" 
+                                                value={driver.committee} 
+                                                onChange={(val) => handleDriverChange(index, "committee", val)} 
+                                                options={committeeOptions} 
+                                                required={driver.show_committee} 
+                                                disabled={!driver.show_committee} 
+                                                className="[&>label]:hidden [&_input]:w-full [&_input]:px-3 [&_input]:py-2 [&_input]:text-sm [&_input]:font-semibold [&_input]:bg-white [&_input]:border [&_input]:border-slate-300 [&_input]:rounded [&_input]:shadow-sm [&_input]:focus:border-red-500 [&_input]:focus:ring-1 [&_input]:focus:ring-red-500"
+                                            />
                                         </div>
                                     </div>
                                 </div>
                                 <div>
-                                    <SignatorySelect label="Municipal Mayor" value={driver.mayor} onChange={(val) => handleDriverChange(index, "mayor", val)} options={mayorOptions} required />
+                                    <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1.5">Municipal Mayor <span className="text-red-500 ml-1">*</span></label>
+                                    <SignatorySelect 
+                                        label="" 
+                                        value={driver.mayor} 
+                                        onChange={(val) => handleDriverChange(index, "mayor", val)} 
+                                        options={mayorOptions} 
+                                        required 
+                                        className="[&>label]:hidden [&_input]:w-full [&_input]:px-3 [&_input]:py-2 [&_input]:text-sm [&_input]:font-semibold [&_input]:bg-white [&_input]:border [&_input]:border-slate-300 [&_input]:rounded [&_input]:shadow-sm [&_input]:focus:border-red-500 [&_input]:focus:ring-1 [&_input]:focus:ring-red-500"
+                                    />
                                 </div>
                             </div>
                         </div>
                     ))}
                 </div>
 
-                <div className="mt-4 flex justify-end gap-3 pt-4 border-t border-gray-100 shrink-0">
-                    <SecondaryButton onClick={onClose} disabled={processing}>Cancel</SecondaryButton>
-                    <PrimaryButton type="submit" disabled={processing} className="bg-indigo-600 hover:bg-indigo-700 shadow-md transition-transform hover:scale-105 cursor-pointer">
-                        <Icon icon="solar:printer-bold" className="mr-2" /> Save & Print
-                    </PrimaryButton>
+                <div className="flex flex-col sm:flex-row justify-end items-center gap-2 pt-5 border-t border-slate-200 mt-2 px-5 pb-5">
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="w-full sm:w-auto px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 border border-slate-300 font-bold rounded text-sm shadow-sm transition-colors text-center"
+                    >
+                        Cancel
+                    </button>
+
+                    <button
+                        type="submit"
+                        disabled={processing}
+                        className="w-full sm:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 border border-transparent rounded font-bold text-sm text-white shadow-sm disabled:opacity-50 flex justify-center items-center gap-1.5 transition-colors"
+                    >
+                        <Icon icon="solar:printer-bold" width="16" /> Save & Print
+                    </button>
                 </div>
             </form>
         </Modal>

@@ -1,5 +1,5 @@
 //GeronaMTOP\resources\js\Components\BarangaySelect.tsx
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, useLayoutEffect } from "react";
 import { Icon } from "@iconify/react";
 import { BARANGAYS } from "@/Constants/Barangays";
 
@@ -20,7 +20,9 @@ export default function BarangaySelect({
 }: Props) {
     const [isOpen, setIsOpen] = useState(false);
     const [selectedIndex, setSelectedIndex] = useState(-1);
+    const [dropUp, setDropUp] = useState(false);
     const listRef = useRef<HTMLUListElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
 
     const filtered = useMemo(() => {
         if (!value) return BARANGAYS;
@@ -53,6 +55,15 @@ export default function BarangaySelect({
             }
         }
     }, [selectedIndex, isOpen]);
+
+    useLayoutEffect(() => {
+        if (isOpen && containerRef.current) {
+            const rect = containerRef.current.getBoundingClientRect();
+            const spaceBelow = window.innerHeight - rect.bottom;
+            // 250px is slightly more than max-h-60 (240px)
+            setDropUp(spaceBelow < 250 && rect.top > 250);
+        }
+    }, [isOpen, filtered]);
 
     const handleBlur = () => {
         setTimeout(() => {
@@ -110,22 +121,20 @@ export default function BarangaySelect({
     };
 
     return (
-        <div className={`mb-4 relative ${isOpen ? "z-50" : "z-10"}`}>
-            <label className="block font-semibold text-sm text-gray-800 mb-1">
+        <div className={`relative ${isOpen ? "z-50" : "z-10"}`}>
+            <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1.5">
                 Barangay / Address
                 {required && <span className="text-red-500 ml-1">*</span>}
             </label>
-            <div className="relative">
-                <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-600">
-                    <Icon icon="solar:map-point-bold" width="20" />
+            <div className="relative" ref={containerRef}>
+                <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-500">
+                    <Icon icon="solar:map-point-bold" width="16" />
                 </div>
 
-                <input
-    type="text"
-    name="address"
-    className={`block w-full pl-10 pr-10 py-3 border-gray-400 font-semibold text-gray-900 bg-white rounded-md shadow-sm focus:border-indigo-600 focus:ring-indigo-600 ${
-        error ? "border-red-500" : ""
-    }`}
+    <input
+        type="text"
+        name="address"
+        className={`block w-full pl-9 pr-9 py-2 text-sm font-semibold bg-white border ${error ? "border-red-500" : "border-slate-300"} rounded shadow-sm focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all`}
                     placeholder="Search Barangay..."
                     value={value}
                     onChange={(e) => {
@@ -141,7 +150,7 @@ export default function BarangaySelect({
                     onKeyDown={handleKeyDown}
                 />
 
-                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-00">
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-500">
                     <Icon
                         icon="solar:alt-arrow-down-bold"
                         className={`transition-transform duration-200 ${
@@ -155,7 +164,7 @@ export default function BarangaySelect({
             {isOpen && filtered.length > 0 && (
                 <ul
                     ref={listRef}
-                    className="absolute z-50 w-full bg-white border border-gray-200 mt-1 max-h-60 overflow-y-auto shadow-xl rounded-md text-sm py-1"
+                    className={`absolute z-50 w-full bg-white border border-gray-200 max-h-60 overflow-y-auto shadow-xl rounded-md text-sm py-1 ${dropUp ? "bottom-full mb-1" : "top-full mt-1"}`}
                 >
                     {filtered.map((brgy, index) => (
                         <li
@@ -182,7 +191,7 @@ export default function BarangaySelect({
                 </ul>
             )}
 
-            {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
+            {error && <p className="mt-1 text-[11px] font-bold text-red-500">{error}</p>}
         </div>
     );
 }
