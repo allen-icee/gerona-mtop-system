@@ -83,7 +83,7 @@
         "@vitejs/plugin-react": "^4.2.0",
         "autoprefixer": "^10.4.12",
         "axios": "^1.6.0",
-        "concurrently": "^9.0.1",
+        "concurrently": "^9.2.4",
         "electron": "^43.0.0",
         "electron-builder": "^26.7.0",
         "laravel-vite-plugin": "^1.0.0",
