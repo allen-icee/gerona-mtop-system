@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\RedirectResponse;
+use Rap2hpoutre\FastExcel\FastExcel;
 
 class UserController extends Controller
 {
@@ -118,38 +119,28 @@ class UserController extends Controller
     {
         $logs = AuditLog::with('user')->latest()->cursor();
 
-        $csvFileName = 'audit_logs_' . date('Y-m-d_H-i-A') . '.csv';
-        $headers = [
-            "Content-type" => "text/csv",
-            "Content-Disposition" => "attachment; filename=$csvFileName",
-            "Pragma" => "no-cache",
-            "Cache-Control" => "must-revalidate, post-check=0, pre-check=0",
-            "Expires" => "0"
-        ];
+        $fileName = 'audit_logs_' . date('Y-m-d_H-i-A') . '.xlsx';
 
-        $callback = function () use ($logs) {
-            $file = fopen('php://output', 'w');
-
-            fputcsv($file, ['ID', 'Timestamp', 'User', 'Action', 'Details', 'IP Address']);
-
+        $generator = function () use ($logs) {
             foreach ($logs as $log) {
-                $safeDetails = is_string($log->payload)
-                    ? $log->payload
-                    : json_encode($log->payload);
-
-                fputcsv($file, [
-                    $log->id,
-                    $log->created_at,
-                    $log->user ? $log->user->name : 'Deleted User',
-                    $log->action,
-                    $safeDetails,
-                    $log->ip_address
-                ]);
+                yield $log;
             }
-            fclose($file);
         };
 
-        return response()->stream($callback, 200, $headers);
+        return (new FastExcel($generator()))->download($fileName, function ($log) {
+            $safeDetails = is_string($log->payload)
+                ? $log->payload
+                : json_encode($log->payload);
+
+            return [
+                'ID' => $log->id,
+                'Timestamp' => $log->created_at,
+                'User' => $log->user ? $log->user->name : 'Deleted User',
+                'Action' => $log->action,
+                'Details' => $safeDetails,
+                'IP Address' => $log->ip_address
+            ];
+        });
     }
     public function flushAuditLogs(Request $request)
     {

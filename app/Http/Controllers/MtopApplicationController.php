@@ -892,7 +892,7 @@ class MtopApplicationController extends Controller
     public function importData(Request $request): RedirectResponse
     {
         $request->validate([
-            'import_file' => 'required|file|extensions:xlsx,xls,csv,txt,sqlite|max:51200',
+            'import_file' => 'required|file|extensions:xlsx,xls,csv,txt,sqlite|max:1048576',
         ]);
 
         try {
@@ -939,13 +939,10 @@ class MtopApplicationController extends Controller
         DB::purge('sqlite_backup');
 
         try {
-            $oldFranchises = DB::connection('sqlite_backup')->table('mtop_franchises')->get();
-            $oldApplications = DB::connection('sqlite_backup')->table('mtop_applications')->get();
-
-            DB::transaction(function () use ($oldFranchises, $oldApplications) {
+            DB::transaction(function () {
                 $seenBodyNumbers = [];
 
-                foreach ($oldFranchises as $franchise) {
+                foreach (DB::connection('sqlite_backup')->table('mtop_franchises')->cursor() as $franchise) {
                     $exists = DB::table('mtop_franchises')->where('mt_number', $franchise->mt_number)->exists();
                     if (!$exists) {
                         $franchiseData = (array) $franchise;
@@ -973,7 +970,7 @@ class MtopApplicationController extends Controller
                     }
                 }
 
-                foreach ($oldApplications as $app) {
+                foreach (DB::connection('sqlite_backup')->table('mtop_applications')->cursor() as $app) {
                     $exists = DB::table('mtop_applications')->where('id', $app->id)->exists();
                     if (!$exists) {
                         $data = (array) $app;

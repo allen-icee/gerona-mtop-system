@@ -6,6 +6,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use App\Models\MtopApplication;
+use Rap2hpoutre\FastExcel\FastExcel;
 
 class BackupDatabase extends Command
 {
@@ -16,7 +17,7 @@ class BackupDatabase extends Command
     {
         $date = now()->format('Y-m-d_H-i-s');
         $sqliteFilename = "backup_{$date}.sqlite";
-        $csvFilename = "backup_{$date}.csv";
+        $xlsxFilename = "backup_{$date}.xlsx";
 
         $sourcePath = database_path('database.sqlite');
 
@@ -27,7 +28,7 @@ class BackupDatabase extends Command
         }
 
         $sqliteDestinationPath = "{$backupFolder}/{$sqliteFilename}";
-        $csvDestinationPath = "{$backupFolder}/{$csvFilename}";
+        $xlsxDestinationPath = "{$backupFolder}/{$xlsxFilename}";
 
         try {
 
@@ -42,37 +43,13 @@ class BackupDatabase extends Command
             $records = MtopApplication::all();
 
             if ($records->isNotEmpty()) {
-                $csvContent = fopen('php://temp', 'r+');
+                $generator = function () use ($records) {
+                    foreach ($records as $row) {
+                        yield $row;
+                    }
+                };
 
-                fputcsv($csvContent, [
-                    'Control No',
-                    'Transaction Date',
-                    'Transaction Type',
-                    'Last Name',
-                    'First Name',
-                    'Middle Name',
-                    'Suffix',
-                    'Paid By Details',
-                    'Driver Name',
-                    'Address',
-                    'Contact #',
-                    'Body Number',
-                    'Plate No',
-                    'Make/Type',
-                    'Engine No',
-                    'Chassis No',
-                    'OR No',
-                    'OR Date',
-                    'Cedula No',
-                    'Cedula Date',
-                    'Punong Bayan',
-                    'Authorized Official',
-                    'Is Free/Promo',
-                    'Valid Until',
-                    'Status'
-                ]);
-
-                foreach ($records as $row) {
+                (new FastExcel($generator()))->export($xlsxDestinationPath, function ($row) {
                     $paidBy = $row->show_paid_by
                         ? trim("{$row->paid_by_first_name} {$row->paid_by_last_name} {$row->paid_by_suffix}")
                         : 'N/A';
@@ -85,41 +62,36 @@ class BackupDatabase extends Command
 
                     $exportBodyNum = preg_match('/^T\d{2}-\d+$/', (string)$row->body_number) ? '' : $row->body_number;
 
-                    fputcsv($csvContent, [
-                        $row->mt_number,
-                        $row->transaction_date,
-                        $row->transaction_type,
-                        $row->last_name,
-                        $row->first_name,
-                        $row->middle_name,
-                        $row->suffix,
-                        $paidBy,
-                        $driverName,
-                        $row->address,
-                        $row->contact_number,
-                        $exportBodyNum,
-                        $row->plate_no,
-                        $row->make_type,
-                        $row->engine_motor_no,
-                        $row->chassis_no,
-                        $row->or_number,
-                        $row->or_date,
-                        $row->cedula_number,
-                        $row->cedula_date,
-                        $row->punong_bayan,
-                        $row->authorized_official,
-                        $row->is_free ? 'YES' : 'NO',
-                        $row->valid_until,
-                        $row->status
-                    ]);
-                }
+                    return [
+                        'Control No' => (string) $row->mt_number,
+                        'Transaction Date' => $row->transaction_date,
+                        'Transaction Type' => $row->transaction_type,
+                        'Last Name' => $row->last_name,
+                        'First Name' => $row->first_name,
+                        'Middle Name' => $row->middle_name,
+                        'Suffix' => $row->suffix,
+                        'Paid By Details' => $paidBy,
+                        'Driver Name' => $driverName,
+                        'Address' => $row->address,
+                        'Contact #' => (string) $row->contact_number,
+                        'Body Number' => (string) $exportBodyNum,
+                        'Plate No' => $row->plate_no,
+                        'Make/Type' => $row->make_type,
+                        'Engine No' => (string) $row->engine_motor_no,
+                        'Chassis No' => (string) $row->chassis_no,
+                        'OR No' => (string) $row->or_number,
+                        'OR Date' => $row->or_date,
+                        'Cedula No' => (string) $row->cedula_number,
+                        'Cedula Date' => $row->cedula_date,
+                        'Punong Bayan' => $row->punong_bayan,
+                        'Authorized Official' => $row->authorized_official,
+                        'Is Free/Promo' => $row->is_free ? 'YES' : 'NO',
+                        'Valid Until' => $row->valid_until,
+                        'Status' => $row->status
+                    ];
+                });
 
-                rewind($csvContent);
-                $csvData = stream_get_contents($csvContent);
-                fclose($csvContent);
-
-                File::put($csvDestinationPath, $csvData);
-                $this->info("CSV backed up successfully: {$csvFilename}");
+                $this->info("Excel backed up successfully: {$xlsxFilename}");
             }
 
             $this->cleanOldBackups($backupFolder);

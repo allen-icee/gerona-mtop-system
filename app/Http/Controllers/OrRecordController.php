@@ -7,6 +7,7 @@ use App\Models\OrRecord;
 use App\Models\Signatory;
 use App\Models\FeeSetting;
 use Inertia\Inertia;
+use Rap2hpoutre\FastExcel\FastExcel;
 
 class OrRecordController extends Controller
 {
@@ -113,102 +114,64 @@ class OrRecordController extends Controller
 
         $feeSettings = \App\Models\FeeSetting::first();
 
-        $csvFileName = 'or_records_' . date('Y-m-d_H-i') . '.csv';
+        $fileName = 'or_records_' . date('Y-m-d_H-i') . '.xlsx';
 
-        $headers = [
-            "Content-type" => "text/csv",
-            "Content-Disposition" => "attachment; filename=$csvFileName",
-            "Pragma" => "no-cache",
-            "Cache-Control" => "must-revalidate, post-check=0, pre-check=0",
-            "Expires" => "0"
-        ];
-
-        $callback = function () use ($records, $feeSettings) {
-            $file = fopen('php://output', 'w');
-
-            fputcsv($file, [
-                'OR Number',
-                'Transaction Date',
-                'Agency',
-                'Payor Name',
-                'Collecting Officer',
-                'Total Amount',
-                'REG/Filing Fee',
-                'Franchise Fee',
-                'Mayors Permit',
-                'Supervisor Fee',
-                'Account Clearance',
-                'Sticker Fee',
-                'ID Fee',
-                'Body Number/Plate',
-                'Penalty'
-            ]);
-
+        $generator = function () use ($records) {
             foreach ($records as $row) {
-                $payorName = trim("{$row->payor_last_name}, {$row->payor_first_name} {$row->payor_middle_name} {$row->payor_suffix}");
-                $fees = $row->fee_breakdown ?? [];
-
-                $getAmount = function ($key) use ($fees, $feeSettings) {
-                    if (!empty($fees[$key]) && $feeSettings) {
-                        return $feeSettings->$key ?? 0;
-                    }
-                    return 0;
-                };
-
-                fputcsv($file, [
-                    $row->or_number,
-                    \Carbon\Carbon::parse($row->transaction_date)->format('Y-m-d'),
-                    $row->agency,
-                    $payorName,
-                    $row->collecting_officer,
-                    $row->total_amount,
-                    $getAmount('reg_filing_fee'),
-                    $getAmount('franchise_fee'),
-                    $getAmount('mayors_permit'),
-                    $getAmount('supervisor_fee'),
-                    $getAmount('account_clearance'),
-                    $getAmount('sticker_fee'),
-                    $getAmount('id_driver_operator_owner'),
-                    $getAmount('body_number_plate'),
-                    $getAmount('penalty'),
-                ]);
+                yield $row;
             }
-            fclose($file);
         };
 
-        return response()->stream($callback, 200, $headers);
+        return (new FastExcel($generator()))->download($fileName, function ($row) use ($feeSettings) {
+            $payorName = trim("{$row->payor_last_name}, {$row->payor_first_name} {$row->payor_middle_name} {$row->payor_suffix}");
+            $fees = $row->fee_breakdown ?? [];
+
+            $getAmount = function ($key) use ($fees, $feeSettings) {
+                if (!empty($fees[$key]) && $feeSettings) {
+                    return $feeSettings->$key ?? 0;
+                }
+                return 0;
+            };
+
+            return [
+                'OR Number' => $row->or_number,
+                'Transaction Date' => \Carbon\Carbon::parse($row->transaction_date)->format('Y-m-d'),
+                'Agency' => $row->agency,
+                'Payor Name' => $payorName,
+                'Collecting Officer' => $row->collecting_officer,
+                'Total Amount' => $row->total_amount,
+                'REG/Filing Fee' => $getAmount('reg_filing_fee'),
+                'Franchise Fee' => $getAmount('franchise_fee'),
+                'Mayors Permit' => $getAmount('mayors_permit'),
+                'Supervisor Fee' => $getAmount('supervisor_fee'),
+                'Account Clearance' => $getAmount('account_clearance'),
+                'Sticker Fee' => $getAmount('sticker_fee'),
+                'ID Fee' => $getAmount('id_driver_operator_owner'),
+                'Body Number/Plate' => $getAmount('body_number_plate'),
+                'Penalty' => $getAmount('penalty'),
+            ];
+        });
     }
 
     public function import(Request $request)
     {
         $request->validate([
-            'file' => 'required|mimes:csv,txt|max:10240',
+            'file' => 'required|file|extensions:xlsx,xls,csv,txt|max:10240',
         ]);
 
         $file = $request->file('file');
-        $handle = fopen($file->path(), 'r');
-        $header = fgetcsv($handle);
+        $fullPath = $file->path();
 
         $imported = 0;
         $skipped = 0;
 
-        $expectedHeaders = ['OR Number', 'Transaction Date', 'Agency', 'Payor Name', 'Collecting Officer', 'Total Amount'];
-        foreach ($expectedHeaders as $eh) {
-            if (!in_array($eh, $header)) {
-                return back()->withErrors(['file' => 'Invalid CSV format. Missing required column: ' . $eh]);
-            }
-        }
-
-        while (($row = fgetcsv($handle)) !== false) {
-            if (count($header) !== count($row)) continue;
-            $data = array_combine($header, $row);
-
+        (new FastExcel)->import($fullPath, function ($data) use (&$imported, &$skipped) {
             $orNumber = $data['OR Number'] ?? null;
-            if (!$orNumber) continue;
+            if (!$orNumber) return;
 
             if (OrRecord::where('or_number', $orNumber)->exists()) {
                 $skipped++;
-                continue;
+                return;
             }
 
             $fullName = $data['Payor Name'] ?? '';
@@ -262,9 +225,7 @@ class OrRecordController extends Controller
             ]);
 
             $imported++;
-        }
-
-        fclose($handle);
+        });
 
         return back()->with('success', "Import completed: {$imported} added, {$skipped} skipped (duplicates).");
     }

@@ -6,6 +6,7 @@ use App\Models\Signatory;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
+use Rap2hpoutre\FastExcel\FastExcel;
 use Illuminate\Support\Facades\Auth;
 
 class SignatoryController extends Controller
@@ -72,69 +73,40 @@ class SignatoryController extends Controller
     {
         $signatories = Signatory::all();
 
-        $csvFileName = 'signatories_backup_' . date('Y-m-d_H-i') . '.csv';
-        $headers = [
-            "Content-type" => "text/csv",
-            "Content-Disposition" => "attachment; filename=$csvFileName",
-            "Pragma" => "no-cache",
-            "Cache-Control" => "must-revalidate, post-check=0, pre-check=0",
-            "Expires" => "0"
-        ];
-
-        $callback = function () use ($signatories) {
-            $file = fopen('php://output', 'w');
-            fputcsv($file, ['ID', 'Name', 'Position', 'Status']);
-
+        $fileName = 'signatories_backup_' . date('Y-m-d_H-i') . '.xlsx';
+        
+        $generator = function () use ($signatories) {
             foreach ($signatories as $row) {
-                fputcsv($file, [
-                    $row->id,
-                    $row->name,
-                    $row->position,
-                    $row->is_active ? 'Active' : 'Inactive'
-                ]);
+                yield $row;
             }
-            fclose($file);
         };
 
-        return response()->stream($callback, 200, $headers);
+        return (new FastExcel($generator()))->download($fileName, function ($row) {
+            return [
+                'ID' => $row->id,
+                'Name' => $row->name,
+                'Position' => $row->position,
+                'Status' => $row->is_active ? 'Active' : 'Inactive'
+            ];
+        });
     }
 
     public function import(Request $request)
     {
         $request->validate([
-            'import_file' => 'required|file|max:2048',
+            'import_file' => 'required|file|extensions:xlsx,xls,csv,txt|max:2048',
         ]);
 
         $file = $request->file('import_file');
-        $extension = strtolower($file->getClientOriginalExtension());
-
-        if ($extension !== 'csv') {
-            return back()->withErrors(['import_file' => 'Only CSV files are allowed for signatories.']);
-        }
-
         $importedCount = 0;
 
         try {
             DB::beginTransaction();
 
-            $path = $file->getRealPath();
-            $fileHandle = fopen($path, 'r');
+            $fullPath = $file->getRealPath();
 
-            $bom = fread($fileHandle, 3);
-            if ($bom !== "\xEF\xBB\xBF") {
-                rewind($fileHandle);
-            }
-
-            $header = fgetcsv($fileHandle);
-            if (!$header) throw new \Exception("File is empty or invalid");
-            $header = array_map('trim', $header);
-
-            while (($row = fgetcsv($fileHandle)) !== false) {
-                if (empty(array_filter($row)) || count($header) !== count($row)) continue;
-
-                $rowAssoc = array_combine($header, $row);
-
-                if (empty($rowAssoc['Name']) || empty($rowAssoc['Position'])) continue;
+            (new FastExcel)->import($fullPath, function ($rowAssoc) use (&$importedCount) {
+                if (empty($rowAssoc['Name']) || empty($rowAssoc['Position'])) return;
 
                 $isActive = (strtolower(trim($rowAssoc['Status'] ?? 'active')) === 'active') ? true : false;
 
@@ -146,20 +118,19 @@ class SignatoryController extends Controller
                     ]
                 );
                 $importedCount++;
-            }
-            fclose($fileHandle);
+            });
 
             DB::commit();
 
             \App\Models\AuditLog::create([
                 'user_id' => Auth::id(),
                 'action' => 'Imported Signatories',
-                'payload' => "Imported/Synced $importedCount officials from CSV.",
+                'payload' => "Imported/Synced $importedCount officials.",
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent(),
             ]);
 
-            return back()->with('message', "Success! Synced $importedCount officials safely.");
+            return redirect()->back()->with('message', "Imported {$importedCount} officials successfully.");
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->withErrors(['import_file' => 'Import failed: Please ensure you are uploading the exact CSV format that was exported.']);
