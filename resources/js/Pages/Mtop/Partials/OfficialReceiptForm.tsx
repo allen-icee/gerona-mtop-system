@@ -17,14 +17,17 @@ export default function OfficialReceiptForm({
     // but we can leave it here so it doesn't break anything else.
     const isRequired = (!data.is_free || data.or_unlocked) && data.show_or;
 
-    useEffect(() => {
-        if (!data.or_date && data.transaction_date) {
-            setData("or_date", data.transaction_date);
-        }
-    }, [data.transaction_date]);
-
     const toggleShowOr = () => {
-        setData("show_or", !data.show_or);
+        const nextShowOr = !data.show_or;
+        if (nextShowOr && !data.or_date && data.transaction_date) {
+            setData((prev: any) => ({
+                ...prev,
+                show_or: true,
+                or_date: prev.or_date || prev.transaction_date,
+            }));
+        } else {
+            setData("show_or", nextShowOr);
+        }
     };
 
     return (

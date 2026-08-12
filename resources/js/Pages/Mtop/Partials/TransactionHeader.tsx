@@ -32,31 +32,19 @@ export default function TransactionHeader({
         data.event_id ? "event" : "regular",
     );
 
-    useEffect(() => {
-        if (
-            processingMode === "event" &&
-            activeEvents?.length > 0 &&
-            !data.event_id
-        ) {
-            setData("event_id", activeEvents[0].id);
-        }
-    }, [processingMode, activeEvents]);
-
-    useEffect(() => {
-        if (
-            processingMode === "event" &&
-            data.is_free &&
-            !data.or_unlocked &&
-            data.event_id
-        ) {
+    const handleModeChange = (mode: "regular" | "event") => {
+        setProcessingMode(mode);
+        if (mode === "event") {
+            const eventIdToUse = data.event_id || (activeEvents && activeEvents.length > 0 ? activeEvents[0].id : null);
             setData((prev: any) => ({
                 ...prev,
+                event_id: eventIdToUse,
+                is_free: true,
+                or_unlocked: false,
                 or_number: "WAIVED",
-                or_date:
-                    prev.transaction_date ||
-                    new Date().toISOString().split("T")[0],
+                or_date: prev.transaction_date || new Date().toISOString().split("T")[0],
             }));
-        } else if (processingMode === "regular") {
+        } else {
             setData((prev: any) => ({
                 ...prev,
                 event_id: null,
@@ -64,14 +52,6 @@ export default function TransactionHeader({
                 or_unlocked: false,
                 or_number: prev.or_number === "WAIVED" ? "" : prev.or_number,
             }));
-        }
-    }, [processingMode, data.is_free, data.or_unlocked, data.event_id]);
-
-    const handleModeChange = (mode: "regular" | "event") => {
-        setProcessingMode(mode);
-        if (mode === "event") {
-            setData("is_free", true);
-            setData("or_unlocked", false);
         }
     };
 

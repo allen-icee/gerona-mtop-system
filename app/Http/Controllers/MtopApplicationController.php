@@ -124,7 +124,7 @@ class MtopApplicationController extends Controller
             'officials' => $officials,
             'activeEvents' => $activeEvents,
             'holidays' => $holidays,
-            'occupied_body_numbers' => (object) $this->getOccupiedBodyNumbers()
+            'occupied_body_numbers' => (object) $this->getOccupiedBodyNumbers(),
         ]);
     }
 
@@ -232,6 +232,8 @@ class MtopApplicationController extends Controller
                 'mt_number' => $mtop->mt_number,
                 'operator_name' => $mtop->first_name . ' ' . $mtop->last_name,
             ])->with('message', $message);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             return redirect()->back()->withErrors(['mt_number' => 'System error preventing creation: ' . $e->getMessage()])->withInput();
         }
@@ -350,7 +352,13 @@ class MtopApplicationController extends Controller
                 if ($application->franchise_id) {
                     $franchise = MtopFranchise::find($application->franchise_id);
                     if ($franchise) {
-                        $this->handleBodyNumberReassignment($validated['body_number'] ?? null, filter_var($validated['force_reassign'] ?? false, FILTER_VALIDATE_BOOLEAN), $franchise->id);
+                        $currentBodyNumber = (string)($franchise->body_number ?? $application->body_number ?? '');
+                        $newBodyNumber = (string)($validated['body_number'] ?? '');
+
+                        if (!empty($newBodyNumber) && $newBodyNumber !== $currentBodyNumber) {
+                            $this->handleBodyNumberReassignment($newBodyNumber, filter_var($validated['force_reassign'] ?? false, FILTER_VALIDATE_BOOLEAN), $franchise->id);
+                        }
+
                         $franchise->update([
                             'mt_number' => $final_mt_number,
                             'body_number' => $validated['body_number'] ?? $franchise->body_number,
@@ -379,6 +387,8 @@ class MtopApplicationController extends Controller
                 'mt_number' => $application->mt_number,
                 'operator_name' => $application->first_name . ' ' . $application->last_name . ($application->suffix ? ' ' . $application->suffix : ''),
             ])->with('message', 'Record updated successfully!');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             return redirect()->back()->withErrors(['mt_number' => $e->getMessage()])->withInput();
         }
@@ -705,26 +715,34 @@ class MtopApplicationController extends Controller
 
                 if ($oldApp->franchise_id) {
                     $franchise = MtopFranchise::where('id', $oldApp->franchise_id)->first();
-                    $this->handleBodyNumberReassignment($validated['body_number'] ?? null, filter_var($validated['force_reassign'] ?? false, FILTER_VALIDATE_BOOLEAN), $franchise->id);
-                    $franchise->update([
-                        'mt_number' => $final_mt_number,
-                        'body_number' => $validated['body_number'] ?? null,
-                        'last_name' => $validated['last_name'],
-                        'first_name' => $validated['first_name'],
-                        'middle_name' => $validated['middle_name'],
-                        'suffix' => $validated['suffix'],
-                        'address' => $validated['address'],
-                        'make_type' => $validated['make_type'],
-                        'engine_motor_no' => $validated['engine_motor_no'],
-                        'chassis_no' => $validated['chassis_no'],
-                        'plate_no' => $validated['plate_no'],
-                        'show_paid_by' => filter_var($validated['show_paid_by'] ?? false, FILTER_VALIDATE_BOOLEAN),
-                        'paid_by_last_name' => $validated['paid_by_last_name'] ?? null,
-                        'paid_by_first_name' => $validated['paid_by_first_name'] ?? null,
-                        'paid_by_middle_name' => $validated['paid_by_middle_name'] ?? null,
-                        'paid_by_suffix' => $validated['paid_by_suffix'] ?? null,
-                    ]);
-                    $this->queueForSync('mtop_franchises', $franchise->fresh()->toArray());
+                    if ($franchise) {
+                        $currentBodyNumber = (string)($franchise->body_number ?? $oldApp->body_number ?? '');
+                        $newBodyNumber = (string)($validated['body_number'] ?? '');
+
+                        if (!empty($newBodyNumber) && ($newBodyNumber !== $currentBodyNumber || $franchise->status !== 'active')) {
+                            $this->handleBodyNumberReassignment($newBodyNumber, filter_var($validated['force_reassign'] ?? false, FILTER_VALIDATE_BOOLEAN), $franchise->id);
+                        }
+
+                        $franchise->update([
+                            'mt_number' => $final_mt_number,
+                            'body_number' => $validated['body_number'] ?? null,
+                            'last_name' => $validated['last_name'],
+                            'first_name' => $validated['first_name'],
+                            'middle_name' => $validated['middle_name'],
+                            'suffix' => $validated['suffix'],
+                            'address' => $validated['address'],
+                            'make_type' => $validated['make_type'],
+                            'engine_motor_no' => $validated['engine_motor_no'],
+                            'chassis_no' => $validated['chassis_no'],
+                            'plate_no' => $validated['plate_no'],
+                            'show_paid_by' => filter_var($validated['show_paid_by'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                            'paid_by_last_name' => $validated['paid_by_last_name'] ?? null,
+                            'paid_by_first_name' => $validated['paid_by_first_name'] ?? null,
+                            'paid_by_middle_name' => $validated['paid_by_middle_name'] ?? null,
+                            'paid_by_suffix' => $validated['paid_by_suffix'] ?? null,
+                        ]);
+                        $this->queueForSync('mtop_franchises', $franchise->fresh()->toArray());
+                    }
                 }
 
                 $applicationData = $validated;
@@ -751,6 +769,8 @@ class MtopApplicationController extends Controller
                 'mt_number' => $newApp->mt_number,
                 'operator_name' => $newApp->first_name . ' ' . $newApp->last_name . ($newApp->suffix ? ' ' . $newApp->suffix : ''),
             ])->with('message', 'Renewal successful!');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             return redirect()->back()->withErrors(['mt_number' => $e->getMessage()])->withInput();
         }
@@ -838,27 +858,35 @@ class MtopApplicationController extends Controller
 
                 if ($oldApp->franchise_id) {
                     $franchise = MtopFranchise::where('id', $oldApp->franchise_id)->first();
-                    $this->handleBodyNumberReassignment($validated['body_number'] ?? null, filter_var($validated['force_reassign'] ?? false, FILTER_VALIDATE_BOOLEAN), $franchise->id);
-                    $franchise->update([
-                        'mt_number' => $final_mt_number,
-                        'body_number' => $validated['body_number'] ?? null,
-                        'last_name' => $validated['last_name'],
-                        'first_name' => $validated['first_name'],
-                        'middle_name' => $validated['middle_name'],
-                        'suffix' => $validated['suffix'],
-                        'address' => $validated['address'],
-                        'contact_number' => $validated['contact_number'] ?? null,
-                        'make_type' => $validated['make_type'],
-                        'engine_motor_no' => $validated['engine_motor_no'],
-                        'chassis_no' => $validated['chassis_no'],
-                        'plate_no' => $validated['plate_no'],
-                        'show_paid_by' => filter_var($validated['show_paid_by'] ?? false, FILTER_VALIDATE_BOOLEAN),
-                        'paid_by_last_name' => $validated['paid_by_last_name'] ?? null,
-                        'paid_by_first_name' => $validated['paid_by_first_name'] ?? null,
-                        'paid_by_middle_name' => $validated['paid_by_middle_name'] ?? null,
-                        'paid_by_suffix' => $validated['paid_by_suffix'] ?? null,
-                    ]);
-                    $this->queueForSync('mtop_franchises', $franchise->fresh()->toArray());
+                    if ($franchise) {
+                        $currentBodyNumber = (string)($franchise->body_number ?? $oldApp->body_number ?? '');
+                        $newBodyNumber = (string)($validated['body_number'] ?? '');
+
+                        if (!empty($newBodyNumber) && ($newBodyNumber !== $currentBodyNumber || $franchise->status !== 'active')) {
+                            $this->handleBodyNumberReassignment($newBodyNumber, filter_var($validated['force_reassign'] ?? false, FILTER_VALIDATE_BOOLEAN), $franchise->id);
+                        }
+
+                        $franchise->update([
+                            'mt_number' => $final_mt_number,
+                            'body_number' => $validated['body_number'] ?? null,
+                            'last_name' => $validated['last_name'],
+                            'first_name' => $validated['first_name'],
+                            'middle_name' => $validated['middle_name'],
+                            'suffix' => $validated['suffix'],
+                            'address' => $validated['address'],
+                            'contact_number' => $validated['contact_number'] ?? null,
+                            'make_type' => $validated['make_type'],
+                            'engine_motor_no' => $validated['engine_motor_no'],
+                            'chassis_no' => $validated['chassis_no'],
+                            'plate_no' => $validated['plate_no'],
+                            'show_paid_by' => filter_var($validated['show_paid_by'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                            'paid_by_last_name' => $validated['paid_by_last_name'] ?? null,
+                            'paid_by_first_name' => $validated['paid_by_first_name'] ?? null,
+                            'paid_by_middle_name' => $validated['paid_by_middle_name'] ?? null,
+                            'paid_by_suffix' => $validated['paid_by_suffix'] ?? null,
+                        ]);
+                        $this->queueForSync('mtop_franchises', $franchise->fresh()->toArray());
+                    }
                 }
 
                 $applicationData = $validated;
@@ -885,6 +913,8 @@ class MtopApplicationController extends Controller
                 'mt_number' => $newApp->mt_number,
                 'operator_name' => $newApp->first_name . ' ' . $newApp->last_name . ($newApp->suffix ? ' ' . $newApp->suffix : ''),
             ])->with('message', 'Ownership transferred successfully!');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             return redirect()->back()->withErrors(['mt_number' => $e->getMessage()])->withInput();
         }
