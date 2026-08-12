@@ -186,13 +186,13 @@ export default function PrintLayout({ settings }: { settings: any }) {
 
     const ToggleSwitch = ({ label, checked, onChange }: any) => (
         <Switch.Group as="div" className="flex items-center justify-between">
-            <Switch.Label className="mr-3 text-sm font-medium text-gray-700">
+            <Switch.Label className="mr-3 text-[11px] font-bold text-slate-700 uppercase tracking-wide">
                 {label}
             </Switch.Label>
             <Switch
                 checked={checked}
                 onChange={onChange}
-                className={`${checked ? "bg-blue-600" : "bg-gray-200"} relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2`}
+                className={`${checked ? "bg-blue-600" : "bg-slate-300"} relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none`}
             >
                 <span
                     aria-hidden="true"
@@ -214,22 +214,21 @@ export default function PrintLayout({ settings }: { settings: any }) {
                 processing={processing}
             />
 
-            <div className="py-6 sm:py-12">
+            <div className="py-6 sm:py-12 pb-24">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <div className="bg-slate-50 overflow-hidden shadow-sm sm:rounded border border-slate-200 p-5">
                         <form
                             onSubmit={submit}
-                            className="p-4 sm:p-8 space-y-8"
+                            className="space-y-8"
                         >
-                            <div className="border-b border-gray-200 pb-8">
+                            <div className="border-b border-slate-200 pb-8">
                                 <div className="md:flex md:items-center md:justify-between mb-6">
                                     <div>
-                                        <h3 className="text-lg font-bold text-gray-900">
+                                        <h3 className="text-base font-extrabold text-slate-800">
                                             Permit Header Image
                                         </h3>
-                                        <p className="text-xs text-gray-500 mt-1">
-                                            Recommended size: 1000x200px (PNG or
-                                            JPG).
+                                        <p className="text-[11px] text-slate-500 font-bold uppercase tracking-wide mt-0.5">
+                                            Recommended size: 1000x200px (PNG or JPG).
                                         </p>
                                     </div>
                                     <div className="mt-4 md:mt-0">
@@ -249,12 +248,12 @@ export default function PrintLayout({ settings }: { settings: any }) {
 
                                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                                     <div className="lg:col-span-4 space-y-4">
-                                        <div className="flex flex-col gap-3">
-                                            <label className="cursor-pointer w-full bg-white border border-gray-300 shadow-sm hover:bg-gray-50 text-gray-700 px-4 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 group">
+                                        <div className="flex flex-col gap-2">
+                                            <label className="cursor-pointer w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-4 py-2 rounded text-sm font-bold transition-all flex items-center justify-center gap-1.5 border border-indigo-200 shadow-sm group">
                                                 <Icon
                                                     icon="solar:gallery-send-bold-duotone"
-                                                    width="22"
-                                                    className="text-blue-600 group-hover:-translate-y-0.5 transition-transform"
+                                                    width="16"
+                                                    className="text-slate-600 group-hover:-translate-y-0.5 transition-transform"
                                                 />{" "}
                                                 Choose Picture
                                                 <input
@@ -273,11 +272,11 @@ export default function PrintLayout({ settings }: { settings: any }) {
                                                 <button
                                                     type="button"
                                                     onClick={handleRemoveHeader}
-                                                    className="w-full text-red-600 bg-red-50 hover:bg-red-100 px-4 py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 border border-red-100"
+                                                    className="w-full text-red-600 bg-red-50 hover:bg-red-100 px-4 py-2 rounded text-sm font-bold transition-all flex items-center justify-center gap-1.5 border border-red-100"
                                                 >
                                                     <Icon
                                                         icon="solar:trash-bin-trash-bold"
-                                                        width="18"
+                                                        width="16"
                                                     />{" "}
                                                     Reset to Default
                                                 </button>
@@ -287,11 +286,11 @@ export default function PrintLayout({ settings }: { settings: any }) {
                                     <div
                                         className={`lg:col-span-8 transition-opacity duration-300 ${data.show_header ? "opacity-100" : "opacity-50 grayscale"}`}
                                     >
-                                        <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 bg-gray-50 flex items-center justify-center min-h-32 relative overflow-hidden group">
+                                        <div className="border-2 border-dashed border-slate-300 rounded p-4 bg-white flex items-center justify-center min-h-32 relative overflow-hidden group">
                                             {(!settings.header_path &&
                                                 !data.header) ||
                                             data.remove_header ? (
-                                                <span className="absolute top-2 right-2 bg-gray-200 text-gray-600 text-[10px] font-extrabold px-2 py-1 rounded uppercase tracking-wider z-10 shadow-sm">
+                                                <span className="absolute top-2 right-2 bg-slate-200 text-slate-600 text-[10px] font-extrabold px-2 py-1 rounded uppercase tracking-wider z-10 shadow-sm">
                                                     Default
                                                 </span>
                                             ) : null}
@@ -306,10 +305,10 @@ export default function PrintLayout({ settings }: { settings: any }) {
                                                     }}
                                                 />
                                             ) : (
-                                                <span className="text-gray-400 font-medium text-sm flex items-center gap-2">
+                                                <span className="text-slate-400 font-bold text-[11px] uppercase tracking-wide flex items-center gap-1.5">
                                                     <Icon
                                                         icon="solar:gallery-remove-bold-duotone"
-                                                        width="24"
+                                                        width="16"
                                                     />{" "}
                                                     No image selected
                                                 </span>
@@ -319,15 +318,14 @@ export default function PrintLayout({ settings }: { settings: any }) {
                                 </div>
                             </div>
 
-                            <div className="border-b border-gray-200 pb-8 mt-8">
+                            <div className="border-b border-slate-200 pb-8 mt-8">
                                 <div className="md:flex md:items-center md:justify-between mb-6">
                                     <div>
-                                        <h3 className="text-lg font-bold text-gray-900">
+                                        <h3 className="text-base font-extrabold text-slate-800">
                                             Permit Footer Image
                                         </h3>
-                                        <p className="text-xs text-gray-500 mt-1">
-                                            Recommended size: 1000x150px (PNG or
-                                            JPG).
+                                        <p className="text-[11px] text-slate-500 font-bold uppercase tracking-wide mt-0.5">
+                                            Recommended size: 1000x150px (PNG or JPG).
                                         </p>
                                     </div>
                                     <div className="mt-4 md:mt-0">
@@ -347,12 +345,12 @@ export default function PrintLayout({ settings }: { settings: any }) {
 
                                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                                     <div className="lg:col-span-4 space-y-4">
-                                        <div className="flex flex-col gap-3">
-                                            <label className="cursor-pointer w-full bg-white border border-gray-300 shadow-sm hover:bg-gray-50 text-gray-700 px-4 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 group">
+                                        <div className="flex flex-col gap-2">
+                                            <label className="cursor-pointer w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-4 py-2 rounded text-sm font-bold transition-all flex items-center justify-center gap-1.5 border border-indigo-200 shadow-sm group">
                                                 <Icon
                                                     icon="solar:gallery-send-bold-duotone"
-                                                    width="22"
-                                                    className="text-blue-600 group-hover:-translate-y-0.5 transition-transform"
+                                                    width="16"
+                                                    className="text-slate-600 group-hover:-translate-y-0.5 transition-transform"
                                                 />{" "}
                                                 Choose Picture
                                                 <input
@@ -371,11 +369,11 @@ export default function PrintLayout({ settings }: { settings: any }) {
                                                 <button
                                                     type="button"
                                                     onClick={handleRemoveFooter}
-                                                    className="w-full text-red-600 bg-red-50 hover:bg-red-100 px-4 py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 border border-red-100"
+                                                    className="w-full text-red-600 bg-red-50 hover:bg-red-100 px-4 py-2 rounded text-sm font-bold transition-all flex items-center justify-center gap-1.5 border border-red-100"
                                                 >
                                                     <Icon
                                                         icon="solar:trash-bin-trash-bold"
-                                                        width="18"
+                                                        width="16"
                                                     />{" "}
                                                     Remove Picture
                                                 </button>
@@ -385,7 +383,7 @@ export default function PrintLayout({ settings }: { settings: any }) {
                                     <div
                                         className={`lg:col-span-8 transition-opacity duration-300 ${data.show_footer ? "opacity-100" : "opacity-50 grayscale"}`}
                                     >
-                                        <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 bg-gray-50 flex items-center justify-center min-h-32 relative overflow-hidden">
+                                        <div className="border-2 border-dashed border-slate-300 rounded p-4 bg-white flex items-center justify-center min-h-32 relative overflow-hidden">
                                             {footerPreview ? (
                                                 <img
                                                     src={footerPreview}
@@ -393,10 +391,10 @@ export default function PrintLayout({ settings }: { settings: any }) {
                                                     className="max-h-32 w-auto object-contain rounded drop-shadow-sm"
                                                 />
                                             ) : (
-                                                <span className="text-gray-400 font-medium text-sm flex items-center gap-2">
+                                                <span className="text-slate-400 font-bold text-[11px] uppercase tracking-wide flex items-center gap-1.5">
                                                     <Icon
                                                         icon="solar:gallery-remove-bold-duotone"
-                                                        width="24"
+                                                        width="16"
                                                     />{" "}
                                                     No image selected
                                                 </span>
@@ -409,24 +407,23 @@ export default function PrintLayout({ settings }: { settings: any }) {
                             <div className="pb-4 mt-8">
                                 <div className="md:flex md:items-center md:justify-between mb-6">
                                     <div>
-                                        <h3 className="text-lg font-bold text-gray-900">
+                                        <h3 className="text-base font-extrabold text-slate-800">
                                             Operator ID Background
                                         </h3>
-                                        <p className="text-xs text-gray-500 mt-1">
-                                            Recommended size: 400x650px (PNG or
-                                            JPG).
+                                        <p className="text-[11px] text-slate-500 font-bold uppercase tracking-wide mt-0.5">
+                                            Recommended size: 400x650px (PNG or JPG).
                                         </p>
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                                     <div className="lg:col-span-4 space-y-4">
-                                        <div className="flex flex-col gap-3">
-                                            <label className="cursor-pointer w-full bg-white border border-gray-300 shadow-sm hover:bg-gray-50 text-gray-700 px-4 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 group">
+                                        <div className="flex flex-col gap-2">
+                                            <label className="cursor-pointer w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-4 py-2 rounded text-sm font-bold transition-all flex items-center justify-center gap-1.5 border border-indigo-200 shadow-sm group">
                                                 <Icon
                                                     icon="solar:gallery-send-bold-duotone"
-                                                    width="22"
-                                                    className="text-blue-600 group-hover:-translate-y-0.5 transition-transform"
+                                                    width="16"
+                                                    className="text-slate-600 group-hover:-translate-y-0.5 transition-transform"
                                                 />{" "}
                                                 Choose Picture
                                                 <input
@@ -447,11 +444,11 @@ export default function PrintLayout({ settings }: { settings: any }) {
                                                     onClick={
                                                         handleRemoveIdBackground
                                                     }
-                                                    className="w-full text-red-600 bg-red-50 hover:bg-red-100 px-4 py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 border border-red-100"
+                                                    className="w-full text-red-600 bg-red-50 hover:bg-red-100 px-4 py-2 rounded text-sm font-bold transition-all flex items-center justify-center gap-1.5 border border-red-100"
                                                 >
                                                     <Icon
                                                         icon="solar:trash-bin-trash-bold"
-                                                        width="18"
+                                                        width="16"
                                                     />{" "}
                                                     Reset to Default
                                                 </button>
@@ -459,11 +456,11 @@ export default function PrintLayout({ settings }: { settings: any }) {
                                         </div>
                                     </div>
                                     <div className="lg:col-span-8">
-                                        <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 bg-gray-50 flex items-center justify-center min-h-75 relative overflow-hidden">
+                                        <div className="border-2 border-dashed border-slate-300 rounded p-4 bg-white flex items-center justify-center min-h-75 relative overflow-hidden">
                                             {(!settings.id_background_path &&
                                                 !data.id_background) ||
                                             data.remove_id_background ? (
-                                                <span className="absolute top-2 right-2 bg-gray-200 text-gray-600 text-[10px] font-extrabold px-2 py-1 rounded uppercase tracking-wider z-10 shadow-sm">
+                                                <span className="absolute top-2 right-2 bg-slate-200 text-slate-600 text-[10px] font-extrabold px-2 py-1 rounded uppercase tracking-wider z-10 shadow-sm">
                                                     Default
                                                 </span>
                                             ) : null}
@@ -472,16 +469,16 @@ export default function PrintLayout({ settings }: { settings: any }) {
                                                 <img
                                                     src={idBackgroundPreview}
                                                     alt="ID Background Preview"
-                                                    className="max-h-80 w-auto object-contain drop-shadow-md rounded-lg"
+                                                    className="max-h-80 w-auto object-contain drop-shadow-md rounded"
                                                     onError={(e) => {
                                                         e.currentTarget.src = `/images/ID_BG_1.png?t=${new Date().getTime()}`;
                                                     }}
                                                 />
                                             ) : (
-                                                <span className="text-gray-400 font-medium text-sm flex items-center gap-2">
+                                                <span className="text-slate-400 font-bold text-[11px] uppercase tracking-wide flex items-center gap-1.5">
                                                     <Icon
                                                         icon="solar:gallery-remove-bold-duotone"
-                                                        width="24"
+                                                        width="16"
                                                     />{" "}
                                                     No image selected
                                                 </span>
@@ -491,18 +488,19 @@ export default function PrintLayout({ settings }: { settings: any }) {
                                 </div>
                             </div>
 
-                            <div className="flex items-center justify-end pt-6 border-t border-gray-100">
-                                <PrimaryButton
+                            <div className="flex items-center justify-end pt-6 border-t border-slate-200">
+                                <button
                                     disabled={processing || !isDirty}
-                                    className={`w-full sm:w-auto justify-center px-8 py-4 text-base ${!isDirty ? "opacity-50 cursor-not-allowed" : "shadow-lg hover:-translate-y-0.5"}`}
+                                    type="submit"
+                                    className={`w-full sm:w-auto flex items-center justify-center px-4 py-2 text-sm rounded font-bold transition-all ${!isDirty ? "opacity-50 cursor-not-allowed bg-slate-400 text-white" : "bg-blue-600 hover:bg-blue-700 text-white shadow"}`}
                                 >
                                     <Icon
                                         icon="solar:diskette-bold"
-                                        className="mr-2"
-                                        width="20"
+                                        className="mr-1.5"
+                                        width="16"
                                     />{" "}
                                     Save Print Settings
-                                </PrimaryButton>
+                                </button>
                             </div>
                         </form>
                     </div>

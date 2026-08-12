@@ -18,6 +18,9 @@ import PermitPreview, {
     formatExpiry,
 } from "./Partials/PermitPreview";
 import PrintSuccessModal from "./Partials/PrintSuccessModal";
+import DiscardModal from "@/Components/DiscardModal";
+import ReassignConfirmationModal from "@/Components/ReassignConfirmationModal";
+import useDirtyNavigation from "@/Hooks/useDirtyNavigation";
 
 interface MtopApplication {
     id: number;
@@ -95,9 +98,10 @@ export default function Edit({
     const [step, setStep] = useState(1);
     const [showMobilePreview, setShowMobilePreview] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [showReassignModal, setShowReassignModal] = useState(false);
     const [updatedRecord, setUpdatedRecord] = useState<any>(null);
 
-    const { data, setData, put, processing, errors, isDirty, reset } = useForm({
+    const { data, setData, put, processing, errors, isDirty, reset, transform } = useForm({
         last_name: application.last_name || "",
         first_name: application.first_name || "",
         middle_name: application.middle_name || "",
@@ -125,7 +129,8 @@ export default function Edit({
         or_date: application.or_date ? application.or_date.split(" ")[0] : "",
         punong_bayan: application.punong_bayan || "",
         authorized_official: application.authorized_official || "",
-        event_id: application.event_id || null,
+        event_id: application.event_id || "",
+        force_reassign: false,
         is_free: !!application.is_free,
 
         or_unlocked:
@@ -146,6 +151,8 @@ export default function Edit({
         paid_by_suffix: application.paid_by_suffix || "",
     });
 
+    const { showDiscardModal, confirmDiscard, cancelDiscard } = useDirtyNavigation(isDirty);
+
     useEffect(() => {
         updateClientMonitor(data, activeEvents);
     }, [data, activeEvents]);
@@ -163,7 +170,6 @@ export default function Edit({
 
     const isStepValid = (stepNum: number) => {
         if (stepNum === 1 || stepNum === 2) {
-            // @ts-ignore
             const fields = requiredFields[stepNum];
             const basicCheck = fields.every(
                 (field: string) =>
@@ -195,8 +201,6 @@ export default function Edit({
                     return false;
                 if (!isValidDate(data.cedula_date)) return false;
             }
-
-            // REMOVED OR STRICT VALIDATION HERE
         }
 
         return true;
@@ -213,7 +217,6 @@ export default function Edit({
         if (data.show_cedula && !isValidDate(data.cedula_date))
             return toast.error("Invalid Cedula Date.");
 
-        // UPDATED OR STRICT VALIDATION HERE (Only check if date is actually typed)
         if (data.show_or && data.or_date && !isValidDate(data.or_date))
             return toast.error("Invalid Official Receipt Date.");
 
@@ -244,6 +247,16 @@ export default function Edit({
                 }
             }
         }
+
+        executeSubmit();
+    };
+
+    const executeSubmit = (forceReassign = false) => {
+        transform((currentData) => ({
+            ...currentData,
+            force_reassign: forceReassign,
+        }));
+
         put(route("mtop.update", application.id), {
             onSuccess: (page: any) => {
                 const successData = page.props.flash?.success_data;
@@ -253,18 +266,25 @@ export default function Edit({
                 }
             },
             onError: (errs) => {
-                if (errs.mt_number) {
-                    setStep(1);
-                    toast.error(errs.mt_number);
-                } else if (errs.body_number) {
-                    setStep(2);
-                    toast.error(errs.body_number);
-                } else {
-                    const firstError = Object.values(errs)[0];
-                    toast.error(
-                        firstError || "Failed to update record. Check inputs.",
-                    );
+                if (errs.body_number === 'REASSIGN_CONFIRMATION_REQUIRED') {
+                    setShowReassignModal(true);
+                    return;
                 }
+
+                const step1Fields = ['last_name', 'first_name', 'middle_name', 'address', 'mt_number', 'transaction_date', 'driver_first_name', 'driver_last_name'];
+                const step2Fields = ['make_type', 'engine_motor_no', 'chassis_no', 'plate_no', 'body_number'];
+                
+                const firstErrKey = Object.keys(errs)[0];
+                if (!firstErrKey) return;
+                
+                if (step1Fields.includes(firstErrKey)) {
+                    setStep(1);
+                } else if (step2Fields.includes(firstErrKey)) {
+                    setStep(2);
+                } else {
+                    setStep(3);
+                }
+                toast.error(errs[firstErrKey]);
             },
         });
     };
@@ -279,7 +299,6 @@ export default function Edit({
                 );
         }
         if (step === 3) {
-            // UPDATED DATE VALIDATIONS TO ALLOW EMPTY FIELDS
             if (data.show_cedula && data.cedula_date && !isValidDate(data.cedula_date))
                 return toast.error("Invalid Cedula Date! Check calendar.");
             if (data.show_or && data.or_date && !isValidDate(data.or_date))
@@ -364,55 +383,63 @@ export default function Edit({
     };
 
     return (
+        <>
+        <DiscardModal
+            show={showDiscardModal}
+            onClose={cancelDiscard}
+            onDiscard={confirmDiscard}
+        />
         <AuthenticatedLayout
             header={
                 <div className="flex justify-between items-center">
                     <div className="flex items-center gap-3">
-                        <div className="bg-blue-100 p-2 rounded-lg text-blue-600 hidden sm:flex items-center justify-center shadow-inner">
+                        <Link href={route("mtop.index")} className="text-slate-500 hover:text-slate-700 transition-colors p-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg">
+                            <Icon icon="solar:alt-arrow-left-bold" width="20" />
+                        </Link>
+                        <div className="bg-orange-100 p-1.5 rounded-md text-orange-600 hidden sm:flex items-center justify-center shadow-inner">
                             <Icon
                                 icon="solar:pen-new-square-bold-duotone"
-                                width="24"
+                                width="20"
                             />
                         </div>
                         <div>
                             <div className="flex items-center gap-3">
-                                <h2 className="font-extrabold text-lg sm:text-xl hover:cursor-pointer  text-gray-800 tracking-tight flex items-center gap-2">
+                                <h2 className="font-extrabold text-base sm:text-lg text-gray-800 tracking-tight flex items-center gap-2">
                                     <Icon
                                         icon="solar:pen-new-square-bold-duotone"
-                                        width="20"
-                                        className="sm:hidden text-blue-600"
+                                        width="18"
+                                        className="sm:hidden text-orange-600"
                                     />
-                                    Edit Application
+                                    Edit Record
                                 </h2>
-                                <span className="text-[10px] sm:text-xs font-black bg-blue-100 text-blue-800 px-2.5 py-1 rounded-md shadow-sm border border-blue-200 tracking-wider">
+                                <span className="text-[10px] sm:text-xs font-black bg-orange-100 text-orange-800 px-2.5 py-1 rounded-md shadow-sm border border-orange-200 tracking-wider">
                                     {application.mt_number}
                                 </span>
                             </div>
-                            <p className="text-xs text-gray-500 font-medium mt-0.5 hidden sm:block">
-                                Update the information for this MTOP record.
+                            <p className="text-[11px] text-gray-500 font-medium hidden sm:block">
+                                Update the details for this MTOP franchise.
                             </p>
                         </div>
                     </div>
-
                     <button
                         type="button"
                         onClick={() => setShowMobilePreview(true)}
-                        className="xl:hidden flex items-center gap-2 px-3 py-2 bg-indigo-50 text-indigo-600 font-bold text-xs rounded-lg hover:bg-indigo-100 transition-colors border border-indigo-100 shadow-sm"
+                        className="xl:hidden flex items-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-600 font-bold text-xs rounded-lg hover:bg-indigo-100 transition-colors border border-indigo-100 shadow-sm"
                         title="Preview Permit"
                     >
-                        <Icon icon="solar:eye-bold" width="18" />
-                        <span className="hidden sm:inline">Preview Permit</span>
+                        <Icon icon="solar:eye-bold" width="16" />
+                        <span className="hidden sm:inline">Preview</span>
                     </button>
                 </div>
             }
         >
             <Head title={`Edit ${application.mt_number}`} />
 
-            <div className="py-6 pb-24 sm:pb-12">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+            <div className="py-6 sm:py-8 pb-24">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="grid grid-cols-1 items-start transition-all duration-500 ease-in-out xl:grid-cols-12 gap-6">
-                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 transition-all duration-500 relative xl:col-span-7">
-                            <div className="flex border-b border-gray-200 bg-gray-50 rounded-t-lg">
+                                <div className="bg-white rounded-lg shadow-sm border border-slate-200 transition-all duration-500 relative xl:col-span-7 flex flex-col">
+                                    <div className="flex border-b border-slate-200 bg-slate-50 rounded-t-lg shrink-0">
                                 <button
                                     type="button"
                                     onClick={() => setStep(1)}
@@ -542,13 +569,8 @@ export default function Edit({
                                     />
                                 </div>
 
-                                <div className="hidden sm:flex items-center justify-between mt-8 pt-4 border-t border-gray-100">
-                                    <Link
-                                        href={route("mtop.index")}
-                                        className="text-gray-500 hover:text-red-600 text-sm font-bold"
-                                    >
-                                        Cancel
-                                    </Link>
+                                <div className="flex justify-end gap-2 pt-5 border-t border-slate-200 mt-2">
+
                                     <div className="flex gap-3">
                                         {step > 1 && (
                                             <button
@@ -557,7 +579,7 @@ export default function Edit({
                                                     e.preventDefault();
                                                     setStep(step - 1);
                                                 }}
-                                                className="px-4 py-2 bg-gray-100 text-gray-700 hover:cursor-pointer rounded-md font-bold hover:bg-gray-200 text-sm"
+                                                className="px-4 py-2 bg-slate-100 text-slate-700 rounded text-sm font-bold hover:bg-slate-200 transition-colors"
                                             >
                                                 Back
                                             </button>
@@ -569,11 +591,11 @@ export default function Edit({
                                                     e.preventDefault();
                                                     handleNext();
                                                 }}
-                                                className={
+                                                className={`px-4 py-2 text-sm font-bold ${
                                                     !isStepValid(step)
-                                                        ? "opacity-50 cursor-not-allowed"
-                                                        : "hover:cursor-pointer "
-                                                }
+                                                        ? "opacity-50 cursor-not-allowed bg-blue-600 text-white"
+                                                        : "bg-blue-600 hover:bg-blue-700 text-white"
+                                                }`}
                                             >
                                                 Next Step{" "}
                                                 <Icon
@@ -584,12 +606,7 @@ export default function Edit({
                                         ) : (
                                             <PrimaryButton
                                                 type="submit"
-                                                className={`bg-blue-800 hover:bg-blue-900 ${!isDirty ||
-                                                    processing ||
-                                                    !isFormValid
-                                                    ? "opacity-50 cursor-not-allowed"
-                                                    : ""
-                                                    }`}
+                                                className={`px-4 py-2 text-sm font-bold bg-emerald-600 hover:bg-emerald-700 text-white ${!isDirty || processing || !isFormValid ? "opacity-50 cursor-not-allowed" : ""}`}
                                                 disabled={
                                                     processing ||
                                                     !isDirty ||
@@ -618,67 +635,6 @@ export default function Edit({
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <PrintSuccessModal
-                show={showSuccessModal}
-                onClose={() => setShowSuccessModal(false)}
-                action="update"
-                data={updatedRecord}
-            />
-
-            <div className="fixed bottom-0 left-0 right-0 bg-white border-t hover:cursor-pointer  border-gray-200 p-4 sm:hidden z-40 flex justify-between items-center safe-area-pb">
-                <Link
-                    href={route("mtop.index")}
-                    className="text-gray-500 font-bold text-sm"
-                >
-                    Cancel
-                </Link>
-                <div className="flex gap-2">
-                    {step > 1 && (
-                        <button
-                            type="button"
-                            onClick={(e) => {
-                                e.preventDefault();
-                                setStep(step - 1);
-                            }}
-                            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-bold text-sm"
-                        >
-                            Back
-                        </button>
-                    )}
-                    {step < 3 ? (
-                        <button
-                            type="button"
-                            onClick={(e) => {
-                                e.preventDefault();
-                                handleNext();
-                            }}
-                            className={`px-6 py-2 bg-blue-600 text-white rounded-lg font-bold text-sm flex items-center ${!isStepValid(step)
-                                ? "opacity-70 cursor-not-allowed"
-                                : ""
-                                }`}
-                        >
-                            Next{" "}
-                            <Icon
-                                icon="solar:arrow-right-bold"
-                                className="ml-1"
-                            />
-                        </button>
-                    ) : (
-                        <button
-                            onClick={submit}
-                            disabled={processing || !isDirty || !isFormValid}
-                            className={`px-6 py-2 bg-blue-800 text-white rounded-lg font-bold text-sm flex items-center ${!isDirty || processing || !isFormValid
-                                ? "opacity-50 cursor-not-allowed"
-                                : ""
-                                }`}
-                        >
-                            <Icon icon="solar:diskette-bold" className="mr-1" />{" "}
-                            Update
-                        </button>
-                    )}
                 </div>
             </div>
 
@@ -717,6 +673,24 @@ export default function Edit({
                     </div>
                 </div>
             </Modal>
+
+            <PrintSuccessModal
+                show={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                action="update"
+                data={updatedRecord}
+            />
+
+            <ReassignConfirmationModal
+                show={showReassignModal}
+                bodyNumber={data.body_number}
+                onClose={() => setShowReassignModal(false)}
+                onConfirm={() => {
+                    setShowReassignModal(false);
+                    executeSubmit(true);
+                }}
+            />
         </AuthenticatedLayout>
+        </>
     );
 }

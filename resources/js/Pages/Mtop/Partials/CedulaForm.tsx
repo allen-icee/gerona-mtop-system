@@ -1,5 +1,5 @@
 //GeronaMTOP\resources\js\Pages\Mtop\Partials\CedulaForm.tsx
-import InputGroup from "@/Components/InputGroup";
+
 import { Icon } from "@iconify/react";
 
 export default function CedulaForm({ data, setData, errors, onKeyDown }: any) {
@@ -34,38 +34,43 @@ export default function CedulaForm({ data, setData, errors, onKeyDown }: any) {
                 <div
                     className={`grid grid-cols-1 gap-2 p-2 rounded-xl bg-white transition-all ${!data.show_cedula ? "opacity-50 blur-[0.4px] pointer-events-none" : ""}`}
                 >
-                    <InputGroup
-                        id="cedula_number"
-                        label="Cedula No."
-                        name="cedula_number"
-                        value={data.cedula_number}
-                        onChange={(e: any) => {
-                            const val = e.target.value
-                                .toUpperCase()
-                                .replace(/[^A-Z0-9-]/g, "");
-                            setData("cedula_number", val);
-                        }}
-                        icon="solar:hashtag-square-bold"
-                        placeholder="e.g. 12345678"
-                        required={data.show_cedula}
-                        disabled={!data.show_cedula}
-                        onKeyDown={onKeyDown}
-                    />
-                    <InputGroup
-                        id="cedula_date"
-                        label="Date Issued"
-                        name="cedula_date"
-                        type="date"
-                        max="9999-12-31"
-                        value={data.cedula_date}
-                        onChange={(e: any) =>
-                            setData("cedula_date", e.target.value)
-                        }
-                        icon="solar:calendar-date-bold"
-                        required={data.show_cedula}
-                        disabled={!data.show_cedula}
-                        onKeyDown={onKeyDown}
-                    />
+                    <div>
+                        <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1.5">
+                            Cedula No. {data.show_cedula && <span className="text-red-500">*</span>}
+                        </label>
+                        <input
+                            type="text"
+                            name="cedula_number"
+                            value={data.cedula_number || ""}
+                            onChange={(e) => {
+                                const val = e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, "");
+                                setData("cedula_number", val);
+                            }}
+                            placeholder="e.g. 12345678"
+                            required={data.show_cedula}
+                            disabled={!data.show_cedula}
+                            className={`block w-full px-3 py-2 text-sm font-semibold bg-white border ${errors?.cedula_number ? "border-red-500" : "border-slate-300"} rounded shadow-sm focus:border-red-500 focus:ring-1 focus:ring-red-500`}
+                            onKeyDown={onKeyDown}
+                        />
+                        {errors?.cedula_number && <p className="mt-1 text-[11px] font-bold text-red-500">{errors.cedula_number}</p>}
+                    </div>
+                    <div>
+                        <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1.5">
+                            Date Issued {data.show_cedula && <span className="text-red-500">*</span>}
+                        </label>
+                        <input
+                            type="date"
+                            name="cedula_date"
+                            max="9999-12-31"
+                            value={data.cedula_date || ""}
+                            onChange={(e) => setData("cedula_date", e.target.value)}
+                            required={data.show_cedula}
+                            disabled={!data.show_cedula}
+                            className={`block w-full px-3 py-2 text-sm font-semibold bg-white border ${errors?.cedula_date ? "border-red-500" : "border-slate-300"} rounded shadow-sm focus:border-red-500 focus:ring-1 focus:ring-red-500`}
+                            onKeyDown={onKeyDown}
+                        />
+                        {errors?.cedula_date && <p className="mt-1 text-[11px] font-bold text-red-500">{errors.cedula_date}</p>}
+                    </div>
                 </div>
 
                 {!data.show_cedula && (

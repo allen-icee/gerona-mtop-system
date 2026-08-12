@@ -1,5 +1,5 @@
 //GeronaMTOP\resources\js\Pages\Mtop\Partials\OfficialReceiptForm.tsx
-import InputGroup from "@/Components/InputGroup";
+
 import { Icon } from "@iconify/react";
 import { useEffect } from "react";
 
@@ -85,39 +85,42 @@ export default function OfficialReceiptForm({
                         : ""
                         }`}
                 >
-                    <InputGroup
-                        id="or_number"
-                        label="O.R. No."
-                        name="or_number"
-                        value={data.or_number}
-                        onChange={(e: any) => {
-                            const val = e.target.value
-                                .toUpperCase()
-                                .replace(/[^A-Z0-9 -]/g, "");
-                            setData("or_number", val);
-                        }}
-                        icon="solar:hashtag-square-bold"
-                        placeholder="e.g. OR 2026-0001"
-                        required={false} // CHANGED: Now completely optional
-                        disabled={locked}
-                        onKeyDown={onKeyDown}
-                    />
+                    <div>
+                        <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1.5">
+                            O.R. No.
+                        </label>
+                        <input
+                            type="text"
+                            name="or_number"
+                            value={data.or_number || ""}
+                            onChange={(e) => {
+                                const val = e.target.value.toUpperCase().replace(/[^A-Z0-9 -]/g, "");
+                                setData("or_number", val);
+                            }}
+                            placeholder="e.g. OR 2026-0001"
+                            disabled={locked}
+                            className={`block w-full px-3 py-2 text-sm font-semibold bg-white border ${errors?.or_number ? "border-red-500" : "border-slate-300"} rounded shadow-sm focus:border-red-500 focus:ring-1 focus:ring-red-500`}
+                            onKeyDown={onKeyDown}
+                        />
+                        {errors?.or_number && <p className="mt-1 text-[11px] font-bold text-red-500">{errors.or_number}</p>}
+                    </div>
 
-                    <InputGroup
-                        id="or_date"
-                        label="Date Paid"
-                        name="or_date"
-                        type="date"
-                        max="9999-12-31"
-                        value={data.or_date}
-                        onChange={(e: any) =>
-                            setData("or_date", e.target.value)
-                        }
-                        icon="solar:calendar-date-bold"
-                        required={false} // CHANGED: Now completely optional
-                        disabled={locked}
-                        onKeyDown={onKeyDown}
-                    />
+                    <div>
+                        <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1.5">
+                            Date Paid
+                        </label>
+                        <input
+                            type="date"
+                            name="or_date"
+                            max="9999-12-31"
+                            value={data.or_date || ""}
+                            onChange={(e) => setData("or_date", e.target.value)}
+                            disabled={locked}
+                            className={`block w-full px-3 py-2 text-sm font-semibold bg-white border ${errors?.or_date ? "border-red-500" : "border-slate-300"} rounded shadow-sm focus:border-red-500 focus:ring-1 focus:ring-red-500`}
+                            onKeyDown={onKeyDown}
+                        />
+                        {errors?.or_date && <p className="mt-1 text-[11px] font-bold text-red-500">{errors.or_date}</p>}
+                    </div>
                 </div>
 
                 {locked && (

@@ -141,29 +141,29 @@ export default function Dashboard({
         <AuthenticatedLayout>
             <Head title="Dashboard" />
 
-            <div className="py-6 sm:py-12">
+            <div className="py-4 sm:py-6">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     {user.role === "admin" && (
-                        <div className="bg-linear-to-r from-blue-900 to-blue-800 text-white overflow-hidden shadow-lg rounded-xl mb-8">
-                            <div className="p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-                                <div className="flex items-center gap-4 w-full sm:w-auto text-center sm:text-left">
-                                    <div className="p-3 bg-white/10 rounded-full shrink-0 hidden sm:block">
+                        <div className="bg-gradient-to-r from-blue-800 to-blue-700 text-white overflow-hidden shadow-sm rounded-lg mb-4 border border-blue-900">
+                            <div className="p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+                                <div className="flex items-center gap-3 w-full sm:w-auto text-center sm:text-left">
+                                    <div className="p-2 bg-white/10 rounded-full shrink-0 hidden sm:block">
                                         <Icon
                                             icon="solar:server-square-bold"
-                                            width="32"
+                                            width="28"
                                         />
                                     </div>
                                     <div className="w-full">
-                                        <h3 className="text-lg font-bold flex items-center justify-center sm:justify-start gap-2">
+                                        <h3 className="text-base font-bold flex items-center justify-center sm:justify-start gap-2">
                                             MTOP System Online
-                                            <span className="relative flex h-3 w-3">
+                                            <span className="relative flex h-2.5 w-2.5">
                                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                                                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                                                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
                                             </span>
                                         </h3>
-                                        <p className="text-blue-100 text-sm mt-1">
+                                        <p className="text-blue-100 text-xs mt-0.5">
                                             Staff Access Link:{" "}
-                                            <span className="font-mono bg-black/20 px-2 py-1 rounded select-all font-bold text-yellow-300">
+                                            <span className="font-mono bg-black/20 px-1.5 py-0.5 rounded select-all font-semibold text-blue-50">
                                                 {staffLink}
                                             </span>
                                         </p>
@@ -171,18 +171,18 @@ export default function Dashboard({
                                 </div>
 
                                 <div className="text-center sm:text-right mt-2 sm:mt-0">
-                                    <div className="text-xs sm:text-sm font-medium text-blue-200 uppercase tracking-widest mb-0.5">
+                                    <div className="text-[11px] font-medium text-blue-200 uppercase tracking-widest mb-0.5">
                                         {currentTime.toLocaleDateString(
                                             "en-US",
                                             {
-                                                weekday: "long",
+                                                weekday: "short",
                                                 year: "numeric",
-                                                month: "long",
+                                                month: "short",
                                                 day: "numeric",
                                             },
                                         )}
                                     </div>
-                                    <div className="text-2xl sm:text-3xl font-black tabular-nums tracking-wide text-white">
+                                    <div className="text-xl sm:text-2xl font-bold tabular-nums tracking-wide text-white">
                                         {currentTime.toLocaleTimeString(
                                             "en-US",
                                             {
@@ -196,105 +196,102 @@ export default function Dashboard({
                         </div>
                     )}
 
-                    <div className="bg-white overflow-hidden shadow-sm rounded-lg sm:rounded-lg mb-6 border-l-4 border-blue-900">
-                        <div className="p-6 text-gray-900 flex items-center justify-between">
+                    <div className="bg-slate-50 border border-slate-200 shadow-sm rounded-lg mb-4 border-l-4 border-l-blue-600">
+                        <div className="p-4 text-slate-800 flex items-center justify-between">
                             <div
                                 onClick={handleSecretClick}
-                                className="cursor-pointer select-none rounded-lg transition-colors hover:bg-gray-50 p-2 -ml-2"
+                                className="cursor-pointer select-none rounded-lg transition-colors hover:bg-slate-100 p-2 -ml-2"
                             >
-                                <h3 className="text-xl sm:text-2xl font-bold text-blue-900">
+                                <h3 className="text-lg sm:text-xl font-bold text-slate-700">
                                     {greeting}, {user.name}!
                                 </h3>
-                                <p className="text-sm sm:text-base text-gray-600 mt-1">
+                                <p className="text-xs sm:text-sm text-slate-600 mt-0.5">
                                     Welcome to the Gerona Municipal Tricycle
                                     Operator Permit (MTOP) System.
                                 </p>
-                                <p className="text-xs sm:text-sm text-gray-500 mt-1">
-                                    Serbisyong May Puso, Serbisyong Totoo!
-                                </p>
                             </div>
 
                             <div
-                                className={`hidden sm:flex items-center justify-center p-4 rounded-full ${iconColor}`}
+                                className={`hidden sm:flex items-center justify-center p-3 rounded-full ${iconColor} opacity-90`}
                             >
-                                <Icon icon={greetingIcon} width="42" />
+                                <Icon icon={greetingIcon} width="32" />
                             </div>
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 mb-8">
-                        <div className="bg-white p-6 rounded-lg shadow-sm border-t-4 border-blue-500 flex items-center justify-between">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mb-6">
+                        <div className="bg-slate-50 p-4 border border-slate-200 rounded-lg shadow-sm border-t-4 border-t-blue-500 flex items-center justify-between">
                             <div>
-                                <p className="text-gray-500 text-xs sm:text-sm font-medium uppercase tracking-wider">
+                                <p className="text-slate-500 text-[11px] sm:text-xs font-semibold uppercase tracking-wider">
                                     Total MTOP Records
                                 </p>
-                                <p className="text-2xl sm:text-3xl font-bold text-gray-800 mt-1">
+                                <p className="text-xl sm:text-2xl font-bold text-slate-700 mt-0.5">
                                     {totalMtop}
                                 </p>
                             </div>
-                            <div className="p-3 bg-blue-50 rounded-full text-blue-600">
+                            <div className="p-2 bg-blue-100/50 rounded-full text-blue-600">
                                 <Icon
                                     icon="solar:folder-with-files-bold"
-                                    width="28"
-                                    className="sm:w-8 sm:h-8"
+                                    width="24"
+                                    className="sm:w-7 sm:h-7"
                                 />
                             </div>
                         </div>
 
-                        <div className="bg-white p-6 rounded-lg shadow-sm border-t-4 border-orange-400 flex items-center justify-between">
+                        <div className="bg-slate-50 p-4 border border-slate-200 rounded-lg shadow-sm border-t-4 border-t-orange-400 flex items-center justify-between">
                             <div>
-                                <p className="text-gray-500 text-xs sm:text-sm font-medium uppercase tracking-wider">
+                                <p className="text-slate-500 text-[11px] sm:text-xs font-semibold uppercase tracking-wider">
                                     Added Record Today
                                 </p>
-                                <p className="text-2xl sm:text-3xl font-bold text-gray-800 mt-1">
+                                <p className="text-xl sm:text-2xl font-bold text-slate-700 mt-0.5">
                                     {newToday}
                                 </p>
                             </div>
-                            <div className="p-3 bg-orange-50 rounded-full text-orange-500">
+                            <div className="p-2 bg-orange-100/50 rounded-full text-orange-500">
                                 <Icon
                                     icon="solar:clock-circle-bold"
-                                    width="28"
-                                    className="sm:w-8 sm:h-8"
+                                    width="24"
+                                    className="sm:w-7 sm:h-7"
                                 />
                             </div>
                         </div>
 
-                        <div className="bg-white p-6 rounded-lg shadow-sm border-t-4 border-green-500 flex items-center justify-between sm:col-span-2 md:col-span-1">
+                        <div className="bg-slate-50 p-4 border border-slate-200 rounded-lg shadow-sm border-t-4 border-t-emerald-500 flex items-center justify-between sm:col-span-2 md:col-span-1">
                             <div>
-                                <p className="text-gray-500 text-xs sm:text-sm font-medium uppercase tracking-wider">
+                                <p className="text-slate-500 text-[11px] sm:text-xs font-semibold uppercase tracking-wider">
                                     System Users
                                 </p>
-                                <p className="text-2xl sm:text-3xl font-bold text-gray-800 mt-1">
+                                <p className="text-xl sm:text-2xl font-bold text-slate-700 mt-0.5">
                                     {totalUsers}
                                 </p>
                             </div>
-                            <div className="p-3 bg-green-50 rounded-full text-green-600">
+                            <div className="p-2 bg-emerald-100/50 rounded-full text-emerald-600">
                                 <Icon
                                     icon="solar:users-group-rounded-bold"
-                                    width="28"
-                                    className="sm:w-8 sm:h-8"
+                                    width="24"
+                                    className="sm:w-7 sm:h-7"
                                 />
                             </div>
                         </div>
                     </div>
 
-                    <h3 className="text-lg font-bold text-gray-700 mb-4 px-1">
+                    <h3 className="text-sm font-bold text-slate-600 mb-3 px-1 uppercase tracking-wider">
                         Quick Actions
                     </h3>
-                    <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                         <Link
                             href={route("mtop.create")}
-                            className="group bg-white p-4 sm:p-6 rounded-xl shadow-sm hover:shadow-md transition-all border border-gray-100 flex flex-col items-center text-center gap-3 hover:-translate-y-1"
+                            className="group bg-slate-50 p-3 sm:p-4 rounded-lg shadow-sm hover:shadow transition-all border border-slate-200 flex flex-col items-center text-center gap-2 hover:-translate-y-0.5"
                         >
-                            <div className="p-3 sm:p-4 bg-blue-50 text-blue-600 rounded-full group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                            <div className="p-2 sm:p-3 bg-blue-100/50 text-blue-600 rounded-full group-hover:bg-blue-600 group-hover:text-white transition-colors">
                                 <Icon
                                     icon="solar:add-circle-bold"
-                                    width="24"
-                                    className="sm:w-8 sm:h-8"
+                                    width="20"
+                                    className="sm:w-6 sm:h-6"
                                 />
                             </div>
-                            <span className="font-semibold text-sm sm:text-base text-gray-700 group-hover:text-blue-900 leading-tight">
-                                Add New Operator
+                            <span className="font-semibold text-xs sm:text-sm text-slate-700 group-hover:text-blue-800 leading-tight">
+                                Add Operator
                             </span>
                         </Link>
 
@@ -303,32 +300,32 @@ export default function Dashboard({
                             <>
                                 <Link
                                     href={route("settings.print.edit")}
-                                    className="group bg-white p-4 sm:p-6 rounded-xl shadow-sm hover:shadow-md transition-all border border-gray-100 flex flex-col items-center text-center gap-3 hover:-translate-y-1"
+                                    className="group bg-slate-50 p-3 sm:p-4 rounded-lg shadow-sm hover:shadow transition-all border border-slate-200 flex flex-col items-center text-center gap-2 hover:-translate-y-0.5"
                                 >
-                                    <div className="p-3 sm:p-4 bg-purple-50 text-purple-600 rounded-full group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                                    <div className="p-2 sm:p-3 bg-purple-100/50 text-purple-600 rounded-full group-hover:bg-purple-600 group-hover:text-white transition-colors">
                                         <Icon
                                             icon="solar:printer-bold"
-                                            width="24"
-                                            className="sm:w-8 sm:h-8"
+                                            width="20"
+                                            className="sm:w-6 sm:h-6"
                                         />
                                     </div>
-                                    <span className="font-semibold text-sm sm:text-base text-gray-700 group-hover:text-orange-900 leading-tight">
+                                    <span className="font-semibold text-xs sm:text-sm text-slate-700 group-hover:text-purple-800 leading-tight">
                                         Print Settings
                                     </span>
                                 </Link>
 
                                 <button
                                     onClick={() => setShowImportModal(true)}
-                                    className="group cursor-pointer bg-white p-4 sm:p-6 rounded-xl shadow-sm hover:shadow-md transition-all border border-gray-100 flex flex-col items-center text-center gap-3 hover:-translate-y-1 w-full"
+                                    className="group cursor-pointer bg-slate-50 p-3 sm:p-4 rounded-lg shadow-sm hover:shadow transition-all border border-slate-200 flex flex-col items-center text-center gap-2 hover:-translate-y-0.5 w-full"
                                 >
-                                    <div className="p-3 sm:p-4 bg-orange-50 text-orange-600 rounded-full group-hover:bg-orange-600 group-hover:text-white transition-colors">
+                                    <div className="p-2 sm:p-3 bg-orange-100/50 text-orange-600 rounded-full group-hover:bg-orange-600 group-hover:text-white transition-colors">
                                         <Icon
                                             icon="solar:import-bold"
-                                            width="24"
-                                            className="sm:w-8 sm:h-8"
+                                            width="20"
+                                            className="sm:w-6 sm:h-6"
                                         />
                                     </div>
-                                    <span className="font-semibold text-sm sm:text-base text-gray-700 group-hover:text-emerald-900 leading-tight">
+                                    <span className="font-semibold text-xs sm:text-sm text-slate-700 group-hover:text-orange-800 leading-tight">
                                         Import Data
                                     </span>
                                 </button>
@@ -341,17 +338,17 @@ export default function Dashboard({
                                     />
                                     <button
                                         type="submit"
-                                        className="group cursor-pointer bg-white p-4 sm:p-6 rounded-xl shadow-sm hover:shadow-md transition-all border border-gray-100 flex flex-col items-center text-center gap-3 hover:-translate-y-1 w-full"
+                                        className="group cursor-pointer bg-slate-50 p-3 sm:p-4 rounded-lg shadow-sm hover:shadow transition-all border border-slate-200 flex flex-col items-center text-center gap-2 hover:-translate-y-0.5 w-full"
                                     >
-                                        <div className="p-3 sm:p-4 bg-red-50 text-red-600 rounded-full group-hover:bg-red-600 group-hover:text-white transition-colors">
+                                        <div className="p-2 sm:p-3 bg-red-100/50 text-red-600 rounded-full group-hover:bg-red-600 group-hover:text-white transition-colors">
                                             <Icon
                                                 icon="solar:shield-bold"
-                                                width="24"
-                                                className="sm:w-8 sm:h-8"
+                                                width="20"
+                                                className="sm:w-6 sm:h-6"
                                             />
                                         </div>
-                                        <span className="font-semibold text-sm sm:text-base text-gray-700 group-hover:text-red-900 leading-tight">
-                                            Backup Database
+                                        <span className="font-semibold text-xs sm:text-sm text-slate-700 group-hover:text-red-800 leading-tight">
+                                            Backup DB
                                         </span>
                                     </button>
                                 </form>
@@ -427,44 +424,44 @@ export default function Dashboard({
                 onClose={() => setShowEasterEgg(false)}
                 maxWidth="sm"
             >
-                <div className="relative p-8 text-center bg-white/80 backdrop-blur-xl rounded-2xl overflow-hidden border border-gray-200 shadow-[0_20px_60px_rgba(0,0,0,0.08)]">
-                    <div className="absolute top-0 left-0 w-full h-1.5 bg-linear-to-r from-blue-500 via-purple-500 to-emerald-500"></div>
+                <div className="relative p-6 text-center bg-slate-50/90 backdrop-blur-xl rounded-2xl overflow-hidden border border-slate-200 shadow-xl">
+                    <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-500 via-purple-500 to-emerald-500"></div>
 
-                    <div className="absolute -top-10 -right-10 w-32 h-32 bg-blue-400/20 rounded-full blur-3xl"></div>
-                    <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-purple-400/20 rounded-full blur-3xl"></div>
+                    <div className="absolute -top-10 -right-10 w-32 h-32 bg-blue-400/20 rounded-full blur-3xl pointer-events-none"></div>
+                    <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-purple-400/20 rounded-full blur-3xl pointer-events-none"></div>
 
                     <div className="relative">
-                        <div className="mx-auto w-20 h-20 flex items-center justify-center rounded-2xl bg-linear-to-br from-blue-500 to-purple-500 shadow-lg shadow-blue-200 animate-pulse">
+                        <div className="mx-auto w-16 h-16 flex items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-purple-500 shadow-md shadow-blue-200/50 animate-pulse">
                             <Icon
                                 icon="solar:code-square-bold-duotone"
-                                width="40"
+                                width="32"
                                 className="text-white"
                             />
                         </div>
                     </div>
 
-                    <h2 className="mt-6 text-3xl font-black text-gray-900">
+                    <h2 className="mt-4 text-2xl font-black text-slate-800">
                         <span className="text-blue-600">System</span>{" "}
                         <span className="text-purple-600">Developers</span>
                     </h2>
 
-                    <p className="text-sm text-gray-500 mt-2 italic">
+                    <p className="text-xs text-slate-500 mt-1 italic">
                         Hi! We are the first creator as OJT Students:
                     </p>
 
-                    <div className="mt-2 space-y-2">
-                        <div className="p-4 bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 font-semibold text-gray-700 hover:text-blue-600">
+                    <div className="mt-4 space-y-2">
+                        <div className="p-3 bg-white/60 rounded-xl border border-slate-200 shadow-sm hover:shadow hover:-translate-y-0.5 transition-all duration-300 font-semibold text-slate-700 hover:text-blue-600 text-sm">
                             Allen Icee A. Dequiros
                         </div>
 
-                        <div className="p-4 bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 font-semibold text-gray-700 hover:text-purple-600">
+                        <div className="p-3 bg-white/60 rounded-xl border border-slate-200 shadow-sm hover:shadow hover:-translate-y-0.5 transition-all duration-300 font-semibold text-slate-700 hover:text-purple-600 text-sm">
                             Elijah Miguel V. Inocencio
                         </div>
                     </div>
 
                     <button
                         onClick={() => setShowEasterEgg(false)}
-                        className="mt-4 w-full py-3 rounded-xl font-bold text-white bg-linear-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-[1.02]"
+                        className="mt-5 w-full py-2.5 rounded-xl font-bold text-white bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 transition-all duration-300 shadow hover:shadow-md hover:scale-[1.02]"
                     >
                         ⊂⁠(⁠≽^•⩊•^≼⁠)⁠つ
                     </button>

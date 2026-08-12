@@ -20,7 +20,6 @@ class BackupDatabase extends Command
 
         $sourcePath = database_path('database.sqlite');
 
-        // DYNAMIC PATH: Uses Google Drive folder if set in .env, otherwise defaults to local storage
         $backupFolder = env('BACKUP_DRIVE_PATH', storage_path('app/private/backups'));
 
         if (!File::exists($backupFolder)) {
@@ -45,7 +44,6 @@ class BackupDatabase extends Command
             if ($records->isNotEmpty()) {
                 $csvContent = fopen('php://temp', 'r+');
 
-                // EXACT same headers as MtopApplicationController export
                 fputcsv($csvContent, [
                     'Control No',
                     'Transaction Date',
@@ -101,7 +99,7 @@ class BackupDatabase extends Command
                         $driverName,
                         $row->address,
                         $row->contact_number,
-                        $exportBodyNum, // <-- Fixed double comma and uses the clean variable
+                        $exportBodyNum,
                         $row->plate_no,
                         $row->make_type,
                         $row->engine_motor_no,

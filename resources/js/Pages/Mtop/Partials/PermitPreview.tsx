@@ -16,7 +16,7 @@ export default function PermitPreview({
     activeEvents?: any[];
     holidays?: any[];
 }) {
-    const [scale, setScale] = useState(1);
+    const [scale, setScale] = useState(0.85);
     const containerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {

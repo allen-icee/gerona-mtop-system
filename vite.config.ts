@@ -23,7 +23,7 @@ export default defineConfig(({ mode }) => {
             port: 5173,
             cors: true,
             hmr: {
-            host: "192.168.10.198",
+            host: env.VITE_HMR_HOST || "192.168.10.198",
             },
         },
 

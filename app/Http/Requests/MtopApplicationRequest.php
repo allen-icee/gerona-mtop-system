@@ -60,6 +60,7 @@ class MtopApplicationRequest extends FormRequest
             'show_auth_official' => 'boolean',
             'show_cedula' => 'boolean',
             'show_or' => 'boolean',
+            'force_reassign' => 'boolean',
 
             'plate_no' => [
                 'nullable',
@@ -81,15 +82,7 @@ class MtopApplicationRequest extends FormRequest
             $rules['mt_number'] = ['required', 'string', 'max:20'];
         }
 
-        $bodyNumberRule = Rule::unique('mtop_franchises', 'body_number')->where(function ($query) {
-            return $query->where('status', 'active');
-        });
-
-        if ($franchiseId) {
-            $bodyNumberRule->ignore($franchiseId);
-        }
-
-        $rules['body_number'] = ['nullable', 'regex:/^[0-9]+$/', $bodyNumberRule];
+        $rules['body_number'] = ['nullable', 'regex:/^[0-9]+$/'];
 
         if (strtoupper($request->input('plate_no')) !== 'FOR REGISTRATION') {
             $plateRule = Rule::unique('mtop_franchises', 'plate_no')->where(function ($query) {
@@ -109,7 +102,6 @@ class MtopApplicationRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'body_number.unique' => 'This Body Number is currently active and assigned to another operator.',
             'plate_no.unique' => 'This Plate Number is already registered to an active franchise.'
         ];
     }

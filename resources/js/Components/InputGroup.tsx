@@ -37,16 +37,16 @@ export default function InputGroup({
             </InputLabel>
             <div className="relative">
                 {icon && (
-                    <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-gray-600 z-10">
-                        <Icon icon={icon} width="20" height="20" />
+                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-500 z-10">
+                        <Icon icon={icon} width="16" height="16" />
                     </div>
                 )}
 
                 <TextInput
                     id={id}
                     type={currentType}
-                    className={`block w-full h-12 font-semibold text-gray-900 ${icon ? "pl-11" : "pl-4"} ${showPasswordToggle ? "pr-11" : "pr-4"
-                        } border-gray-400 bg-white focus:border-blue-600 focus:ring-blue-600 rounded-lg shadow-sm transition-all text-sm`}
+                    className={`block w-full py-2 font-semibold text-slate-900 ${icon ? "pl-9" : "pl-3"} ${showPasswordToggle ? "pr-9" : "pr-3"
+                        } border-slate-300 bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600 rounded shadow-sm transition-all text-sm`}
                     {...props}
                 />
 

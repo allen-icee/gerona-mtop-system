@@ -22,7 +22,6 @@ class ImportOldSqliteData extends Command
             return;
         }
 
-        // DYNAMIC CONNECTION: This prevents the "Connection not configured" error
         Config::set('database.connections.sqlite_backup', [
             'driver' => 'sqlite',
             'database' => $backupPath,
@@ -44,7 +43,7 @@ class ImportOldSqliteData extends Command
 
         DB::transaction(function () use ($oldFranchises, $oldApplications) {
             $franchiseCount = 0;
-            $seenBodyNumbers = []; // Track body numbers in memory to prevent duplicate crashes
+            $seenBodyNumbers = [];
 
             foreach ($oldFranchises as $franchise) {
                 $exists = DB::table('mtop_franchises')->where('mt_number', $franchise->mt_number)->exists();
@@ -52,25 +51,20 @@ class ImportOldSqliteData extends Command
                 if (!$exists) {
                     $franchiseData = (array) $franchise;
 
-                    // 1. Sanitize the body_number first
                     $bodyNum = trim($franchiseData['body_number'] ?? '');
                     if ($bodyNum === '' || strtoupper($bodyNum) === 'N/A' || strtoupper($bodyNum) === 'NONE') {
                         $franchiseData['body_number'] = null;
                     }
 
-                    // 2. Explicitly prevent duplicates using both memory and database checks
                     if ($franchiseData['body_number'] !== null) {
                         $bNum = $franchiseData['body_number'];
 
-                        // Check if we already saw this body_number during this import loop OR if it's already in the DB
                         $bodyExistsInDb = DB::table('mtop_franchises')->where('body_number', $bNum)->exists();
 
                         if (in_array($bNum, $seenBodyNumbers) || $bodyExistsInDb) {
-                            // Automatically set duplicates to null so the import continues safely
                             $this->warn("Duplicate body_number '{$bNum}' found for mt_number '{$franchiseData['mt_number']}'. Setting to NULL.");
                             $franchiseData['body_number'] = null;
                         } else {
-                            // Remember this body number so we don't insert it again
                             $seenBodyNumbers[] = $bNum;
                         }
                     }
@@ -87,8 +81,6 @@ class ImportOldSqliteData extends Command
 
                 if (!$exists) {
                     $data = (array) $app;
-
-                    // Fallback for new columns in case the old DB doesn't have them
                     if (!array_key_exists('is_manual_validity', $data)) $data['is_manual_validity'] = 0;
                     if (!array_key_exists('is_free', $data)) $data['is_free'] = 0;
                     if (!array_key_exists('show_paid_by', $data)) $data['show_paid_by'] = 0;

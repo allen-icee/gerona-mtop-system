@@ -266,29 +266,32 @@ export const openClientMonitor = (
             <title>Client Review Monitor</title>
             <script src="https://cdn.tailwindcss.com"></script>
             <style>
-                body { background: #e5e7eb; display: flex; align-items: flex-start; justify-content: center; min-height: 100vh; margin: 0; padding: 2rem; font-family: ui-sans-serif, system-ui, sans-serif; overflow-y: auto; }
-                #zoom-wrapper { width: 100%; max-width: 1100px; transform-origin: top center; margin-top: 2rem; margin-bottom: 4rem; transition: zoom 0.1s ease; }
-                .container { background: white; padding: 3rem; border-radius: 1.5rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); width: 100%; }
-                table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; font-size: 14pt; }
-                td, th { border: 2px solid #111827; padding: 1rem; }
-                .label { background-color: #bfdbfe; color: #1e3a8a; font-weight: bold; width: 35%; text-transform: uppercase; }
+                body { background: #e5e7eb; display: flex; align-items: flex-start; justify-content: center; min-height: 100vh; margin: 0; padding: 1rem; font-family: ui-sans-serif, system-ui, sans-serif; overflow-y: auto; }
+                #zoom-wrapper { width: 100%; max-width: 1100px; transform-origin: top center; margin-top: 1rem; margin-bottom: 1rem; transition: zoom 0.1s ease; }
+                .container { background: white; padding: 1.5rem; border-radius: 1rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); width: 100%; }
+                table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; font-size: 1rem; }
+                @media (min-width: 768px) { table { font-size: 1.125rem; } }
+                @media (min-width: 1024px) { table { font-size: 1.25rem; } }
+                td, th { border: 2px solid #111827; padding: 0.5rem 0.75rem; word-break: break-word; }
+                .label { background-color: #bfdbfe; color: #1e3a8a; font-weight: bold; width: 35%; text-transform: uppercase; font-size: 0.875em; }
                 .value { font-weight: 900; color: #111827; text-transform: uppercase; }
-                .header-table th { background-color: #93c5fd; color: #1e3a8a; font-weight: bold; text-align: center; font-size: 13pt; text-transform: uppercase; letter-spacing: 0.05em; }
+                .header-table th { background-color: #93c5fd; color: #1e3a8a; font-weight: bold; text-align: center; font-size: 0.9em; text-transform: uppercase; letter-spacing: 0.05em; }
                 .help-toast { position: fixed; top: 1rem; right: 1rem; background: rgba(17, 24, 39, 0.8); color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.875rem; font-weight: bold; pointer-events: none; z-index: 50; }
+                .grid-responsive { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
             </style>
         </head>
         <body>
-            <div class="help-toast">Ctrl + Scroll to Zoom</div>
+            <div class="help-toast hidden sm:block">Ctrl + Scroll to Zoom</div>
             <div id="zoom-wrapper">
                 <div class="container">
-                    <div style="text-align: center; margin-bottom: 2rem; border-bottom: 4px solid #111827; padding-bottom: 1rem;">
-                        <h1 class="text-4xl font-black uppercase text-gray-900 m-0 tracking-tight">Information Preview</h1>
-                        <p class="text-gray-500 font-bold mt-2 text-lg">Please verify if all details below are correct.</p>
+                    <div style="text-align: center; margin-bottom: 1.5rem; border-bottom: 3px solid #111827; padding-bottom: 0.75rem;">
+                        <h1 class="text-2xl sm:text-3xl font-black uppercase text-gray-900 m-0 tracking-tight">Information Preview</h1>
+                        <p class="text-gray-500 font-bold mt-1 text-sm sm:text-base">Please verify if all details below are correct.</p>
                     </div>
 
                     <table>
-                        <tr><td class="label">NAME</td><td class="value text-2xl" id="c-name">${payload.name}</td></tr>
-                        <tr><td class="label">USAPIN BILANG</td><td class="value text-red-600 text-2xl" id="c-mt_number">${payload.mt_number}</td></tr>
+                        <tr><td class="label">NAME</td><td class="value text-xl sm:text-2xl" id="c-name">${payload.name}</td></tr>
+                        <tr><td class="label">USAPIN BILANG</td><td class="value text-red-600 text-xl sm:text-2xl" id="c-mt_number">${payload.mt_number}</td></tr>
                         <tr><td class="label">DATE</td><td class="value" id="c-date">${payload.date}</td></tr>
                         <tr><td class="label">BARANGAY</td><td class="value" id="c-address">${payload.address}</td></tr>
                         <tr><td class="label">EXPIRY DATE</td><td class="value text-indigo-700" id="c-expiry">${payload.expiry}</td></tr>
@@ -309,13 +312,13 @@ export const openClientMonitor = (
                         </tr>
                     </table>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
-                        <table>
+                    <div class="grid-responsive">
+                        <table style="margin-bottom: 0;">
                             <tr class="header-table"><th colspan="2">CEDULA</th></tr>
                             <tr><td class="label" style="width: 40%;">NUMBER</td><td class="value font-mono tracking-wider" id="c-cedula_number">${payload.cedula_number}</td></tr>
                             <tr><td class="label">DATE</td><td class="value" id="c-cedula_date">${payload.cedula_date}</td></tr>
                         </table>
-                        <table>
+                        <table style="margin-bottom: 0;">
                             <tr class="header-table"><th colspan="2">OFFICIAL RECEIPT</th></tr>
                             <tr><td class="label" style="width: 40%;">NUMBER</td><td class="value font-mono tracking-wider" id="c-or_number">${payload.or_number}</td></tr>
                             <tr><td class="label">DATE</td><td class="value" id="c-or_date">${payload.or_date}</td></tr>

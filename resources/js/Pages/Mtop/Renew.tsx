@@ -17,6 +17,9 @@ import PermitPreview, {
     updateClientMonitor,
     formatExpiry,
 } from "./Partials/PermitPreview";
+import DiscardModal from "@/Components/DiscardModal";
+import ReassignConfirmationModal from "@/Components/ReassignConfirmationModal";
+import useDirtyNavigation from "@/Hooks/useDirtyNavigation";
 
 const isValidDate = (dateString: string): boolean => {
     if (!dateString) return false;
@@ -42,38 +45,32 @@ export default function Renew({
 }: any) {
     const [step, setStep] = useState(1);
     const [showMobilePreview, setShowMobilePreview] = useState(false);
+    const [showReassignModal, setShowReassignModal] = useState(false);
 
-    const { data, setData, post, processing, errors } = useForm({
+    const { data, setData, post, processing, errors, isDirty, reset, transform } = useForm({
         last_name: application.last_name || "",
         first_name: application.first_name || "",
         middle_name: application.middle_name || "",
         suffix: application.suffix || "",
         address: application.address || "",
         mt_number: application.mt_number || "",
-
-        // Keeps today's date for the new renewal transaction
         transaction_date: new Date().toISOString().split("T")[0],
-
         make_type: application.make_type || "",
         engine_motor_no: application.engine_motor_no || "",
         chassis_no: application.chassis_no || "",
         plate_no: application.plate_no || "",
         body_number: application.body_number || "",
-
-        // Safely pull and format previous docs if carrying them over
         cedula_number: application.cedula_number || "",
         cedula_date: application.cedula_date
             ? application.cedula_date.split(" ")[0]
             : "",
         or_number: application.or_number || "",
         or_date: application.or_date ? application.or_date.split(" ")[0] : "",
-
         punong_bayan: application.punong_bayan || "",
         authorized_official: application.authorized_official || "",
-        event_id: null,
+        event_id: "",
         is_free: false,
         or_unlocked: false,
-
         show_auth_official: !!application.show_auth_official,
         show_cedula: !!application.show_cedula,
         show_or: !!application.show_or,
@@ -81,14 +78,14 @@ export default function Renew({
         valid_until: application.valid_until
             ? application.valid_until.split(" ")[0]
             : "",
-
-        // ADDED MISSING PAID BY STATE INITIALIZATION
         show_paid_by: !!application.show_paid_by,
         paid_by_last_name: application.paid_by_last_name || "",
         paid_by_first_name: application.paid_by_first_name || "",
         paid_by_middle_name: application.paid_by_middle_name || "",
         paid_by_suffix: application.paid_by_suffix || "",
     });
+
+    const { showDiscardModal, confirmDiscard, cancelDiscard } = useDirtyNavigation(isDirty);
 
     useEffect(() => {
         updateClientMonitor(data, activeEvents);
@@ -107,7 +104,6 @@ export default function Renew({
 
     const isStepValid = (stepNum: number) => {
         if (stepNum === 1 || stepNum === 2) {
-            // @ts-ignore
             const fields = requiredFields[stepNum];
             const basicCheck = fields.every(
                 (field: string) =>
@@ -166,9 +162,6 @@ export default function Renew({
         if (requiresOr && !isValidDate(data.or_date))
             return toast.error("Invalid Official Receipt Date.");
 
-        // =================================================================
-        // NEW: PRE-SAVE PROMO WARNING MODAL
-        // =================================================================
         if (data.is_free && data.event_id) {
             const currentEvent =
                 activeEvents?.find((ev: any) => ev.id == data.event_id) ||
@@ -193,11 +186,19 @@ export default function Renew({
                         "Do you want to proceed?",
                     );
 
-                    // If they click "Cancel", we stop the function so it doesn't save!
                     if (!confirmProceed) return;
                 }
             }
         }
+        
+        executeSubmit();
+    };
+
+    const executeSubmit = (forceReassign = false) => {
+        transform((currentData) => ({
+            ...currentData,
+            force_reassign: forceReassign,
+        }));
         post(
             route(
                 window.location.pathname.includes("renew")
@@ -207,18 +208,25 @@ export default function Renew({
             ),
             {
                 onError: (errs) => {
-                    if (errs.mt_number) {
-                        setStep(1);
-                        toast.error(errs.mt_number);
-                    } else if (errs.body_number) {
-                        setStep(2);
-                        toast.error(errs.body_number);
-                    } else {
-                        const firstError = Object.values(errs)[0];
-                        toast.error(
-                            firstError || "Failed to process. Check inputs.",
-                        );
-                    }
+                if (errs.body_number === 'REASSIGN_CONFIRMATION_REQUIRED') {
+                    setShowReassignModal(true);
+                    return;
+                }
+
+                const step1Fields = ['last_name', 'first_name', 'middle_name', 'address', 'mt_number', 'transaction_date', 'driver_first_name', 'driver_last_name'];
+                const step2Fields = ['make_type', 'engine_motor_no', 'chassis_no', 'plate_no', 'body_number'];
+                
+                const firstErrKey = Object.keys(errs)[0];
+                if (!firstErrKey) return;
+                
+                if (step1Fields.includes(firstErrKey)) {
+                    setStep(1);
+                } else if (step2Fields.includes(firstErrKey)) {
+                    setStep(2);
+                } else {
+                    setStep(3);
+                }
+                toast.error(errs[firstErrKey]);    
                 },
             },
         );
@@ -313,56 +321,63 @@ export default function Renew({
     };
 
     return (
+        <>
+        <DiscardModal
+            show={showDiscardModal}
+            onClose={cancelDiscard}
+            onDiscard={confirmDiscard}
+        />
         <AuthenticatedLayout
             header={
                 <div className="flex justify-between items-center">
                     <div className="flex items-center gap-3">
-                        <div className="bg-yellow-100 p-2 rounded-lg text-yellow-600 hidden sm:flex items-center justify-center shadow-inner">
+                        <Link href={route("mtop.index")} className="text-slate-500 hover:text-slate-700 transition-colors p-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg">
+                            <Icon icon="solar:alt-arrow-left-bold" width="20" />
+                        </Link>
+                        <div className="bg-yellow-100 p-1.5 rounded-md text-yellow-600 hidden sm:flex items-center justify-center shadow-inner">
                             <Icon
-                                icon="solar:refresh-circle-bold-duotone"
-                                width="24"
+                                icon="solar:restart-square-bold-duotone"
+                                width="20"
                             />
                         </div>
                         <div>
                             <div className="flex items-center gap-3">
-                                <h2 className="font-extrabold text-lg sm:text-xl text-gray-800 tracking-tight flex items-center gap-2">
+                                <h2 className="font-extrabold text-base sm:text-lg text-gray-800 tracking-tight flex items-center gap-2">
                                     <Icon
-                                        icon="solar:refresh-circle-bold-duotone"
-                                        width="20"
+                                        icon="solar:restart-square-bold-duotone"
+                                        width="18"
                                         className="sm:hidden text-yellow-600"
                                     />
-                                    Renew Application
+                                    Renew Record
                                 </h2>
                                 <span className="text-[10px] sm:text-xs font-black bg-yellow-100 text-yellow-800 px-2.5 py-1 rounded-md shadow-sm border border-yellow-200 tracking-wider">
                                     {application.mt_number}
                                 </span>
                             </div>
-                            <p className="text-xs text-gray-500 font-medium mt-0.5 hidden sm:block">
-                                Process a new 3-year validity for this
-                                franchise.
+                            <p className="text-[11px] text-gray-500 font-medium hidden sm:block">
+                                Process the renewal of this MTOP franchise.
                             </p>
                         </div>
                     </div>
-
                     <button
                         type="button"
                         onClick={() => setShowMobilePreview(true)}
-                        className="xl:hidden flex items-center gap-2 px-3 py-2 bg-indigo-50 text-indigo-600 font-bold text-xs rounded-lg hover:bg-indigo-100 transition-colors border border-indigo-100 shadow-sm"
+                        className="xl:hidden flex items-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-600 font-bold text-xs rounded-lg hover:bg-indigo-100 transition-colors border border-indigo-100 shadow-sm"
                         title="Preview Permit"
                     >
-                        <Icon icon="solar:eye-bold" width="18" />
-                        <span className="hidden sm:inline">Preview Permit</span>
+                        <Icon icon="solar:eye-bold" width="16" />
+                        <span className="hidden sm:inline">Preview</span>
                     </button>
                 </div>
             }
         >
             <Head title={`Renew ${application.mt_number}`} />
 
-            <div className="py-6 pb-24 sm:pb-12">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+            <div className="py-6 sm:py-8 pb-24">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="grid grid-cols-1 items-start transition-all duration-500 ease-in-out xl:grid-cols-12 gap-6">
-                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 transition-all duration-500 relative xl:col-span-7">
-                            <div className="flex border-b border-gray-200 bg-gray-50 rounded-t-lg">
+                                <div className="bg-white rounded-lg shadow-sm border border-slate-200 transition-all duration-500 relative xl:col-span-7 flex flex-col">
+                                    <div className="flex border-b border-slate-200 bg-slate-50 rounded-t-lg shrink-0">
                                 <button
                                     type="button"
                                     onClick={() => setStep(1)}
@@ -490,21 +505,14 @@ export default function Renew({
                                     />
                                 </div>
 
-                                <div className="hidden sm:flex items-center justify-between mt-8 pt-4 border-t border-gray-100">
-                                    <Link
-                                        href={route("mtop.index")}
-                                        className="text-gray-500 hover:text-red-600 text-sm font-bold"
-                                    >
-                                        Cancel
-                                    </Link>
+                                <div className="flex justify-end gap-2 pt-5 border-t border-slate-200 mt-2">
+
                                     <div className="flex gap-3">
                                         {step > 1 && (
                                             <button
                                                 type="button"
-                                                onClick={() =>
-                                                    setStep(step - 1)
-                                                }
-                                                className="px-4 py-2 bg-gray-100 hover:cursor-pointer text-gray-700 rounded-md font-bold hover:bg-gray-200 text-sm"
+                                                onClick={() => setStep(step - 1)}
+                                                className="px-4 py-2 bg-slate-100 text-slate-700 rounded text-sm font-bold hover:bg-slate-200 transition-colors"
                                             >
                                                 Back
                                             </button>
@@ -513,11 +521,11 @@ export default function Renew({
                                             <PrimaryButton
                                                 type="button"
                                                 onClick={handleNext}
-                                                className={
+                                                className={`px-4 py-2 text-sm font-bold ${
                                                     !isStepValid(step)
-                                                        ? "opacity-50 cursor-not-allowed"
-                                                        : "hover:cursor-pointer"
-                                                }
+                                                        ? "opacity-50 cursor-not-allowed bg-blue-600 text-white"
+                                                        : "bg-blue-600 hover:bg-blue-700 text-white"
+                                                }`}
                                             >
                                                 Next Step{" "}
                                                 <Icon
@@ -528,10 +536,8 @@ export default function Renew({
                                         ) : (
                                             <PrimaryButton
                                                 type="submit"
-                                                className={`bg-yellow-600 hover:cursor-pointer  hover:bg-yellow-700 text-white ${processing || !isFormValid ? "opacity-50 cursor-not-allowed" : ""}`}
-                                                disabled={
-                                                    processing || !isFormValid
-                                                }
+                                                className={`px-4 py-2 text-sm font-bold bg-yellow-600 hover:bg-yellow-700 text-white ${processing || !isFormValid ? "opacity-50 cursor-not-allowed" : ""}`}
+                                                disabled={processing || !isFormValid}
                                             >
                                                 <Icon
                                                     icon="solar:diskette-bold"
@@ -555,48 +561,6 @@ export default function Renew({
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <div className="fixed bottom-0 left-0 right-0 bg-white hover:cursor-pointer border-t border-gray-200 p-4 sm:hidden z-40 flex justify-between items-center safe-area-pb">
-                <Link
-                    href={route("mtop.index")}
-                    className="text-gray-500 font-bold text-sm"
-                >
-                    Cancel
-                </Link>
-                <div className="flex gap-2">
-                    {step > 1 && (
-                        <button
-                            type="button"
-                            onClick={() => setStep(step - 1)}
-                            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-bold text-sm"
-                        >
-                            Back
-                        </button>
-                    )}
-                    {step < 3 ? (
-                        <button
-                            type="button"
-                            onClick={handleNext}
-                            className={`px-6 py-2 bg-blue-600 text-white rounded-lg font-bold text-sm flex items-center ${!isStepValid(step) ? "opacity-70 cursor-not-allowed" : ""}`}
-                        >
-                            Next{" "}
-                            <Icon
-                                icon="solar:arrow-right-bold"
-                                className="ml-1"
-                            />
-                        </button>
-                    ) : (
-                        <button
-                            onClick={submit}
-                            disabled={processing || !isFormValid}
-                            className={`px-6 py-2 bg-yellow-600 text-white rounded-lg font-bold text-sm flex items-center ${processing || !isFormValid ? "opacity-50 cursor-not-allowed" : ""}`}
-                        >
-                            <Icon icon="solar:diskette-bold" className="mr-1" />{" "}
-                            Renew
-                        </button>
-                    )}
                 </div>
             </div>
 
@@ -635,6 +599,16 @@ export default function Renew({
                     </div>
                 </div>
             </Modal>
+            <ReassignConfirmationModal
+                show={showReassignModal}
+                bodyNumber={data.body_number}
+                onClose={() => setShowReassignModal(false)}
+                onConfirm={() => {
+                    setShowReassignModal(false);
+                    executeSubmit(true);
+                }}
+            />
         </AuthenticatedLayout>
+        </>
     );
 }

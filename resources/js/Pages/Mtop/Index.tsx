@@ -10,6 +10,7 @@ import PermitPreview from "./Partials/PermitPreview";
 import { BARANGAYS } from "@/Constants/Barangays";
 import ConfirmDeleteModal from "@/Components/ConfirmDeleteModal";
 import DriverInfoModal from "./Partials/DriverInfoModal";
+import ClearRecordsModal from "@/Components/ClearRecordsModal";
 import DropRecordModal from "./Partials/DropRecordModal";
 
 interface MtopApplication {
@@ -148,6 +149,20 @@ export default function Index({
         }
     };
 
+    const [isClearModalOpen, setIsClearModalOpen] = useState(false);
+    const [isClearing, setIsClearing] = useState(false);
+
+    const handleClearAll = () => {
+        setIsClearing(true);
+        router.delete(route("mtop.clear"), {
+            onSuccess: () => {
+                setIsClearModalOpen(false);
+                setIsClearing(false);
+            },
+            onError: () => setIsClearing(false),
+        });
+    };
+
     const toggleSelect = (id: number) => {
         if (selectedIds.includes(id)) {
             setSelectedIds(selectedIds.filter((i) => i !== id));
@@ -171,7 +186,6 @@ export default function Index({
         return applications.data.filter((app) => selectedIds.includes(app.id));
     }, [selectedIds, applications.data]);
 
-    // NEW: Handle Export properly via standard browser navigation
     const handleExport = () => {
         const currentParams = new URLSearchParams(window.location.search);
         const exportUrl = `${route("mtop.export")}?${currentParams.toString()}`;
@@ -188,82 +202,68 @@ export default function Index({
                         <div className="flex flex-col md:flex-row gap-3 w-full xl:w-auto flex-wrap">
                             <div className="flex items-center gap-3 w-full md:w-auto">
                                 <div className="relative flex-1 md:flex-none w-full md:w-auto">
-                                    <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-gray-500">
+                                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-500">
                                         <Icon
                                             icon="iconamoon:search-bold"
-                                            width="20"
+                                            width="16"
                                         />
                                     </div>
-                                    <TextInput
-                                        className="pl-12 w-full md:w-80 py-3 text-base shadow-sm"
+                                    <input
+                                        type="text"
+                                        className="py-2 pl-9 pr-3 text-sm rounded border border-slate-300 shadow-sm focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-white placeholder:text-slate-400 font-semibold w-full md:w-64"
                                         placeholder="Search..."
                                         value={search}
                                         onChange={(e) => setSearch(e.target.value)}
                                     />
                                 </div>
 
-                                <div className="flex items-center gap-1.5 bg-indigo-50 text-indigo-700 px-4 py-3 rounded-lg border border-indigo-200 shadow-sm whitespace-nowrap h-full">
-                                    <Icon icon="solar:documents-bold" width="20" className="text-indigo-500" />
-                                    <span className="font-extrabold text-lg leading-none">{applications.total}</span>
+                                <div className="flex items-center gap-1.5 bg-indigo-50 text-indigo-700 px-3 py-2 rounded border border-indigo-200 shadow-sm whitespace-nowrap h-full">
+                                    <Icon icon="solar:documents-bold" width="16" className="text-indigo-500" />
+                                    <span className="font-extrabold text-sm leading-none">{applications.total}</span>
                                 </div>
                             </div>
 
-                            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto flex-wrap">
+                            <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto flex-wrap">
                                 <select
-                                    className="border-gray-300 rounded-md shadow-sm text-base py-3 pl-4 pr-10 w-full sm:w-48 focus:border-indigo-500 focus:ring-indigo-500 cursor-pointer"
+                                    className="py-2 pl-3 pr-8 text-sm rounded border border-slate-300 shadow-sm focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-white font-semibold cursor-pointer w-full sm:w-auto"
                                     value={barangay}
-                                    onChange={(e) =>
-                                        setBarangay(e.target.value)
-                                    }
+                                    onChange={(e) => setBarangay(e.target.value)}
                                 >
                                     <option value="">All Barangays</option>
                                     {BARANGAYS.map((b) => (
-                                        <option key={b} value={b}>
-                                            {b}
-                                        </option>
+                                        <option key={b} value={b}>{b}</option>
                                     ))}
                                 </select>
 
                                 <select
-                                    className="border-gray-300 rounded-md shadow-sm text-base py-3 w-full sm:w-32 focus:border-indigo-500 focus:ring-indigo-500 cursor-pointer"
+                                    className="py-2 pl-3 pr-8 text-sm rounded border border-slate-300 shadow-sm focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-white font-semibold cursor-pointer w-full sm:w-auto"
                                     value={month}
                                     onChange={(e) => setMonth(e.target.value)}
                                 >
                                     <option value="">Month</option>
                                     {Array.from({ length: 12 }, (_, i) => (
                                         <option key={i} value={i + 1}>
-                                            {new Date(0, i).toLocaleString(
-                                                "default",
-                                                { month: "long" },
-                                            )}
+                                            {new Date(0, i).toLocaleString("default", { month: "long" })}
                                         </option>
                                     ))}
                                 </select>
 
                                 <select
-                                    className="border-gray-300 rounded-md shadow-sm text-base py-3 w-full sm:w-28 focus:border-indigo-500 focus:ring-indigo-500 cursor-pointer"
+                                    className="py-2 pl-3 pr-8 text-sm rounded border border-slate-300 shadow-sm focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-white font-semibold cursor-pointer w-full sm:w-auto"
                                     value={year}
                                     onChange={(e) => setYear(e.target.value)}
                                 >
                                     <option value="">Year</option>
                                     {Array.from(
-                                        {
-                                            length:
-                                                new Date().getFullYear() -
-                                                2000 +
-                                                2,
-                                        },
-                                        (_, i) =>
-                                            new Date().getFullYear() + 1 - i,
+                                        { length: new Date().getFullYear() - 2000 + 2 },
+                                        (_, i) => new Date().getFullYear() + 1 - i,
                                     ).map((y) => (
-                                        <option key={y} value={y}>
-                                            {y}
-                                        </option>
+                                        <option key={y} value={y}>{y}</option>
                                     ))}
                                 </select>
 
                                 <select
-                                    className="border-gray-300 rounded-md shadow-sm text-base py-3 w-full sm:w-40 focus:border-indigo-500 focus:ring-indigo-500 cursor-pointer"
+                                    className="py-2 pl-3 pr-8 text-sm rounded border border-slate-300 shadow-sm focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-white font-semibold cursor-pointer w-full sm:w-auto"
                                     value={renewal}
                                     onChange={(e) => setRenewal(e.target.value)}
                                 >
@@ -277,7 +277,7 @@ export default function Index({
 
                                 {/* THE COMBINED ALPHABETICAL DROPDOWN */}
                                 <select
-                                    className="border-gray-300 rounded-md shadow-sm text-base py-3 w-full sm:w-48 focus:border-indigo-500 focus:ring-indigo-500 cursor-pointer"
+                                    className="py-2 pl-3 pr-8 text-sm rounded border border-slate-300 shadow-sm focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-white font-semibold cursor-pointer w-full sm:w-auto"
                                     value={sortAlphabetical}
                                     onChange={(e) => setSortAlphabetical(e.target.value)}
                                 >
@@ -290,30 +290,39 @@ export default function Index({
                             </div>
                         </div>
 
-                        <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
-                            {/* REPLACED WITH PROPER BUTTON EXPORT */}
+                        <div className="flex flex-col sm:flex-row gap-2 w-full xl:w-auto mt-4 xl:mt-0">
+                            {user.role === 'admin' && (
+                                <button
+                                    onClick={() => setIsClearModalOpen(true)}
+                                    type="button"
+                                    title="Clear All MTOP Records"
+                                    className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-3 rounded text-sm flex items-center justify-center gap-1.5 shadow-sm w-full sm:w-auto transition-colors whitespace-nowrap"
+                                >
+                                    <Icon icon="solar:trash-bin-trash-bold" width="16" />
+                                    <span className="hidden sm:inline">Clear</span>
+                                </button>
+                            )}
+
                             <button
                                 onClick={handleExport}
                                 type="button"
-                                className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg flex items-center justify-center gap-2 shadow-md w-full sm:w-auto text-base transition-transform hover:scale-105"
+                                className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-3 rounded text-sm flex items-center justify-center gap-1.5 shadow-sm w-full sm:w-auto transition-colors whitespace-nowrap"
                             >
-                                <Icon icon="solar:file-download-bold" width="24" />{" "}
-                                Export
+                                <Icon icon="solar:file-download-bold" width="16" /> Export
                             </button>
 
                             <Link
                                 href={route("mtop.create")}
-                                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg flex items-center justify-center gap-2 shadow-md w-full sm:w-auto text-base transition-transform hover:scale-105"
+                                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm flex items-center justify-center gap-1.5 shadow-sm w-full sm:w-auto transition-colors whitespace-nowrap"
                             >
-                                <Icon icon="solar:add-circle-bold" width="24" />{" "}
-                                Add
+                                <Icon icon="solar:add-circle-bold" width="16" /> Add Record
                             </Link>
                         </div>
                     </div>
 
-                    <div className="hidden md:block bg-white overflow-hidden shadow-sm sm:rounded-lg border border-gray-100">
-                        <table className="w-full text-sm text-left text-gray-500">
-                            <thead className="text-xs text-gray-700 uppercase bg-gray-50 border-b">
+                    <div className="hidden md:block bg-slate-50 overflow-hidden shadow-sm sm:rounded border border-slate-200">
+                        <table className="w-full text-sm text-center text-slate-600 border-collapse [&_th]:border [&_th]:border-slate-200 [&_td]:border [&_td]:border-slate-200">
+                            <thead className="text-[11px] text-slate-100 uppercase bg-slate-700 tracking-wide border-b border-slate-800">
                                 <tr>
                                     <th className="px-6 py-4 w-12 text-center">
                                         <button
@@ -334,7 +343,7 @@ export default function Index({
                                         </button>
                                     </th>
                                     <th className="px-6 py-4">Control No.</th>
-                                    <th className="px-6 py-4">
+                                    <th className="px-6 py-4 text-center">
                                         Applicant Name
                                     </th>
                                     <th className="px-6 py-4 hidden lg:table-cell">
@@ -416,7 +425,7 @@ export default function Index({
                                         return (
                                             <tr
                                                 key={app.id}
-                                                className={`border-b transition-colors ${isSelected ? "bg-indigo-50/50" : "bg-white hover:bg-gray-50"}`}
+                                                className={`transition-colors border-b border-slate-200 last:border-0 ${isSelected ? "bg-indigo-100" : "bg-white even:bg-blue-50 hover:bg-slate-100"}`}
                                             >
                                                 <td className="px-6 py-4 text-center">
                                                     <button
@@ -440,7 +449,7 @@ export default function Index({
                                                         {app.mt_number || "-"}
                                                     </div>
                                                 </td>
-                                                <td className="px-6 py-4 font-bold text-gray-800 text-base">
+                                                <td className="px-6 py-4 font-bold text-gray-800 text-base text-left">
                                                     {app.last_name},{" "}
                                                     {app.first_name}{" "}
                                                     {app.middle_name
@@ -474,7 +483,7 @@ export default function Index({
                                                                 )
                                                             }
                                                             title="View Details"
-                                                            className="p-2 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 hover:text-indigo-800 rounded-md transition-colors shadow-sm"
+                                                            className="p-2 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 hover:text-indigo-800 rounded-md border border-indigo-200 transition-colors shadow-sm"
                                                         >
                                                             <Icon
                                                                 icon="solar:eye-bold"
@@ -489,7 +498,7 @@ export default function Index({
                                                             )}
                                                             target="_blank"
                                                             title="Print Permit"
-                                                            className="p-2 text-green-600 bg-green-50 hover:bg-green-100 hover:text-green-800 rounded-md transition-colors shadow-sm"
+                                                            className="p-2 text-green-600 bg-green-50 hover:bg-green-100 hover:text-green-800 rounded-md border border-green-200 transition-colors shadow-sm"
                                                         >
                                                             <Icon
                                                                 icon="solar:printer-bold"
@@ -503,7 +512,7 @@ export default function Index({
                                                                 app.id,
                                                             )}
                                                             title="Edit Record"
-                                                            className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 hover:text-blue-800 rounded-md transition-colors shadow-sm"
+                                                            className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 hover:text-blue-800 rounded-md border border-blue-200 transition-colors shadow-sm"
                                                         >
                                                             <Icon
                                                                 icon="solar:pen-new-square-bold"
@@ -517,7 +526,7 @@ export default function Index({
                                                                 app.id,
                                                             )}
                                                             title="Transfer Ownership"
-                                                            className="p-2 text-purple-600 bg-purple-50 hover:bg-purple-100 hover:text-purple-800 rounded-md transition-colors shadow-sm"
+                                                            className="p-2 text-purple-600 bg-purple-50 hover:bg-purple-100 hover:text-purple-800 rounded-md border border-purple-200 transition-colors shadow-sm"
                                                         >
                                                             <Icon
                                                                 icon="solar:users-group-two-rounded-bold"
@@ -532,7 +541,7 @@ export default function Index({
                                                                     app.id,
                                                                 )}
                                                                 title="Renew Franchise"
-                                                                className="p-2 text-yellow-600 bg-yellow-50 hover:bg-yellow-100 hover:text-yellow-800 rounded-md transition-colors shadow-sm"
+                                                                className="p-2 text-yellow-600 bg-yellow-50 hover:bg-yellow-100 hover:text-yellow-800 rounded-md border border-yellow-200 transition-colors shadow-sm"
                                                             >
                                                                 <Icon
                                                                     icon="solar:restart-square-bold"
@@ -545,7 +554,7 @@ export default function Index({
                                                         <button
                                                             onClick={() => setDroppingApp(app)}
                                                             title={app.status === 'cancelled' ? "View/Edit Dropping Record" : "Cancel/Drop Record"}
-                                                            className="p-2 text-orange-600 bg-orange-50 hover:bg-orange-100 hover:text-orange-800 rounded-md transition-colors shadow-sm"
+                                                            className="p-2 text-orange-600 bg-orange-50 hover:bg-orange-100 hover:text-orange-800 rounded-md border border-orange-200 transition-colors shadow-sm"
                                                         >
                                                             <Icon icon="solar:close-square-bold" width="18" />
                                                         </button>
@@ -560,7 +569,7 @@ export default function Index({
                                                                         )
                                                                     }
                                                                     title="Delete Record"
-                                                                    className="p-2 text-red-600 bg-red-50 hover:bg-red-100 hover:text-red-800 rounded-md transition-colors shadow-sm"
+                                                                    className="p-2 text-red-600 bg-red-50 hover:bg-red-100 hover:text-red-800 rounded-md border border-red-200 transition-colors shadow-sm"
                                                                 >
                                                                     <Icon
                                                                         icon="solar:trash-bin-trash-bold"
@@ -638,7 +647,7 @@ export default function Index({
                                 return (
                                     <div
                                         key={app.id}
-                                        className={`bg-white rounded-xl border p-4 shadow-sm transition-all flex flex-col ${isSelected ? "border-indigo-500 ring-2 ring-indigo-500/20 bg-indigo-50/10" : "border-gray-200"}`}
+                                        className={`bg-slate-50 rounded border p-4 shadow-sm transition-all flex flex-col ${isSelected ? "border-indigo-500 ring-2 ring-indigo-500/20 bg-indigo-50/10" : "border-slate-200"}`}
                                     >
                                         <div className="flex justify-between items-start mb-3">
                                             <div className="flex items-center gap-3">
@@ -655,7 +664,7 @@ export default function Index({
                                                     />
                                                 </button>
                                                 <div>
-                                                    <span className="text-xs font-bold text-indigo-600 uppercase">
+                                                    <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1.5 block">
                                                         Control No.
                                                     </span>
                                                     <p className="font-bold text-gray-900">
@@ -678,7 +687,7 @@ export default function Index({
 
                                         <div className="mb-4 pl-9">
                                             <div className="flex justify-between items-center mb-1">
-                                                <span className="text-xs font-bold text-gray-400 uppercase">
+                                                <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wide">
                                                     Applicant
                                                 </span>
                                                 <span
@@ -694,7 +703,7 @@ export default function Index({
                                                     ? app.middle_name[0] + "."
                                                     : ""}
                                             </p>
-                                            <p className="text-sm text-gray-500 leading-tight mt-1">
+                                            <p className="text-sm text-slate-500 leading-tight mt-1">
                                                 {app.address.replace(
                                                     /(,\s*GERONA,\s*TARLAC|\s*GERONA,\s*TARLAC)/i,
                                                     "",
@@ -850,44 +859,43 @@ export default function Index({
                 maxWidth="2xl"
             >
                 {viewingApp && (
-                    <div className="flex flex-col h-dvh sm:h-auto sm:max-h-[90vh]">
-                        <div className="bg-gray-800 px-6 py-4 flex justify-between items-center shrink-0 sm:rounded-t-lg">
-                            <h3 className="text-white font-bold uppercase tracking-wider text-lg flex items-center gap-2">
-                                <Icon icon="solar:document-text-bold" />{" "}
+                    <div className="bg-slate-50 rounded-none sm:rounded-lg h-full sm:h-auto sm:max-h-[90vh] flex flex-col overflow-hidden">
+                        <div className="flex justify-between items-center bg-slate-700 px-5 py-3 rounded-none sm:rounded-t-lg border-b border-slate-800 shrink-0">
+                            <h3 className="text-white font-bold text-base flex items-center gap-2 tracking-wide">
+                                <Icon icon="solar:document-text-bold" width="20" className="text-blue-400" />
                                 Information Preview
                             </h3>
                             <button
                                 onClick={() => setViewingApp(null)}
-                                className="text-gray-400 hover:text-white transition-colors p-2"
+                                className="text-slate-400 hover:text-white transition-colors"
                             >
                                 <Icon
                                     icon="solar:close-circle-bold"
-                                    width="28"
+                                    width="24"
                                 />
                             </button>
                         </div>
-                        <div className="overflow-y-auto p-0 bg-gray-100 flex-1">
+                        <div className="overflow-y-auto p-0 bg-slate-50 flex-1">
                             <PermitPreview
                                 data={viewingApp}
                                 showHeader={false}
                                 activeEvents={activeEvents}
                             />
                         </div>
-                        <div className="bg-white border-t px-6 py-4 flex justify-end gap-3 shrink-0 sm:rounded-b-lg pb-safe">
+                        <div className="bg-white border-t border-slate-200 px-5 py-4 flex justify-end gap-2 shrink-0 sm:rounded-b-lg pb-safe">
                             <Link
                                 href={route("mtop.edit", viewingApp.id)}
-                                className="justify-center flex-1 sm:flex-none inline-flex items-center px-6 py-3 bg-blue-600 border border-transparent rounded-lg font-semibold text-sm text-white uppercase tracking-widest hover:bg-blue-700"
+                                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm flex items-center justify-center gap-1.5 shadow-sm transition-colors flex-1 sm:flex-none"
                             >
                                 <Icon
                                     icon="solar:pen-new-square-bold"
-                                    className="mr-2"
-                                    width="18"
+                                    width="16"
                                 />{" "}
                                 Edit Record
                             </Link>
                             <button
                                 onClick={() => setViewingApp(null)}
-                                className="justify-center flex-1 sm:flex-none inline-flex items-center px-6 py-3 bg-white border border-gray-300 rounded-lg font-semibold text-sm text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50"
+                                className="bg-slate-200 hover:bg-slate-300 text-slate-700 border border-slate-300 font-bold py-2 px-4 rounded text-sm flex items-center justify-center shadow-sm transition-colors flex-1 sm:flex-none"
                             >
                                 Close
                             </button>
@@ -909,6 +917,15 @@ export default function Index({
                 application={droppingApp}
                 officials={officials}
                 feeSettings={feeSettings}
+            />
+
+            <ClearRecordsModal
+                show={isClearModalOpen}
+                onClose={() => setIsClearModalOpen(false)}
+                onConfirm={handleClearAll}
+                processing={isClearing}
+                title="Clear All MTOP Records"
+                description="Are you sure you want to clear all MTOP records? This action cannot be undone."
             />
         </AuthenticatedLayout>
     );
