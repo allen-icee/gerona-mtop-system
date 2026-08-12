@@ -77,7 +77,11 @@ class MtopApplicationController extends Controller
                     'body_number' => 'REASSIGN_CONFIRMATION_REQUIRED'
                 ]);
             } else {
-                $existingActive->update(['status' => 'dropped']);
+                $existingActive->update([
+                    'status' => 'dropped',
+                    'body_number' => null,
+                ]);
+                $this->queueForSync('mtop_franchises', $existingActive->fresh()->toArray());
             }
         }
     }
