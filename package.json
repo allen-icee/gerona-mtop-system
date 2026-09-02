@@ -6,11 +6,12 @@
     "type": "module",
     "author": "Municipality of Gerona",
     "scripts": {
-        "dev": "node scripts/update-ip.js && vite",
+        "update-ip": "node scripts/update-ip.js",
+        "dev": "npm run update-ip && vite",
         "build": "tsc && vite build && rimraf public/hot && node -e \"require('fs').copyFileSync('public/build/.vite/manifest.json', 'public/build/manifest.json')\"",
         "start": "electron electron.cjs",
         "dist": "electron-builder",
-        "watch": "concurrently -k \"npm run dev\" \"npm start\""
+        "watch": "npm run update-ip && concurrently -k \"vite\" \"npm start\""
     },
     "build": {
         "appId": "com.gerona.mtop",

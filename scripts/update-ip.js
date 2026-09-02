@@ -23,34 +23,36 @@ function getLocalIP() {
 const ip = getLocalIP();
 console.log(`\n🚀  AUTO-CONFIGURING FOR IP: ${ip}`);
 
+function updateEnvVar(content, key, value) {
+    const regex = new RegExp(`^${key}=.*$`, "m");
+    if (regex.test(content)) {
+        return content.replace(regex, `${key}=${value}`);
+    } else {
+        const separator = content.endsWith('\n') || content === '' ? '' : '\n';
+        return `${content}${separator}${key}=${value}\n`;
+    }
+}
+
 const envPath = path.join(rootDir, ".env");
 if (fs.existsSync(envPath)) {
     let envContent = fs.readFileSync(envPath, "utf8");
 
-    envContent = envContent.replace(
-        /^APP_URL=.*$/m,
-        `APP_URL=http://${ip}:8000`,
-    );
+    envContent = updateEnvVar(envContent, "APP_URL", `http://${ip}:8000`);
+    envContent = updateEnvVar(envContent, "SERVER_IP", ip);
+    envContent = updateEnvVar(envContent, "VITE_HMR_HOST", ip);
+
     fs.writeFileSync(envPath, envContent);
-    console.log(`✅  Updated .env APP_URL`);
+    console.log(`✅  Updated .env APP_URL, SERVER_IP, and VITE_HMR_HOST to ${ip}`);
 }
 
-const vitePath = path.join(rootDir, "vite.config.ts");
-if (fs.existsSync(vitePath)) {
-    let viteContent = fs.readFileSync(vitePath, "utf8");
-
-    const regex = /hmr:\s*\{\s*host:\s*["'].*?["']\s*,/s;
-    if (regex.test(viteContent)) {
-        viteContent = viteContent.replace(
-            regex,
-            `hmr: {\n            host: "${ip}",`,
-        );
-        fs.writeFileSync(vitePath, viteContent);
-        console.log(`✅  Updated vite.config.ts HMR Host`);
-    } else {
-        console.log(
-            `⚠️  Could not find HMR host in vite.config.ts. Check formatting.`,
-        );
+// Remove stale public/hot file so Vite regenerates it with the current IP
+const hotPath = path.join(rootDir, "public", "hot");
+if (fs.existsSync(hotPath)) {
+    try {
+        fs.unlinkSync(hotPath);
+        console.log(`✅  Cleared old public/hot file`);
+    } catch (e) {
+        console.log(`⚠️  Could not remove public/hot: ${e.message}`);
     }
 }
 
@@ -59,12 +61,12 @@ if (fs.existsSync(batPath)) {
     let batContent = fs.readFileSync(batPath, "utf8");
 
     batContent = batContent.replace(
-        /start http:\/\/[\d\.]+:8100/,
+        /start http:\/\/[\d\.]+:8100/g,
         `start http://${ip}:8000`,
     );
 
     batContent = batContent.replace(
-        /echo OTHER STAFF should use:\s+http:\/\/[\d\.]+:8100/,
+        /echo OTHER STAFF should use:\s+http:\/\/[\d\.]+:8100/g,
         `echo OTHER STAFF should use:      http://${ip}:8000`,
     );
 
